@@ -7,12 +7,12 @@ import 'package:lumina/src/core/widgets/integer_stepper.dart';
 import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
 import 'package:lumina/src/core/widgets/settings_section_title.dart';
 import 'package:lumina/src/core/widgets/settings_sub_label.dart';
+import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 import 'reader_link_handling_selector.dart';
 import 'reader_page_animation_selector.dart';
 import 'reader_scale_slider.dart';
-import 'reader_theme_option_chip.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
 class ReaderStyleBottomSheet extends ConsumerStatefulWidget {
@@ -106,7 +106,7 @@ class _ReaderStyleBottomSheetState
                               children: presets.map((preset) {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 16),
-                                  child: ReaderThemeOptionChip(
+                                  child: ThemeVariantChip(
                                     colorScheme: preset.colorScheme,
                                     isSelected: _themeIndex == preset.index,
                                     onTap: () {
@@ -159,7 +159,22 @@ class _ReaderStyleBottomSheetState
             const SizedBox(height: 16),
 
             // Scale
-            SettingsSubLabel(label: l10n.readerScale),
+            Row(
+              children: [
+                SettingsSubLabel(label: l10n.readerScale),
+                const Spacer(),
+                Text(
+                  '${_scale.toStringAsFixed(1)}x',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
             ReaderScaleSlider(
               value: _scale,
