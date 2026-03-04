@@ -7,7 +7,7 @@ part of 'storage_cleanup_service_provider.dart';
 // **************************************************************************
 
 String _$storageCleanupServiceHash() =>
-    r'0ee623753cadf50b210e07c911cd34c21a5d30b4';
+    r'e95e04d4309fc538a40eb917239cfeebe7fd6b2d';
 
 /// Provider for [StorageCleanupService].
 ///

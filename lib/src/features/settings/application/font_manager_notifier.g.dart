@@ -7,7 +7,7 @@ part of 'font_manager_notifier.dart';
 // **************************************************************************
 
 String _$fontManagerNotifierHash() =>
-    r'674de356df31583a65c38854bd0c7dc5ff266192';
+    r'291fa746e44243d65873f59b11061e7b29a52cc1';
 
 /// See also [FontManagerNotifier].
 @ProviderFor(FontManagerNotifier)
