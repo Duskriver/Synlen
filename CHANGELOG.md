@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.2] - 2026-03-04
 
-这里是为你拆分好的纯英文和纯中文两部分更新日志：
-
 ### English
 
 #### Added
