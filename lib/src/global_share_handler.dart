@@ -49,8 +49,7 @@ class GolbalShareHandler extends ConsumerWidget {
     WidgetRef ref,
     List<PlatformPath> paths,
   ) async {
-    // Use the navigator key's context so we can show a dialog / overlay from
-    // anywhere in the tree, regardless of the current route.
+    // 使用 navigator key 的 context，这样无论当前路由如何，我们都能在整个树中的任意位置弹出对话框或遮罩层。
     final navContext = ToastService.navigatorKey.currentContext;
     if (navContext == null || !navContext.mounted) return;
 

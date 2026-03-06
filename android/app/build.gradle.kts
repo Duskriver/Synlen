@@ -38,12 +38,19 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
-            keyPassword = keystoreProperties.getProperty("keyPassword") ?: ""
-            storePassword = keystoreProperties.getProperty("storePassword") ?: ""
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            storePassword = keystoreProperties.getProperty("storePassword")
             val storeFilePath = keystoreProperties.getProperty("storeFile")
             if (storeFilePath != null && storeFilePath.isNotEmpty()) {
                 storeFile = file(storeFilePath)
+            } else {
+                // 如果没有配置 key.properties，则回退到 debug 签名，避免构建失败
+                // 注意：这只适用于测试，发布到商店必须配置正确的签名
+                storeFile = signingConfigs.getByName("debug").storeFile
+                storePassword = signingConfigs.getByName("debug").storePassword
+                keyAlias = signingConfigs.getByName("debug").keyAlias
+                keyPassword = signingConfigs.getByName("debug").keyPassword
             }
         }
     }
@@ -55,7 +62,7 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
-            )            
+            )
             signingConfig = signingConfigs.getByName("release")
         }
 
