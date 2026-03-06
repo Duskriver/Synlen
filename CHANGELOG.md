@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.3] - 2026-03-07
+
+### English
+
+#### Changed
+
+* **AI Word Interpretation**: Enhanced AI prompts for word interpretation to include phonetic symbols, parts of speech, and contextual analysis.
+* **AI Sentence Analysis**: Improved AI sentence analysis to prioritize natural Chinese translations and provide concise grammatical breakdowns.
+
+### Chinese
+
+#### 变更与优化
+
+* **AI 单词解释优化**：优化了 AI 单词解释的 Prompt，增加了音标、词性、变形及上下文作用分析。
+* **AI 句子分析优化**：优化了 AI 句子分析的 Prompt，优先显示整句翻译并精简了语法分析内容。
+
 ## [v0.2.2] - 2026-03-04
 
 ### English
