@@ -20,7 +20,8 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
 
   void updateWebViewThemeWithDebounce() {
     themeUpdateDebouncer?.cancel();
-    themeUpdateDebouncer = Timer(const Duration(milliseconds: 50), () {
+    // 增加防抖时间，减少 WebView 主线程压力
+    themeUpdateDebouncer = Timer(const Duration(milliseconds: 200), () {
       updateWebViewTheme();
     });
   }

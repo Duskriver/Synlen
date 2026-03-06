@@ -91,6 +91,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   String displayProgress = '0.00%';
   @override
   Timer? progressDebouncer;
+  @override
+  Timer? _saveProgressDebouncer;
 
   // Theme state (used by _ThemeMixin)
   @override
@@ -404,7 +406,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           currentPageInChapter = pageIndex;
                         });
                         updateProgressDebounced();
-                        saveProgress();
+                        saveProgressDebounced();
                       },
                       onRendererInitialized: () async {
                         await Future.delayed(const Duration(milliseconds: 30));
