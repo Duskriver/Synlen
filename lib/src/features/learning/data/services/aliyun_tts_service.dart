@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:lumina/src/core/utils/wav_header_util.dart';
+
 class AliyunTTSService {
   final Dio _dio = Dio(
     BaseOptions(
@@ -40,7 +42,9 @@ class AliyunTTSService {
             'language_type': 'English',
           },
           'parameters': {
-            'audio_format': 'mp3', // 强制请求 mp3 格式以简化播放
+            // 阿里云该模型目前仅支持 pcm 格式输出，采样率为 24kHz
+            'audio_format': 'pcm',
+            'sample_rate': 24000,
           },
         },
       );
@@ -89,7 +93,7 @@ class AliyunTTSService {
     }
   }
 
-  /// 保持向后兼容：生成音频并保存到文件
+  /// 保持向后兼容：生成音频并保存到文件 (添加 WAV 头部)
   Future<String?> generateAudio(String text) async {
     final bytes = <int>[];
     await for (final chunk in generateAudioStream(text)) {
@@ -98,11 +102,15 @@ class AliyunTTSService {
 
     if (bytes.isEmpty) return null;
 
+    // 为 PCM 数据添加 WAV 头部
+    final header = WavHeaderUtil.generateWavHeader(bytes.length, 24000, 1, 16);
+    final fullBytes = [...header, ...bytes];
+
     final tempDir = await getTemporaryDirectory();
     final fileName =
-        'tts_${DateTime.now().millisecondsSinceEpoch}_${text.hashCode}.mp3';
+        'tts_${DateTime.now().millisecondsSinceEpoch}_${text.hashCode}.wav';
     final file = File('${tempDir.path}/$fileName');
-    await file.writeAsBytes(bytes);
+    await file.writeAsBytes(fullBytes);
     return file.path;
   }
 }

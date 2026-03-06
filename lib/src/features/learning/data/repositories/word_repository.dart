@@ -8,6 +8,8 @@ import 'package:lumina/src/features/learning/data/services/deep_seek_service.dar
 import 'package:lumina/src/features/learning/data/services/free_dictionary_service.dart';
 import '../../domain/word_explanation.dart';
 
+import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
+
 /// 单词学习结果
 class WordLearningResult {
   /// 发音音频 URL (来自 API 或 TTS)
@@ -47,13 +49,13 @@ class WordRepository {
     return await _isar.wordExplanations.get(id);
   }
 
-  /// 获取单词的发音音频字节流
+  /// 获取单词的发音音频字节流结果（包含流和格式）
   ///
   /// 业务逻辑：
-  /// 1. 首先尝试从免费词典 API 获取 URL
+  /// 1. 首先尝试从免费词典 API 获取 URL (返回 mp3)
   /// 2. 如果成功，流式下载该 URL 的内容
-  /// 3. 如果失败，调用阿里云 TTS 流式接口
-  Stream<List<int>> getPronunciationStream(String word) async* {
+  /// 3. 如果失败，降级调用阿里云 TTS 流式接口 (返回 pcm)
+  Stream<AudioStreamResult> getPronunciationStream(String word) async* {
     try {
       // 1. 尝试免费词典
       final dictionaryAudioUrl = await _freeDictionaryService
@@ -64,9 +66,10 @@ class WordRepository {
           options: Options(responseType: ResponseType.stream),
         );
         if (response.statusCode == 200 && response.data != null) {
-          await for (final chunk in response.data!.stream) {
-            yield chunk as List<int>;
-          }
+          yield AudioStreamResult(
+            stream: response.data!.stream.cast<List<int>>(),
+            format: AudioFormat.mp3,
+          );
           return;
         }
       }
@@ -74,8 +77,11 @@ class WordRepository {
       debugPrint('Free Dictionary Audio error, falling back to Aliyun TTS: $e');
     }
 
-    // 2. 降级到阿里云 TTS 流式
-    yield* _aliyunTTSService.generateAudioStream(word);
+    // 2. 降级到阿里云 TTS 流式 (PCM)
+    yield AudioStreamResult(
+      stream: _aliyunTTSService.generateAudioStream(word),
+      format: AudioFormat.pcm,
+    );
   }
 
   /// 获取单词基础信息
@@ -97,41 +103,58 @@ class WordRepository {
 
     // 2. 无缓存，直接返回空结果，由 UI 决定并行逻辑
     // 但在返回前，先检查本地是否已经有音频文件，如果有则直接返回路径
-    final audioFile = await _getAudioFile(word);
-    String? existingAudioPath;
-    if (await audioFile.exists()) {
-      existingAudioPath = audioFile.path;
-    }
+    final existingFile = await _findExistingAudioFile(word);
 
     return WordLearningResult(
-      audioUrl: existingAudioPath,
+      audioUrl: existingFile?.path,
       explanation: null,
       isFromCache: false,
     );
   }
 
+  /// 查找本地已有的音频文件（支持 mp3 或 wav）
+  Future<File?> _findExistingAudioFile(String word) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final audioDir = Directory('${appDir.path}/audio');
+    if (!await audioDir.exists()) return null;
+
+    final safeWord = word.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final mp3File = File('${audioDir.path}/word_$safeWord.mp3');
+    if (await mp3File.exists()) return mp3File;
+
+    final wavFile = File('${audioDir.path}/word_$safeWord.wav');
+    if (await wavFile.exists()) return wavFile;
+
+    return null;
+  }
+
   /// 获取确定性的音频文件对象
-  Future<File> _getAudioFile(String word) async {
+  Future<File> _getAudioFile(String word, {bool isWav = false}) async {
     final appDir = await getApplicationDocumentsDirectory();
     final audioDir = Directory('${appDir.path}/audio');
     if (!await audioDir.exists()) {
       await audioDir.create(recursive: true);
     }
-    // 使用 MD5 或简单的清理确保文件名安全且唯一
-    // 这里简单地移除非字母数字字符，实际生产环境建议使用 hash
     final safeWord = word.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    return File('${audioDir.path}/word_$safeWord.mp3');
+    final ext = isWav ? '.wav' : '.mp3';
+    return File('${audioDir.path}/word_$safeWord$ext');
   }
 
   /// 保存音频文件到本地并返回路径
   Future<String> saveAudioFile(String word, List<int> bytes) async {
-    final file = await _getAudioFile(word);
+    // 检查是否已经存在
+    final existing = await _findExistingAudioFile(word);
+    if (existing != null) return existing.path;
 
-    // 如果文件已存在，直接返回，不重复写入
-    if (await file.exists()) {
-      return file.path;
-    }
+    // 根据内容判断格式（WAV 头部以 'RIFF' 开头）
+    final isWav =
+        bytes.length > 4 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46;
 
+    final file = await _getAudioFile(word, isWav: isWav);
     await file.writeAsBytes(bytes);
     return file.path;
   }

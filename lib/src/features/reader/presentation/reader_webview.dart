@@ -174,6 +174,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   @override
+  void dispose() {
+    widget.controller._attachState(null);
+    _headlessWebView?.dispose();
+    for (var completer in _completers.values) {
+      if (!completer.isCompleted) {
+        completer.completeError('ReaderWebView disposed');
+      }
+    }
+    _completers.clear();
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(covariant ReaderWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isLoading && widget.isLoading) {
@@ -533,7 +546,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           context.findRenderObject() as RenderRepaintBoundary?;
 
       if (boundary == null) return null;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      // 降低像素比以提高截图性能，减少主线程卡顿
+      // 3.0 对于全屏 WebView 来说过于沉重
+      ui.Image image = await boundary.toImage(pixelRatio: 1.5);
       return image;
     } else {
       throw UnimplementedError(

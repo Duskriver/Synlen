@@ -4,26 +4,60 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
 import 'package:lumina/src/features/learning/data/repositories/learning_repository_provider.dart';
+
+import 'package:lumina/src/core/utils/wav_header_util.dart';
 
 /// 一个简单的流式音频源，用于播放边下载边缓存的音频字节
 class _StreamingAudioSource extends StreamAudioSource {
   final Stream<List<int>> byteStream;
+  final AudioFormat format;
   final List<int> _buffer = [];
   final _controller = StreamController<List<int>>.broadcast();
+  StreamSubscription<List<int>>? _subscription;
   bool _isFinished = false;
 
-  _StreamingAudioSource(this.byteStream) {
+  _StreamingAudioSource(this.byteStream, this.format) {
+    if (format == AudioFormat.pcm) {
+      // 阿里云 PCM 为 24kHz, 16bit, Mono
+      // 在流开始前添加 WAV 头部以便播放器识别
+      _buffer.addAll(WavHeaderUtil.generateWavHeader(0, 24000, 1, 16));
+    }
     _init();
   }
 
   void _init() async {
-    await for (final chunk in byteStream) {
-      _buffer.addAll(chunk);
-      _controller.add(chunk);
+    _subscription = byteStream.listen(
+      (chunk) {
+        _buffer.addAll(chunk);
+        if (!_controller.isClosed) {
+          _controller.add(chunk);
+        }
+      },
+      onDone: () {
+        _isFinished = true;
+        if (!_controller.isClosed) {
+          _controller.close();
+        }
+      },
+      onError: (e) {
+        debugPrint('StreamingAudioSource error: $e');
+        _isFinished = true;
+        if (!_controller.isClosed) {
+          _controller.addError(e);
+          _controller.close();
+        }
+      },
+      cancelOnError: true,
+    );
+  }
+
+  void dispose() {
+    _subscription?.cancel();
+    if (!_controller.isClosed) {
+      _controller.close();
     }
-    _isFinished = true;
-    _controller.close();
   }
 
   List<int> get bytes => _buffer;
@@ -39,7 +73,7 @@ class _StreamingAudioSource extends StreamAudioSource {
       contentLength: _isFinished ? _buffer.length - start : null,
       offset: start,
       stream: _getStream(start),
-      contentType: 'audio/mpeg',
+      contentType: format == AudioFormat.mp3 ? 'audio/mpeg' : 'audio/wav',
     );
   }
 
@@ -84,23 +118,37 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
   String? _pronunciationUrl; // 本地路径或 null
   String? _error;
   _StreamingAudioSource? _streamingSource;
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    _audioPlayer.setVolume(1.0);
     _loadData();
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
+    // 显式释放关联的流资源和播放器
+    _streamingSource?.dispose();
+    // 立即释放播放器资源，防止 native 回调到已关闭的资源
+    // 同时也解决了 MediaCodec 资源耗尽导致的报错 (required system resources: 6)
     _audioPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _loadData() async {
     try {
+      if (!mounted) return;
+
+      // 设置音量
+      try {
+        await _audioPlayer.setVolume(1.0);
+      } catch (e) {
+        debugPrint('Error setting volume: $e');
+      }
+
       final repository = ref.read(wordRepositoryProvider);
 
       // 1. 获取基础信息（主要检查缓存）
@@ -113,6 +161,13 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
             _pronunciationUrl = result.audioUrl;
             _isLoading = false;
           });
+          // 如果有缓存音频，立即设置源
+          if (_pronunciationUrl != null && !_isDisposed) {
+            final file = File(_pronunciationUrl!);
+            if (await file.exists()) {
+              await _audioPlayer.setFilePath(_pronunciationUrl!);
+            }
+          }
         }
         return;
       }
@@ -135,52 +190,72 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
         // 只有在没有音频时，才并行启动音频获取
         Future.microtask(() async {
           try {
-            final byteStream = repository.getPronunciationStream(widget.word);
-            _streamingSource = _StreamingAudioSource(byteStream);
-
-            // 立即设置播放源，实现流式播放准备
-            await _audioPlayer.setAudioSource(_streamingSource!);
-
-            if (mounted) {
-              setState(() {
-                // 在流式加载中，暂时不显示播放按钮，直到有数据或播放器准备好
-              });
+            if (!mounted) {
+              audioCompleter.complete(null);
+              return;
             }
-
-            // 等待流结束并保存文件
-            while (!_streamingSource!.isFinished) {
-              await Future.delayed(const Duration(milliseconds: 100));
-            }
-
-            final filePath = await repository.saveAudioFile(
+            final audioResultStream = repository.getPronunciationStream(
               widget.word,
-              _streamingSource!.bytes,
             );
-            audioCompleter.complete(filePath);
 
-            if (mounted) {
-              setState(() {
-                _pronunciationUrl = filePath;
-              });
+            // 获取流中的第一个（也是唯一一个）AudioStreamResult
+            await for (final result in audioResultStream) {
+              if (_isDisposed) break;
+
+              _streamingSource = _StreamingAudioSource(
+                result.stream,
+                result.format,
+              );
+
+              // 立即设置播放源，实现流式播放准备
+              if (!_isDisposed) {
+                await _audioPlayer.setAudioSource(_streamingSource!);
+              }
+
+              // 等待流结束并保存文件
+              while (mounted && !_streamingSource!.isFinished) {
+                await Future.delayed(const Duration(milliseconds: 100));
+              }
+
+              if (!mounted) {
+                audioCompleter.complete(null);
+                return;
+              }
+
+              final filePath = await repository.saveAudioFile(
+                widget.word,
+                _streamingSource!.bytes,
+              );
+              audioCompleter.complete(filePath);
+
+              if (mounted) {
+                setState(() {
+                  _pronunciationUrl = filePath;
+                });
+              }
+              break; // 只处理第一个结果
             }
           } catch (e) {
             debugPrint('Audio stream error: $e');
-            audioCompleter.complete(null);
+            if (!audioCompleter.isCompleted) {
+              audioCompleter.complete(null);
+            }
           }
         });
       }
 
       // 并行启动 AI 解释流
-      await for (final chunk in repository.getWordExplanationStream(
+      final stream = repository.getWordExplanationStream(
         widget.word,
         widget.context,
         audioFilePathFuture: audioCompleter.future,
-      )) {
-        if (mounted) {
-          setState(() {
-            _explanation += chunk;
-          });
-        }
+      );
+
+      await for (final chunk in stream) {
+        if (!mounted) break;
+        setState(() {
+          _explanation += chunk;
+        });
       }
 
       if (mounted) {
@@ -200,17 +275,27 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
   }
 
   Future<void> _playAudio() async {
+    if (_isDisposed) return;
     try {
-      if (_pronunciationUrl != null) {
-        final file = File(_pronunciationUrl!);
-        if (await file.exists()) {
-          await _audioPlayer.setFilePath(_pronunciationUrl!);
-        }
-      } else if (_streamingSource != null) {
-        // 如果还在流式加载中，直接播放当前源
-        await _audioPlayer.play();
-        return;
+      // 如果正在播放，重置到开始位置
+      if (_audioPlayer.playing) {
+        await _audioPlayer.stop();
+        await _audioPlayer.seek(Duration.zero);
       }
+
+      // 检查源是否已设置，如果没有（例如流式加载尚未完成时用户点击），
+      // 尝试在播放前设置一次。
+      if (_audioPlayer.audioSource == null) {
+        if (_pronunciationUrl != null) {
+          final file = File(_pronunciationUrl!);
+          if (await file.exists()) {
+            await _audioPlayer.setFilePath(_pronunciationUrl!);
+          }
+        } else if (_streamingSource != null) {
+          await _audioPlayer.setAudioSource(_streamingSource!);
+        }
+      }
+
       await _audioPlayer.play();
     } catch (e) {
       debugPrint('Audio play error: $e');
@@ -266,9 +351,7 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
           ),
           const SizedBox(height: 16),
           // Content
-          Flexible(
-            child: _buildContent(),
-          ),
+          Flexible(child: _buildContent()),
         ],
       ),
     );
