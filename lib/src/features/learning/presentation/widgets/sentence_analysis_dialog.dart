@@ -111,6 +111,7 @@ class _SentenceAnalysisDialogState
       // 2. 无缓存：同时启动音频和 AI
       if (mounted) {
         setState(() {
+          _audioUrl = result.audioUrl; // 如果本地已有音频，直接设置
           _isLoading = false;
           _isStreaming = true;
         });
@@ -118,34 +119,39 @@ class _SentenceAnalysisDialogState
 
       final audioCompleter = Completer<String?>();
 
-      // 并行启动音频获取和 AI 分析
-      Future.microtask(() async {
-        try {
-          final byteStream = repository.getPronunciationStream(widget.sentence);
-          _streamingSource = _StreamingAudioSource(byteStream);
+      // 如果已有音频，直接完成 Completer，不再下载
+      if (result.audioUrl != null) {
+        audioCompleter.complete(result.audioUrl);
+      } else {
+        // 只有在没有音频时，才并行启动音频获取
+        Future.microtask(() async {
+          try {
+            final byteStream = repository.getPronunciationStream(widget.sentence);
+            _streamingSource = _StreamingAudioSource(byteStream);
 
-          await _audioPlayer.setAudioSource(_streamingSource!);
+            await _audioPlayer.setAudioSource(_streamingSource!);
 
-          while (!_streamingSource!.isFinished) {
-            await Future.delayed(const Duration(milliseconds: 100));
+            while (!_streamingSource!.isFinished) {
+              await Future.delayed(const Duration(milliseconds: 100));
+            }
+
+            final filePath = await repository.saveAudioFile(
+              widget.sentence,
+              _streamingSource!.bytes,
+            );
+            audioCompleter.complete(filePath);
+
+            if (mounted) {
+              setState(() {
+                _audioUrl = filePath;
+              });
+            }
+          } catch (e) {
+            debugPrint('Sentence audio stream error: $e');
+            audioCompleter.complete(null);
           }
-
-          final filePath = await repository.saveAudioFile(
-            widget.sentence,
-            _streamingSource!.bytes,
-          );
-          audioCompleter.complete(filePath);
-
-          if (mounted) {
-            setState(() {
-              _audioUrl = filePath;
-            });
-          }
-        } catch (e) {
-          debugPrint('Sentence audio stream error: $e');
-          audioCompleter.complete(null);
-        }
-      });
+        });
+      }
 
       // 并行启动 AI 分析流
       await for (final chunk in repository.getSentenceAnalysisStream(

@@ -60,11 +60,34 @@ class SentenceRepository {
     }
 
     // 2. 无缓存情况：直接返回空结果，由 UI 决定并行逻辑
+    // 但在返回前，先检查本地是否已经有音频文件，如果有则直接返回路径
+    final audioFile = await _getAudioFile(sentence);
+    String? existingAudioPath;
+    if (await audioFile.exists()) {
+      existingAudioPath = audioFile.path;
+    }
+
     return SentenceLearningResult(
       analysis: null,
-      audioUrl: null,
+      audioUrl: existingAudioPath,
       isFromCache: false,
     );
+  }
+
+  /// 获取确定性的音频文件对象
+  Future<File> _getAudioFile(String sentence) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final audioDir = Directory('${appDir.path}/audio');
+    if (!await audioDir.exists()) {
+      await audioDir.create(recursive: true);
+    }
+    // 使用 MD5 或简单的清理确保文件名安全且唯一
+    // 这里使用 hashCode 并不完全安全（冲突概率），但在句子场景下可接受，
+    // 或者使用 MD5 库。为了简单起见，这里使用 hashCode 并清理特殊字符。
+    // 更好的做法是引入 crypto 包做 md5。
+    // 这里暂时使用 hashCode。
+    final safeHash = sentence.hashCode.toString();
+    return File('${audioDir.path}/sentence_$safeHash.mp3');
   }
 
   /// 获取句子的发音音频字节流
@@ -74,14 +97,13 @@ class SentenceRepository {
 
   /// 保存音频文件到本地并返回路径
   Future<String> saveAudioFile(String sentence, List<int> bytes) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final audioDir = Directory('${appDir.path}/audio');
-    if (!await audioDir.exists()) {
-      await audioDir.create(recursive: true);
-    }
+    final file = await _getAudioFile(sentence);
     
-    final fileName = 'sentence_${sentence.hashCode}_${DateTime.now().millisecondsSinceEpoch}.mp3';
-    final file = File('${audioDir.path}/$fileName');
+    // 如果文件已存在，直接返回，不重复写入
+    if (await file.exists()) {
+      return file.path;
+    }
+
     await file.writeAsBytes(bytes);
     return file.path;
   }

@@ -96,24 +96,42 @@ class WordRepository {
     }
 
     // 2. 无缓存，直接返回空结果，由 UI 决定并行逻辑
+    // 但在返回前，先检查本地是否已经有音频文件，如果有则直接返回路径
+    final audioFile = await _getAudioFile(word);
+    String? existingAudioPath;
+    if (await audioFile.exists()) {
+      existingAudioPath = audioFile.path;
+    }
+
     return WordLearningResult(
-      audioUrl: null,
+      audioUrl: existingAudioPath,
       explanation: null,
       isFromCache: false,
     );
   }
 
-  /// 保存音频文件到本地并返回路径
-  Future<String> saveAudioFile(String word, List<int> bytes) async {
+  /// 获取确定性的音频文件对象
+  Future<File> _getAudioFile(String word) async {
     final appDir = await getApplicationDocumentsDirectory();
     final audioDir = Directory('${appDir.path}/audio');
     if (!await audioDir.exists()) {
       await audioDir.create(recursive: true);
     }
+    // 使用 MD5 或简单的清理确保文件名安全且唯一
+    // 这里简单地移除非字母数字字符，实际生产环境建议使用 hash
+    final safeWord = word.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    return File('${audioDir.path}/word_$safeWord.mp3');
+  }
 
-    final fileName =
-        'word_${word}_${DateTime.now().millisecondsSinceEpoch}.mp3';
-    final file = File('${audioDir.path}/$fileName');
+  /// 保存音频文件到本地并返回路径
+  Future<String> saveAudioFile(String word, List<int> bytes) async {
+    final file = await _getAudioFile(word);
+
+    // 如果文件已存在，直接返回，不重复写入
+    if (await file.exists()) {
+      return file.path;
+    }
+
     await file.writeAsBytes(bytes);
     return file.path;
   }
