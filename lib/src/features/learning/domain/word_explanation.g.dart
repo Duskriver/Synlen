@@ -52,7 +52,7 @@ const WordExplanationSchema = CollectionSchema(
     r'word': IndexSchema(
       id: -2031626334120420267,
       name: r'word',
-      unique: true,
+      unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
@@ -156,61 +156,6 @@ List<IsarLinkBase<dynamic>> _wordExplanationGetLinks(WordExplanation object) {
 void _wordExplanationAttach(
     IsarCollection<dynamic> col, Id id, WordExplanation object) {
   object.id = id;
-}
-
-extension WordExplanationByIndex on IsarCollection<WordExplanation> {
-  Future<WordExplanation?> getByWord(String word) {
-    return getByIndex(r'word', [word]);
-  }
-
-  WordExplanation? getByWordSync(String word) {
-    return getByIndexSync(r'word', [word]);
-  }
-
-  Future<bool> deleteByWord(String word) {
-    return deleteByIndex(r'word', [word]);
-  }
-
-  bool deleteByWordSync(String word) {
-    return deleteByIndexSync(r'word', [word]);
-  }
-
-  Future<List<WordExplanation?>> getAllByWord(List<String> wordValues) {
-    final values = wordValues.map((e) => [e]).toList();
-    return getAllByIndex(r'word', values);
-  }
-
-  List<WordExplanation?> getAllByWordSync(List<String> wordValues) {
-    final values = wordValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'word', values);
-  }
-
-  Future<int> deleteAllByWord(List<String> wordValues) {
-    final values = wordValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'word', values);
-  }
-
-  int deleteAllByWordSync(List<String> wordValues) {
-    final values = wordValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'word', values);
-  }
-
-  Future<Id> putByWord(WordExplanation object) {
-    return putByIndex(r'word', object);
-  }
-
-  Id putByWordSync(WordExplanation object, {bool saveLinks = true}) {
-    return putByIndexSync(r'word', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllByWord(List<WordExplanation> objects) {
-    return putAllByIndex(r'word', objects);
-  }
-
-  List<Id> putAllByWordSync(List<WordExplanation> objects,
-      {bool saveLinks = true}) {
-    return putAllByIndexSync(r'word', objects, saveLinks: saveLinks);
-  }
 }
 
 extension WordExplanationQueryWhereSort

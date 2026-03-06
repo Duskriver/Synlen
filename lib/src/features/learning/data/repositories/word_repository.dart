@@ -41,8 +41,10 @@ class WordRepository {
   );
 
   /// 从本地缓存获取单词信息
-  Future<WordExplanation?> getCachedWord(String word) async {
-    return await _isar.wordExplanations.where().wordEqualTo(word).findFirst();
+  Future<WordExplanation?> getCachedWord(String word, String context) async {
+    // 使用确定的 Hash ID 直接查找，实现 O(1) 精确匹配
+    final id = WordExplanation.generateId(word, context);
+    return await _isar.wordExplanations.get(id);
   }
 
   /// 获取单词的发音音频字节流
@@ -84,7 +86,7 @@ class WordRepository {
   /// UI 应并行启动 getWordExplanationStream 和 getPronunciationStream
   Future<WordLearningResult> getWordInfo(String word, String context) async {
     // 1. 优先检查缓存
-    final cached = await getCachedWord(word);
+    final cached = await getCachedWord(word, context);
     if (cached != null) {
       return WordLearningResult(
         audioUrl: cached.audioUrl, // 这里存的是本地文件路径
@@ -138,6 +140,8 @@ class WordRepository {
     // 当 AI 解释完成时，保存到 Isar 缓存
     if (fullContent.isNotEmpty) {
       final newCache = WordExplanation()
+        ..id =
+            WordExplanation.generateId(word, context) // 显式设置基于内容的 ID
         ..word = word
         ..explanation = fullContent
         ..lastUpdated = DateTime.now()
