@@ -118,6 +118,7 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
       // 2. 无缓存：同时启动音频和 AI
       if (mounted) {
         setState(() {
+          _pronunciationUrl = result.audioUrl; // 如果本地已有音频，直接设置
           _isLoading = false;
           _isStreaming = true;
         });
@@ -125,42 +126,47 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
 
       final audioCompleter = Completer<String?>();
 
-      // 并行启动音频获取和 AI 解释
-      Future.microtask(() async {
-        try {
-          final byteStream = repository.getPronunciationStream(widget.word);
-          _streamingSource = _StreamingAudioSource(byteStream);
+      // 如果已有音频，直接完成 Completer，不再下载
+      if (result.audioUrl != null) {
+        audioCompleter.complete(result.audioUrl);
+      } else {
+        // 只有在没有音频时，才并行启动音频获取
+        Future.microtask(() async {
+          try {
+            final byteStream = repository.getPronunciationStream(widget.word);
+            _streamingSource = _StreamingAudioSource(byteStream);
 
-          // 立即设置播放源，实现流式播放准备
-          await _audioPlayer.setAudioSource(_streamingSource!);
+            // 立即设置播放源，实现流式播放准备
+            await _audioPlayer.setAudioSource(_streamingSource!);
 
-          if (mounted) {
-            setState(() {
-              // 在流式加载中，暂时不显示播放按钮，直到有数据或播放器准备好
-            });
+            if (mounted) {
+              setState(() {
+                // 在流式加载中，暂时不显示播放按钮，直到有数据或播放器准备好
+              });
+            }
+
+            // 等待流结束并保存文件
+            while (!_streamingSource!.isFinished) {
+              await Future.delayed(const Duration(milliseconds: 100));
+            }
+
+            final filePath = await repository.saveAudioFile(
+              widget.word,
+              _streamingSource!.bytes,
+            );
+            audioCompleter.complete(filePath);
+
+            if (mounted) {
+              setState(() {
+                _pronunciationUrl = filePath;
+              });
+            }
+          } catch (e) {
+            debugPrint('Audio stream error: $e');
+            audioCompleter.complete(null);
           }
-
-          // 等待流结束并保存文件
-          while (!_streamingSource!.isFinished) {
-            await Future.delayed(const Duration(milliseconds: 100));
-          }
-
-          final filePath = await repository.saveAudioFile(
-            widget.word,
-            _streamingSource!.bytes,
-          );
-          audioCompleter.complete(filePath);
-
-          if (mounted) {
-            setState(() {
-              _pronunciationUrl = filePath;
-            });
-          }
-        } catch (e) {
-          debugPrint('Audio stream error: $e');
-          audioCompleter.complete(null);
-        }
-      });
+        });
+      }
 
       // 并行启动 AI 解释流
       await for (final chunk in repository.getWordExplanationStream(
