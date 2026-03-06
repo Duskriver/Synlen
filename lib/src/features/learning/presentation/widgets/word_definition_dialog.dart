@@ -62,11 +62,13 @@ class _StreamingAudioSource extends StreamAudioSource {
 class WordDefinitionDialog extends ConsumerStatefulWidget {
   final String word;
   final String context;
+  final ScrollController? scrollController;
 
   const WordDefinitionDialog({
     super.key,
     required this.word,
     required this.context,
+    this.scrollController,
   });
 
   @override
@@ -217,24 +219,58 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.word),
-      content: SizedBox(width: double.maxFinite, child: _buildContent()),
-      actions: [
-        if (_isStreaming)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      width: double.infinity,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 32,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('关闭'),
-        ),
-      ],
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.word,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (_isStreaming)
+                const Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Content
+          Flexible(
+            child: _buildContent(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -251,6 +287,7 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
     }
 
     return SingleChildScrollView(
+      controller: widget.scrollController,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
