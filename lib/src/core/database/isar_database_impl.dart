@@ -4,6 +4,8 @@ import 'package:lumina/src/core/storage/app_storage.dart';
 import '../../features/library/domain/shelf_book.dart';
 import '../../features/library/domain/book_manifest.dart';
 import '../../features/library/domain/shelf_group.dart';
+import '../../features/learning/domain/word_explanation.dart';
+import '../../features/learning/domain/sentence_analysis.dart';
 import 'isar_database.dart';
 
 /// Concrete implementation of IsarDatabase
@@ -22,6 +24,8 @@ class IsarDatabaseImpl implements IsarDatabase {
         ShelfBookSchema, // Lightweight UI entity
         ShelfGroupSchema, // Folder/group entity
         BookManifestSchema, // Heavy reader entity
+        WordExplanationSchema, // Word explanation cache
+        SentenceAnalysisSchema, // Sentence analysis cache
       ],
       directory: AppStorage.supportPath,
       inspector: kDebugMode, // Isar Inspector for debug builds only

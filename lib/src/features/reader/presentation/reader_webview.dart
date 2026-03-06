@@ -100,6 +100,8 @@ class ReaderWebViewCallbacks {
   final Function(String innerHtml, Rect rect) onFootnoteTap;
   final Function(String url) onLinkTap;
   final bool Function(String url) shouldHandleLinkTap;
+  final Function(String word, String context) onWordTap;
+  final Function(String sentence) onSentenceSelected;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -112,6 +114,8 @@ class ReaderWebViewCallbacks {
     required this.onFootnoteTap,
     required this.onLinkTap,
     required this.shouldHandleLinkTap,
+    required this.onWordTap,
+    required this.onSentenceSelected,
   });
 }
 
@@ -457,6 +461,27 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           widget.callbacks.onLinkTap(url);
         } else {
           widget.callbacks.onTap(x, y);
+        }
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onWordTap',
+      callback: (args) {
+        if (args.length >= 2) {
+          final word = args[0] as String;
+          final context = args[1] as String;
+          widget.callbacks.onWordTap(word, context);
+        }
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onSentenceSelected',
+      callback: (args) {
+        if (args.isNotEmpty) {
+          final sentence = args[0] as String;
+          widget.callbacks.onSentenceSelected(sentence);
         }
       },
     );

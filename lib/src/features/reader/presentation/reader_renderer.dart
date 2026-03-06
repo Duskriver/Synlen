@@ -110,6 +110,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final Function(String innerHtml, Rect rect) onFootnoteTap;
   final Function(String url) onLinkTap;
   final bool Function(String url) shouldHandleLinkTap;
+  final Function(String word, String context) onWordTap;
+  final Function(String sentence) onSentenceSelected;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
   final String statusBarLeftContent;
@@ -135,6 +137,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.onFootnoteTap,
     required this.onLinkTap,
     required this.shouldHandleLinkTap,
+    required this.onWordTap,
+    required this.onSentenceSelected,
     required this.shouldShowWebView,
     required this.initializeTheme,
     required this.statusBarLeftContent,
@@ -447,6 +451,8 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
           onFootnoteTap: widget.onFootnoteTap,
           onLinkTap: widget.onLinkTap,
           shouldHandleLinkTap: widget.shouldHandleLinkTap,
+          onWordTap: widget.onWordTap,
+          onSentenceSelected: widget.onSentenceSelected,
         ),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,

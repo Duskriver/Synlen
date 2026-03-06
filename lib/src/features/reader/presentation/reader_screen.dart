@@ -23,6 +23,9 @@ import '../data/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
+import '../../learning/presentation/widgets/word_definition_dialog.dart';
+import '../../learning/presentation/widgets/sentence_analysis_dialog.dart';
+
 part 'mixins/spine_navigation_mixin.dart';
 part 'mixins/page_navigation_mixin.dart';
 part 'mixins/progress_mixin.dart';
@@ -242,6 +245,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     scaffoldKey.currentState?.openDrawer();
   }
 
+  void handleWordTap(String word, String wordContext) {
+    debugPrint('Word Tapped: $word');
+    showDialog(
+      context: context,
+      builder: (context) =>
+          WordDefinitionDialog(word: word, context: wordContext),
+    );
+  }
+
+  void handleSentenceSelected(String sentence) {
+    debugPrint('Sentence Selected: $sentence');
+    showDialog(
+      context: context,
+      builder: (context) => SentenceAnalysisDialog(sentence: sentence),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
@@ -360,6 +380,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onFootnoteTap: handleFootnoteTap,
                       onLinkTap: handleLinkTap,
                       shouldHandleLinkTap: shouldHandleLinkTap,
+                      onWordTap: handleWordTap,
+                      onSentenceSelected: handleSentenceSelected,
                       shouldShowWebView: shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
                       statusBarLeftContent: activateTocTitle,
