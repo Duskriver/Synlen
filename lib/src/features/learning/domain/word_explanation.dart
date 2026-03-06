@@ -5,11 +5,11 @@ part 'word_explanation.g.dart';
 /// 单词解释缓存集合
 @collection
 class WordExplanation {
-  /// 自动递增主键
+  /// 基于 word + context 的哈希主键，确保同一单词在同一上下文只有一条记录
   Id id = Isar.autoIncrement;
 
   /// 单词文本
-  @Index(unique: true)
+  @Index()
   late String word;
 
   /// 解释内容 (Markdown 格式)
@@ -23,4 +23,25 @@ class WordExplanation {
 
   /// 发音音频 URL
   String? audioUrl;
+
+  /// 生成确定性 ID
+  static int generateId(String word, String? context) {
+    return _fastHash('$word|${context ?? ""}');
+  }
+}
+
+/// FNV-1a 64-bit hash algorithm
+int _fastHash(String string) {
+  var hash = 0xcbf29ce484222325;
+
+  var i = 0;
+  while (i < string.length) {
+    final codeUnit = string.codeUnitAt(i++);
+    hash ^= codeUnit >> 8;
+    hash *= 0x100000001b3;
+    hash ^= codeUnit & 0xFF;
+    hash *= 0x100000001b3;
+  }
+
+  return hash;
 }
