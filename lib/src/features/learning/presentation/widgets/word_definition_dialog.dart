@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
@@ -251,10 +251,29 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
         audioFilePathFuture: audioCompleter.future,
       );
 
+      // 优化：增加缓冲和节流，避免高频 setState 导致的 UI 卡顿
+      String buffer = '';
+      DateTime lastUpdateTime = DateTime.now();
+      const updateInterval = Duration(milliseconds: 100);
+
       await for (final chunk in stream) {
         if (!mounted) break;
+        buffer += chunk;
+
+        final now = DateTime.now();
+        if (now.difference(lastUpdateTime) >= updateInterval) {
+          setState(() {
+            _explanation += buffer;
+            buffer = '';
+          });
+          lastUpdateTime = now;
+        }
+      }
+
+      // 处理剩余的缓冲内容
+      if (buffer.isNotEmpty && mounted) {
         setState(() {
-          _explanation += chunk;
+          _explanation += buffer;
         });
       }
 
@@ -391,11 +410,13 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
               ),
             ),
           if (_explanation.isNotEmpty)
-            MarkdownBody(
-              data: _explanation,
-              selectable: true,
-              styleSheet: MarkdownStyleSheet(
-                p: Theme.of(context).textTheme.bodyMedium,
+            RepaintBoundary(
+              child: MarkdownBody(
+                data: _explanation,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             ),
           if (_isStreaming && _explanation.isEmpty)
