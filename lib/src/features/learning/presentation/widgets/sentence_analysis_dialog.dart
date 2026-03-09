@@ -61,6 +61,15 @@ class _StreamingAudioSource extends StreamAudioSource {
   }
 
   List<int> get bytes => _buffer;
+
+  /// 获取原始 PCM 字节（去除流式占位的 WAV 头部）
+  List<int> get pcmBytes {
+    if (format == AudioFormat.pcm && _buffer.length >= 44) {
+      return _buffer.sublist(44);
+    }
+    return _buffer;
+  }
+
   bool get isFinished => _isFinished;
 
   @override
@@ -215,9 +224,22 @@ class _SentenceAnalysisDialogState
                 return;
               }
 
+              // 准备保存的数据：如果是 PCM，重新生成带有正确长度的 WAV 头部
+              List<int> bytesToSave = _streamingSource!.bytes;
+              if (result.format == AudioFormat.pcm) {
+                final pcmBytes = _streamingSource!.pcmBytes;
+                final correctHeader = WavHeaderUtil.generateWavHeader(
+                  pcmBytes.length,
+                  24000,
+                  1,
+                  16,
+                );
+                bytesToSave = [...correctHeader, ...pcmBytes];
+              }
+
               final filePath = await repository.saveAudioFile(
                 widget.sentence,
-                _streamingSource!.bytes,
+                bytesToSave,
               );
               audioCompleter.complete(filePath);
 
