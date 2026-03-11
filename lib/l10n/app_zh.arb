@@ -827,6 +827,56 @@
     "description": "开源许可证副标题"
   },
 
+  "checkForUpdates": "检查更新",
+  "@checkForUpdates": {
+    "description": "检查更新标签"
+  },
+
+  "checkForUpdatesSubtitle": "检查是否有新版本可用",
+  "@checkForUpdatesSubtitle": {
+    "description": "检查更新副标题"
+  },
+
+  "checkingForUpdates": "正在检查更新...",
+  "@checkingForUpdates": {
+    "description": "正在检查更新提示"
+  },
+
+  "upToDate": "已是最新版本",
+  "@upToDate": {
+    "description": "最新版本提示"
+  },
+
+  "newVersionAvailable": "发现新版本",
+  "@newVersionAvailable": {
+    "description": "发现新版本提示"
+  },
+
+  "updateViaChinaCloud": "蓝奏云下载",
+  "@updateViaChinaCloud": {
+    "description": "蓝奏云下载按钮标签"
+  },
+
+  "updateViaGithub": "GitHub 下载",
+  "@updateViaGithub": {
+    "description": "GitHub 下载按钮标签"
+  },
+
+  "passwordCopied": "密码已复制",
+  "@passwordCopied": {
+    "description": "密码复制成功提示"
+  },
+
+  "updateCheckFailed": "检查更新失败",
+  "@updateCheckFailed": {
+    "description": "检查更新失败提示"
+  },
+
+  "languageNameInEnglish": "Chinese",
+  "@languageNameInEnglish": {
+    "description": "当前语言的英文名称，用于在更新日志中选择对应的语言部分"
+  },
+
   "tips": "使用提示",
   "@tips": {
     "description": "提示部分标题"
@@ -1168,7 +1218,7 @@
     "description": "是否跟随书内（epub://）链接跳转的开关标签"
   },
 
-  "readerPageAnimationSection": "翻页动画",
+  "readerPageAnimationSection": "翻页",
   "@readerPageAnimationSection": {
     "description": "阅读器样式面板翻页动画区块标题"
   },
@@ -1181,6 +1231,11 @@
   "readerPageAnimationSlide": "滑动翻页",
   "@readerPageAnimationSlide": {
     "description": "翻页动画选项：滑动过渡"
+  },
+
+  "readerVolumeKeyTurnsPage": "用音量键翻页",
+  "@readerVolumeKeyTurnsPage": {
+    "description": "开关标签：使用硬件音量键翻页"
   },
 
   "readerFontSection": "自定义字体",
@@ -1298,5 +1353,10 @@
   "open": "打开",
   "@open": {
     "description": "打开链接的按钮标签"
+  },
+
+  "chapterNotFoundInSpine": "未找到该章节",
+  "@chapterNotFoundInSpine": {
+    "description": "章节未找到错误提示，可能是因为该章节没有正确包含在 EPUB 的 spine 中"
   }
 }

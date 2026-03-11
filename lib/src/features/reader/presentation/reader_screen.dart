@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/data/services/volume_control_service.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../application/reader_settings_notifier.dart';
 import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
@@ -54,6 +56,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         _LinkHandlingMixin,
         _ImageViewerMixin,
         _FootnoteMixin {
+  @override
   late final EpubWebViewHandler webViewHandler;
 
   @override
@@ -77,8 +80,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   // Spine navigation state (used by _SpineNavigationMixin)
   @override
   int currentSpineItemIndex = 0;
-  @override
-  double? initialProgressToRestore;
 
   // Pagination state (used by _PageNavigationMixin)
   @override
@@ -121,6 +122,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
+  StreamSubscription<String>? volumeSubscription;
+  bool tocDrawerOpen = false;
+  bool styleDrawerOpen = false;
+  AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
+
   @override
   void initState() {
     super.initState();
@@ -143,23 +149,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       currentTheme = Theme.of(context);
       if (router != null && router.animation != null) {
         routeAnimation = router.animation!;
-        routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
+        routeAnimation?.addStatusListener(handleRouteAnimationStatus);
       } else {
         shouldShowWebView = true;
       }
     });
     hideBottomNavigationBar();
+    setupVolumeControl();
+    WakelockPlus.enable();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
     routeAnimation = null;
     themeUpdateDebouncer?.cancel();
     progressDebouncer?.cancel();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
+    volumeSubscription?.cancel();
+    VolumeControlService.disableInterception();
+    WakelockPlus.disable();
     super.dispose();
   }
 
@@ -169,6 +180,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
       saveProgress();
+    }
+
+    lastLifecycleState = state;
+    setupVolumeControl();
+  }
+
+  void setupVolumeControl() {
+    final resume =
+        ref.read(readerSettingsNotifierProvider).volumeKeyTurnsPage &&
+        !tocDrawerOpen &&
+        !styleDrawerOpen &&
+        lastLifecycleState == AppLifecycleState.resumed;
+
+    if (resume) {
+      VolumeControlService.enableInterception();
+      volumeSubscription ??= VolumeControlService.volumeKeyEvents.listen((
+        event,
+      ) {
+        final isVolumeTurnEnabled = ref
+            .read(readerSettingsNotifierProvider)
+            .volumeKeyTurnsPage;
+        if (isVolumeTurnEnabled) {
+          if (event == 'up') {
+            rendererController.performPreviousPageTurn();
+          } else if (event == 'down') {
+            rendererController.performNextPageTurn();
+          }
+        }
+      });
+    } else {
+      VolumeControlService.disableInterception();
     }
   }
 
@@ -194,12 +236,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
-  void _handleRouteAnimationStatus(AnimationStatus status) {
+  void handleRouteAnimationStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
       setState(() {
         shouldShowWebView = true;
       });
-      routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+      routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
       routeAnimation = null;
     }
   }
@@ -219,7 +261,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
       setState(() {
         currentSpineItemIndex = bookSession.initialChapterIndex;
-        initialProgressToRestore = bookSession.initialScrollPosition;
       });
       updateProgressDebounced();
     } catch (e) {
@@ -343,6 +384,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     });
 
+    ref.listen(
+      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
+      (previous, next) {
+        if (previous != next) {
+          setupVolumeControl();
+        }
+      },
+    );
+
     final activeItems = resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
@@ -370,6 +420,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 onCoverTap: navigateToFirstTocItemFirstPage,
                 themeData: themeData,
               ),
+              onDrawerChanged: (isOpened) {
+                tocDrawerOpen = isOpened;
+                setupVolumeControl();
+              },
               body: Container(
                 color: epubTheme.surfaceColor,
                 child: Stack(
@@ -385,7 +439,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
                       onInitialized: () async {
-                        await loadCarousel();
+                        final ratio = bookSession.initialScrollPosition;
+                        await loadCarousel(restoreScrollRatio: ratio);
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {
@@ -393,13 +448,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           if (currentPageInChapter >= totalPagesInChapter) {
                             currentPageInChapter = totalPagesInChapter - 1;
                           }
-                          updateProgressDebounced();
                         });
-                        if (initialProgressToRestore != null) {
-                          final ratio = initialProgressToRestore ?? 0.0;
-                          initialProgressToRestore = null;
-                          await rendererController.restoreScrollPosition(ratio);
-                        }
+                        updateProgressDebounced();
                       },
                       onPageChanged: (pageIndex) {
                         setState(() {
@@ -407,13 +457,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         });
                         updateProgressDebounced();
                         saveProgressDebounced();
-                      },
-                      onRendererInitialized: () async {
-                        await Future.delayed(const Duration(milliseconds: 30));
-                        setState(() {
-                          isWebViewLoading = false;
-                        });
-                        saveProgress();
                       },
                       onScrollAnchors: handleScrollAnchors,
                       onImageLongPress: handleImageLongPress,
@@ -451,6 +494,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onLastPage: () => goToPage(totalPagesInChapter - 1),
                       onPreviousChapter: previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
+                      onToggleStyleDrawer: (show) {
+                        tocDrawerOpen = show;
+                        setupVolumeControl();
+                      },
                     ),
                   ],
                 ),

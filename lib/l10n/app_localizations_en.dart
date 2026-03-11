@@ -484,6 +484,36 @@ class AppLocalizationsEn extends AppLocalizations {
       'View open source libraries used in the app and their licenses';
 
   @override
+  String get checkForUpdates => 'Check for Updates';
+
+  @override
+  String get checkForUpdatesSubtitle => 'Check if a new version is available';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates...';
+
+  @override
+  String get upToDate => 'Already up to date';
+
+  @override
+  String get newVersionAvailable => 'New version available';
+
+  @override
+  String get updateViaChinaCloud => 'Download via Lanzou';
+
+  @override
+  String get updateViaGithub => 'Download via GitHub';
+
+  @override
+  String get passwordCopied => 'Password copied';
+
+  @override
+  String get updateCheckFailed => 'Failed to check for updates';
+
+  @override
+  String get languageNameInEnglish => 'English';
+
+  @override
   String get tips => 'Tips';
 
   @override
@@ -688,13 +718,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerHandleIntraLink => 'Follow in-book links';
 
   @override
-  String get readerPageAnimationSection => 'Page Animation';
+  String get readerPageAnimationSection => 'Pagination';
 
   @override
   String get readerPageAnimationNone => 'None';
 
   @override
   String get readerPageAnimationSlide => 'Slide';
+
+  @override
+  String get readerVolumeKeyTurnsPage => 'Volume Keys Turn Pages';
 
   @override
   String get readerFontSection => 'Custom Font';
@@ -764,4 +797,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get open => 'Open';
+
+  @override
+  String get chapterNotFoundInSpine => 'Chapter not found in book spine';
 }

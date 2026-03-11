@@ -13,6 +13,7 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - "rust_builder/cargokit/build_tool/**"
 
 linter:
   # The lint rules applied to this project can be customized in the

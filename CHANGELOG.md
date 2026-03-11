@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * **AI 单词解释优化**：优化了 AI 单词解释的 Prompt，增加了音标、词性、变形及上下文作用分析。
 * **AI 句子分析优化**：优化了 AI 句子分析的 Prompt，优先显示整句翻译并精简了语法分析内容。
+## [Unreleased]
+
+- 优化性能和用户体验
+- 修复设置界面滑动到屏幕外状态丢失的问题
+- Android 端的音量键翻页功能
+- 修复字体导入相关 BUG
+- 阅读界面常亮屏幕
+- 添加检查更新功能
+- 添加对脚注中图片的支持
 
 ## [v0.2.2] - 2026-03-04
 

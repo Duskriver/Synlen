@@ -944,6 +944,66 @@ abstract class AppLocalizations {
   /// **'View open source libraries used in the app and their licenses'**
   String get openSourceLicensesSubtitle;
 
+  /// Check for updates label
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get checkForUpdates;
+
+  /// Check for updates subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Check if a new version is available'**
+  String get checkForUpdatesSubtitle;
+
+  /// Checking for updates progress message
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get checkingForUpdates;
+
+  /// Up to date message
+  ///
+  /// In en, this message translates to:
+  /// **'Already up to date'**
+  String get upToDate;
+
+  /// New version available message
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get newVersionAvailable;
+
+  /// Update via Lanzou cloud button label
+  ///
+  /// In en, this message translates to:
+  /// **'Download via Lanzou'**
+  String get updateViaChinaCloud;
+
+  /// Update via GitHub button label
+  ///
+  /// In en, this message translates to:
+  /// **'Download via GitHub'**
+  String get updateViaGithub;
+
+  /// Password copied toast message
+  ///
+  /// In en, this message translates to:
+  /// **'Password copied'**
+  String get passwordCopied;
+
+  /// Update check failed message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check for updates'**
+  String get updateCheckFailed;
+
+  /// The name of the current language in English, used to select the matching section in update logs
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageNameInEnglish;
+
   /// Tips section title
   ///
   /// In en, this message translates to:
@@ -1295,7 +1355,7 @@ abstract class AppLocalizations {
   /// Reader style sheet section title for page-turning animation
   ///
   /// In en, this message translates to:
-  /// **'Page Animation'**
+  /// **'Pagination'**
   String get readerPageAnimationSection;
 
   /// Page animation option: no animation
@@ -1309,6 +1369,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Slide'**
   String get readerPageAnimationSlide;
+
+  /// Toggle label to use hardware volume keys for page turning
+  ///
+  /// In en, this message translates to:
+  /// **'Volume Keys Turn Pages'**
+  String get readerVolumeKeyTurnsPage;
 
   /// Reader style sheet subsection label for custom font settings
   ///
@@ -1423,6 +1489,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get open;
+
+  /// Error message shown when trying to navigate to a chapter that doesn't exist in the book spine
+  ///
+  /// In en, this message translates to:
+  /// **'Chapter not found in book spine'**
+  String get chapterNotFoundInSpine;
 }
 
 class _AppLocalizationsDelegate

@@ -7,7 +7,7 @@ part of 'reader_settings_notifier.dart';
 // **************************************************************************
 
 String _$readerSettingsNotifierHash() =>
-    r'18fb91e06620987f49402a87512da4fe2b636536';
+    r'e46f76f33d5987ed6b14dcefba6d3375fda06e46';
 
 /// See also [ReaderSettingsNotifier].
 @ProviderFor(ReaderSettingsNotifier)

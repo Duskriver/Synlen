@@ -476,6 +476,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openSourceLicensesSubtitle => '显示应用中使用的开源库及其许可证';
 
   @override
+  String get checkForUpdates => '检查更新';
+
+  @override
+  String get checkForUpdatesSubtitle => '检查是否有新版本可用';
+
+  @override
+  String get checkingForUpdates => '正在检查更新...';
+
+  @override
+  String get upToDate => '已是最新版本';
+
+  @override
+  String get newVersionAvailable => '发现新版本';
+
+  @override
+  String get updateViaChinaCloud => '蓝奏云下载';
+
+  @override
+  String get updateViaGithub => 'GitHub 下载';
+
+  @override
+  String get passwordCopied => '密码已复制';
+
+  @override
+  String get updateCheckFailed => '检查更新失败';
+
+  @override
+  String get languageNameInEnglish => 'Chinese';
+
+  @override
   String get tips => '使用提示';
 
   @override
@@ -669,13 +699,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerHandleIntraLink => '跟随书内链接';
 
   @override
-  String get readerPageAnimationSection => '翻页动画';
+  String get readerPageAnimationSection => '翻页';
 
   @override
   String get readerPageAnimationNone => '无动画';
 
   @override
   String get readerPageAnimationSlide => '滑动翻页';
+
+  @override
+  String get readerVolumeKeyTurnsPage => '用音量键翻页';
 
   @override
   String get readerFontSection => '自定义字体';
@@ -745,4 +778,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get open => '打开';
+
+  @override
+  String get chapterNotFoundInSpine => '未找到该章节';
 }
