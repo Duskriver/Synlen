@@ -1,0 +1,7 @@
+# Copy this file to `key.properties` and replace all placeholder values.
+# Do not commit the real `key.properties` or your keystore file.
+
+storeFile=C:\\path\\to\\cijing-release.jks
+storePassword=replace_with_store_password
+keyAlias=cijing
+keyPassword=replace_with_key_password

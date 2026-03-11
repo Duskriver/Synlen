@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 
 class VolumeControlService {
   static const MethodChannel _methodChannel = MethodChannel(
-    'lumina/volume_control',
+    'cijing/volume_control',
   );
   static const EventChannel _eventChannel = EventChannel(
-    'lumina/volume_events',
+    'cijing/volume_events',
   );
 
   static Future<void> enableInterception() async {

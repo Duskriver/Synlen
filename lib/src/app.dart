@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:lumina/src/core/config/app_info.dart';
 import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/global_share_handler.dart';
 import '../l10n/app_localizations.dart';
@@ -25,7 +26,7 @@ class LuminaReaderApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: 'Lumina',
+      title: AppInfo.appName,
       debugShowCheckedModeBanner: false,
       scrollBehavior: _NoOverscrollBehavior(),
 

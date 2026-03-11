@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appName => 'Lumina';
+  String get appName => '词镜';
 
   @override
   String get settings => '设置';
@@ -324,7 +324,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteFolderPath => '远程文件夹路径';
 
   @override
-  String get remoteFolderHint => 'LuminaReader/';
+  String get remoteFolderHint => 'CiJingReader/';
 
   @override
   String get folderPathRequired => '文件夹路径为必填项';
@@ -627,7 +627,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openStorageLocation => '打开存储位置';
 
   @override
-  String get openStorageLocationSubtitle => '在文件管理器中打开 Lumina 的存储目录';
+  String get openStorageLocationSubtitle => '在文件管理器中打开词镜的存储目录';
 
   @override
   String openStorageLocationFailed(String error) {
@@ -636,7 +636,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openStorageLocationIOSMessage =>
-      '请在文件应用中打开“我的 iPhone/iPad”下的“Lumina”文件夹来访问存储位置';
+      '请在文件应用中打开“我的 iPhone/iPad”下的“词镜”文件夹来访问存储位置';
 
   @override
   String get unsavedChangesTitle => '未保存的修改';

@@ -43,7 +43,7 @@ class BackupPaths {
 /// Android: Uses native MethodChannel with SAF (Storage Access Framework)
 /// iOS: Uses UIDocumentPickerViewController via native MethodChannel
 class UnifiedImportService {
-  static const String _channelName = 'com.lumina.ereader/native_picker';
+  static const String _channelName = 'com.tanglei.cijing/native_picker';
   static const MethodChannel _channel = MethodChannel(_channelName);
 
   final _safStream = SafStream();

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 void main() async {
-  print('🚀 start build lumina web assets...');
+  print('🚀 start build cijing web assets...');
 
   const jsProjectDir = 'web_assets/controller.js';
 

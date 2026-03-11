@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'Lumina';
+  String get appName => '词镜';
 
   @override
   String get settings => 'Settings';
@@ -324,7 +324,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteFolderPath => 'Remote Folder Path';
 
   @override
-  String get remoteFolderHint => 'LuminaReader/';
+  String get remoteFolderHint => 'CiJingReader/';
 
   @override
   String get folderPathRequired => 'Folder path is required';
@@ -645,7 +645,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openStorageLocationSubtitle =>
-      'Open the folder where Lumina stores its data (cache, books, etc.)';
+      'Open the folder where 词镜 stores its data (cache, books, etc.)';
 
   @override
   String openStorageLocationFailed(String error) {
@@ -654,7 +654,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openStorageLocationIOSMessage =>
-      'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.';
+      'Please open the \"词镜\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.';
 
   @override
   String get unsavedChangesTitle => 'Unsaved Changes';

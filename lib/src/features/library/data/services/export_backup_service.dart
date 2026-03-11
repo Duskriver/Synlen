@@ -35,7 +35,7 @@ final class ExportFailure extends ExportResult {
 ///
 /// Platform strategy:
 ///   Android — builds the folder directly in the public Downloads directory
-///             (/storage/emulated/0/Download/Lumina/) so the user can find it
+///             (/storage/emulated/0/Download/CiJing/) so the user can find it
 ///             without any further action. No Share Sheet required.
 ///   iOS     — builds the folder inside the OS-managed temporary directory,
 ///             then hands it to the native Share Sheet via share_plus.
@@ -72,7 +72,7 @@ class ExportBackupService {
     Rect? sharePositionOrigin,
   }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final backupName = 'lumina-backup-$timestamp';
+    final backupName = 'cijing-backup-$timestamp';
     Directory? targetDir;
 
     try {
@@ -83,7 +83,7 @@ class ExportBackupService {
         // Android: write directly to the public Downloads folder so the file
         // manager and other apps can access it without extra permissions.
         targetDir = Directory(
-          '/storage/emulated/0/Download/Lumina/$backupName',
+          '/storage/emulated/0/Download/CiJing/$backupName',
         );
       } else {
         // iOS: use the system temporary directory.  Files here survive long
@@ -187,7 +187,7 @@ class ExportBackupService {
         // iOS: share the entire folder via the native Share Sheet.
         final shareParams = ShareParams(
           files: [XFile(targetDir.path)],
-          title: 'Lumina Backup',
+          title: '词镜 Backup',
         );
         final result = await SharePlus.instance.share(shareParams);
         debugPrint('[ExportBackup] iOS share result: $result');

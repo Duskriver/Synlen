@@ -4,6 +4,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/core/config/app_info.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
@@ -109,21 +110,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     SettingsInfoTile(
                       icon: Icons.code_outlined,
                       title: l10n.github,
-                      subtitle: 'github.com/MilkFeng/lumina.git',
-                      onTap: () =>
-                          _launchUrl('https://github.com/MilkFeng/lumina.git'),
+                      subtitle: AppInfo.projectRepositoryUrl,
+                      onTap: () => _launchUrl(AppInfo.projectRepositoryUrl),
                     ),
                     SettingsInfoTile(
                       icon: Icons.person_outline_outlined,
                       title: l10n.author,
-                      subtitle: 'Milk Feng',
+                      subtitle: AppInfo.appAuthor,
                     ),
                     SettingsInfoTile(
                       icon: Icons.attribution_outlined,
                       title: l10n.openSourceLicenses,
                       onTap: () => showLicensePage(
                         context: context,
+                        applicationName: AppInfo.appName,
                         applicationVersion: _version,
+                        applicationLegalese: AppInfo.applicationLegalese,
                         useRootNavigator: true,
                       ),
                       subtitle: l10n.openSourceLicensesSubtitle,
