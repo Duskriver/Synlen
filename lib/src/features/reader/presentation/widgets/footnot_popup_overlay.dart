@@ -1,9 +1,12 @@
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:lumina/src/features/reader/data/epub_webview_handler.dart';
 import 'package:lumina/src/features/reader/data/reader_scripts.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
@@ -12,6 +15,10 @@ class FootnotePopupOverlay extends StatefulWidget {
   final String rawHtml;
   final VoidCallback onDismiss;
   final EpubTheme epubTheme;
+  final Uri? baseUrl;
+  final String epubPath;
+  final String fileHash;
+  final EpubWebViewHandler webViewHandler;
 
   const FootnotePopupOverlay({
     super.key,
@@ -19,6 +26,10 @@ class FootnotePopupOverlay extends StatefulWidget {
     required this.rawHtml,
     required this.onDismiss,
     required this.epubTheme,
+    this.baseUrl,
+    required this.epubPath,
+    required this.fileHash,
+    required this.webViewHandler,
   });
 
   @override
@@ -77,6 +88,28 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<Uint8List> _fetchEpubImageBytes(String src) async {
+    final uri = widget.baseUrl?.resolve(src);
+    final webUri = WebUri(uri?.toString() ?? src);
+    final response = await widget.webViewHandler.handleRequest(
+      epubPath: widget.epubPath,
+      fileHash: widget.fileHash,
+      requestUrl: webUri,
+    );
+    if (response != null && response.data != null) {
+      final bytes = response.data!;
+
+      final image = await decodeImageFromList(bytes);
+      image.dispose();
+
+      if (mounted) {
+        await precacheImage(MemoryImage(bytes), context);
+      }
+      return bytes;
+    }
+    return Uint8List(0);
   }
 
   @override
@@ -187,6 +220,7 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         child: HtmlWidget(
                           widget.rawHtml,
+                          baseUrl: widget.baseUrl,
                           textStyle: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: widget.epubTheme.colorScheme.onSurface,
@@ -206,16 +240,60 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                                   ),
                             );
                           },
+                          customWidgetBuilder: (element) {
+                            if (element.localName == 'img') {
+                              final src = element.attributes['src'];
+                              if (src != null) {
+                                return FutureBuilder<Uint8List>(
+                                  future: _fetchEpubImageBytes(src),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return SizedBox(
+                                        width: 50,
+                                        height: 50,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: widget
+                                                .epubTheme
+                                                .colorScheme
+                                                .primary,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    if (snapshot.hasData &&
+                                        snapshot.data!.isNotEmpty) {
+                                      return GestureDetector(
+                                        onTap: () {
+                                          // TODO: Implement image tap to view full size
+                                        },
+                                        child: Image.memory(
+                                          snapshot.data!,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      );
+                                    }
+                                    return Icon(
+                                      Icons.broken_image,
+                                      color: widget
+                                          .epubTheme
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    );
+                                  },
+                                );
+                              }
+                            }
+                            return null;
+                          },
                           customStylesBuilder: (element) {
                             Map<String, String> styles = {};
                             final fontSize =
-                                (widget
-                                        .epubTheme
-                                        .themeData
-                                        .textTheme
-                                        .labelMedium
-                                        ?.fontSize ??
-                                    14.0) *
+                                _getDefaultFontSizeWithoutScale(
+                                  element.localName ?? '',
+                                ) *
                                 widget.epubTheme.zoom;
                             styles['font-size'] = '${fontSize}px';
                             if (widget.epubTheme.shouldOverrideTextColor) {
@@ -250,5 +328,51 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
         ),
       ],
     );
+  }
+
+  double _getDefaultFontSizeWithoutScale(String elementName) {
+    final fontSize =
+        widget.epubTheme.themeData.textTheme.labelMedium?.fontSize ?? 14.0;
+    switch (elementName.toLowerCase()) {
+      case 'h1':
+        return fontSize + 6.0;
+      case 'h2':
+        return fontSize + 5.0;
+      case 'h3':
+        return fontSize + 4.0;
+      case 'h4':
+        return fontSize + 3.0;
+      case 'h5':
+        return fontSize + 2.0;
+      case 'h6':
+        return fontSize + 1.0;
+
+      case 'big':
+        return fontSize + 2.0;
+
+      case 'p':
+      case 'div':
+      case 'span':
+      case 'a':
+      case 'li':
+      case 'blockquote':
+      case 'pre':
+      case 'code':
+      case 'kbd':
+        return fontSize;
+
+      case 'small':
+      case 'sub':
+      case 'sup':
+      case 'figcaption':
+      case 'reference':
+        return fontSize > 3.0 ? fontSize - 2.0 : fontSize * 0.75;
+
+      case 'rt':
+        return fontSize * 0.5;
+
+      default:
+        return fontSize;
+    }
   }
 }

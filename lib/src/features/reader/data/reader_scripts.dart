@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/features/reader/data/epub_webview_handler.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
-import 'package:lumina/web_src/reader_assets.dart';
+import 'package:lumina/src/web/web_assets.dart';
 
 String colorToHex(Color color) {
   final argb = color.toARGB32();
@@ -94,7 +94,6 @@ String generateSkeletonHtml(
     'theme': {
       'zoom': theme.zoom,
       'paginationCss': kPaginationCss,
-      'variableCss': variableStyle,
       'shouldOverrideTextColor': theme.shouldOverrideTextColor,
       'primaryColor': colorToHex(primaryColor),
       'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
@@ -127,7 +126,7 @@ String generateSkeletonHtml(
   <script id="skeleton-variable-script">
     const initialConfig = $initialConfigJson;
     window.addEventListener('DOMContentLoaded', () => {
-      window.reader.init(initialConfig);
+      window.api.init(initialConfig);
     });
   </script>
 </head>
