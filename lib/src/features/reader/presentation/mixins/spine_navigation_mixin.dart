@@ -21,15 +21,15 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
+  void refreshActiveTocState();
 
   List<String> getAnchorsForSpine(String spinePath) {
     return bookSession.getAnchorsForSpine(spinePath);
   }
 
   void handleScrollAnchors(List<String> anchorIds) {
-    setState(() {
-      bookSession.updateActiveAnchors(anchorIds);
-    });
+    bookSession.updateActiveAnchors(anchorIds);
+    refreshActiveTocState();
   }
 
   String getSpineItemUrl(int index, [String anchor = 'top']) {
@@ -52,6 +52,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
         overrideSpineIndex >= 0 &&
         overrideSpineIndex < bookSession.spine.length) {
       currentSpineItemIndex = overrideSpineIndex;
+      refreshActiveTocState();
     }
     final currIndex = currentSpineItemIndex;
     final prevIndex = currIndex > 0 ? currIndex - 1 : null;
@@ -128,10 +129,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   Future<void> navigateToSpineItem(int index, [String anchor = 'top']) async {
     if (index < 0 || index >= bookSession.spine.length) return;
 
-    setState(() {
-      currentSpineItemIndex = index;
-      currentPageInChapter = 0;
-    });
+    currentSpineItemIndex = index;
+    currentPageInChapter = 0;
+    refreshActiveTocState();
     updateProgressDebounced();
 
     await loadCarousel(anchor: anchor);
@@ -149,9 +149,8 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     await rendererController.jumpToPreviousChapterLastPage();
 
-    setState(() {
-      currentSpineItemIndex--;
-    });
+    currentSpineItemIndex--;
+    refreshActiveTocState();
 
     preloadPreviousOf(currentSpineItemIndex);
     saveProgress();
@@ -168,10 +167,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     await rendererController.jumpToPreviousChapterFirstPage();
 
-    setState(() {
-      currentSpineItemIndex--;
-      currentPageInChapter = 0;
-    });
+    currentSpineItemIndex--;
+    currentPageInChapter = 0;
+    refreshActiveTocState();
     updateProgressDebounced();
 
     preloadPreviousOf(currentSpineItemIndex);
@@ -189,10 +187,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     await rendererController.jumpToNextChapter();
 
-    setState(() {
-      currentSpineItemIndex++;
-      currentPageInChapter = 0;
-    });
+    currentSpineItemIndex++;
+    currentPageInChapter = 0;
+    refreshActiveTocState();
     updateProgressDebounced();
 
     preloadNextOf(currentSpineItemIndex);

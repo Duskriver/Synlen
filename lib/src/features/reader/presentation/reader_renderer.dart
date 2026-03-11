@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
@@ -121,8 +122,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final Function(String sentence) onSentenceSelected;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
-  final String statusBarLeftContent;
-  final String statusBarRightContent;
+  final ValueListenable<String> statusBarLeftContent;
+  final ValueListenable<String> statusBarRightContent;
 
   const ReaderRenderer({
     super.key,
@@ -163,6 +164,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     with TickerProviderStateMixin {
   final GlobalKey _webViewKey = GlobalKey();
   final ReaderWebViewController _webViewController = ReaderWebViewController();
+  ProviderSubscription<ReaderPageAnimation>? _pageAnimationSubscription;
 
   late final AndroidPageTurnSession _androidPageTurnSession;
   late final IOSPageTurnSession _iosPageTurnSession;
@@ -208,11 +210,24 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     _needPageTurnAnimation =
         ref.read(readerSettingsNotifierProvider).pageAnimation !=
         ReaderPageAnimation.none;
+    _pageAnimationSubscription = ref.listenManual(
+      readerSettingsNotifierProvider.select((s) => s.pageAnimation),
+      (previous, next) {
+        if (previous == next || !mounted) {
+          return;
+        }
+
+        setState(() {
+          _needPageTurnAnimation = next != ReaderPageAnimation.none;
+        });
+      },
+    );
   }
 
   @override
   void dispose() {
     widget.controller._attachState(null);
+    _pageAnimationSubscription?.close();
     _androidPageTurnSession.dispose();
     super.dispose();
   }
@@ -314,15 +329,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(readerSettingsNotifierProvider, (previous, next) {
-      if (previous?.pageAnimation != next.pageAnimation) {
-        setState(() {
-          _needPageTurnAnimation =
-              next.pageAnimation != ReaderPageAnimation.none;
-        });
-      }
-    });
-
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -388,15 +394,25 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: buildBadge(
-                  widget.statusBarLeftContent,
-                  false,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              ValueListenableBuilder<String>(
+                valueListenable: widget.statusBarLeftContent,
+                builder: (context, content, child) {
+                  return Flexible(
+                    child: buildBadge(
+                      content,
+                      false,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 8),
-              buildBadge(widget.statusBarRightContent, true),
+              ValueListenableBuilder<String>(
+                valueListenable: widget.statusBarRightContent,
+                builder: (context, content, child) {
+                  return buildBadge(content, true);
+                },
+              ),
             ],
           ),
         ),

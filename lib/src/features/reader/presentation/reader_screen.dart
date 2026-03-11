@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,17 +80,55 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   // Spine navigation state (used by _SpineNavigationMixin)
   @override
-  int currentSpineItemIndex = 0;
+  int get currentSpineItemIndex => _currentSpineItemIndex;
+  int _currentSpineItemIndex = 0;
+  final ValueNotifier<int> _currentSpineItemNotifier = ValueNotifier(0);
+
+  @override
+  set currentSpineItemIndex(int value) {
+    if (_currentSpineItemIndex == value) return;
+    _currentSpineItemIndex = value;
+    _currentSpineItemNotifier.value = value;
+  }
 
   // Pagination state (used by _PageNavigationMixin)
   @override
-  int currentPageInChapter = 0;
+  int get currentPageInChapter => _currentPageInChapter;
+  int _currentPageInChapter = 0;
+  final ValueNotifier<int> _currentPageNotifier = ValueNotifier(0);
+
   @override
-  int totalPagesInChapter = 1;
+  set currentPageInChapter(int value) {
+    if (_currentPageInChapter == value) return;
+    _currentPageInChapter = value;
+    _currentPageNotifier.value = value;
+  }
+
+  @override
+  int get totalPagesInChapter => _totalPagesInChapter;
+  int _totalPagesInChapter = 1;
+  final ValueNotifier<int> _totalPagesNotifier = ValueNotifier(1);
+
+  @override
+  set totalPagesInChapter(int value) {
+    if (_totalPagesInChapter == value) return;
+    _totalPagesInChapter = value;
+    _totalPagesNotifier.value = value;
+  }
 
   // Progress state (used by _ProgressMixin)
   @override
-  String displayProgress = '0.00%';
+  String get displayProgress => _displayProgress;
+  String _displayProgress = '0.00%';
+  final ValueNotifier<String> _displayProgressNotifier = ValueNotifier('0.00%');
+
+  @override
+  set displayProgress(String value) {
+    if (_displayProgress == value) return;
+    _displayProgress = value;
+    _displayProgressNotifier.value = value;
+  }
+
   @override
   Timer? progressDebouncer;
   @override
@@ -123,9 +162,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   StreamSubscription<String>? volumeSubscription;
+  ProviderSubscription<ReaderSettings>? _readerSettingsSubscription;
+  ProviderSubscription<bool>? _volumeKeyTurnsPageSubscription;
   bool tocDrawerOpen = false;
   bool styleDrawerOpen = false;
   AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
+  final ValueNotifier<Set<TocItem>> _activeTocItemsNotifier = ValueNotifier(
+    <TocItem>{},
+  );
+  final ValueNotifier<String> _activeTocTitleNotifier = ValueNotifier('');
 
   @override
   void initState() {
@@ -157,6 +202,31 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     hideBottomNavigationBar();
     setupVolumeControl();
     WakelockPlus.enable();
+    _readerSettingsSubscription = ref.listenManual(
+      readerSettingsNotifierProvider,
+      (previous, next) {
+        if (previous == null || previous == next) {
+          return;
+        }
+
+        if (previous.fontFileName != next.fontFileName ||
+            previous.overrideFontFamily != next.overrideFontFamily) {
+          updateWebViewTheme();
+        } else if (previous.zoom != next.zoom) {
+          updateWebViewThemeWithDebounce();
+        } else {
+          updateWebViewTheme();
+        }
+      },
+    );
+    _volumeKeyTurnsPageSubscription = ref.listenManual(
+      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
+      (previous, next) {
+        if (previous != next) {
+          setupVolumeControl();
+        }
+      },
+    );
   }
 
   @override
@@ -166,6 +236,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     routeAnimation = null;
     themeUpdateDebouncer?.cancel();
     progressDebouncer?.cancel();
+    _readerSettingsSubscription?.close();
+    _volumeKeyTurnsPageSubscription?.close();
+    _currentSpineItemNotifier.dispose();
+    _currentPageNotifier.dispose();
+    _totalPagesNotifier.dispose();
+    _displayProgressNotifier.dispose();
+    _activeTocItemsNotifier.dispose();
+    _activeTocTitleNotifier.dispose();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
     volumeSubscription?.cancel();
@@ -214,6 +292,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
+  @override
+  void refreshActiveTocState() {
+    final activeItems = resolveActiveItems();
+    if (!setEquals(_activeTocItemsNotifier.value, activeItems)) {
+      _activeTocItemsNotifier.value = activeItems;
+    }
+
+    final title = activeItems.isNotEmpty
+        ? activeItems.last.label
+        : bookSession.book?.title ?? '';
+    if (_activeTocTitleNotifier.value != title) {
+      _activeTocTitleNotifier.value = title;
+    }
+  }
+
   void hideBottomNavigationBar() {
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
@@ -259,9 +352,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         return;
       }
 
-      setState(() {
-        currentSpineItemIndex = bookSession.initialChapterIndex;
-      });
+      currentSpineItemIndex = bookSession.initialChapterIndex;
+      refreshActiveTocState();
+      if (mounted) {
+        setState(() {});
+      }
       updateProgressDebounced();
     } catch (e) {
       if (mounted) {
@@ -302,8 +397,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           return Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: WordDefinitionDialog(
               word: word,
@@ -330,8 +426,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           return Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: SentenceAnalysisDialog(
               sentence: sentence,
@@ -370,33 +467,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             systemNavigationBarIconBrightness: Brightness.dark,
           );
 
-    ref.listen(readerSettingsNotifierProvider, (previous, next) {
-      if (previous != null && previous != next) {
-        // If zoom changed, use debounce to avoid excessive WebView reloads while dragging the slider
-        if (previous.fontFileName != next.fontFileName ||
-            previous.overrideFontFamily != next.overrideFontFamily) {
-          updateWebViewTheme();
-        } else if (previous.zoom != next.zoom) {
-          updateWebViewThemeWithDebounce();
-        } else {
-          updateWebViewTheme();
-        }
-      }
-    });
-
-    ref.listen(
-      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
-      (previous, next) {
-        if (previous != next) {
-          setupVolumeControl();
-        }
-      },
-    );
-
-    final activeItems = resolveActiveItems();
-    final activateTocTitle = activeItems.isNotEmpty
-        ? activeItems.last.label
-        : bookSession.book!.title;
     return PopScope(
       canPop: footnoteOverlayEntry == null,
       onPopInvokedWithResult: (didPop, result) {
@@ -412,13 +482,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             Scaffold(
               key: scaffoldKey,
               backgroundColor: epubTheme.colorScheme.surfaceContainer,
-              drawer: TocDrawer(
-                book: bookSession.book!,
-                toc: bookSession.toc,
-                activeTocItems: activeItems,
-                onTocItemSelected: navigateToTocItem,
-                onCoverTap: navigateToFirstTocItemFirstPage,
-                themeData: themeData,
+              drawer: ValueListenableBuilder<Set<TocItem>>(
+                valueListenable: _activeTocItemsNotifier,
+                builder: (context, activeItems, child) {
+                  return TocDrawer(
+                    book: bookSession.book!,
+                    toc: bookSession.toc,
+                    activeTocItems: activeItems,
+                    onTocItemSelected: navigateToTocItem,
+                    onCoverTap: navigateToFirstTocItemFirstPage,
+                    themeData: themeData,
+                  );
+                },
               ),
               onDrawerChanged: (isOpened) {
                 tocDrawerOpen = isOpened;
@@ -443,18 +518,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         await loadCarousel(restoreScrollRatio: ratio);
                       },
                       onPageCountReady: (totalPages) async {
-                        setState(() {
-                          totalPagesInChapter = totalPages;
-                          if (currentPageInChapter >= totalPagesInChapter) {
-                            currentPageInChapter = totalPagesInChapter - 1;
-                          }
-                        });
+                        totalPagesInChapter = totalPages;
+                        if (currentPageInChapter >= totalPagesInChapter) {
+                          currentPageInChapter = totalPagesInChapter > 0
+                              ? totalPagesInChapter - 1
+                              : 0;
+                        }
                         updateProgressDebounced();
                       },
                       onPageChanged: (pageIndex) {
-                        setState(() {
-                          currentPageInChapter = pageIndex;
-                        });
+                        currentPageInChapter = pageIndex;
                         updateProgressDebounced();
                         saveProgressDebounced();
                       },
@@ -467,36 +540,47 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onSentenceSelected: handleSentenceSelected,
                       shouldShowWebView: shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
-                      statusBarLeftContent: activateTocTitle,
-                      statusBarRightContent: displayProgress,
+                      statusBarLeftContent: _activeTocTitleNotifier,
+                      statusBarRightContent: _displayProgressNotifier,
                     ),
 
-                    ControlPanel(
-                      showControls: showControls,
-                      title: bookSession.spine.isEmpty
-                          ? bookSession.book!.title
-                          : activateTocTitle,
-                      currentSpineItemIndex: currentSpineItemIndex,
-                      totalSpineItems: bookSession.spine.length,
-                      currentPageInChapter: currentPageInChapter,
-                      totalPagesInChapter: totalPagesInChapter,
-                      direction: bookSession.book!.direction,
-                      onBack: () {
-                        saveProgress();
-                        context.pop();
-                      },
-                      onOpenDrawer: openDrawer,
-                      onPreviousPage: () =>
-                          rendererController.performPreviousPageTurn(),
-                      onFirstPage: () => goToPage(0),
-                      onNextPage: () =>
-                          rendererController.performNextPageTurn(),
-                      onLastPage: () => goToPage(totalPagesInChapter - 1),
-                      onPreviousChapter: previousSpineItemFirstPage,
-                      onNextChapter: nextSpineItem,
-                      onToggleStyleDrawer: (show) {
-                        tocDrawerOpen = show;
-                        setupVolumeControl();
+                    ListenableBuilder(
+                      listenable: Listenable.merge([
+                        _activeTocTitleNotifier,
+                        _currentSpineItemNotifier,
+                        _currentPageNotifier,
+                        _totalPagesNotifier,
+                      ]),
+                      builder: (context, child) {
+                        return ControlPanel(
+                          showControls: showControls,
+                          title: bookSession.spine.isEmpty
+                              ? bookSession.book!.title
+                              : _activeTocTitleNotifier.value,
+                          currentSpineItemIndex:
+                              _currentSpineItemNotifier.value,
+                          totalSpineItems: bookSession.spine.length,
+                          currentPageInChapter: _currentPageNotifier.value,
+                          totalPagesInChapter: _totalPagesNotifier.value,
+                          direction: bookSession.book!.direction,
+                          onBack: () {
+                            saveProgress();
+                            context.pop();
+                          },
+                          onOpenDrawer: openDrawer,
+                          onPreviousPage: () =>
+                              rendererController.performPreviousPageTurn(),
+                          onFirstPage: () => goToPage(0),
+                          onNextPage: () =>
+                              rendererController.performNextPageTurn(),
+                          onLastPage: () => goToPage(totalPagesInChapter - 1),
+                          onPreviousChapter: previousSpineItemFirstPage,
+                          onNextChapter: nextSpineItem,
+                          onToggleStyleDrawer: (show) {
+                            styleDrawerOpen = show;
+                            setupVolumeControl();
+                          },
+                        );
                       },
                     ),
                   ],

@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../domain/shelf_book.dart';
+
 import '../../../../core/widgets/book_cover.dart';
 import '../../application/bookshelf_notifier.dart';
+import '../../domain/shelf_book.dart';
 
-/// Book grid item widget – displays a single book in the grid.
-/// Appearance branches into three helpers based on [viewMode].
-class BookGridItem extends ConsumerWidget {
+/// Book grid item widget displays a single book in the grid.
+class BookGridItem extends StatelessWidget {
   final ShelfBook book;
   final bool isSelectionMode;
   final bool isSelected;
   final ViewMode viewMode;
+  final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
   const BookGridItem({
@@ -20,36 +19,32 @@ class BookGridItem extends ConsumerWidget {
     required this.isSelectionMode,
     required this.isSelected,
     required this.viewMode,
+    this.onTap,
     this.onLongPress,
   });
 
-  // ─── public build ────────────────────────────────────────────────────────
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () => _handleTap(context, ref),
-      onLongPress: onLongPress,
-
-      child: Stack(
-        children: [
-          // Main mode-specific layout
-          switch (viewMode) {
-            ViewMode.relaxed => _buildRelaxed(context),
-            ViewMode.compact => Positioned.fill(child: _buildCompact(context)),
-          },
-
-          // Selection checkbox (top-left, all modes)
-          if (isSelectionMode)
-            Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
-        ],
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Stack(
+          children: [
+            switch (viewMode) {
+              ViewMode.relaxed => _buildRelaxed(context),
+              ViewMode.compact => Positioned.fill(
+                child: _buildCompact(context),
+              ),
+            },
+            if (isSelectionMode)
+              Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
+          ],
+        ),
       ),
     );
   }
 
-  // ─── mode helpers ─────────────────────────────────────────────────────────
-
-  /// Relaxed: cover + title + author + progress bar.
   Widget _buildRelaxed(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,13 +78,11 @@ class BookGridItem extends ConsumerWidget {
     );
   }
 
-  /// Compact: cover only, title gradient overlay + frosted progress badge.
   Widget _buildCompact(BuildContext context) {
     return _buildCoverStack(
       context,
       fit: StackFit.expand,
       extras: [
-        // Bottom gradient + title
         Positioned(
           bottom: 0,
           left: 0,
@@ -114,8 +107,8 @@ class BookGridItem extends ConsumerWidget {
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
-                  shadows: [
-                    const Shadow(
+                  shadows: const [
+                    Shadow(
                       color: Colors.black54,
                       blurRadius: 2.0,
                       offset: Offset(0, 1.0),
@@ -126,13 +119,10 @@ class BookGridItem extends ConsumerWidget {
             ),
           ),
         ),
-        // Progress badge (top-right)
         _buildProgressBadge(context),
       ],
     );
   }
-
-  // ─── shared cover stack ───────────────────────────────────────────────────
 
   Widget _buildCoverStack(
     BuildContext context, {
@@ -142,7 +132,6 @@ class BookGridItem extends ConsumerWidget {
     final maskAndExtras = Stack(
       fit: StackFit.expand,
       children: [
-        // Selection colour overlay
         if (isSelectionMode)
           Container(
             decoration: BoxDecoration(
@@ -224,7 +213,6 @@ class BookGridItem extends ConsumerWidget {
                       relativePath: book.coverPath,
                       radius: currentRadius,
                     ),
-
                     Opacity(
                       opacity: libraryOpacity,
                       child: Material(
@@ -258,9 +246,6 @@ class BookGridItem extends ConsumerWidget {
     );
   }
 
-  // ─── badge helpers ────────────────────────────────────────────────────────
-
-  /// Frosted-glass percentage badge (comfortable / compact modes).
   Widget _buildProgressBadge(BuildContext context) {
     if (book.readingProgress <= 0 || book.isFinished || isSelectionMode) {
       return const SizedBox.shrink();
@@ -310,19 +295,6 @@ class BookGridItem extends ConsumerWidget {
             )
           : null,
     );
-  }
-
-  // ─── tap handler ──────────────────────────────────────────────────────────
-
-  void _handleTap(BuildContext context, WidgetRef ref) {
-    if (isSelectionMode) {
-      ref.read(bookshelfNotifierProvider.notifier).toggleItemSelection(book);
-    } else {
-      final notifier = ref.read(bookshelfNotifierProvider.notifier);
-      context.push('/book/${book.fileHash}', extra: book).then((_) {
-        notifier.reloadQuietly();
-      });
-    }
   }
 }
 

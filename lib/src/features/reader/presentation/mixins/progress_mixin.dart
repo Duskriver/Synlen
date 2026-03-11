@@ -42,9 +42,7 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
       final newProgress = '${(ratio * 100.0).toStringAsFixed(2)}%';
 
       if (displayProgress != newProgress) {
-        setState(() {
-          displayProgress = newProgress;
-        });
+        displayProgress = newProgress;
       }
     });
   }
