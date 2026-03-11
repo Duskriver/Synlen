@@ -3,9 +3,9 @@ import UIKit
 import WebKit
 
 /// Flutter plugin that drives slide-transition page-turn animations inside the
-/// Lumina reader by snapshotting the active `WKWebView` and animating it.
+/// 词镜 reader by snapshotting the active `WKWebView` and animating it.
 ///
-/// Channel: `lumina/reader_page_turn`
+/// Channel: `cijing/reader_page_turn`
 /// Methods:
 ///   - `preparePageTurn`   → snapshots the current web view (returns nil / error)
 ///   - `animatePageTurn`   → slides the snapshot away revealing the new content
@@ -31,7 +31,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "lumina/reader_page_turn",
+      name: "cijing/reader_page_turn",
       binaryMessenger: registrar.messenger()
     )
     let instance = ReaderPageTurnPlugin()

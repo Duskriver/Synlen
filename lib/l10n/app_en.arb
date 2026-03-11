@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
   
-  "appName": "Lumina",
+  "appName": "词镜",
   "@appName": {
     "description": "Application name"
   },
@@ -552,7 +552,7 @@
     "description": "Remote folder path label"
   },
   
-  "remoteFolderHint": "LuminaReader/",
+  "remoteFolderHint": "CiJingReader/",
   "@remoteFolderHint": {
     "description": "Remote folder path hint"
   },
@@ -1088,7 +1088,7 @@
     "description": "Open storage location action label"
   },
 
-  "openStorageLocationSubtitle": "Open the folder where Lumina stores its data (cache, books, etc.)",
+  "openStorageLocationSubtitle": "Open the folder where 词镜 stores its data (cache, books, etc.)",
   "@openStorageLocationSubtitle": {
     "description": "Subtitle for open storage location action"
   },
@@ -1103,7 +1103,7 @@
     }
   },
 
-  "openStorageLocationIOSMessage": "Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.",
+  "openStorageLocationIOSMessage": "Please open the \"词镜\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.",
   "@openStorageLocationIOSMessage": {
     "description": "Message shown on iOS when user tries to open storage location, since it's not possible to open it directly"
   },

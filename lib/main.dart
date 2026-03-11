@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/core/config/app_info.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
@@ -23,8 +25,19 @@ void _preWarmWebView() async {
   await headlessWebView?.run();
 }
 
+Future<void> _registerBundledLicenses() async {
+  final licenseText = await rootBundle.loadString(AppInfo.bundledLicenseAsset);
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks([
+      AppInfo.originalProjectName,
+      AppInfo.originalAuthor,
+    ], licenseText);
+  });
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _registerBundledLicenses();
 
   // Initialize Rust FFI runtime (must be called before any Rust API functions)
   await RustLib.init();

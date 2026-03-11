@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.lumina.ereader"
+    namespace = "com.tanglei.cijing"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lumina.ereader"
+        applicationId = "com.tanglei.cijing"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode

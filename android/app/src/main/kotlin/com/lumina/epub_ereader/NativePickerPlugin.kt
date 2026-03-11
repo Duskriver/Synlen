@@ -1,4 +1,4 @@
-package com.lumina.ereader
+package com.tanglei.cijing
 
 import android.app.Activity
 import android.content.Intent
@@ -596,6 +596,6 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // -------------------------------------------------------------------------
 
     companion object {
-        const val CHANNEL_NAME = "com.lumina.ereader/native_picker"
+        const val CHANNEL_NAME = "com.tanglei.cijing/native_picker"
     }
 }

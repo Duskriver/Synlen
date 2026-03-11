@@ -1,7 +1,7 @@
 name: lumina
-description: "Lumina Reader - A lightweight, cross-platform EPUB reader built with Flutter, supporting iOS and Android systems."
+description: "词镜 - A lightweight, cross-platform EPUB reader built with Flutter for Android and iOS."
 publish_to: 'none'
-homepage: https://github.com/MilkFeng/lumina
+homepage: https://github.com/TangLei/cijing
 license: MIT
 
 version: 0.2.4+1
@@ -109,5 +109,6 @@ flutter:
   uses-material-design: true
 
   assets:
+    - LICENSE
     - assets/icons/icon.svg
     - assets/logos/logo.svg

@@ -4,13 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lumina/l10n/app_localizations.dart';
+import 'package:lumina/src/core/config/app_info.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/simple_markdown.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const _versionUrl = 'https://lumina.milkfeng.top/version';
 
 /// Settings tile that checks for application updates from the remote server.
 class CheckUpdateTile extends StatefulWidget {
@@ -41,7 +40,9 @@ class _CheckUpdateTileState extends State<CheckUpdateTile> {
 
       final httpClient = HttpClient();
       httpClient.connectionTimeout = const Duration(seconds: 10);
-      final request = await httpClient.getUrl(Uri.parse(_versionUrl));
+      final request = await httpClient.getUrl(
+        Uri.parse(AppInfo.versionEndpoint),
+      );
       final response = await request.close();
       final body = await response.transform(utf8.decoder).join();
       httpClient.close();

@@ -1,4 +1,4 @@
-package com.lumina.ereader
+package com.tanglei.cijing
 
 import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterFragmentActivity
