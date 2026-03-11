@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
@@ -124,7 +125,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   Widget _buildContentWidget(BuildContext context) {
     final bookshelfState = ref.watch(bookshelfNotifierProvider);
 
-    final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
+    final state = bookshelfState.valueOrNull;
     final isSelectionMode = state?.isSelectionMode ?? false;
 
     return PopScope(
@@ -159,7 +160,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 return _buildTabView(context, ref, state);
               },
             ),
-            floatingActionButton: _buildFAB(context, ref),
+            floatingActionButton: _buildFAB(context, ref, state),
           ),
           if (isSelectingFiles)
             Positioned.fill(
@@ -180,9 +181,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 
-  Widget? _buildFAB(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
-
+  Widget? _buildFAB(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState? state,
+  ) {
     if (state?.isSelectionMode ?? false) {
       return null;
     }
@@ -425,26 +428,43 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             mainAxisSpacing: 8,
           ),
         },
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final book = books[index];
-          return BookGridItem(
-            book: book,
-            isSelected: state.selectedBookIds.contains(book.id),
-            isSelectionMode: state.isSelectionMode,
-            viewMode: state.viewMode,
-            onLongPress: () {
-              if (!state.isSelectionMode) {
-                HapticFeedback.selectionClick();
-                ref
-                    .read(bookshelfNotifierProvider.notifier)
-                    .toggleSelectionMode();
-                ref
-                    .read(bookshelfNotifierProvider.notifier)
-                    .toggleItemSelection(book);
-              }
-            },
-          );
-        }, childCount: books.length),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final book = books[index];
+            return BookGridItem(
+              book: book,
+              isSelected: state.selectedBookIds.contains(book.id),
+              isSelectionMode: state.isSelectionMode,
+              viewMode: state.viewMode,
+              onTap: () {
+                if (state.isSelectionMode) {
+                  ref
+                      .read(bookshelfNotifierProvider.notifier)
+                      .toggleItemSelection(book);
+                  return;
+                }
+
+                final notifier = ref.read(bookshelfNotifierProvider.notifier);
+                context.push('/book/${book.fileHash}', extra: book).then((_) {
+                  notifier.reloadQuietly();
+                });
+              },
+              onLongPress: () {
+                if (!state.isSelectionMode) {
+                  HapticFeedback.selectionClick();
+                  ref
+                      .read(bookshelfNotifierProvider.notifier)
+                      .toggleSelectionMode();
+                  ref
+                      .read(bookshelfNotifierProvider.notifier)
+                      .toggleItemSelection(book);
+                }
+              },
+            );
+          },
+          childCount: books.length,
+          addAutomaticKeepAlives: false,
+        ),
       ),
     );
   }

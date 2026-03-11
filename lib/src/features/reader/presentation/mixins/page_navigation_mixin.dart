@@ -58,9 +58,7 @@ mixin _PageNavigationMixin on ConsumerState<ReaderScreen> {
   Future<void> goToPage(int pageIndex) async {
     if (pageIndex < 0 || pageIndex >= totalPagesInChapter) return;
 
-    setState(() {
-      currentPageInChapter = pageIndex;
-    });
+    currentPageInChapter = pageIndex;
     updateProgressDebounced();
 
     await rendererController.jumpToPage(pageIndex);
