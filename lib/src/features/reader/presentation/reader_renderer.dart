@@ -255,16 +255,30 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     }
   }
 
+  bool _isBottomBlankTap(Offset localPosition) {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) {
+      return false;
+    }
+
+    final height = renderBox.size.height;
+    final activationHeight = max(_currentTheme.padding.bottom, 48.0);
+
+    return localPosition.dy >= height - activationHeight;
+  }
+
   void _handleTap(TapUpDetails details) {
     if (widget.showControls) {
       widget.onToggleControls();
+    } else if (_isBottomBlankTap(details.localPosition)) {
+      widget.onToggleControls();
     } else if (_androidPageTurnSession.isAnimating ||
         _iosPageTurnSession.isAnimating) {
-      _handleTapZone(details.globalPosition.dx, details.globalPosition.dy);
+      _handleTapZone(details.localPosition.dx, details.localPosition.dy);
     } else {
       _webViewController.checkTapElementAt(
-        details.globalPosition.dx,
-        details.globalPosition.dy,
+        details.localPosition.dx,
+        details.localPosition.dy,
       );
     }
   }
