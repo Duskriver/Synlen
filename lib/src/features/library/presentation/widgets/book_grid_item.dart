@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:lumina/src/core/widgets/middle_ellipsis_two_lines_text.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../domain/shelf_book.dart';
@@ -51,7 +51,7 @@ class BookGridItem extends StatelessWidget {
       children: [
         Expanded(child: _buildCoverStack(context, fit: StackFit.expand)),
         const SizedBox(height: 12),
-        Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+        MiddleEllipsisTwoLinesText(book.title),
         const SizedBox(height: 4),
         if (book.author.isNotEmpty)
           Text(
@@ -100,10 +100,8 @@ class BookGridItem extends StatelessWidget {
                   colors: [Colors.transparent, Colors.black87],
                 ),
               ),
-              child: Text(
+              child: MiddleEllipsisTwoLinesText(
                 book.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,

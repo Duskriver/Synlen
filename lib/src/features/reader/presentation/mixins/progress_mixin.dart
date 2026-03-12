@@ -18,7 +18,6 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
   Timer? get progressDebouncer;
   set progressDebouncer(Timer? v);
 
-  /// 用于保存进度的防抖计时器，避免频繁的数据库写入
   Timer? get _saveProgressDebouncer;
   set _saveProgressDebouncer(Timer? v);
 
@@ -47,7 +46,6 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
     });
   }
 
-  /// 带防抖的保存进度方法，防止用户快速翻页时频繁触发数据库写操作导致主线程卡顿
   void saveProgressDebounced() {
     _saveProgressDebouncer?.cancel();
     _saveProgressDebouncer = Timer(const Duration(seconds: 1), () {
@@ -56,10 +54,8 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
     });
   }
 
-  /// 实际执行数据库保存操作
-  Future<void> saveProgress() async {
-    // 所有的数据库 I/O 操作虽然是异步的，但高频率触发仍会占用 CPU 资源
-    await bookSession.saveProgress(
+  void saveProgress() {
+    bookSession.saveProgress(
       currentChapterIndex: currentSpineItemIndex,
       currentPageInChapter: currentPageInChapter,
       totalPagesInChapter: totalPagesInChapter,
