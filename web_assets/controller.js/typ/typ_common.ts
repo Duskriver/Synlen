@@ -1,5 +1,6 @@
 
-function removePaddingAndMarginAndFillScreen(element: HTMLElement) {
+export function removePaddingAndMarginAndFillScreen(element: HTMLElement) {
+  if (!element || !element.style) return;
   element.style.setProperty('padding', '0', 'important');
   element.style.setProperty('padding-top', '0', 'important');
   element.style.setProperty('padding-bottom', '0', 'important');
@@ -29,7 +30,9 @@ function removePaddingAndMarginAndFillScreen(element: HTMLElement) {
   element.style.setProperty('overflow', 'hidden', 'important');
 }
 
-function setupFullscreenElement(el: HTMLElement | SVGElement, doc: Document) {
+export function setupFullscreenElement(el: HTMLElement | SVGElement, doc: Document) {
+  if (!el) return;
+
   let isRotated90 = false;
   let rotationDeg = 0;
 
@@ -50,13 +53,15 @@ function setupFullscreenElement(el: HTMLElement | SVGElement, doc: Document) {
       }
     }
 
-    if (current !== el) {
+    if (current && current !== el && current.style) {
       current.style.setProperty('transform', 'none', 'important');
       current.style.setProperty('-webkit-transform', 'none', 'important');
     }
 
     current = current.parentElement;
   }
+
+  if (!el.style) return;
 
   el.style.setProperty('position', 'fixed', 'important');
   el.style.setProperty('z-index', '9999', 'important');
@@ -87,48 +92,43 @@ function setupFullscreenElement(el: HTMLElement | SVGElement, doc: Document) {
   }
 }
 
-export function applyDuokanTyp(iframe: HTMLIFrameElement) {
+export function applyCenteringStyles(iframe: HTMLIFrameElement) {
   if (!iframe) return;
   if (!iframe.contentDocument && !iframe.contentWindow) return;
 
   const doc = iframe.contentDocument!;
 
-  const isFullscreen = doc.body.classList.contains('lumina-spine-property-duokan-page-fullscreen');
-  const isFitWindow = doc.body.classList.contains('lumina-spine-property-duokan-page-fitwindow');
+  const root = doc.documentElement;
+  removePaddingAndMarginAndFillScreen(root);
+  removePaddingAndMarginAndFillScreen(doc.body);
 
-  if (isFullscreen || isFitWindow) {
+  const svgs = doc.querySelectorAll('svg');
+  for (let i = 0; i < svgs.length; i++) {
+    svgs[i].setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    setupFullscreenElement(svgs[i], doc);
+  }
 
-    const root = doc.documentElement;
-    removePaddingAndMarginAndFillScreen(root);
-    removePaddingAndMarginAndFillScreen(doc.body);
+  const svgImages = doc.querySelectorAll('svg image');
+  for (let i = 0; i < svgImages.length; i++) {
+    svgImages[i].setAttribute('width', '100%');
+    svgImages[i].setAttribute('height', '100%');
+  }
 
-    const svgs = doc.querySelectorAll('svg');
-    for (let i = 0; i < svgs.length; i++) {
-      svgs[i].setAttribute('preserveAspectRatio', 'xMidYMid meet');
-      setupFullscreenElement(svgs[i], doc);
-    }
+  const imgs = doc.querySelectorAll('img');
+  for (let i = 0; i < imgs.length; i++) {
+    imgs[i].style.setProperty('object-fit', 'contain', 'important');
+    setupFullscreenElement(imgs[i], doc);
+  }
 
-    const svgImages = doc.querySelectorAll('svg image');
-    for (let i = 0; i < svgImages.length; i++) {
-      svgImages[i].setAttribute('width', '100%');
-      svgImages[i].setAttribute('height', '100%');
-    }
-
-    const imgs = doc.querySelectorAll('img');
-    for (let i = 0; i < imgs.length; i++) {
-      imgs[i].style.setProperty('object-fit', 'contain', 'important');
-      setupFullscreenElement(imgs[i], doc);
-    }
-
-    const allElements = doc.body.querySelectorAll('*');
-    for (let i = 0; i < allElements.length; i++) {
-      const el = allElements[i] as HTMLElement;
-      if (el.tagName !== 'IMG' && el.tagName !== 'SVG' && el.tagName !== 'image') {
-        el.style.setProperty('margin', '0', 'important');
-        el.style.setProperty('padding', '0', 'important');
-        el.style.setProperty('max-width', 'none', 'important');
-        el.style.setProperty('max-height', 'none', 'important');
-      }
+  const allElements = doc.body.querySelectorAll('*');
+  for (let i = 0; i < allElements.length; i++) {
+    const el = allElements[i] as HTMLElement;
+    if (!el.style) continue;
+    if (el.tagName !== 'IMG' && el.tagName !== 'SVG' && el.tagName !== 'image') {
+      el.style.setProperty('margin', '0', 'important');
+      el.style.setProperty('padding', '0', 'important');
+      el.style.setProperty('max-width', 'none', 'important');
+      el.style.setProperty('max-height', 'none', 'important');
     }
   }
 }

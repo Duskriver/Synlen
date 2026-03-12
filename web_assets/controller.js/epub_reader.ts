@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { LuminaApi } from './api';
 import { FlutterBridge } from './flutter_bridge';
-import { applyDuokanTyp } from './duokan_typ';
+import { applyTyp, getTypConfig } from './typ/typ';
 
 export class EpubReader implements LuminaApi {
   state: ReaderState;
@@ -299,8 +299,15 @@ export class EpubReader implements LuminaApi {
       if (!body) return;
 
       const rect = bestCandidate.rect;
-      const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
-      const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
+
+      let absoluteLeft = rect.x - body.scrollLeft;
+      let absoluteTop = rect.y - body.scrollTop;
+
+      const config = getTypConfig(iframe);
+      if (config.havePadding()) {
+        absoluteLeft += this.state.config.padding.left;
+        absoluteTop += this.state.config.padding.top;
+      }
 
       const baseUrl = iframe.contentDocument.baseURI || '';
 
@@ -337,8 +344,15 @@ export class EpubReader implements LuminaApi {
             const rect = imgEl.getBoundingClientRect();
             if (!rect || rect.width < 5 || rect.height < 5) return false;
 
-            const docX = rect.left - bodyRect.left;
-            const docY = rect.top - bodyRect.top;
+            const config = getTypConfig(iframe);
+
+            let docX = rect.left - bodyRect.left;
+            let docY = rect.top - bodyRect.top;
+
+            if (config.havePadding()) {
+              docX += this.state.config.padding.left;
+              docY += this.state.config.padding.top;
+            }
 
             FlutterBridge.onImageLongPress(src, docX, docY, rect.width, rect.height);
             return true;
@@ -673,15 +687,25 @@ export class EpubReader implements LuminaApi {
             // <a title="...">...</a>
             innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
             isFootnote = true;
-          } else if (epubType === 'noteref') {
+          }
+        }
+
+        if (!isFootnote) {
+          if (epubType === 'noteref') {
             // <a epub:type="noteref" href="#note1">...</a>
             innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
             isFootnote = true;
-          } else if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
-            // <a class="duokan-footnote" href="#note1"> <img /> </a>
+          }
+        }
+
+        if (!isFootnote) {
+          if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
+            // <a class="duokan-footnote" href="#note1"> ... </a>
             const fullHref = link.href;
             let thisUrl = link.ownerDocument.location.href;
-            if (thisUrl.includes('#')) thisUrl = thisUrl.split('#')[0];
+            if (thisUrl.includes('#')) {
+              thisUrl = thisUrl.split('#')[0];
+            }
             if (fullHref === thisUrl || thisUrl === fullHref.split('#')[0]) {
               innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
               isFootnote = true;
@@ -749,8 +773,15 @@ export class EpubReader implements LuminaApi {
     const body = iframe.contentDocument.body;
     if (!body) return;
 
-    const docX = x - body.scrollLeft;
-    const docY = y - body.scrollTop;
+    const config = getTypConfig(iframe);
+
+    let docX = x + body.scrollLeft;
+    let docY = y + body.scrollTop;
+
+    if (config.havePadding()) {
+      docX -= this.state.config.padding.left;
+      docY -= this.state.config.padding.top;
+    }
 
     const radius = 20;
     let candidates = this.state.quadTree.query(
@@ -937,7 +968,7 @@ export class EpubReader implements LuminaApi {
         for (const prop of properties) {
           doc.body.classList.toggle('lumina-spine-property-' + prop, true);
         }
-        applyDuokanTyp(iframe);
+        applyTyp(iframe);
 
         const reflow = doc.body.scrollHeight; void reflow;
         requestAnimationFrame(() => {
