@@ -94,17 +94,11 @@ class ImportCacheManager {
 
   /// Streams content from Android SAF URI to cache file
   ///
-  /// Uses saf_stream package to read from content:// URIs without
-  /// blocking the main thread or causing ANRs.
+  /// Uses a native-side copy to avoid pushing large chunks through Flutter
+  /// platform channels, which can trigger OOM on large EPUB imports.
   Future<void> _streamAndHashFromSAF(String uri, File targetFile) async {
     try {
-      // Open stream from SAF URI
-      final stream = await _safStream.readFileStream(uri, start: 0);
-
-      // Stream to target file - IMPORTANT: await addStream before closing
-      final sink = targetFile.openWrite();
-      await sink.addStream(stream);
-      await sink.close();
+      await _safStream.copyToLocalFile(uri, targetFile.path);
     } catch (e) {
       // Clean up on error
       if (await targetFile.exists()) {

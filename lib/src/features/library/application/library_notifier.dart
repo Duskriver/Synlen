@@ -175,7 +175,12 @@ class LibraryNotifier extends _$LibraryNotifier {
         );
 
         // 3. Import the book and wait for the Either result
-        final result = await epubImportService.importBook(importable.cacheFile);
+        final result = await epubImportService.importBook(
+          importable.cacheFile,
+          precomputedHash: importable.hash,
+          originalFileName: importable.originalName,
+          moveSourceFile: true,
+        );
 
         // 4. Notify UI of success or failure for this file
         yield result.fold(
