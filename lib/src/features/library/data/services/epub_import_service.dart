@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/services/epub_import_workers.dart';
+import 'package:lumina/src/rust/api/epub.dart' as rust_epub;
 import 'package:fpdart/fpdart.dart';
 import '../../domain/shelf_book.dart';
 import '../../domain/book_manifest.dart';
@@ -29,12 +29,19 @@ class EpubImportService {
   /// Returns Either:
   ///   - Right: The imported ShelfBook
   ///   - Left: error message
-  Future<Either<String, ShelfBook>> importBook(File file) async {
+  Future<Either<String, ShelfBook>> importBook(
+    File file, {
+    String? precomputedHash,
+    String? originalFileName,
+    bool moveSourceFile = false,
+  }) async {
     try {
       // Pipeline: Hash → Check → Copy → Parse → Extract → Create → Save
-      final fileHash = await _calculateHash(
-        file,
-      ).then((result) => result.getOrElse((error) => throw Exception(error)));
+      final String fileHash =
+          precomputedHash ??
+          await _calculateHash(
+            file,
+          ).then((result) => result.getOrElse((error) => throw Exception(error)));
 
       final bookExists = await _checkBookExistence(fileHash);
       if (bookExists.isLeft()) {
@@ -44,13 +51,14 @@ class EpubImportService {
       final epubPath = await _copyToAppStorage(
         file,
         fileHash,
+        moveSourceFile: moveSourceFile,
       ).then((result) => result.getOrElse((error) => throw Exception(error)));
 
       final parseData =
           await _parseAndExtract(
             epubPath,
             fileHash,
-            file.path.split('/').last,
+            originalFileName ?? file.path.split('/').last,
           ).then(
             (result) => result.fold((error) {
               _deleteFile(epubPath);
@@ -205,6 +213,7 @@ class EpubImportService {
   Future<Either<String, String>> _copyToAppStorage(
     File sourceFile,
     String fileHash,
+    {bool moveSourceFile = false}
   ) async {
     try {
       final booksDir = Directory(
@@ -222,7 +231,15 @@ class EpubImportService {
         return right(targetPath);
       }
 
-      await sourceFile.copy(targetPath);
+      if (moveSourceFile) {
+        try {
+          await sourceFile.rename(targetPath);
+        } on FileSystemException {
+          await sourceFile.copy(targetPath);
+        }
+      } else {
+        await sourceFile.copy(targetPath);
+      }
       return right(targetPath);
     } catch (e) {
       return left('File copy failed: $e');
@@ -249,27 +266,26 @@ class EpubImportService {
         await coversDir.create(recursive: true);
       }
 
-      // Read EPUB as archive
-      final inputStream = InputFileStream(epubPath);
-      final archive = ZipDecoder().decodeStream(inputStream);
-
-      // Resolve cover path (relative to OPF root)
+      // Resolve cover path relative to the OPF root, then read only that entry
+      // through the Rust EPUB backend instead of scanning the whole ZIP in Dart.
       final opfDir = opfRootPath.contains('/')
           ? opfRootPath.substring(0, opfRootPath.lastIndexOf('/'))
           : '';
       final coverPath = opfDir.isEmpty ? coverHref : '$opfDir/$coverHref';
 
-      // Find cover file in archive
-      final coverFile = archive.findFile(coverPath);
-      if (coverFile == null) {
-        return null;
-      }
-
       // Determine file extension from MIME type or filename
       var extension = _getImageExtension(coverPath);
 
+      await rust_epub.loadEpub(epubPath: epubPath);
+      final rawCoverData = await rust_epub.readEpubFile(
+        epubPath: epubPath,
+        filePath: coverPath,
+      );
+      if (rawCoverData == null || rawCoverData.isEmpty) {
+        return null;
+      }
+
       // Compress image using worker
-      final rawCoverData = coverFile.content;
       var coverData = await ImportWorkers.compressImage(rawCoverData);
       if (coverData != null) {
         extension = '.jpg';
@@ -285,6 +301,8 @@ class EpubImportService {
       // Cover extraction is non-critical, log and continue
       debugPrint('Cover extraction failed: $e');
       return null;
+    } finally {
+      rust_epub.closeEpub(epubPath: epubPath).ignore();
     }
   }
 
