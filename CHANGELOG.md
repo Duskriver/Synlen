@@ -8,18 +8,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- 优化性能和用户体验
-- 修复设置界面滑动到屏幕外状态丢失的问题
-- Android 端的音量键翻页功能
-- 修复自定义字体相关 BUG
-- 阅读界面常亮屏幕
-- 添加检查更新功能
-- 添加对脚注中图片的支持
-- 主页的书籍标题过长时改为在中间省略
-- 图片查看器增加对 SVG 的支持
-- 优化书籍的渲染样式
-- 优化书籍详情页面的 description 显示
-- 添加更多对多看平台特有特性的支持
+## [v0.2.3] - 2026-03-13
+
+### English
+
+#### Added
+
+* **Volume Key Paging**: Added support for turning pages using volume keys on Android devices.
+* **Keep Awake**: Added a feature to keep the screen awake while on the reading interface.
+* **Check for Updates**: Added a built-in check for updates feature.
+* **Footnote Images**: Added support for displaying images embedded within footnotes.
+* **SVG Viewer**: Added SVG format support to the image viewer.
+* **Duokan Support**: Added broader support for Duokan platform-specific formatting features.
+
+#### Changed
+
+* **Performance & UX**: Optimized overall rendering performance and reading user experience.
+* **Title Truncation**: Long book titles on the home page now truncate in the middle for better visual balance.
+* **Rendering Styles**: Polished and optimized internal book rendering styles.
+* **Book Details**: Optimized the text display for the description section on the book details page.
+
+#### Fixed
+
+* **Settings State**: Fixed an issue where UI state was lost when items in the settings interface were scrolled off-screen.
+* **Custom Fonts**: Fixed various bugs related to the application of custom fonts.
+
+### Chinese
+
+#### 新增
+
+* **音量键翻页**：新增 Android 端的音量键翻页功能。
+* **屏幕常亮**：阅读界面新增保持屏幕常亮特性。
+* **检查更新**：应用内新增检查更新功能。
+* **脚注图片**：新增对书籍脚注中内嵌图片的支持。
+* **SVG 支持**：图片查看器新增对 SVG 格式图片的支持。
+* **多看特性**：添加了更多对多看平台特有排版特性的兼容支持。
+
+#### 变更与优化
+
+* **性能与体验**：全面优化了底层渲染性能与整体用户体验。
+* **标题省略**：主页的书籍标题过长时，现已改为在中间省略，提升视觉平衡。
+* **渲染优化**：优化了书籍的排版与渲染样式。
+* **详情页优化**：优化了书籍详情页面的简介文本显示效果。
+
+#### 修复
+
+* **状态防丢**：修复了设置界面中组件滑动到屏幕外后导致状态丢失的问题。
+* **字体修复**：修复了自定义字体相关的若干 BUG。
 
 ## [v0.2.2] - 2026-03-04
 
@@ -89,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed font-size and line-height application issues in certain books.
 - Improved tap accuracy for links in the reader.
 
-### 简体中文
+### Chinese
 
 #### 新增
 - 上线全新全局主题系统，支持独立的明暗模式切换
