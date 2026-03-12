@@ -96,7 +96,7 @@ class BackupImportProgress extends ProgressLog {
 ///
 /// Mirrors the folder structure produced by [ExportBackupService]:
 /// ```
-/// lumina-backup-{timestamp}/
+/// synlen-backup-{timestamp}/
 ///   ├── books/         ← .epub files (one per book)
 ///   ├── covers/        ← cover images
 ///   ├── manifests/     ← {hash}.json (serialised BookManifest)

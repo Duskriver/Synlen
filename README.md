@@ -25,8 +25,8 @@
 Clone the repository:
 
 ```bash
-git clone https://github.com/TangLei/cijing.git
-cd cijing
+git clone https://github.com/tltltltltltltltl/Synlen.git
+cd Synlen
 ```
 
 Install dependencies:

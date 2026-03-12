@@ -1,7 +1,7 @@
 name: lumina
 description: "词镜 - A lightweight, cross-platform EPUB reader built with Flutter for Android and iOS."
 publish_to: 'none'
-homepage: https://github.com/TangLei/cijing
+homepage: https://github.com/tltltltltltltltl/Synlen
 license: MIT
 
 version: 0.2.4+1

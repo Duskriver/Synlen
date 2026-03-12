@@ -61,7 +61,7 @@ jobs:
         run: |
           flutter build appbundle --release
           
-          NEW_NAME="lumina-${{ github.ref_name }}-bundle-release.aab"
+          NEW_NAME="synlen-${{ github.ref_name }}-bundle-release.aab"
           
           mv build/app/outputs/bundle/release/app-release.aab build/outputs/$NEW_NAME
           echo "Generated $NEW_NAME"
@@ -70,7 +70,7 @@ jobs:
         run: |
           flutter build apk --release
           
-          NEW_NAME="lumina-${{ github.ref_name }}-universal-release.apk"
+          NEW_NAME="synlen-${{ github.ref_name }}-universal-release.apk"
           
           mv build/app/outputs/flutter-apk/app-release.apk build/outputs/$NEW_NAME
           echo "Generated $NEW_NAME"
@@ -84,7 +84,7 @@ jobs:
             abi=${file#app-}
             abi=${abi%-release.apk}
             
-            NEW_NAME="lumina-${{ github.ref_name }}-$abi-release.apk"
+            NEW_NAME="synlen-${{ github.ref_name }}-$abi-release.apk"
             
             mv "$file" "${{ github.workspace }}/build/outputs/$NEW_NAME"
             echo "Generated $NEW_NAME"
@@ -130,7 +130,7 @@ jobs:
           mkdir Payload
           mv build/ios/iphoneos/Runner.app Payload/
 
-          NAME="lumina-${{ github.ref_name }}-ios-unsigned.ipa"
+          NAME="synlen-${{ github.ref_name }}-ios-unsigned.ipa"
           zip -r $NAME Payload
           echo "Generated $NAME"
 
@@ -138,7 +138,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-artifacts
-          path: lumina-${{ github.ref_name }}-ios-unsigned.ipa
+          path: synlen-${{ github.ref_name }}-ios-unsigned.ipa
 
   create-release:
     name: Create GitHub Release
