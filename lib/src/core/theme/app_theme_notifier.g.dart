@@ -15,14 +15,14 @@ String _$appThemeNotifierHash() => r'274878e7d790d46473099be1c9fc84d2eac0b110';
 @ProviderFor(AppThemeNotifier)
 final appThemeNotifierProvider =
     NotifierProvider<AppThemeNotifier, AppThemeSettings>.internal(
-      AppThemeNotifier.new,
-      name: r'appThemeNotifierProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$appThemeNotifierHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  AppThemeNotifier.new,
+  name: r'appThemeNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$appThemeNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$AppThemeNotifier = Notifier<AppThemeSettings>;
 // ignore_for_file: type=lint

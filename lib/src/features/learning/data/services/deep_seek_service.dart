@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:lumina/src/features/learning/domain/learning_exception.dart';
 
 class DeepSeekService {
   final Dio _dio = Dio();
@@ -82,7 +83,7 @@ class DeepSeekService {
       );
 
       if (response.statusCode != 200 || response.data == null) {
-        return;
+        throw const LearningException('单词解释服务暂时不可用');
       }
 
       final stream = response.data!.stream;
@@ -90,6 +91,7 @@ class DeepSeekService {
           .cast<List<int>>()
           .transform(utf8.decoder)
           .transform(const LineSplitter());
+      var hasContent = false;
 
       await for (final line in lineStream) {
         final trimmedLine = line.trim();
@@ -103,6 +105,7 @@ class DeepSeekService {
             final delta = data['choices'][0]['delta'];
             final content = delta['content'];
             if (content != null && content is String) {
+              hasContent = true;
               yield content;
             }
           } catch (e) {
@@ -110,8 +113,14 @@ class DeepSeekService {
           }
         }
       }
+      if (!hasContent) {
+        throw const LearningException('单词解释服务没有返回内容');
+      }
     } catch (e) {
-      // 错误处理
+      if (e is LearningException) {
+        rethrow;
+      }
+      throw LearningException('单词解释请求失败: $e');
     }
   }
 
@@ -185,7 +194,7 @@ class DeepSeekService {
       );
 
       if (response.statusCode != 200 || response.data == null) {
-        return;
+        throw const LearningException('句子分析服务暂时不可用');
       }
 
       final stream = response.data!.stream;
@@ -193,6 +202,7 @@ class DeepSeekService {
           .cast<List<int>>()
           .transform(utf8.decoder)
           .transform(const LineSplitter());
+      var hasContent = false;
 
       await for (final line in lineStream) {
         final trimmedLine = line.trim();
@@ -206,6 +216,7 @@ class DeepSeekService {
             final delta = data['choices'][0]['delta'];
             final content = delta['content'];
             if (content != null && content is String) {
+              hasContent = true;
               yield content;
             }
           } catch (e) {
@@ -213,8 +224,14 @@ class DeepSeekService {
           }
         }
       }
+      if (!hasContent) {
+        throw const LearningException('句子分析服务没有返回内容');
+      }
     } catch (e) {
-      // 错误处理
+      if (e is LearningException) {
+        rethrow;
+      }
+      throw LearningException('句子分析请求失败: $e');
     }
   }
 }

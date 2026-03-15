@@ -495,11 +495,14 @@ export class InteractionManager {
     }
 
     const text = result.textNode.textContent || '';
+    // Reuse sentence extraction for a better contextual prompt when possible.
+    const sentenceContext = this.expandToSentence(range);
     const contextStart = Math.max(0, result.start - 50);
     const contextEnd = Math.min(text.length, result.end + 50);
+    const fallbackContext = text.substring(contextStart, contextEnd);
     FlutterBridge.onWordTap(
       result.word,
-      text.substring(contextStart, contextEnd),
+      sentenceContext || fallbackContext,
     );
     return true;
   }

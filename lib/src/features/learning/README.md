@@ -17,7 +17,8 @@ lib/src/features/learning/
 │       └── free_dictionary_service.dart      # 免费词典 API 服务
 ├── domain/                 # 领域层，定义数据模型
 │   ├── sentence_analysis.dart  # 句子分析数据模型 (Isar Collection)
-│   └── word_explanation.dart   # 单词释义数据模型 (Isar Collection)
+│   ├── word_explanation.dart   # 单词释义数据模型 (Isar Collection)
+│   └── word_pronunciation.dart # 单词发音数据模型 (Isar Collection)
 └── presentation/           # 表现层，UI 组件
     └── widgets/
         ├── sentence_analysis_dialog.dart     # 句子分析展示弹窗
@@ -29,7 +30,8 @@ lib/src/features/learning/
 ### 1. 数据模型 (Domain)
 使用 **Isar** 数据库进行本地缓存，以减少 API 调用并支持离线访问。
 *   **SentenceAnalysis**: 存储句子的语法分析结果、朗读音频路径及更新时间。
-*   **WordExplanation**: 存储单词在特定上下文中的释义、发音音频路径及更新时间。
+*   **WordExplanation**: 存储单词在特定上下文中的释义及更新时间。
+*   **WordPronunciation**: 存储单词发音音频路径及更新时间。
 
 ### 2. 服务层 (Services)
 *   **DeepSeekService**: 
@@ -53,7 +55,7 @@ lib/src/features/learning/
 *   **WordRepository**:
     *   `getWordInfo`: 优先从数据库获取缓存的单词释义。
     *   `getPronunciationStream`: 发音获取策略为 **FreeDictionary API -> 阿里云 TTS (降级方案)**。
-    *   同时负责将获取到的释义和音频路径持久化到 Isar 数据库。
+    *   将释义和音频分别持久化到独立缓存，避免上下文释义与发音缓存互相污染。
 
 ### 4. 表现层 (Presentation)
 *   **SentenceAnalysisDialog**: 

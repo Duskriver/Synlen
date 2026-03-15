@@ -5,6 +5,7 @@ import '../../features/library/domain/shelf_book.dart';
 import '../../features/library/domain/book_manifest.dart';
 import '../../features/library/domain/shelf_group.dart';
 import '../../features/learning/domain/word_explanation.dart';
+import '../../features/learning/domain/word_pronunciation.dart';
 import '../../features/learning/domain/sentence_analysis.dart';
 import 'isar_database.dart';
 
@@ -25,6 +26,7 @@ class IsarDatabaseImpl implements IsarDatabase {
         ShelfGroupSchema, // Folder/group entity
         BookManifestSchema, // Heavy reader entity
         WordExplanationSchema, // Word explanation cache
+        WordPronunciationSchema, // Word audio cache
         SentenceAnalysisSchema, // Sentence analysis cache
       ],
       directory: AppStorage.supportPath,

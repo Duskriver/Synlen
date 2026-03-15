@@ -16,9 +16,8 @@ String _$isarDatabaseHash() => r'723f4a7baeccdb9ecac887385f8c55054aee7ae8';
 final isarDatabaseProvider = Provider<IsarDatabase>.internal(
   isarDatabase,
   name: r'isarDatabaseProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$isarDatabaseHash,
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$isarDatabaseHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
@@ -34,9 +33,8 @@ String _$isarHash() => r'8adffff302ffdac95f157c90001907c2b78cd017';
 final isarProvider = FutureProvider<Isar>.internal(
   isar,
   name: r'isarProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$isarHash,
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$isarHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

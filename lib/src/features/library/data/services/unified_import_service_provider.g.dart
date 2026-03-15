@@ -24,14 +24,14 @@ String _$unifiedImportServiceHash() =>
 @ProviderFor(unifiedImportService)
 final unifiedImportServiceProvider =
     AutoDisposeProvider<UnifiedImportService>.internal(
-      unifiedImportService,
-      name: r'unifiedImportServiceProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$unifiedImportServiceHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  unifiedImportService,
+  name: r'unifiedImportServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$unifiedImportServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef UnifiedImportServiceRef = AutoDisposeProviderRef<UnifiedImportService>;
 String _$importCacheManagerHash() =>
@@ -46,14 +46,14 @@ String _$importCacheManagerHash() =>
 @ProviderFor(importCacheManager)
 final importCacheManagerProvider =
     AutoDisposeProvider<ImportCacheManager>.internal(
-      importCacheManager,
-      name: r'importCacheManagerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$importCacheManagerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  importCacheManager,
+  name: r'importCacheManagerProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$importCacheManagerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef ImportCacheManagerRef = AutoDisposeProviderRef<ImportCacheManager>;
 // ignore_for_file: type=lint

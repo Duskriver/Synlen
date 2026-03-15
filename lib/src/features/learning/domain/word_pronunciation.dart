@@ -1,29 +1,26 @@
 import 'package:isar/isar.dart';
 
-part 'word_explanation.g.dart';
+part 'word_pronunciation.g.dart';
 
-/// 单词解释缓存集合
+/// 单词发音缓存集合
 @collection
-class WordExplanation {
-  /// 基于 word + context 的哈希主键，确保同一单词在同一上下文只有一条记录
+class WordPronunciation {
+  /// 基于单词文本的稳定主键，确保同一单词只有一条音频缓存记录
   Id id = Isar.autoIncrement;
 
   /// 单词文本
-  @Index()
+  @Index(unique: true)
   late String word;
 
-  /// 解释内容 (Markdown 格式)
-  late String explanation;
+  /// 本地音频文件路径
+  String? audioUrl;
 
   /// 最后更新时间
   late DateTime lastUpdated;
 
-  /// 关联的上下文 (可选，用于区分不同语境下的解释)
-  String? context;
-
   /// 生成确定性 ID
-  static int generateId(String word, String? context) {
-    return _fastHash('$word|${context ?? ""}');
+  static int generateId(String word) {
+    return _fastHash(word);
   }
 }
 

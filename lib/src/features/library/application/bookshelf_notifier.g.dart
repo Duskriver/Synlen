@@ -12,19 +12,16 @@ String _$bookshelfNotifierHash() => r'e87999f7a0c257980110334f5ce4d5ccab3dee6b';
 ///
 /// Copied from [BookshelfNotifier].
 @ProviderFor(BookshelfNotifier)
-final bookshelfNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<
-      BookshelfNotifier,
-      BookshelfState
-    >.internal(
-      BookshelfNotifier.new,
-      name: r'bookshelfNotifierProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$bookshelfNotifierHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+final bookshelfNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    BookshelfNotifier, BookshelfState>.internal(
+  BookshelfNotifier.new,
+  name: r'bookshelfNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$bookshelfNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$BookshelfNotifier = AutoDisposeAsyncNotifier<BookshelfState>;
 // ignore_for_file: type=lint

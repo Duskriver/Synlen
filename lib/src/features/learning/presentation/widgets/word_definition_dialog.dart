@@ -1,9 +1,12 @@
+// ignore_for_file: experimental_member_use
+
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:lumina/src/features/learning/data/repositories/word_repository.dart';
 import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
 import 'package:lumina/src/features/learning/data/repositories/learning_repository_provider.dart';
 
@@ -122,10 +125,12 @@ class WordDefinitionDialog extends ConsumerStatefulWidget {
 class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
   late AudioPlayer _audioPlayer;
   bool _isLoading = true;
-  bool _isStreaming = false;
+  bool _isFetchingExplanation = false;
+  bool _isFetchingAudio = false;
   String _explanation = '';
   String? _pronunciationUrl; // 本地路径或 null
-  String? _error;
+  String? _explanationError;
+  String? _audioError;
   _StreamingAudioSource? _streamingSource;
   bool _isDisposed = false;
 
@@ -160,120 +165,137 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
 
       final repository = ref.read(wordRepositoryProvider);
 
-      // 1. 获取基础信息（主要检查缓存）
       final result = await repository.getWordInfo(widget.word, widget.context);
+      if (!mounted) return;
 
-      if (result.isFromCache) {
+      setState(() {
+        _explanation = result.explanation ?? '';
+        _pronunciationUrl = result.audioUrl;
+        _isLoading = false;
+        _isFetchingExplanation = !result.hasCachedExplanation;
+        _isFetchingAudio = !result.hasCachedAudio;
+        _explanationError = null;
+        _audioError = null;
+      });
+
+      await _prepareLocalAudioSource();
+
+      if (!result.hasCachedAudio) {
+        unawaited(_fetchAndCacheAudio(repository));
+      }
+
+      if (result.hasCachedExplanation) {
         if (mounted) {
           setState(() {
-            _explanation = result.explanation ?? '';
-            _pronunciationUrl = result.audioUrl;
-            _isLoading = false;
+            _isFetchingExplanation = false;
           });
-          // 如果有缓存音频，立即设置源
-          if (_pronunciationUrl != null && !_isDisposed) {
-            final file = File(_pronunciationUrl!);
-            if (await file.exists()) {
-              await _audioPlayer.setFilePath(_pronunciationUrl!);
-            }
-          }
         }
-        return;
+      } else {
+        await _fetchExplanation(repository);
       }
-
-      // 2. 无缓存：同时启动音频和 AI
+    } catch (e) {
       if (mounted) {
         setState(() {
-          _pronunciationUrl = result.audioUrl; // 如果本地已有音频，直接设置
+          _explanationError = _formatError(e);
           _isLoading = false;
-          _isStreaming = true;
+          _isFetchingExplanation = false;
+          _isFetchingAudio = false;
         });
       }
+    }
+  }
 
-      final audioCompleter = Completer<String?>();
+  Future<void> _prepareLocalAudioSource() async {
+    if (_pronunciationUrl == null || _isDisposed) {
+      return;
+    }
 
-      // 如果已有音频，直接完成 Completer，不再下载
-      if (result.audioUrl != null) {
-        audioCompleter.complete(result.audioUrl);
-      } else {
-        // 只有在没有音频时，才并行启动音频获取
-        Future.microtask(() async {
-          try {
-            if (!mounted) {
-              audioCompleter.complete(null);
-              return;
-            }
-            final audioResultStream = repository.getPronunciationStream(
-              widget.word,
-            );
+    final file = File(_pronunciationUrl!);
+    if (await file.exists()) {
+      await _audioPlayer.setFilePath(_pronunciationUrl!);
+    }
+  }
 
-            // 获取流中的第一个（也是唯一一个）AudioStreamResult
-            await for (final result in audioResultStream) {
-              if (_isDisposed) break;
+  Future<String?> _fetchAndCacheAudio(WordRepository repository) async {
+    try {
+      final audioResultStream = repository.getPronunciationStream(widget.word);
 
-              _streamingSource = _StreamingAudioSource(
-                result.stream,
-                result.format,
-              );
+      await for (final result in audioResultStream) {
+        if (_isDisposed) {
+          return null;
+        }
 
-              // 立即设置播放源，实现流式播放准备
-              if (!_isDisposed) {
-                await _audioPlayer.setAudioSource(_streamingSource!);
-              }
+        _streamingSource?.dispose();
+        _streamingSource = _StreamingAudioSource(result.stream, result.format);
 
-              // 等待流结束并保存文件
-              while (mounted && !_streamingSource!.isFinished) {
-                await Future.delayed(const Duration(milliseconds: 100));
-              }
+        if (!_isDisposed) {
+          await _audioPlayer.setAudioSource(_streamingSource!);
+        }
 
-              if (!mounted) {
-                audioCompleter.complete(null);
-                return;
-              }
+        if (mounted) {
+          setState(() {
+            _audioError = null;
+          });
+        }
 
-              // 准备保存的数据：如果是 PCM，重新生成带有正确长度的 WAV 头部
-              List<int> bytesToSave = _streamingSource!.bytes;
-              if (result.format == AudioFormat.pcm) {
-                final pcmBytes = _streamingSource!.pcmBytes;
-                final correctHeader = WavHeaderUtil.generateWavHeader(
-                  pcmBytes.length,
-                  24000,
-                  1,
-                  16,
-                );
-                bytesToSave = [...correctHeader, ...pcmBytes];
-              }
+        while (!_isDisposed && !_streamingSource!.isFinished) {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
 
-              final filePath = await repository.saveAudioFile(
-                widget.word,
-                bytesToSave,
-              );
-              audioCompleter.complete(filePath);
+        if (_isDisposed) {
+          return null;
+        }
 
-              if (mounted) {
-                setState(() {
-                  _pronunciationUrl = filePath;
-                });
-              }
-              break; // 只处理第一个结果
-            }
-          } catch (e) {
-            debugPrint('Audio stream error: $e');
-            if (!audioCompleter.isCompleted) {
-              audioCompleter.complete(null);
-            }
-          }
-        });
+        List<int> bytesToSave = _streamingSource!.bytes;
+        if (result.format == AudioFormat.pcm) {
+          final pcmBytes = _streamingSource!.pcmBytes;
+          final correctHeader = WavHeaderUtil.generateWavHeader(
+            pcmBytes.length,
+            24000,
+            1,
+            16,
+          );
+          bytesToSave = [...correctHeader, ...pcmBytes];
+        }
+
+        final filePath = await repository.saveAudioFile(
+          widget.word,
+          bytesToSave,
+        );
+        await repository.persistAudioPath(widget.word, filePath);
+
+        if (mounted) {
+          setState(() {
+            _pronunciationUrl = filePath;
+          });
+        }
+        return filePath;
       }
 
-      // 并行启动 AI 解释流
+      throw StateError('音频服务没有返回可播放的音频');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _audioError = _formatError(e);
+        });
+      }
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingAudio = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchExplanation(WordRepository repository) async {
+    try {
       final stream = repository.getWordExplanationStream(
         widget.word,
         widget.context,
-        audioFilePathFuture: audioCompleter.future,
       );
 
-      // 优化：增加缓冲和节流，避免高频 setState 导致的 UI 卡顿
       String buffer = '';
       DateTime lastUpdateTime = DateTime.now();
       const updateInterval = Duration(milliseconds: 100);
@@ -287,32 +309,36 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
           setState(() {
             _explanation += buffer;
             buffer = '';
+            _explanationError = null;
           });
           lastUpdateTime = now;
         }
       }
 
-      // 处理剩余的缓冲内容
       if (buffer.isNotEmpty && mounted) {
         setState(() {
           _explanation += buffer;
-        });
-      }
-
-      if (mounted) {
-        setState(() {
-          _isStreaming = false;
+          _explanationError = null;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
-          _isLoading = false;
-          _isStreaming = false;
+          _explanationError = _formatError(e);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingExplanation = false;
         });
       }
     }
+  }
+
+  String _formatError(Object error) {
+    final text = error.toString().trim();
+    return text.isEmpty ? '请求失败，请稍后重试' : text;
   }
 
   Future<void> _playAudio() async {
@@ -375,7 +401,7 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (_isStreaming)
+              if (_isFetchingExplanation || _isFetchingAudio)
                 const Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: SizedBox(
@@ -399,15 +425,20 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
   }
 
   Widget _buildContent() {
-    if (_isLoading && _explanation.isEmpty) {
+    final hasAudio =
+        (_pronunciationUrl != null && _pronunciationUrl!.isNotEmpty) ||
+        _streamingSource != null;
+    final primaryError = _explanationError ?? _audioError;
+
+    if (_isLoading && _explanation.isEmpty && !hasAudio) {
       return const SizedBox(
         height: 100,
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_error != null && _explanation.isEmpty) {
-      return Text('加载失败: $_error');
+    if (primaryError != null && _explanation.isEmpty && !hasAudio) {
+      return Text('加载失败: $primaryError');
     }
 
     return SingleChildScrollView(
@@ -416,8 +447,7 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if ((_pronunciationUrl != null && _pronunciationUrl!.isNotEmpty) ||
-              _streamingSource != null)
+          if (hasAudio)
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Row(
@@ -431,6 +461,14 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
                 ],
               ),
             ),
+          if (_audioError != null && !hasAudio)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                '音频暂不可用：$_audioError',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           if (_explanation.isNotEmpty)
             RepaintBoundary(
               child: MarkdownBody(
@@ -441,7 +479,15 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
                 ),
               ),
             ),
-          if (_isStreaming && _explanation.isEmpty)
+          if (_explanationError != null && _explanation.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                '释义更新失败：$_explanationError',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          if (_isFetchingExplanation && _explanation.isEmpty)
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
