@@ -153,10 +153,7 @@ class EpubWebViewHandler {
       final dataPair = result.getRight().toNullable()!;
       _resourceCache[urlString] = dataPair;
 
-      return CustomSchemeResponse(
-        contentType: dataPair.$2,
-        data: dataPair.$1,
-      );
+      return CustomSchemeResponse(contentType: dataPair.$2, data: dataPair.$1);
     } catch (e) {
       final errorMessage = 'Error reading file: $e';
       return CustomSchemeResponse(

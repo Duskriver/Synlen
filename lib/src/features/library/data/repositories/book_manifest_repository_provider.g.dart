@@ -16,16 +16,16 @@ String _$bookManifestRepositoryHash() =>
 @ProviderFor(bookManifestRepository)
 final bookManifestRepositoryProvider =
     AutoDisposeProvider<BookManifestRepository>.internal(
-  bookManifestRepository,
-  name: r'bookManifestRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$bookManifestRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      bookManifestRepository,
+      name: r'bookManifestRepositoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$bookManifestRepositoryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
-typedef BookManifestRepositoryRef
-    = AutoDisposeProviderRef<BookManifestRepository>;
+typedef BookManifestRepositoryRef =
+    AutoDisposeProviderRef<BookManifestRepository>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

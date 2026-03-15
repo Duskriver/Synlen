@@ -39,9 +39,9 @@ class EpubImportService {
       // Pipeline: Hash → Check → Copy → Parse → Extract → Create → Save
       final String fileHash =
           precomputedHash ??
-          await _calculateHash(
-            file,
-          ).then((result) => result.getOrElse((error) => throw Exception(error)));
+          await _calculateHash(file).then(
+            (result) => result.getOrElse((error) => throw Exception(error)),
+          );
 
       final bookExists = await _checkBookExistence(fileHash);
       if (bookExists.isLeft()) {
@@ -212,9 +212,9 @@ class EpubImportService {
   /// Returns absolute path to the copied file
   Future<Either<String, String>> _copyToAppStorage(
     File sourceFile,
-    String fileHash,
-    {bool moveSourceFile = false}
-  ) async {
+    String fileHash, {
+    bool moveSourceFile = false,
+  }) async {
     try {
       final booksDir = Directory(
         '${AppStorage.documentsPath}${AppStorageConstants.booksDir}',

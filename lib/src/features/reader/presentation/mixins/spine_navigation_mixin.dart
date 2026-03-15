@@ -36,6 +36,10 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     return bookSession.getSpineItemUrl(index, anchor);
   }
 
+  String? getSpineProperties(int index) {
+    return bookSession.getSpineProperties(index);
+  }
+
   Future<void> loadCarousel({
     String anchor = 'top',
     int? overrideSpineIndex,
@@ -67,6 +71,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     final currToken = await rendererController.preloadCurrentChapter(
       currUrl,
       getAnchorsForSpine(currentSpinePath),
+      getSpineProperties(currIndex),
     );
     if (currToken != null) tokensForWait.add(currToken);
 
@@ -76,6 +81,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       final prevToken = await rendererController.preloadPreviousChapter(
         prevUrl,
         getAnchorsForSpine(prevSpinePath),
+        getSpineProperties(prevIndex),
       );
       if (prevToken != null) tokensForWait.add(prevToken);
     }
@@ -86,6 +92,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       final nextToken = await rendererController.preloadNextChapter(
         nextUrl,
         getAnchorsForSpine(nextSpinePath),
+        getSpineProperties(nextIndex),
       );
       if (nextToken != null) tokensForWait.add(nextToken);
     }
@@ -110,6 +117,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       await rendererController.preloadNextChapter(
         url,
         getAnchorsForSpine(nextSpinePath),
+        getSpineProperties(nextIndex),
       );
     }
   }
@@ -122,6 +130,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       await rendererController.preloadPreviousChapter(
         url,
         getAnchorsForSpine(prevSpinePath),
+        getSpineProperties(prevIndex),
       );
     }
   }

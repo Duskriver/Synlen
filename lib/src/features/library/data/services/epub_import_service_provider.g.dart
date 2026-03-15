@@ -15,14 +15,14 @@ String _$epubImportServiceHash() => r'b0db9f20cd3a4b92998840f283708275b9183ecd';
 @ProviderFor(epubImportService)
 final epubImportServiceProvider =
     AutoDisposeProvider<EpubImportService>.internal(
-  epubImportService,
-  name: r'epubImportServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$epubImportServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      epubImportService,
+      name: r'epubImportServiceProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$epubImportServiceHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef EpubImportServiceRef = AutoDisposeProviderRef<EpubImportService>;
 // ignore_for_file: type=lint

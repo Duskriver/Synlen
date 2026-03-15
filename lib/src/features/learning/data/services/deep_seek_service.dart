@@ -67,7 +67,10 @@ class DeepSeekService {
         data: {
           'model': _model,
           'messages': [
-            {"role": "system", "content": "你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。"},
+            {
+              "role": "system",
+              "content": "你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。",
+            },
             {
               'role': 'user',
               'content':
@@ -168,12 +171,13 @@ class DeepSeekService {
         data: {
           'model': _model,
           'messages': [
-            {"role": "system", "content": "你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。"},
+            {
+              "role": "system",
+              "content": "你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。",
+            },
             {
               'role': 'user',
-              'content':
-                  "优先显示原句及翻译，然后教我理解，最后分析它的语法和成分。'$sentence'",
-               
+              'content': "优先显示原句及翻译，然后教我理解，最后分析它的语法和成分。'$sentence'",
             },
           ],
           'stream': true,

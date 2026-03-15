@@ -51,21 +51,13 @@ class CoverFileFamily extends Family<AsyncValue<File?>> {
   /// Returns null if path is null/empty or file doesn't exist.
   ///
   /// Copied from [coverFile].
-  CoverFileProvider call(
-    String? relativePath,
-  ) {
-    return CoverFileProvider(
-      relativePath,
-    );
+  CoverFileProvider call(String? relativePath) {
+    return CoverFileProvider(relativePath);
   }
 
   @override
-  CoverFileProvider getProviderOverride(
-    covariant CoverFileProvider provider,
-  ) {
-    return call(
-      provider.relativePath,
-    );
+  CoverFileProvider getProviderOverride(covariant CoverFileProvider provider) {
+    return call(provider.relativePath);
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -92,23 +84,18 @@ class CoverFileProvider extends AutoDisposeFutureProvider<File?> {
   /// Returns null if path is null/empty or file doesn't exist.
   ///
   /// Copied from [coverFile].
-  CoverFileProvider(
-    String? relativePath,
-  ) : this._internal(
-          (ref) => coverFile(
-            ref as CoverFileRef,
-            relativePath,
-          ),
-          from: coverFileProvider,
-          name: r'coverFileProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$coverFileHash,
-          dependencies: CoverFileFamily._dependencies,
-          allTransitiveDependencies: CoverFileFamily._allTransitiveDependencies,
-          relativePath: relativePath,
-        );
+  CoverFileProvider(String? relativePath)
+    : this._internal(
+        (ref) => coverFile(ref as CoverFileRef, relativePath),
+        from: coverFileProvider,
+        name: r'coverFileProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$coverFileHash,
+        dependencies: CoverFileFamily._dependencies,
+        allTransitiveDependencies: CoverFileFamily._allTransitiveDependencies,
+        relativePath: relativePath,
+      );
 
   CoverFileProvider._internal(
     super._createNotifier, {
@@ -171,5 +158,6 @@ class _CoverFileProviderElement extends AutoDisposeFutureProviderElement<File?>
   @override
   String? get relativePath => (origin as CoverFileProvider).relativePath;
 }
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

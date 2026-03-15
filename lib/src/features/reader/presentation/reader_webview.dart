@@ -37,8 +37,13 @@ class ReaderWebViewController {
     return await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
-  Future<int?> loadFrame(String frame, String url, String anchors) async {
-    return await _webViewState?._loadFrame(frame, url, anchors);
+  Future<int?> loadFrame(
+    String frame,
+    String url,
+    String anchors,
+    String properties,
+  ) async {
+    return await _webViewState?._loadFrame(frame, url, anchors, properties);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
@@ -49,8 +54,8 @@ class ReaderWebViewController {
     await _webViewState?._restoreScrollPosition(ratio);
   }
 
-  Future<void> checkElementAt(double x, double y) async {
-    await _webViewState?._checkElementAt(x, y);
+  Future<void> checkLongPressElementAt(double x, double y) async {
+    await _webViewState?._checkLongPressElementAt(x, y);
   }
 
   Future<void> checkTapElementAt(double x, double y) async {
@@ -94,6 +99,9 @@ final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
   supportZoom: false,
   useHybridComposition: false,
   resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+  verticalScrollBarEnabled: false,
+  horizontalScrollBarEnabled: false,
+  overScrollMode: OverScrollMode.NEVER,
 );
 
 /// Callbacks for WebView events
@@ -231,15 +239,20 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Future<int> _jumpToPageFor(String frame, int pageIndex) =>
       _api.jumpToPageFor(frame, pageIndex);
 
-  Future<int> _loadFrame(String frame, String url, String anchors) =>
-      _api.loadFrame(frame, url, anchors);
+  Future<int> _loadFrame(
+    String frame,
+    String url,
+    String anchors,
+    String properties,
+  ) => _api.loadFrame(frame, url, anchors, properties);
 
   Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 
   Future<void> _restoreScrollPosition(double ratio) =>
       _api.restoreScrollPosition(ratio);
 
-  Future<void> _checkElementAt(double x, double y) => _api.checkElementAt(x, y);
+  Future<void> _checkLongPressElementAt(double x, double y) =>
+      _api.checkLongPressElementAt(x, y);
 
   Future<void> _checkTapElementAt(double x, double y) =>
       _api.checkTapElementAt(x, y);

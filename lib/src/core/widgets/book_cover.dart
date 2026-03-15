@@ -1,19 +1,21 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 
-/// Book cover widget with gapless playback.
+import '../providers/cover_file_provider.dart';
+
+/// Book cover widget with Riverpod-based caching and gapless playback.
 /// Parent should handle clipping with ClipRRect if rounded corners are needed.
-class BookCover extends StatelessWidget {
+class BookCover extends ConsumerWidget {
   static const double _coverAspectRatio = 210 / 297;
+  static const int globalCacheHeight = 900;
+
   final String? relativePath;
   final BorderRadius radius;
   final bool enableBorder;
   final int cacheHeight;
-  static const int globalCacheHeight = 900;
 
   const BookCover({
     super.key,
@@ -31,64 +33,60 @@ class BookCover extends StatelessWidget {
         lowerPath.endsWith('.webp');
   }
 
-  File? _resolveCoverFile() {
-    if (relativePath == null || relativePath!.isEmpty) {
-      return null;
-    }
-
-    if (!_isWellImageFile(relativePath!)) {
-      return null;
-    }
-
-    try {
-      final decodedPath = Uri.decodeFull(relativePath!);
-      return File('${AppStorage.documentsPath}$decodedPath');
-    } catch (_) {
-      return null;
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final file = _resolveCoverFile();
-    if (file == null) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final coverFileAsync = ref.watch(coverFileProvider(relativePath));
+    if (!_isWellImageFile(relativePath ?? '')) {
       return _buildPlaceholder(context);
     }
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(borderRadius: radius),
-      foregroundDecoration: BoxDecoration(
-        borderRadius: radius,
-        border: enableBorder
-            ? Border.all(color: Theme.of(context).dividerColor, width: 1)
-            : null,
-      ),
-      child: Image.file(
-        file,
-        fit: BoxFit.cover,
-        cacheHeight: cacheHeight,
-        cacheWidth: (cacheHeight * _coverAspectRatio).round(),
-        filterQuality: FilterQuality.low,
-        gaplessPlayback: true,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded) {
-            return child;
-          }
+    return coverFileAsync.when(
+      loading: () => _buildPlaceholder(context, showIcon: false),
+      error: (error, stack) => _buildPlaceholder(context, showIcon: false),
+      data: (file) {
+        if (file == null) {
+          return _buildPlaceholder(context);
+        }
 
-          return AnimatedOpacity(
-            opacity: frame == null ? 0.0 : 1.0,
-            duration: const Duration(
-              milliseconds: AppTheme.defaultLongAnimationDurationMs,
-            ),
-            curve: Curves.easeOut,
-            child: child,
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder(context, showIcon: false);
-        },
-      ),
+        return Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+          foregroundDecoration: BoxDecoration(
+            borderRadius: radius,
+            border: enableBorder
+                ? Border.all(color: Theme.of(context).dividerColor, width: 1)
+                : null,
+          ),
+          child: Image.file(
+            file,
+            fit: BoxFit.cover,
+            cacheHeight: cacheHeight,
+            cacheWidth: (cacheHeight * _coverAspectRatio).round(),
+            filterQuality: FilterQuality.low,
+            gaplessPlayback: true,
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded) {
+                return child;
+              }
+
+              return AnimatedOpacity(
+                opacity: frame == null ? 0.0 : 1.0,
+                duration: const Duration(
+                  milliseconds: AppTheme.defaultLongAnimationDurationMs,
+                ),
+                curve: Curves.easeOut,
+                child: child,
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return _buildPlaceholder(context, showIcon: false);
+            },
+          ),
+        );
+      },
     );
   }
 

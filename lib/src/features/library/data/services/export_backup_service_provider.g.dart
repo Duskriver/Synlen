@@ -19,14 +19,14 @@ String _$exportBackupServiceHash() =>
 @ProviderFor(exportBackupService)
 final exportBackupServiceProvider =
     AutoDisposeProvider<ExportBackupService>.internal(
-  exportBackupService,
-  name: r'exportBackupServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$exportBackupServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      exportBackupService,
+      name: r'exportBackupServiceProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$exportBackupServiceHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef ExportBackupServiceRef = AutoDisposeProviderRef<ExportBackupService>;
 // ignore_for_file: type=lint
