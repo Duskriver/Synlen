@@ -6,7 +6,7 @@ part of 'library_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$libraryNotifierHash() => r'97a6f1dbdcaf24d6730f0e47d682406ac7f8bcbd';
+String _$libraryNotifierHash() => r'c67105bd6651939e476552e189ceb6150cd7d257';
 
 /// Notifier for managing library operations with dependency injection
 ///
@@ -14,14 +14,14 @@ String _$libraryNotifierHash() => r'97a6f1dbdcaf24d6730f0e47d682406ac7f8bcbd';
 @ProviderFor(LibraryNotifier)
 final libraryNotifierProvider =
     AutoDisposeAsyncNotifierProvider<LibraryNotifier, LibraryState>.internal(
-      LibraryNotifier.new,
-      name: r'libraryNotifierProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$libraryNotifierHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  LibraryNotifier.new,
+  name: r'libraryNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$libraryNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$LibraryNotifier = AutoDisposeAsyncNotifier<LibraryState>;
 // ignore_for_file: type=lint

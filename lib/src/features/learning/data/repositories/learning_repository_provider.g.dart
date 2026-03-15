@@ -15,17 +15,17 @@ String _$freeDictionaryServiceHash() =>
 @ProviderFor(freeDictionaryService)
 final freeDictionaryServiceProvider =
     AutoDisposeProvider<FreeDictionaryService>.internal(
-      freeDictionaryService,
-      name: r'freeDictionaryServiceProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$freeDictionaryServiceHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  freeDictionaryService,
+  name: r'freeDictionaryServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$freeDictionaryServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-typedef FreeDictionaryServiceRef =
-    AutoDisposeProviderRef<FreeDictionaryService>;
+typedef FreeDictionaryServiceRef
+    = AutoDisposeProviderRef<FreeDictionaryService>;
 String _$deepSeekServiceHash() => r'77ca780a6061bbb0962705c37a33c8fa69d84b43';
 
 /// 提供 [DeepSeekService] 实例
@@ -86,14 +86,14 @@ String _$sentenceRepositoryHash() =>
 @ProviderFor(sentenceRepository)
 final sentenceRepositoryProvider =
     AutoDisposeProvider<SentenceRepository>.internal(
-      sentenceRepository,
-      name: r'sentenceRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$sentenceRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  sentenceRepository,
+  name: r'sentenceRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$sentenceRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef SentenceRepositoryRef = AutoDisposeProviderRef<SentenceRepository>;
 // ignore_for_file: type=lint

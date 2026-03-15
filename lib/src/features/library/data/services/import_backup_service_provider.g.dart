@@ -19,14 +19,14 @@ String _$importBackupServiceHash() =>
 @ProviderFor(importBackupService)
 final importBackupServiceProvider =
     AutoDisposeProvider<ImportBackupService>.internal(
-      importBackupService,
-      name: r'importBackupServiceProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$importBackupServiceHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  importBackupService,
+  name: r'importBackupServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$importBackupServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef ImportBackupServiceRef = AutoDisposeProviderRef<ImportBackupService>;
 // ignore_for_file: type=lint

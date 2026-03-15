@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:lumina/src/features/learning/domain/learning_exception.dart';
 
 import 'package:lumina/src/core/utils/wav_header_util.dart';
 
@@ -50,7 +51,7 @@ class AliyunTTSService {
       );
 
       if (response.statusCode != 200 || response.data == null) {
-        return;
+        throw const LearningException('音频服务暂时不可用');
       }
 
       final stream = response.data!.stream;
@@ -58,6 +59,7 @@ class AliyunTTSService {
           .cast<List<int>>()
           .transform(utf8.decoder)
           .transform(const LineSplitter());
+      var hasAudio = false;
 
       await for (final line in lineStream) {
         final trimmedLine = line.trim();
@@ -72,6 +74,7 @@ class AliyunTTSService {
             // 1. 优先尝试从 audio_bin 提取 (二进制流)
             final audioBin = output['audio_bin'];
             if (audioBin != null && audioBin is String && audioBin.isNotEmpty) {
+              hasAudio = true;
               yield base64.decode(audioBin);
               continue;
             }
@@ -81,6 +84,7 @@ class AliyunTTSService {
             if (audioData != null &&
                 audioData is String &&
                 audioData.isNotEmpty) {
+              hasAudio = true;
               yield base64.decode(audioData);
             }
           } catch (e) {
@@ -88,8 +92,15 @@ class AliyunTTSService {
           }
         }
       }
+      if (!hasAudio) {
+        throw const LearningException('音频服务没有返回音频数据');
+      }
     } catch (e) {
       debugPrint('AliyunTTSService error: $e');
+      if (e is LearningException) {
+        rethrow;
+      }
+      throw LearningException('音频请求失败: $e');
     }
   }
 

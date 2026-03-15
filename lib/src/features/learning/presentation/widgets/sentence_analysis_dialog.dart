@@ -1,9 +1,12 @@
+// ignore_for_file: experimental_member_use
+
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:lumina/src/features/learning/data/repositories/sentence_repository.dart';
 import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
 import 'package:lumina/src/features/learning/data/repositories/learning_repository_provider.dart';
 
@@ -118,10 +121,12 @@ class _SentenceAnalysisDialogState
     extends ConsumerState<SentenceAnalysisDialog> {
   late AudioPlayer _audioPlayer;
   bool _isLoading = true;
-  bool _isStreaming = false;
+  bool _isFetchingAnalysis = false;
+  bool _isFetchingAudio = false;
   String _analysis = '';
   String? _audioUrl; // 本地路径或 null
-  String? _error;
+  String? _analysisError;
+  String? _audioError;
   _StreamingAudioSource? _streamingSource;
   bool _isDisposed = false;
 
@@ -156,116 +161,143 @@ class _SentenceAnalysisDialogState
 
       final repository = ref.read(sentenceRepositoryProvider);
 
-      // 1. 获取基础信息（主要检查缓存）
       final result = await repository.getSentenceInfo(widget.sentence);
+      if (!mounted) return;
 
-      if (result.isFromCache) {
+      setState(() {
+        _analysis = result.analysis ?? '';
+        _audioUrl = result.audioUrl;
+        _isLoading = false;
+        _isFetchingAnalysis = !result.hasCachedAnalysis;
+        _isFetchingAudio = !result.hasCachedAudio;
+        _analysisError = null;
+        _audioError = null;
+      });
+
+      await _prepareLocalAudioSource();
+
+      Future<String?> audioFilePathFuture = Future<String?>.value(_audioUrl);
+      if (!result.hasCachedAudio) {
+        audioFilePathFuture = _fetchAndCacheAudio(repository);
+      }
+
+      if (result.hasCachedAnalysis) {
         if (mounted) {
           setState(() {
-            _analysis = result.analysis ?? '';
-            _audioUrl = result.audioUrl;
-            _isLoading = false;
+            _isFetchingAnalysis = false;
           });
-          // 如果有缓存音频，立即设置源
-          if (_audioUrl != null && !_isDisposed) {
-            final file = File(_audioUrl!);
-            if (await file.exists()) {
-              await _audioPlayer.setFilePath(_audioUrl!);
-            }
-          }
         }
-        return;
+      } else {
+        await _fetchAnalysis(repository, audioFilePathFuture);
       }
-
-      // 2. 无缓存：同时启动音频和 AI
+    } catch (e) {
       if (mounted) {
         setState(() {
-          _audioUrl = result.audioUrl; // 如果本地已有音频，直接设置
+          _analysisError = _formatError(e);
           _isLoading = false;
-          _isStreaming = true;
+          _isFetchingAnalysis = false;
+          _isFetchingAudio = false;
         });
       }
+    }
+  }
 
-      final audioCompleter = Completer<String?>();
+  Future<void> _prepareLocalAudioSource() async {
+    if (_audioUrl == null || _isDisposed) {
+      return;
+    }
 
-      // 如果已有音频，直接完成 Completer，不再下载
-      if (result.audioUrl != null) {
-        audioCompleter.complete(result.audioUrl);
-      } else {
-        // 只有在没有音频时，才并行启动音频获取
-        Future.microtask(() async {
-          try {
-            if (!mounted) {
-              audioCompleter.complete(null);
-              return;
-            }
-            final audioResultStream = repository.getPronunciationStream(
-              widget.sentence,
-            );
+    final file = File(_audioUrl!);
+    if (await file.exists()) {
+      await _audioPlayer.setFilePath(_audioUrl!);
+    }
+  }
 
-            await for (final result in audioResultStream) {
-              if (_isDisposed) break;
-
-              _streamingSource = _StreamingAudioSource(
-                result.stream,
-                result.format,
-              );
-
-              if (!_isDisposed) {
-                await _audioPlayer.setAudioSource(_streamingSource!);
-              }
-
-              while (mounted && !_streamingSource!.isFinished) {
-                await Future.delayed(const Duration(milliseconds: 100));
-              }
-
-              if (!mounted) {
-                audioCompleter.complete(null);
-                return;
-              }
-
-              // 准备保存的数据：如果是 PCM，重新生成带有正确长度的 WAV 头部
-              List<int> bytesToSave = _streamingSource!.bytes;
-              if (result.format == AudioFormat.pcm) {
-                final pcmBytes = _streamingSource!.pcmBytes;
-                final correctHeader = WavHeaderUtil.generateWavHeader(
-                  pcmBytes.length,
-                  24000,
-                  1,
-                  16,
-                );
-                bytesToSave = [...correctHeader, ...pcmBytes];
-              }
-
-              final filePath = await repository.saveAudioFile(
-                widget.sentence,
-                bytesToSave,
-              );
-              audioCompleter.complete(filePath);
-
-              if (mounted) {
-                setState(() {
-                  _audioUrl = filePath;
-                });
-              }
-              break;
-            }
-          } catch (e) {
-            debugPrint('Sentence audio stream error: $e');
-            if (!audioCompleter.isCompleted) {
-              audioCompleter.complete(null);
-            }
-          }
-        });
-      }
-
-      // 并行启动 AI 分析流
-      final stream = repository.getSentenceAnalysisStream(
+  Future<String?> _fetchAndCacheAudio(SentenceRepository repository) async {
+    try {
+      final audioResultStream = repository.getPronunciationStream(
         widget.sentence,
-        audioFilePathFuture: audioCompleter.future,
       );
 
-      // 优化：增加缓冲和节流，避免高频 setState 导致的 UI 卡顿
+      await for (final result in audioResultStream) {
+        if (_isDisposed) {
+          return null;
+        }
+
+        _streamingSource?.dispose();
+        _streamingSource = _StreamingAudioSource(result.stream, result.format);
+
+        if (!_isDisposed) {
+          await _audioPlayer.setAudioSource(_streamingSource!);
+        }
+
+        if (mounted) {
+          setState(() {
+            _audioError = null;
+          });
+        }
+
+        while (!_isDisposed && !_streamingSource!.isFinished) {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+
+        if (_isDisposed) {
+          return null;
+        }
+
+        List<int> bytesToSave = _streamingSource!.bytes;
+        if (result.format == AudioFormat.pcm) {
+          final pcmBytes = _streamingSource!.pcmBytes;
+          final correctHeader = WavHeaderUtil.generateWavHeader(
+            pcmBytes.length,
+            24000,
+            1,
+            16,
+          );
+          bytesToSave = [...correctHeader, ...pcmBytes];
+        }
+
+        final filePath = await repository.saveAudioFile(
+          widget.sentence,
+          bytesToSave,
+        );
+        await repository.persistAudioPath(widget.sentence, filePath);
+
+        if (mounted) {
+          setState(() {
+            _audioUrl = filePath;
+          });
+        }
+        return filePath;
+      }
+
+      throw StateError('音频服务没有返回可播放的音频');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _audioError = _formatError(e);
+        });
+      }
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingAudio = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchAnalysis(
+    SentenceRepository repository,
+    Future<String?> audioFilePathFuture,
+  ) async {
+    try {
+      final stream = repository.getSentenceAnalysisStream(
+        widget.sentence,
+        audioFilePathFuture: audioFilePathFuture,
+      );
+
       String buffer = '';
       DateTime lastUpdateTime = DateTime.now();
       const updateInterval = Duration(milliseconds: 100);
@@ -279,32 +311,36 @@ class _SentenceAnalysisDialogState
           setState(() {
             _analysis += buffer;
             buffer = '';
+            _analysisError = null;
           });
           lastUpdateTime = now;
         }
       }
 
-      // 处理剩余的缓冲内容
       if (buffer.isNotEmpty && mounted) {
         setState(() {
           _analysis += buffer;
-        });
-      }
-
-      if (mounted) {
-        setState(() {
-          _isStreaming = false;
+          _analysisError = null;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
-          _isLoading = false;
-          _isStreaming = false;
+          _analysisError = _formatError(e);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingAnalysis = false;
         });
       }
     }
+  }
+
+  String _formatError(Object error) {
+    final text = error.toString().trim();
+    return text.isEmpty ? '请求失败，请稍后重试' : text;
   }
 
   Future<void> _playAudio() async {
@@ -361,7 +397,7 @@ class _SentenceAnalysisDialogState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('句子分析', style: Theme.of(context).textTheme.headlineSmall),
-              if (_isStreaming)
+              if (_isFetchingAnalysis || _isFetchingAudio)
                 const Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: SizedBox(
@@ -385,15 +421,20 @@ class _SentenceAnalysisDialogState
   }
 
   Widget _buildContent() {
-    if (_isLoading && _analysis.isEmpty) {
+    final hasAudio =
+        (_audioUrl != null && _audioUrl!.isNotEmpty) ||
+        _streamingSource != null;
+    final primaryError = _analysisError ?? _audioError;
+
+    if (_isLoading && _analysis.isEmpty && !hasAudio) {
       return const SizedBox(
         height: 100,
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_error != null && _analysis.isEmpty) {
-      return Text('加载失败: $_error');
+    if (primaryError != null && _analysis.isEmpty && !hasAudio) {
+      return Text('加载失败: $primaryError');
     }
 
     return SingleChildScrollView(
@@ -402,8 +443,7 @@ class _SentenceAnalysisDialogState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if ((_audioUrl != null && _audioUrl!.isNotEmpty) ||
-              _streamingSource != null)
+          if (hasAudio)
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Row(
@@ -417,6 +457,14 @@ class _SentenceAnalysisDialogState
                 ],
               ),
             ),
+          if (_audioError != null && !hasAudio)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                '音频暂不可用：$_audioError',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           if (_analysis.isNotEmpty)
             RepaintBoundary(
               child: MarkdownBody(
@@ -427,7 +475,15 @@ class _SentenceAnalysisDialogState
                 ),
               ),
             ),
-          if (_isStreaming && _analysis.isEmpty)
+          if (_analysisError != null && _analysis.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                '分析更新失败：$_analysisError',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          if (_isFetchingAnalysis && _analysis.isEmpty)
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),

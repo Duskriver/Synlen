@@ -16,13 +16,17 @@ class SentenceLearningResult {
   final String? audioUrl;
 
   /// 是否是缓存结果
-  final bool isFromCache;
+  final bool hasCachedAnalysis;
+  final bool hasCachedAudio;
 
   SentenceLearningResult({
     this.analysis,
     this.audioUrl,
-    this.isFromCache = false,
+    this.hasCachedAnalysis = false,
+    this.hasCachedAudio = false,
   });
+
+  bool get isFullyCached => hasCachedAnalysis && hasCachedAudio;
 }
 
 /// 句子学习仓库，专门负责句子的语法分析、TTS 朗读及缓存逻辑
@@ -47,24 +51,14 @@ class SentenceRepository {
   /// 返回 [SentenceLearningResult]，如果 analysis 为 null 且 isFromCache 为 false，
   /// UI 应并行启动 getSentenceAnalysisStream 和 getPronunciationStream
   Future<SentenceLearningResult> getSentenceInfo(String sentence) async {
-    // 1. 优先检查缓存
     final cached = await getCachedSentence(sentence);
-    if (cached != null) {
-      return SentenceLearningResult(
-        analysis: cached.analysis,
-        audioUrl: cached.audioUrl, // 本地文件路径
-        isFromCache: true,
-      );
-    }
-
-    // 2. 无缓存情况：直接返回空结果，由 UI 决定并行逻辑
-    // 但在返回前，先检查本地是否已经有音频文件，如果有则直接返回路径
-    final existingFile = await _findExistingAudioFile(sentence);
+    final cachedAudioPath = await _resolveAudioPath(sentence, cached?.audioUrl);
 
     return SentenceLearningResult(
-      analysis: null,
-      audioUrl: existingFile?.path,
-      isFromCache: false,
+      analysis: cached?.analysis,
+      audioUrl: cachedAudioPath,
+      hasCachedAnalysis: cached?.analysis.isNotEmpty ?? false,
+      hasCachedAudio: cachedAudioPath != null,
     );
   }
 
@@ -74,13 +68,18 @@ class SentenceRepository {
     final audioDir = Directory('${appDir.path}/audio');
     if (!await audioDir.exists()) return null;
 
-    final safeHash = sentence.hashCode.toString();
-    final wavFile = File('${audioDir.path}/sentence_$safeHash.wav');
-    if (await wavFile.exists()) return wavFile;
+    final candidateKeys = <String>[
+      _stableSentenceHash(sentence),
+      sentence.hashCode.toString(),
+    ];
 
-    // 兼容旧的 .mp3 命名（如果有的话）
-    final mp3File = File('${audioDir.path}/sentence_$safeHash.mp3');
-    if (await mp3File.exists()) return mp3File;
+    for (final key in candidateKeys) {
+      final wavFile = File('${audioDir.path}/sentence_$key.wav');
+      if (await wavFile.exists()) return wavFile;
+
+      final mp3File = File('${audioDir.path}/sentence_$key.mp3');
+      if (await mp3File.exists()) return mp3File;
+    }
 
     return null;
   }
@@ -92,7 +91,7 @@ class SentenceRepository {
     if (!await audioDir.exists()) {
       await audioDir.create(recursive: true);
     }
-    final safeHash = sentence.hashCode.toString();
+    final safeHash = _stableSentenceHash(sentence);
     // 句子固定使用 .wav 因为来自阿里云 PCM
     return File('${audioDir.path}/sentence_$safeHash.wav');
   }
@@ -114,6 +113,17 @@ class SentenceRepository {
     final file = await _getAudioFile(sentence);
     await file.writeAsBytes(bytes);
     return file.path;
+  }
+
+  Future<void> persistAudioPath(String sentence, String audioPath) async {
+    final cached = await getCachedSentence(sentence);
+    if (cached == null) {
+      return;
+    }
+
+    cached.audioUrl = audioPath;
+    cached.lastUpdated = DateTime.now();
+    await _isar.writeTxn(() => _isar.sentenceAnalysis.put(cached));
   }
 
   /// 流式获取句子分析并自动持久化
@@ -138,13 +148,43 @@ class SentenceRepository {
 
     // 当 AI 分析流结束且内容有效时，保存到 Isar 缓存
     if (fullContent.isNotEmpty) {
-      final newCache = SentenceAnalysis()
-        ..sentence = sentence
-        ..analysis = fullContent
-        ..lastUpdated = DateTime.now()
-        ..audioUrl = audioPath;
+      final cached = await getCachedSentence(sentence);
+      final entry = cached ?? SentenceAnalysis()
+        ..sentence = sentence;
+      entry.analysis = fullContent;
+      entry.lastUpdated = DateTime.now();
+      entry.audioUrl = audioPath ?? entry.audioUrl;
 
-      await _isar.writeTxn(() => _isar.sentenceAnalysis.put(newCache));
+      await _isar.writeTxn(() => _isar.sentenceAnalysis.put(entry));
     }
   }
+
+  Future<String?> _resolveAudioPath(
+    String sentence,
+    String? preferredPath,
+  ) async {
+    if (preferredPath != null && preferredPath.isNotEmpty) {
+      final preferredFile = File(preferredPath);
+      if (await preferredFile.exists()) {
+        return preferredFile.path;
+      }
+    }
+
+    final existingFile = await _findExistingAudioFile(sentence);
+    return existingFile?.path;
+  }
+}
+
+String _stableSentenceHash(String sentence) {
+  var hash = 0xcbf29ce484222325;
+
+  for (var i = 0; i < sentence.length; i++) {
+    final codeUnit = sentence.codeUnitAt(i);
+    hash ^= codeUnit >> 8;
+    hash *= 0x100000001b3;
+    hash ^= codeUnit & 0xFF;
+    hash *= 0x100000001b3;
+  }
+
+  return hash.toUnsigned(64).toRadixString(16);
 }

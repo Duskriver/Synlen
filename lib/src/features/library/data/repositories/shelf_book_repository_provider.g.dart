@@ -16,14 +16,14 @@ String _$shelfBookRepositoryHash() =>
 @ProviderFor(shelfBookRepository)
 final shelfBookRepositoryProvider =
     AutoDisposeProvider<ShelfBookRepository>.internal(
-      shelfBookRepository,
-      name: r'shelfBookRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$shelfBookRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  shelfBookRepository,
+  name: r'shelfBookRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$shelfBookRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef ShelfBookRepositoryRef = AutoDisposeProviderRef<ShelfBookRepository>;
 // ignore_for_file: type=lint

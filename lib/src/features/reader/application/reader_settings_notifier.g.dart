@@ -11,19 +11,16 @@ String _$readerSettingsNotifierHash() =>
 
 /// See also [ReaderSettingsNotifier].
 @ProviderFor(ReaderSettingsNotifier)
-final readerSettingsNotifierProvider =
-    AutoDisposeNotifierProvider<
-      ReaderSettingsNotifier,
-      ReaderSettings
-    >.internal(
-      ReaderSettingsNotifier.new,
-      name: r'readerSettingsNotifierProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$readerSettingsNotifierHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+final readerSettingsNotifierProvider = AutoDisposeNotifierProvider<
+    ReaderSettingsNotifier, ReaderSettings>.internal(
+  ReaderSettingsNotifier.new,
+  name: r'readerSettingsNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$readerSettingsNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$ReaderSettingsNotifier = AutoDisposeNotifier<ReaderSettings>;
 // ignore_for_file: type=lint
