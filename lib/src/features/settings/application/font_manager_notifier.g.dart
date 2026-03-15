@@ -11,16 +11,19 @@ String _$fontManagerNotifierHash() =>
 
 /// See also [FontManagerNotifier].
 @ProviderFor(FontManagerNotifier)
-final fontManagerNotifierProvider = AutoDisposeNotifierProvider<
-    FontManagerNotifier, List<ImportedFont>>.internal(
-  FontManagerNotifier.new,
-  name: r'fontManagerNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$fontManagerNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final fontManagerNotifierProvider =
+    AutoDisposeNotifierProvider<
+      FontManagerNotifier,
+      List<ImportedFont>
+    >.internal(
+      FontManagerNotifier.new,
+      name: r'fontManagerNotifierProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$fontManagerNotifierHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef _$FontManagerNotifier = AutoDisposeNotifier<List<ImportedFont>>;
 // ignore_for_file: type=lint

@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/url_launcher/url_launcher.dart';
 import 'package:lumina/src/features/reader/data/services/volume_control_service.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../application/reader_settings_notifier.dart';
 import '../domain/reader_settings.dart';
@@ -119,8 +119,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   // Progress state (used by _ProgressMixin)
   @override
   String get displayProgress => _displayProgress;
-  String _displayProgress = '0.00%';
-  final ValueNotifier<String> _displayProgressNotifier = ValueNotifier('0.00%');
+  String _displayProgress = '';
+  final ValueNotifier<String> _displayProgressNotifier = ValueNotifier('');
 
   @override
   set displayProgress(String value) {

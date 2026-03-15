@@ -14,14 +14,14 @@ String _$libraryNotifierHash() => r'97a6f1dbdcaf24d6730f0e47d682406ac7f8bcbd';
 @ProviderFor(LibraryNotifier)
 final libraryNotifierProvider =
     AutoDisposeAsyncNotifierProvider<LibraryNotifier, LibraryState>.internal(
-  LibraryNotifier.new,
-  name: r'libraryNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$libraryNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      LibraryNotifier.new,
+      name: r'libraryNotifierProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$libraryNotifierHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef _$LibraryNotifier = AutoDisposeAsyncNotifier<LibraryState>;
 // ignore_for_file: type=lint

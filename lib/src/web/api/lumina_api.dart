@@ -24,8 +24,14 @@ class LuminaApi {
 
   /// Loads [url] into the iframe identified by [slot].
   /// [anchors] should be a JSON-encoded list: `'["id1","id2"]'`.
-  Future<int> loadFrame(String slot, String url, String anchors) => _bridge
-      .call((t) => "window.api.loadFrame($t, '$slot', '$url', $anchors)");
+  Future<int> loadFrame(
+    String slot,
+    String url,
+    String anchors,
+    String properties,
+  ) => _bridge.call(
+    (t) => "window.api.loadFrame($t, '$slot', '$url', $anchors, $properties)",
+  );
 
   /// Scrolls [slot]'s iframe to [pageIndex] without immediately awaiting.
   Future<int> jumpToPageFor(String slot, int pageIndex) =>
@@ -72,8 +78,8 @@ class LuminaApi {
   // ─── Fire-and-forget ───────────────────────────────────────────────
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
-  Future<void> checkElementAt(double x, double y) =>
-      _bridge.evaluate('window.api.checkElementAt($x, $y)');
+  Future<void> checkLongPressElementAt(double x, double y) =>
+      _bridge.evaluate('window.api.checkLongPressElementAt($x, $y)');
 
   /// Checks whether the tap at (x, y) hits a link, footnote, or other element.
   Future<void> checkTapElementAt(double x, double y) =>

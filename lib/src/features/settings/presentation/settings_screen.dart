@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/config/app_info.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/url_launcher/url_launcher.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_font_section.dart';
@@ -14,7 +15,6 @@ import 'package:lumina/src/features/settings/presentation/widgets/backup_tile.da
 import 'package:lumina/src/features/settings/presentation/widgets/check_update_tile.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Settings Screen - Shows app information, tips and credits
@@ -178,8 +178,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (await UrlLauncher.canLaunch(uri)) {
+      await UrlLauncher.launch(uri);
     }
   }
 
