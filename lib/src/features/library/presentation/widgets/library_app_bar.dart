@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -72,7 +71,6 @@ class _LibraryAppBarState extends State<LibraryAppBar>
   @override
   Widget build(BuildContext context) {
     final isSelectionMode = widget.state.isSelectionMode;
-    final logoSvgPath = 'assets/logos/logo.svg';
 
     // Rebuild the SliverAppBar on every animation tick so that
     // bottom.preferredSize.height shrinks/grows smoothly.
@@ -108,28 +106,22 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                         context,
                       )!.selected(widget.state.selectedCount),
                     )
-                  : IconButton(
-                      padding: EdgeInsets.only(
-                        left: 0,
-                        right: 32,
-                        top: 16,
-                        bottom: 16,
+                  : TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.only(right: 24),
+                        minimumSize: const Size(48, 48),
+                        alignment: Alignment.centerLeft,
+                        foregroundColor: Theme.of(context).colorScheme.onSurface,
                       ),
-                      alignment: Alignment.centerLeft,
-                      constraints: const BoxConstraints(
-                        minWidth: 48,
-                        minHeight: 48,
-                      ),
-                      hoverColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      splashColor: Colors.transparent,
                       onPressed: () => context.push('/settings'),
-                      icon: SvgPicture.asset(
-                        logoSvgPath,
-                        height: 16,
-                        colorFilter: ColorFilter.mode(
-                          Theme.of(context).colorScheme.onSurface,
-                          BlendMode.srcIn,
+                      child: Text(
+                        'Synlen',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          fontStyle: FontStyle.italic,
+                          letterSpacing: 0.4,
+                          height: 1,
                         ),
                       ),
                     ),

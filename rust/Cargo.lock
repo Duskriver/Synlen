@@ -507,17 +507,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
-name = "synlen_rust"
-version = "0.1.0"
-dependencies = [
- "flutter_rust_bridge",
- "once_cell",
- "parking_lot",
- "positioned-io",
- "rc-zip",
-]
-
-[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -827,6 +816,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "synlen_rust"
+version = "0.1.0"
+dependencies = [
+ "flutter_rust_bridge",
+ "once_cell",
+ "parking_lot",
+ "positioned-io",
+ "rc-zip",
+]
+
+[[package]]
 name = "threadpool"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -992,4 +992,3 @@ checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
 dependencies = [
  "memchr",
 ]
-
