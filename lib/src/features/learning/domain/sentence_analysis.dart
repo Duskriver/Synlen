@@ -15,9 +15,6 @@ class SentenceAnalysis {
   /// 分析内容 (Markdown 格式)
   late String analysis;
 
-  /// 朗读音频 URL
-  String? audioUrl;
-
   /// 最后更新时间
   late DateTime lastUpdated;
 }

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'sentence_analysis.dart';
+part of 'sentence_pronunciation.dart';
 
 // **************************************************************************
 // IsarCollectionGenerator
@@ -9,17 +9,18 @@ part of 'sentence_analysis.dart';
 // coverage:ignore-file
 // ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
 
-extension GetSentenceAnalysisCollection on Isar {
-  IsarCollection<SentenceAnalysis> get sentenceAnalysis => this.collection();
+extension GetSentencePronunciationCollection on Isar {
+  IsarCollection<SentencePronunciation> get sentencePronunciations =>
+      this.collection();
 }
 
-const SentenceAnalysisSchema = CollectionSchema(
-  name: r'SentenceAnalysis',
-  id: 4237526127947078241,
+const SentencePronunciationSchema = CollectionSchema(
+  name: r'SentencePronunciation',
+  id: -8841789925205684871,
   properties: {
-    r'analysis': PropertySchema(
+    r'audioUrl': PropertySchema(
       id: 0,
-      name: r'analysis',
+      name: r'audioUrl',
       type: IsarType.string,
     ),
     r'lastUpdated': PropertySchema(
@@ -33,10 +34,10 @@ const SentenceAnalysisSchema = CollectionSchema(
       type: IsarType.string,
     )
   },
-  estimateSize: _sentenceAnalysisEstimateSize,
-  serialize: _sentenceAnalysisSerialize,
-  deserialize: _sentenceAnalysisDeserialize,
-  deserializeProp: _sentenceAnalysisDeserializeProp,
+  estimateSize: _sentencePronunciationEstimateSize,
+  serialize: _sentencePronunciationSerialize,
+  deserialize: _sentencePronunciationDeserialize,
+  deserializeProp: _sentencePronunciationDeserializeProp,
   idName: r'id',
   indexes: {
     r'sentence': IndexSchema(
@@ -55,49 +56,54 @@ const SentenceAnalysisSchema = CollectionSchema(
   },
   links: {},
   embeddedSchemas: {},
-  getId: _sentenceAnalysisGetId,
-  getLinks: _sentenceAnalysisGetLinks,
-  attach: _sentenceAnalysisAttach,
+  getId: _sentencePronunciationGetId,
+  getLinks: _sentencePronunciationGetLinks,
+  attach: _sentencePronunciationAttach,
   version: '3.1.0+1',
 );
 
-int _sentenceAnalysisEstimateSize(
-  SentenceAnalysis object,
+int _sentencePronunciationEstimateSize(
+  SentencePronunciation object,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.analysis.length * 3;
+  {
+    final value = object.audioUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.sentence.length * 3;
   return bytesCount;
 }
 
-void _sentenceAnalysisSerialize(
-  SentenceAnalysis object,
+void _sentencePronunciationSerialize(
+  SentencePronunciation object,
   IsarWriter writer,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.analysis);
+  writer.writeString(offsets[0], object.audioUrl);
   writer.writeDateTime(offsets[1], object.lastUpdated);
   writer.writeString(offsets[2], object.sentence);
 }
 
-SentenceAnalysis _sentenceAnalysisDeserialize(
+SentencePronunciation _sentencePronunciationDeserialize(
   Id id,
   IsarReader reader,
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = SentenceAnalysis();
-  object.analysis = reader.readString(offsets[0]);
+  final object = SentencePronunciation();
+  object.audioUrl = reader.readStringOrNull(offsets[0]);
   object.id = id;
   object.lastUpdated = reader.readDateTime(offsets[1]);
   object.sentence = reader.readString(offsets[2]);
   return object;
 }
 
-P _sentenceAnalysisDeserializeProp<P>(
+P _sentencePronunciationDeserializeProp<P>(
   IsarReader reader,
   int propertyId,
   int offset,
@@ -105,7 +111,7 @@ P _sentenceAnalysisDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
       return (reader.readDateTime(offset)) as P;
     case 2:
@@ -115,25 +121,27 @@ P _sentenceAnalysisDeserializeProp<P>(
   }
 }
 
-Id _sentenceAnalysisGetId(SentenceAnalysis object) {
+Id _sentencePronunciationGetId(SentencePronunciation object) {
   return object.id;
 }
 
-List<IsarLinkBase<dynamic>> _sentenceAnalysisGetLinks(SentenceAnalysis object) {
+List<IsarLinkBase<dynamic>> _sentencePronunciationGetLinks(
+    SentencePronunciation object) {
   return [];
 }
 
-void _sentenceAnalysisAttach(
-    IsarCollection<dynamic> col, Id id, SentenceAnalysis object) {
+void _sentencePronunciationAttach(
+    IsarCollection<dynamic> col, Id id, SentencePronunciation object) {
   object.id = id;
 }
 
-extension SentenceAnalysisByIndex on IsarCollection<SentenceAnalysis> {
-  Future<SentenceAnalysis?> getBySentence(String sentence) {
+extension SentencePronunciationByIndex
+    on IsarCollection<SentencePronunciation> {
+  Future<SentencePronunciation?> getBySentence(String sentence) {
     return getByIndex(r'sentence', [sentence]);
   }
 
-  SentenceAnalysis? getBySentenceSync(String sentence) {
+  SentencePronunciation? getBySentenceSync(String sentence) {
     return getByIndexSync(r'sentence', [sentence]);
   }
 
@@ -145,13 +153,14 @@ extension SentenceAnalysisByIndex on IsarCollection<SentenceAnalysis> {
     return deleteByIndexSync(r'sentence', [sentence]);
   }
 
-  Future<List<SentenceAnalysis?>> getAllBySentence(
+  Future<List<SentencePronunciation?>> getAllBySentence(
       List<String> sentenceValues) {
     final values = sentenceValues.map((e) => [e]).toList();
     return getAllByIndex(r'sentence', values);
   }
 
-  List<SentenceAnalysis?> getAllBySentenceSync(List<String> sentenceValues) {
+  List<SentencePronunciation?> getAllBySentenceSync(
+      List<String> sentenceValues) {
     final values = sentenceValues.map((e) => [e]).toList();
     return getAllByIndexSync(r'sentence', values);
   }
@@ -166,37 +175,38 @@ extension SentenceAnalysisByIndex on IsarCollection<SentenceAnalysis> {
     return deleteAllByIndexSync(r'sentence', values);
   }
 
-  Future<Id> putBySentence(SentenceAnalysis object) {
+  Future<Id> putBySentence(SentencePronunciation object) {
     return putByIndex(r'sentence', object);
   }
 
-  Id putBySentenceSync(SentenceAnalysis object, {bool saveLinks = true}) {
+  Id putBySentenceSync(SentencePronunciation object, {bool saveLinks = true}) {
     return putByIndexSync(r'sentence', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllBySentence(List<SentenceAnalysis> objects) {
+  Future<List<Id>> putAllBySentence(List<SentencePronunciation> objects) {
     return putAllByIndex(r'sentence', objects);
   }
 
-  List<Id> putAllBySentenceSync(List<SentenceAnalysis> objects,
+  List<Id> putAllBySentenceSync(List<SentencePronunciation> objects,
       {bool saveLinks = true}) {
     return putAllByIndexSync(r'sentence', objects, saveLinks: saveLinks);
   }
 }
 
-extension SentenceAnalysisQueryWhereSort
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QWhere> {
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhere> anyId() {
+extension SentencePronunciationQueryWhereSort
+    on QueryBuilder<SentencePronunciation, SentencePronunciation, QWhere> {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhere>
+      anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
 }
 
-extension SentenceAnalysisQueryWhere
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QWhereClause> {
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause> idEqualTo(
-      Id id) {
+extension SentencePronunciationQueryWhere on QueryBuilder<SentencePronunciation,
+    SentencePronunciation, QWhereClause> {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
+      idEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IdWhereClause.between(
         lower: id,
@@ -205,7 +215,7 @@ extension SentenceAnalysisQueryWhere
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
       idNotEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
@@ -228,7 +238,7 @@ extension SentenceAnalysisQueryWhere
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
       idGreaterThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -237,7 +247,7 @@ extension SentenceAnalysisQueryWhere
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
       idLessThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
@@ -246,7 +256,8 @@ extension SentenceAnalysisQueryWhere
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause> idBetween(
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
+      idBetween(
     Id lowerId,
     Id upperId, {
     bool includeLower = true,
@@ -262,7 +273,7 @@ extension SentenceAnalysisQueryWhere
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
       sentenceEqualTo(String sentence) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
@@ -272,7 +283,7 @@ extension SentenceAnalysisQueryWhere
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterWhereClause>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterWhereClause>
       sentenceNotEqualTo(String sentence) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
@@ -308,65 +319,83 @@ extension SentenceAnalysisQueryWhere
   }
 }
 
-extension SentenceAnalysisQueryFilter
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QFilterCondition> {
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisEqualTo(
-    String value, {
+extension SentencePronunciationQueryFilter on QueryBuilder<
+    SentencePronunciation, SentencePronunciation, QFilterCondition> {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'audioUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'audioUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlEqualTo(
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'analysis',
+        property: r'audioUrl',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisGreaterThan(
-    String value, {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlGreaterThan(
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'analysis',
+        property: r'audioUrl',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisLessThan(
-    String value, {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlLessThan(
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'analysis',
+        property: r'audioUrl',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisBetween(
-    String lower,
-    String upper, {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlBetween(
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'analysis',
+        property: r'audioUrl',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -376,78 +405,80 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisStartsWith(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'analysis',
+        property: r'audioUrl',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisEndsWith(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'analysis',
+        property: r'audioUrl',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisContains(String value, {bool caseSensitive = true}) {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+          QAfterFilterCondition>
+      audioUrlContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'analysis',
+        property: r'audioUrl',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisMatches(String pattern, {bool caseSensitive = true}) {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+          QAfterFilterCondition>
+      audioUrlMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'analysis',
+        property: r'audioUrl',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisIsEmpty() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'analysis',
+        property: r'audioUrl',
         value: '',
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      analysisIsNotEmpty() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> audioUrlIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'analysis',
+        property: r'audioUrl',
         value: '',
       ));
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      idEqualTo(Id value) {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'id',
@@ -456,8 +487,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      idGreaterThan(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> idGreaterThan(
     Id value, {
     bool include = false,
   }) {
@@ -470,8 +501,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      idLessThan(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> idLessThan(
     Id value, {
     bool include = false,
   }) {
@@ -484,8 +515,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      idBetween(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> idBetween(
     Id lower,
     Id upper, {
     bool includeLower = true,
@@ -502,8 +533,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      lastUpdatedEqualTo(DateTime value) {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> lastUpdatedEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'lastUpdated',
@@ -512,8 +543,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      lastUpdatedGreaterThan(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> lastUpdatedGreaterThan(
     DateTime value, {
     bool include = false,
   }) {
@@ -526,8 +557,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      lastUpdatedLessThan(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> lastUpdatedLessThan(
     DateTime value, {
     bool include = false,
   }) {
@@ -540,8 +571,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      lastUpdatedBetween(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> lastUpdatedBetween(
     DateTime lower,
     DateTime upper, {
     bool includeLower = true,
@@ -558,8 +589,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceEqualTo(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceEqualTo(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -572,8 +603,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceGreaterThan(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -588,8 +619,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceLessThan(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceLessThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -604,8 +635,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceBetween(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -624,8 +655,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceStartsWith(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -638,8 +669,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceEndsWith(
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
@@ -652,7 +683,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+          QAfterFilterCondition>
       sentenceContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
@@ -663,7 +695,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+          QAfterFilterCondition>
       sentenceMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
@@ -674,8 +707,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceIsEmpty() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'sentence',
@@ -684,8 +717,8 @@ extension SentenceAnalysisQueryFilter
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterFilterCondition>
-      sentenceIsNotEmpty() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation,
+      QAfterFilterCondition> sentenceIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'sentence',
@@ -695,50 +728,50 @@ extension SentenceAnalysisQueryFilter
   }
 }
 
-extension SentenceAnalysisQueryObject
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QFilterCondition> {}
+extension SentencePronunciationQueryObject on QueryBuilder<
+    SentencePronunciation, SentencePronunciation, QFilterCondition> {}
 
-extension SentenceAnalysisQueryLinks
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QFilterCondition> {}
+extension SentencePronunciationQueryLinks on QueryBuilder<SentencePronunciation,
+    SentencePronunciation, QFilterCondition> {}
 
-extension SentenceAnalysisQuerySortBy
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QSortBy> {
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
-      sortByAnalysis() {
+extension SentencePronunciationQuerySortBy
+    on QueryBuilder<SentencePronunciation, SentencePronunciation, QSortBy> {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
+      sortByAudioUrl() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'analysis', Sort.asc);
+      return query.addSortBy(r'audioUrl', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
-      sortByAnalysisDesc() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
+      sortByAudioUrlDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'analysis', Sort.desc);
+      return query.addSortBy(r'audioUrl', Sort.desc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       sortByLastUpdated() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastUpdated', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       sortByLastUpdatedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastUpdated', Sort.desc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       sortBySentence() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sentence', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       sortBySentenceDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sentence', Sort.desc);
@@ -746,57 +779,58 @@ extension SentenceAnalysisQuerySortBy
   }
 }
 
-extension SentenceAnalysisQuerySortThenBy
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QSortThenBy> {
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
-      thenByAnalysis() {
+extension SentencePronunciationQuerySortThenBy
+    on QueryBuilder<SentencePronunciation, SentencePronunciation, QSortThenBy> {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
+      thenByAudioUrl() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'analysis', Sort.asc);
+      return query.addSortBy(r'audioUrl', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
-      thenByAnalysisDesc() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
+      thenByAudioUrlDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'analysis', Sort.desc);
+      return query.addSortBy(r'audioUrl', Sort.desc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy> thenById() {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
+      thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       thenByLastUpdated() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastUpdated', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       thenByLastUpdatedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastUpdated', Sort.desc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       thenBySentence() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sentence', Sort.asc);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QAfterSortBy>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QAfterSortBy>
       thenBySentenceDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sentence', Sort.desc);
@@ -804,23 +838,23 @@ extension SentenceAnalysisQuerySortThenBy
   }
 }
 
-extension SentenceAnalysisQueryWhereDistinct
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QDistinct> {
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QDistinct>
-      distinctByAnalysis({bool caseSensitive = true}) {
+extension SentencePronunciationQueryWhereDistinct
+    on QueryBuilder<SentencePronunciation, SentencePronunciation, QDistinct> {
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QDistinct>
+      distinctByAudioUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'analysis', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'audioUrl', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QDistinct>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QDistinct>
       distinctByLastUpdated() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastUpdated');
     });
   }
 
-  QueryBuilder<SentenceAnalysis, SentenceAnalysis, QDistinct>
+  QueryBuilder<SentencePronunciation, SentencePronunciation, QDistinct>
       distinctBySentence({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sentence', caseSensitive: caseSensitive);
@@ -828,28 +862,30 @@ extension SentenceAnalysisQueryWhereDistinct
   }
 }
 
-extension SentenceAnalysisQueryProperty
-    on QueryBuilder<SentenceAnalysis, SentenceAnalysis, QQueryProperty> {
-  QueryBuilder<SentenceAnalysis, int, QQueryOperations> idProperty() {
+extension SentencePronunciationQueryProperty on QueryBuilder<
+    SentencePronunciation, SentencePronunciation, QQueryProperty> {
+  QueryBuilder<SentencePronunciation, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
     });
   }
 
-  QueryBuilder<SentenceAnalysis, String, QQueryOperations> analysisProperty() {
+  QueryBuilder<SentencePronunciation, String?, QQueryOperations>
+      audioUrlProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'analysis');
+      return query.addPropertyName(r'audioUrl');
     });
   }
 
-  QueryBuilder<SentenceAnalysis, DateTime, QQueryOperations>
+  QueryBuilder<SentencePronunciation, DateTime, QQueryOperations>
       lastUpdatedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastUpdated');
     });
   }
 
-  QueryBuilder<SentenceAnalysis, String, QQueryOperations> sentenceProperty() {
+  QueryBuilder<SentencePronunciation, String, QQueryOperations>
+      sentenceProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'sentence');
     });

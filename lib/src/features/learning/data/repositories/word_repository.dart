@@ -1,15 +1,13 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
-import '../../domain/word_explanation.dart';
-import '../../domain/word_pronunciation.dart';
-
+import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
+import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/domain/word_explanation.dart';
+import 'package:synlen/src/features/learning/domain/word_pronunciation.dart';
 
 /// 单词学习结果
 class WordLearningResult {
@@ -38,26 +36,25 @@ class WordRepository {
   final FreeDictionaryService _freeDictionaryService;
   final DeepSeekService _deepSeekService;
   final AliyunTTSService _aliyunTTSService;
-  final Isar _isar;
+  final WordCacheStore _cacheStore;
+  final AudioFileStore _audioFileStore;
 
   WordRepository(
     this._freeDictionaryService,
     this._deepSeekService,
     this._aliyunTTSService,
-    this._isar,
+    this._cacheStore,
+    this._audioFileStore,
   );
 
   /// 从本地缓存获取单词信息
-  Future<WordExplanation?> getCachedWord(String word, String context) async {
-    // 使用确定的 Hash ID 直接查找，实现 O(1) 精确匹配
-    final id = WordExplanation.generateId(word, context);
-    return await _isar.wordExplanations.get(id);
+  Future<WordExplanation?> getCachedWord(String word, String context) {
+    return _cacheStore.getExplanation(word, context);
   }
 
   /// 从本地缓存获取单词发音信息
-  Future<WordPronunciation?> getCachedPronunciation(String word) async {
-    final id = WordPronunciation.generateId(word);
-    return await _isar.wordPronunciations.get(id);
+  Future<WordPronunciation?> getCachedPronunciation(String word) {
+    return _cacheStore.getPronunciation(word);
   }
 
   /// 获取单词的发音音频字节流结果（包含流和格式）
@@ -104,7 +101,10 @@ class WordRepository {
   Future<WordLearningResult> getWordInfo(String word, String context) async {
     final cachedExplanation = await getCachedWord(word, context);
     final cachedPronunciation = await getCachedPronunciation(word);
-    final audioPath = await _resolveAudioPath(word, cachedPronunciation?.audioUrl);
+    final audioPath = await _audioFileStore.resolveWordAudioPath(
+      word,
+      preferredPath: cachedPronunciation?.audioUrl,
+    );
 
     if (audioPath != null &&
         (cachedPronunciation == null ||
@@ -120,65 +120,13 @@ class WordRepository {
     );
   }
 
-  /// 查找本地已有的音频文件（支持 mp3 或 wav）
-  Future<File?> _findExistingAudioFile(String word) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final audioDir = Directory('${appDir.path}/audio');
-    if (!await audioDir.exists()) return null;
-
-    final safeWord = word.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final mp3File = File('${audioDir.path}/word_$safeWord.mp3');
-    if (await mp3File.exists()) return mp3File;
-
-    final wavFile = File('${audioDir.path}/word_$safeWord.wav');
-    if (await wavFile.exists()) return wavFile;
-
-    return null;
-  }
-
-  /// 获取确定性的音频文件对象
-  Future<File> _getAudioFile(String word, {bool isWav = false}) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final audioDir = Directory('${appDir.path}/audio');
-    if (!await audioDir.exists()) {
-      await audioDir.create(recursive: true);
-    }
-    final safeWord = word.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final ext = isWav ? '.wav' : '.mp3';
-    return File('${audioDir.path}/word_$safeWord$ext');
-  }
-
   /// 保存音频文件到本地并返回路径
-  Future<String> saveAudioFile(String word, List<int> bytes) async {
-    // 检查是否已经存在
-    final existing = await _findExistingAudioFile(word);
-    if (existing != null) return existing.path;
-
-    // 根据内容判断格式（WAV 头部以 'RIFF' 开头）
-    final isWav =
-        bytes.length > 4 &&
-        bytes[0] == 0x52 &&
-        bytes[1] == 0x49 &&
-        bytes[2] == 0x46 &&
-        bytes[3] == 0x46;
-
-    final file = await _getAudioFile(word, isWav: isWav);
-    await file.writeAsBytes(bytes);
-    return file.path;
+  Future<String> saveAudioFile(String word, List<int> bytes) {
+    return _audioFileStore.saveWordAudioFile(word, bytes);
   }
 
-  Future<void> persistAudioPath(String word, String audioPath) async {
-    final cached = await getCachedPronunciation(word);
-    final entry =
-        cached ??
-        (WordPronunciation()
-          ..id = WordPronunciation.generateId(word)
-          ..word = word);
-
-    entry.audioUrl = audioPath;
-    entry.lastUpdated = DateTime.now();
-
-    await _isar.writeTxn(() => _isar.wordPronunciations.put(entry));
+  Future<void> persistAudioPath(String word, String audioPath) {
+    return _cacheStore.savePronunciationPath(word, audioPath);
   }
 
   /// 流式获取单词解释并自动持久化
@@ -195,38 +143,11 @@ class WordRepository {
 
     // 当 AI 解释完成时，保存到 Isar 缓存
     if (fullContent.isNotEmpty) {
-      final cached = await getCachedWord(word, context);
-      final newCache =
-          cached ??
-          (WordExplanation()
-            ..id =
-                WordExplanation.generateId(
-                  word,
-                  context,
-                ) // 显式设置基于内容的 ID
-            ..word = word
-            ..context = context);
-
-      newCache
-        ..word = word
-        ..explanation = fullContent
-        ..lastUpdated = DateTime.now()
-        ..context = context;
-
-      await _isar.writeTxn(() => _isar.wordExplanations.put(newCache));
+      await _cacheStore.saveExplanation(
+        word: word,
+        context: context,
+        explanation: fullContent,
+      );
     }
-  }
-
-  Future<String?> _resolveAudioPath(String word, String? preferredPath) async {
-    if (preferredPath != null && preferredPath.isNotEmpty) {
-      final preferredFile = File(preferredPath);
-      if (await preferredFile.exists()) {
-        return preferredFile.path;
-      }
-    }
-
-    final existingFile = await _findExistingAudioFile(word);
-    return existingFile?.path;
   }
 }
-

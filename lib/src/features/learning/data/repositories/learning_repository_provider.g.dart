@@ -60,7 +60,79 @@ final aliyunTTSServiceProvider = AutoDisposeProvider<AliyunTTSService>.internal(
 );
 
 typedef AliyunTTSServiceRef = AutoDisposeProviderRef<AliyunTTSService>;
-String _$wordRepositoryHash() => r'd3ba539222df4e4fa8f1916892df188c7ab5ebaf';
+String _$learningAudioFileStoreHash() =>
+    r'4269f892b564a390ad8682d3ffca5f3e30754dee';
+
+/// See also [learningAudioFileStore].
+@ProviderFor(learningAudioFileStore)
+final learningAudioFileStoreProvider =
+    AutoDisposeProvider<LearningAudioFileStore>.internal(
+  learningAudioFileStore,
+  name: r'learningAudioFileStoreProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$learningAudioFileStoreHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef LearningAudioFileStoreRef
+    = AutoDisposeProviderRef<LearningAudioFileStore>;
+String _$wordLearningCacheStoreHash() =>
+    r'67bce2dc6b79634c10ae61376e58390ee3581dca';
+
+/// See also [wordLearningCacheStore].
+@ProviderFor(wordLearningCacheStore)
+final wordLearningCacheStoreProvider =
+    AutoDisposeProvider<WordLearningCacheStore>.internal(
+  wordLearningCacheStore,
+  name: r'wordLearningCacheStoreProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$wordLearningCacheStoreHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef WordLearningCacheStoreRef
+    = AutoDisposeProviderRef<WordLearningCacheStore>;
+String _$sentenceLearningCacheStoreHash() =>
+    r'259949859682368f751d2bbd4172d797f0dbfff2';
+
+/// See also [sentenceLearningCacheStore].
+@ProviderFor(sentenceLearningCacheStore)
+final sentenceLearningCacheStoreProvider =
+    AutoDisposeProvider<SentenceLearningCacheStore>.internal(
+  sentenceLearningCacheStore,
+  name: r'sentenceLearningCacheStoreProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$sentenceLearningCacheStoreHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef SentenceLearningCacheStoreRef
+    = AutoDisposeProviderRef<SentenceLearningCacheStore>;
+String _$sentencePronunciationCacheStoreHash() =>
+    r'109b8679ea5b091fd95bbbd0a3e06c37f30a15e3';
+
+/// See also [sentencePronunciationCacheStore].
+@ProviderFor(sentencePronunciationCacheStore)
+final sentencePronunciationCacheStoreProvider =
+    AutoDisposeProvider<SentencePronunciationCacheStore>.internal(
+  sentencePronunciationCacheStore,
+  name: r'sentencePronunciationCacheStoreProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$sentencePronunciationCacheStoreHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef SentencePronunciationCacheStoreRef
+    = AutoDisposeProviderRef<SentencePronunciationCacheStore>;
+String _$wordRepositoryHash() => r'ccd559fa6773808a4b4086dfe73ef7b48e716669';
 
 /// 提供 [WordRepository] 实例
 ///
@@ -78,7 +150,7 @@ final wordRepositoryProvider = AutoDisposeProvider<WordRepository>.internal(
 
 typedef WordRepositoryRef = AutoDisposeProviderRef<WordRepository>;
 String _$sentenceRepositoryHash() =>
-    r'6546e8c7cc9ce4eaa7eed4192f0b2ffe159b1675';
+    r'381b5c5e206abd759c0529e5c3eea19833978311';
 
 /// 提供 [SentenceRepository] 实例
 ///

@@ -7,6 +7,7 @@ import '../../features/library/domain/shelf_group.dart';
 import '../../features/learning/domain/word_explanation.dart';
 import '../../features/learning/domain/word_pronunciation.dart';
 import '../../features/learning/domain/sentence_analysis.dart';
+import '../../features/learning/domain/sentence_pronunciation.dart';
 import 'isar_database.dart';
 
 /// Concrete implementation of IsarDatabase
@@ -28,6 +29,7 @@ class IsarDatabaseImpl implements IsarDatabase {
         WordExplanationSchema, // Word explanation cache
         WordPronunciationSchema, // Word audio cache
         SentenceAnalysisSchema, // Sentence analysis cache
+        SentencePronunciationSchema, // Sentence audio cache
       ],
       directory: AppStorage.supportPath,
       inspector: kDebugMode, // Isar Inspector for debug builds only
@@ -42,4 +44,3 @@ class IsarDatabaseImpl implements IsarDatabase {
     _instance = null;
   }
 }
-
