@@ -1,11 +1,11 @@
-import 'dart:io';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
-import '../../domain/sentence_analysis.dart';
-
+import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
+import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache_store.dart';
+import 'package:synlen/src/features/learning/data/stores/sentence_pronunciation_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/domain/sentence_analysis.dart';
+import 'package:synlen/src/features/learning/domain/sentence_pronunciation.dart';
 
 /// 句子学习结果
 class SentenceLearningResult {
@@ -33,16 +33,25 @@ class SentenceLearningResult {
 class SentenceRepository {
   final DeepSeekService _deepSeekService;
   final AliyunTTSService _aliyunTTSService;
-  final Isar _isar;
+  final SentenceAnalysisStore _analysisCacheStore;
+  final SentencePronunciationStore _pronunciationCacheStore;
+  final AudioFileStore _audioFileStore;
 
-  SentenceRepository(this._deepSeekService, this._aliyunTTSService, this._isar);
+  SentenceRepository(
+    this._deepSeekService,
+    this._aliyunTTSService,
+    this._analysisCacheStore,
+    this._pronunciationCacheStore,
+    this._audioFileStore,
+  );
 
   /// 从本地缓存获取句子分析信息
-  Future<SentenceAnalysis?> getCachedSentence(String sentence) async {
-    return await _isar.sentenceAnalysis
-        .where()
-        .sentenceEqualTo(sentence)
-        .findFirst();
+  Future<SentenceAnalysis?> getCachedSentence(String sentence) {
+    return _analysisCacheStore.getSentence(sentence);
+  }
+
+  Future<SentencePronunciation?> getCachedPronunciation(String sentence) {
+    return _pronunciationCacheStore.getPronunciation(sentence);
   }
 
   /// 获取句子基础信息
@@ -51,49 +60,25 @@ class SentenceRepository {
   /// 返回 [SentenceLearningResult]，如果 analysis 为 null 且 isFromCache 为 false，
   /// UI 应并行启动 getSentenceAnalysisStream 和 getPronunciationStream
   Future<SentenceLearningResult> getSentenceInfo(String sentence) async {
-    final cached = await getCachedSentence(sentence);
-    final cachedAudioPath = await _resolveAudioPath(sentence, cached?.audioUrl);
+    final cachedAnalysis = await getCachedSentence(sentence);
+    final cachedPronunciation = await getCachedPronunciation(sentence);
+    final cachedAudioPath = await _audioFileStore.resolveSentenceAudioPath(
+      sentence,
+      preferredPath: cachedPronunciation?.audioUrl,
+    );
+
+    if (cachedAudioPath != null &&
+        (cachedPronunciation == null ||
+            cachedPronunciation.audioUrl != cachedAudioPath)) {
+      await persistAudioPath(sentence, cachedAudioPath);
+    }
 
     return SentenceLearningResult(
-      analysis: cached?.analysis,
+      analysis: cachedAnalysis?.analysis,
       audioUrl: cachedAudioPath,
-      hasCachedAnalysis: cached?.analysis.isNotEmpty ?? false,
+      hasCachedAnalysis: cachedAnalysis?.analysis.isNotEmpty ?? false,
       hasCachedAudio: cachedAudioPath != null,
     );
-  }
-
-  /// 查找本地已有的音频文件
-  Future<File?> _findExistingAudioFile(String sentence) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final audioDir = Directory('${appDir.path}/audio');
-    if (!await audioDir.exists()) return null;
-
-    final candidateKeys = <String>[
-      _stableSentenceHash(sentence),
-      sentence.hashCode.toString(),
-    ];
-
-    for (final key in candidateKeys) {
-      final wavFile = File('${audioDir.path}/sentence_$key.wav');
-      if (await wavFile.exists()) return wavFile;
-
-      final mp3File = File('${audioDir.path}/sentence_$key.mp3');
-      if (await mp3File.exists()) return mp3File;
-    }
-
-    return null;
-  }
-
-  /// 获取确定性的音频文件对象
-  Future<File> _getAudioFile(String sentence) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final audioDir = Directory('${appDir.path}/audio');
-    if (!await audioDir.exists()) {
-      await audioDir.create(recursive: true);
-    }
-    final safeHash = _stableSentenceHash(sentence);
-    // 句子固定使用 .wav 因为来自阿里云 PCM
-    return File('${audioDir.path}/sentence_$safeHash.wav');
   }
 
   /// 获取句子的发音音频字节流结果 (PCM)
@@ -105,34 +90,16 @@ class SentenceRepository {
   }
 
   /// 保存音频文件到本地并返回路径
-  Future<String> saveAudioFile(String sentence, List<int> bytes) async {
-    // 检查是否已经存在
-    final existing = await _findExistingAudioFile(sentence);
-    if (existing != null) return existing.path;
-
-    final file = await _getAudioFile(sentence);
-    await file.writeAsBytes(bytes);
-    return file.path;
+  Future<String> saveAudioFile(String sentence, List<int> bytes) {
+    return _audioFileStore.saveSentenceAudioFile(sentence, bytes);
   }
 
-  Future<void> persistAudioPath(String sentence, String audioPath) async {
-    final cached = await getCachedSentence(sentence);
-    if (cached == null) {
-      return;
-    }
-
-    cached.audioUrl = audioPath;
-    cached.lastUpdated = DateTime.now();
-    await _isar.writeTxn(() => _isar.sentenceAnalysis.put(cached));
+  Future<void> persistAudioPath(String sentence, String audioPath) {
+    return _pronunciationCacheStore.saveAudioPath(sentence, audioPath);
   }
 
   /// 流式获取句子分析并自动持久化
-  ///
-  /// [audioFilePathFuture] 预先获取的音频文件路径的 Future
-  Stream<String> getSentenceAnalysisStream(
-    String sentence, {
-    required Future<String?> audioFilePathFuture,
-  }) async* {
+  Stream<String> getSentenceAnalysisStream(String sentence) async* {
     String fullContent = '';
 
     // 调用 DeepSeek AI 进行句子分析
@@ -143,49 +110,12 @@ class SentenceRepository {
       yield chunk;
     }
 
-    // 等待音频文件保存完成
-    final audioPath = await audioFilePathFuture;
-
     // 当 AI 分析流结束且内容有效时，保存到 Isar 缓存
     if (fullContent.isNotEmpty) {
-      final cached = await getCachedSentence(sentence);
-      final entry = cached ?? SentenceAnalysis()
-        ..sentence = sentence;
-      entry.analysis = fullContent;
-      entry.lastUpdated = DateTime.now();
-      entry.audioUrl = audioPath ?? entry.audioUrl;
-
-      await _isar.writeTxn(() => _isar.sentenceAnalysis.put(entry));
+      await _analysisCacheStore.saveAnalysis(
+        sentence: sentence,
+        analysis: fullContent,
+      );
     }
   }
-
-  Future<String?> _resolveAudioPath(
-    String sentence,
-    String? preferredPath,
-  ) async {
-    if (preferredPath != null && preferredPath.isNotEmpty) {
-      final preferredFile = File(preferredPath);
-      if (await preferredFile.exists()) {
-        return preferredFile.path;
-      }
-    }
-
-    final existingFile = await _findExistingAudioFile(sentence);
-    return existingFile?.path;
-  }
 }
-
-String _stableSentenceHash(String sentence) {
-  var hash = 0xcbf29ce484222325;
-
-  for (var i = 0; i < sentence.length; i++) {
-    final codeUnit = sentence.codeUnitAt(i);
-    hash ^= codeUnit >> 8;
-    hash *= 0x100000001b3;
-    hash ^= codeUnit & 0xFF;
-    hash *= 0x100000001b3;
-  }
-
-  return hash.toUnsigned(64).toRadixString(16);
-}
-

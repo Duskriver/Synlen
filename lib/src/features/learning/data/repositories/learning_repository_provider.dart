@@ -1,4 +1,8 @@
 import 'package:synlen/src/core/database/providers.dart';
+import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
+import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache_store.dart';
+import 'package:synlen/src/features/learning/data/stores/sentence_pronunciation_cache_store.dart';
+import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
@@ -29,6 +33,33 @@ AliyunTTSService aliyunTTSService(AliyunTTSServiceRef ref) {
   return AliyunTTSService();
 }
 
+@riverpod
+LearningAudioFileStore learningAudioFileStore(LearningAudioFileStoreRef ref) {
+  return const LearningAudioFileStore();
+}
+
+@riverpod
+WordLearningCacheStore wordLearningCacheStore(WordLearningCacheStoreRef ref) {
+  final isar = ref.watch(isarProvider).requireValue;
+  return WordLearningCacheStore(isar);
+}
+
+@riverpod
+SentenceLearningCacheStore sentenceLearningCacheStore(
+  SentenceLearningCacheStoreRef ref,
+) {
+  final isar = ref.watch(isarProvider).requireValue;
+  return SentenceLearningCacheStore(isar);
+}
+
+@riverpod
+SentencePronunciationCacheStore sentencePronunciationCacheStore(
+  SentencePronunciationCacheStoreRef ref,
+) {
+  final isar = ref.watch(isarProvider).requireValue;
+  return SentencePronunciationCacheStore(isar);
+}
+
 // --- Repository Providers ---
 
 /// 提供 [WordRepository] 实例
@@ -37,13 +68,15 @@ WordRepository wordRepository(WordRepositoryRef ref) {
   final freeDictionaryService = ref.watch(freeDictionaryServiceProvider);
   final deepSeekService = ref.watch(deepSeekServiceProvider);
   final aliyunTTSService = ref.watch(aliyunTTSServiceProvider);
-  final isar = ref.watch(isarProvider).requireValue;
+  final cacheStore = ref.watch(wordLearningCacheStoreProvider);
+  final audioFileStore = ref.watch(learningAudioFileStoreProvider);
 
   return WordRepository(
     freeDictionaryService,
     deepSeekService,
     aliyunTTSService,
-    isar,
+    cacheStore,
+    audioFileStore,
   );
 }
 
@@ -52,8 +85,17 @@ WordRepository wordRepository(WordRepositoryRef ref) {
 SentenceRepository sentenceRepository(SentenceRepositoryRef ref) {
   final deepSeekService = ref.watch(deepSeekServiceProvider);
   final aliyunTTSService = ref.watch(aliyunTTSServiceProvider);
-  final isar = ref.watch(isarProvider).requireValue;
+  final analysisCacheStore = ref.watch(sentenceLearningCacheStoreProvider);
+  final pronunciationCacheStore = ref.watch(
+    sentencePronunciationCacheStoreProvider,
+  );
+  final audioFileStore = ref.watch(learningAudioFileStoreProvider);
 
-  return SentenceRepository(deepSeekService, aliyunTTSService, isar);
+  return SentenceRepository(
+    deepSeekService,
+    aliyunTTSService,
+    analysisCacheStore,
+    pronunciationCacheStore,
+    audioFileStore,
+  );
 }
-
