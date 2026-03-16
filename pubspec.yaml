@@ -2,7 +2,6 @@ name: synlen
 description: "Synlen Reader - A lightweight, cross-platform EPUB reader built with Flutter, supporting iOS and Android systems."
 publish_to: 'none'
 homepage: https://github.com/tltltltltltltltl/Synlen
-license: MIT
 
 version: 0.2.3+1
 
@@ -109,7 +108,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - LICENSE
+    - assets/licenses/lumina_mit.txt
     - assets/icons/icon.svg
     - assets/logos/logo.svg
 

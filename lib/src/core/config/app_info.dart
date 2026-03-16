@@ -14,6 +14,6 @@ class AppInfo {
 
   static const applicationLegalese =
       'Synlen is based on Lumina by MilkFeng. Original project licensed under MIT.';
-  static const bundledLicenseAsset = 'LICENSE';
+  static const bundledLicenseAsset = 'assets/licenses/lumina_mit.txt';
 }
 
