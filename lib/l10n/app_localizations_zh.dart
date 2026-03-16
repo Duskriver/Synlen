@@ -324,7 +324,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteFolderPath => '远程文件夹路径';
 
   @override
-  String get remoteFolderHint => 'CiJingReader/';
+  String get remoteFolderHint => 'SynlenReader/';
 
   @override
   String get folderPathRequired => '文件夹路径为必填项';

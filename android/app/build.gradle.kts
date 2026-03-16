@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.tanglei.cijing"
+    namespace = "com.tanglei.synlen"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.tanglei.cijing"
+        applicationId = "com.tanglei.synlen"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
@@ -88,3 +88,4 @@ dependencies {
     // DocumentFile for SAF folder traversal
     implementation("androidx.documentfile:documentfile:1.0.1")
 }
+

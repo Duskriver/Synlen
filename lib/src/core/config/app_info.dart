@@ -16,3 +16,4 @@ class AppInfo {
       'Synlen is based on Lumina by MilkFeng. Original project licensed under MIT.';
   static const bundledLicenseAsset = 'LICENSE';
 }
+

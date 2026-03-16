@@ -1,6 +1,6 @@
-import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
+import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
+import 'package:synlen/src/features/library/data/services/export_backup_service.dart';
+import 'package:synlen/src/features/library/data/services/export_backup_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../repositories/shelf_book_repository_provider.dart';
@@ -23,3 +23,4 @@ StorageCleanupService storageCleanupService(StorageCleanupServiceRef ref) {
     sharedPreferences: prefs,
   );
 }
+

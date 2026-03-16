@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../../core/widgets/book_cover.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -373,3 +373,4 @@ class _TocDrawerState extends State<TocDrawer> {
     );
   }
 }
+

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lumina/src/features/library/data/parsers/epub_zip_parser.dart';
+import 'package:synlen/src/features/library/data/parsers/epub_zip_parser.dart';
 
 void main() {
   group('EpubZipParser', () {
@@ -1128,3 +1128,4 @@ Uint8List _createEpubWithNavAndNcx() {
   final zipEncoder = ZipEncoder();
   return Uint8List.fromList(zipEncoder.encode(archive));
 }
+

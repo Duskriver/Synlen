@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:lumina/src/features/learning/domain/learning_exception.dart';
+import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class DeepSeekService {
   final Dio _dio = Dio();
@@ -235,3 +235,4 @@ class DeepSeekService {
     }
   }
 }
+

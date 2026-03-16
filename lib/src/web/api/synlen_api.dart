@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'webview_bridge.dart';
 
-/// Typed Dart mirror of the TypeScript `LuminaApi` interface
+/// Typed Dart mirror of the TypeScript `SynlenApi` interface
 /// (`web_assets/controller.js/api.ts`).
 ///
 /// Every public method corresponds 1-to-1 with its TypeScript counterpart.
@@ -15,10 +15,10 @@ import 'webview_bridge.dart';
 ///
 /// Methods that return `Future<void>` fire the JS call and await its
 /// completion before returning.
-class LuminaApi {
+class SynlenApi {
   final WebViewBridge _bridge;
 
-  LuminaApi(this._bridge);
+  SynlenApi(this._bridge);
 
   // ─── Token-based (deferred await) ──────────────────────────────────
 
@@ -85,3 +85,4 @@ class LuminaApi {
   Future<void> checkTapElementAt(double x, double y) =>
       _bridge.evaluate('window.api.checkTapElementAt($x, $y)');
 }
+

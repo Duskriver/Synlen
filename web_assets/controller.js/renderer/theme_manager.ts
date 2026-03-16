@@ -54,26 +54,26 @@ export class ThemeManager {
     const isV = this.frameMgr.isVertical();
 
     const fontFaceBlock = t.fontFileName
-      ? `@font-face { font-family: 'LuminaCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
+      ? `@font-face { font-family: 'SynlenCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
       : '';
-    const fontFamilyItem = t.fontFileName ? `--lumina-font-family: 'LuminaCustomFont';` : '';
+    const fontFamilyItem = t.fontFileName ? `--synlen-font-family: 'SynlenCustomFont';` : '';
 
     return fontFaceBlock + ' :root {'
-      + `--lumina-zoom: ${t.zoom};`
-      + `--lumina-safe-width: ${cfg.safeWidth}px;`
-      + `--lumina-safe-height: ${cfg.safeHeight}px;`
-      + `--lumina-padding-top: ${cfg.padding.top}px;`
-      + `--lumina-padding-left: ${cfg.padding.left}px;`
-      + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
-      + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
-      + `--lumina-surface-color: ${t.surfaceColor};`
-      + `--lumina-on-surface-color: ${t.onSurfaceColor};`
-      + `--lumina-primary-color: ${t.primaryColor};`
-      + `--lumina-primary-container-color: ${t.primaryContainerColor};`
-      + `--lumina-on-surface-variant-color: ${t.onSurfaceVariantColor};`
-      + `--lumina-outline-variant-color: ${t.outlineVariantColor};`
-      + `--lumina-surface-container-color: ${t.surfaceContainerColor};`
-      + `--lumina-surface-container-high-color: ${t.surfaceContainerHighColor};`
+      + `--synlen-zoom: ${t.zoom};`
+      + `--synlen-safe-width: ${cfg.safeWidth}px;`
+      + `--synlen-safe-height: ${cfg.safeHeight}px;`
+      + `--synlen-padding-top: ${cfg.padding.top}px;`
+      + `--synlen-padding-left: ${cfg.padding.left}px;`
+      + `--synlen-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
+      + `--synlen-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
+      + `--synlen-surface-color: ${t.surfaceColor};`
+      + `--synlen-on-surface-color: ${t.onSurfaceColor};`
+      + `--synlen-primary-color: ${t.primaryColor};`
+      + `--synlen-primary-container-color: ${t.primaryContainerColor};`
+      + `--synlen-on-surface-variant-color: ${t.onSurfaceVariantColor};`
+      + `--synlen-outline-variant-color: ${t.outlineVariantColor};`
+      + `--synlen-surface-container-color: ${t.surfaceContainerColor};`
+      + `--synlen-surface-container-high-color: ${t.surfaceContainerHighColor};`
       + fontFamilyItem
       + '}';
   }
@@ -89,29 +89,29 @@ export class ThemeManager {
     const t = cfg.theme;
     const isV = this.frameMgr.isVertical();
 
-    root.style.setProperty('--lumina-zoom', String(t.zoom));
-    root.style.setProperty('--lumina-safe-width', cfg.safeWidth + 'px');
-    root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
-    root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
-    root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
-    root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
-    root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
-    root.style.setProperty('--lumina-surface-color', t.surfaceColor);
-    root.style.setProperty('--lumina-on-surface-color', t.onSurfaceColor);
-    root.style.setProperty('--lumina-primary-color', t.primaryColor);
-    root.style.setProperty('--lumina-primary-container', t.primaryContainerColor);
-    root.style.setProperty('--lumina-on-surface-variant', t.onSurfaceVariantColor);
-    root.style.setProperty('--lumina-outline-variant', t.outlineVariantColor);
-    root.style.setProperty('--lumina-surface-container', t.surfaceContainerColor);
-    root.style.setProperty('--lumina-surface-container-high', t.surfaceContainerHighColor);
+    root.style.setProperty('--synlen-zoom', String(t.zoom));
+    root.style.setProperty('--synlen-safe-width', cfg.safeWidth + 'px');
+    root.style.setProperty('--synlen-safe-height', cfg.safeHeight + 'px');
+    root.style.setProperty('--synlen-padding-top', cfg.padding.top + 'px');
+    root.style.setProperty('--synlen-padding-left', cfg.padding.left + 'px');
+    root.style.setProperty('--synlen-reader-overflow-x', isV ? 'hidden' : 'auto');
+    root.style.setProperty('--synlen-reader-overflow-y', isV ? 'auto' : 'hidden');
+    root.style.setProperty('--synlen-surface-color', t.surfaceColor);
+    root.style.setProperty('--synlen-on-surface-color', t.onSurfaceColor);
+    root.style.setProperty('--synlen-primary-color', t.primaryColor);
+    root.style.setProperty('--synlen-primary-container', t.primaryContainerColor);
+    root.style.setProperty('--synlen-on-surface-variant', t.onSurfaceVariantColor);
+    root.style.setProperty('--synlen-outline-variant', t.outlineVariantColor);
+    root.style.setProperty('--synlen-surface-container', t.surfaceContainerColor);
+    root.style.setProperty('--synlen-surface-container-high', t.surfaceContainerHighColor);
 
     const overrideColor = iframe != null
       ? t.shouldOverrideTextColor && this.getOriginalBackgroundColor(iframe) == null
       : t.shouldOverrideTextColor;
 
-    body.classList.toggle('lumina-override-color', overrideColor);
-    body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
-    body.classList.toggle('lumina-override-font', !!(t.fontFileName));
+    body.classList.toggle('synlen-override-color', overrideColor);
+    body.classList.toggle('synlen-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
+    body.classList.toggle('synlen-override-font', !!(t.fontFileName));
 
     const existingStyle = doc.getElementById(styleId);
     if (existingStyle) {

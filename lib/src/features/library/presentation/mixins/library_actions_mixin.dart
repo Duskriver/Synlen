@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/file_handling/file_handling.dart';
-import 'package:lumina/src/features/library/presentation/widgets/import_progress_dialog.dart';
-import 'package:lumina/src/features/library/presentation/widgets/restore_progress_dialog.dart';
+import 'package:synlen/src/core/file_handling/file_handling.dart';
+import 'package:synlen/src/features/library/presentation/widgets/import_progress_dialog.dart';
+import 'package:synlen/src/features/library/presentation/widgets/restore_progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -397,3 +397,4 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     return (result?.trim().isNotEmpty ?? false) ? result : null;
   }
 }
+

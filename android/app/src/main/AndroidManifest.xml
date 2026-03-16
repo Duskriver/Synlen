@@ -71,7 +71,7 @@
         
         <!-- DocumentsProvider for exposing EPUB files through Storage Access Framework -->
         <provider
-            android:name=".LuminaDocumentsProvider"
+            android:name=".SynlenDocumentsProvider"
             android:authorities="${applicationId}.documents"
             android:exported="true"
             android:grantUriPermissions="true"
@@ -93,3 +93,4 @@
         </intent>
     </queries>
 </manifest>
+

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/l10n/app_localizations.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/settings/application/font_manager_notifier.dart';
-import 'package:lumina/src/features/settings/domain/imported_font.dart';
+import 'package:synlen/l10n/app_localizations.dart';
+import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/features/settings/application/font_manager_notifier.dart';
+import 'package:synlen/src/features/settings/domain/imported_font.dart';
 import 'settings_info_section.dart';
 
 /// Inline font management section embedded directly in the Settings screen.
@@ -137,3 +137,4 @@ class SettingsFontSection extends ConsumerWidget {
     }
   }
 }
+

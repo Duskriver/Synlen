@@ -1,5 +1,5 @@
 [package]
-name = "lumina_rust"
+name = "synlen_rust"
 version = "0.1.0"
 edition = "2021"
 

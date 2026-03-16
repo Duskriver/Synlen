@@ -9,7 +9,7 @@ import type {
   ThemeUpdate,
   Direction
 } from '../common/types';
-import { LuminaApi } from '../api/lumina_api';
+import { SynlenApi } from '../api/synlen_api';
 import { FlutterBridge } from '../api/flutter_bridge';
 import { applyTyp } from '../typ/typ';
 import { FrameManager } from './frame_manager';
@@ -17,7 +17,7 @@ import { PaginationManager } from './pagination';
 import { InteractionManager } from './interaction';
 import { ThemeManager } from './theme_manager';
 
-export class Renderer implements LuminaApi {
+export class Renderer implements SynlenApi {
   private state: ReaderState;
 
   private frameMgr: FrameManager;
@@ -236,17 +236,17 @@ export class Renderer implements LuminaApi {
       requestAnimationFrame(() => {
         const originalBgColor = this.themeMgr.getOriginalBackgroundColor(iframe);
         const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
-        doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
+        doc.body.classList.toggle('synlen-override-color', shouldOverrideColor);
         doc.body.classList.toggle(
-          'lumina-force-override-font',
+          'synlen-force-override-font',
           !!(this.state.config.theme.overrideFontFamily && this.state.config.theme.fontFileName)
         );
-        doc.body.classList.toggle('lumina-override-font', !!(this.state.config.theme.fontFileName));
-        doc.body.classList.toggle('lumina-is-vertical', this.frameMgr.isVertical());
+        doc.body.classList.toggle('synlen-override-font', !!(this.state.config.theme.fontFileName));
+        doc.body.classList.toggle('synlen-is-vertical', this.frameMgr.isVertical());
 
         const properties = this.state.properties[this.frameMgr.getSlotFromElement(iframe)] || [];
         for (const prop of properties) {
-          doc.body.classList.toggle('lumina-spine-property-' + prop, true);
+          doc.body.classList.toggle('synlen-spine-property-' + prop, true);
         }
         applyTyp(iframe);
 
@@ -335,3 +335,4 @@ export class Renderer implements LuminaApi {
     });
   }
 }
+

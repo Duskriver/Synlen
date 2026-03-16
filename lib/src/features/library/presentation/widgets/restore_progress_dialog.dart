@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:lumina/l10n/app_localizations.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/application/library_notifier.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
-import 'package:lumina/src/features/library/data/services/import_backup_service.dart';
-import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
+import 'package:synlen/l10n/app_localizations.dart';
+import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/features/library/application/library_notifier.dart';
+import 'package:synlen/src/features/library/application/progress_log.dart';
+import 'package:synlen/src/features/library/data/services/import_backup_service.dart';
+import 'package:synlen/src/features/library/presentation/widgets/progress_dialog.dart';
 
 /// Hosts the restore-backup progress dialog.
 /// Identical architecture to [_ImportProgressDialog] but interprets
@@ -106,3 +106,4 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
     );
   }
 }
+

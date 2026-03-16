@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
-import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
-import 'package:lumina/src/features/settings/domain/imported_font.dart';
+import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:synlen/src/features/settings/domain/imported_font.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'font_manager_notifier.g.dart';
@@ -113,3 +113,4 @@ class FontManagerNotifier extends _$FontManagerNotifier {
     await prefs.setString(_kImportedFonts, jsonStr);
   }
 }
+

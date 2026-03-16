@@ -1,5 +1,5 @@
-body.lumina-override-color {
-  color: var(--lumina-on-surface-color) !important;
+body.synlen-override-color {
+  color: var(--synlen-on-surface-color) !important;
 
   p,
   h1,
@@ -12,11 +12,11 @@ body.lumina-override-color {
   span,
   div,
   section {
-    color: var(--lumina-on-surface-color);
+    color: var(--synlen-on-surface-color);
   }
 
   ::selection {
-    background-color: var(--lumina-primary-container-color) !important;
+    background-color: var(--synlen-primary-container-color) !important;
     color: inherit !important;
   }
 
@@ -24,12 +24,12 @@ body.lumina-override-color {
   a:link,
   a:visited,
   a:active {
-    color: var(--lumina-primary-color);
+    color: var(--synlen-primary-color);
     text-decoration: none;
   }
 
   a:visited {
-    color: var(--lumina-primary-color) !important;
+    color: var(--synlen-primary-color) !important;
   }
 
   a * {
@@ -37,30 +37,30 @@ body.lumina-override-color {
   }
 
   blockquote {
-    background-color: var(--lumina-surface-container-color) !important;
-    border-color: var(--lumina-primary-color) !important;
-    color: var(--lumina-on-surface-variant-color) !important;
+    background-color: var(--synlen-surface-container-color) !important;
+    border-color: var(--synlen-primary-color) !important;
+    color: var(--synlen-on-surface-variant-color) !important;
   }
 
   hr {
-    background-color: var(--lumina-outline-variant-color) !important;
+    background-color: var(--synlen-outline-variant-color) !important;
   }
 
   code {
-    background-color: var(--lumina-surface-container-high-color) !important;
-    color: var(--lumina-primary-color) !important;
+    background-color: var(--synlen-surface-container-high-color) !important;
+    color: var(--synlen-primary-color) !important;
   }
 
   pre {
-    background-color: var(--lumina-surface-container-color) !important;
-    border: 1px solid var(--lumina-outline-variant-color) !important;
+    background-color: var(--synlen-surface-container-color) !important;
+    border: 1px solid var(--synlen-outline-variant-color) !important;
   }
 
   pre code {
-    color: var(--lumina-on-surface-variant-color) !important;
+    color: var(--synlen-on-surface-variant-color) !important;
   }
 
   figcaption {
-    color: var(--lumina-on-surface-variant-color) !important;
+    color: var(--synlen-on-surface-variant-color) !important;
   }
 }

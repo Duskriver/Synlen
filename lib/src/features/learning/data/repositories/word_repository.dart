@@ -3,13 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:lumina/src/features/learning/data/services/aliyun_tts_service.dart';
-import 'package:lumina/src/features/learning/data/services/deep_seek_service.dart';
-import 'package:lumina/src/features/learning/data/services/free_dictionary_service.dart';
+import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
+import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
+import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
 import '../../domain/word_explanation.dart';
 import '../../domain/word_pronunciation.dart';
 
-import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 
 /// 单词学习结果
 class WordLearningResult {
@@ -229,3 +229,4 @@ class WordRepository {
     return existingFile?.path;
   }
 }
+

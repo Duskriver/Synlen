@@ -5,7 +5,7 @@ import WebKit
 /// Flutter plugin that drives slide-transition page-turn animations inside the
 /// 词镜 reader by snapshotting the active `WKWebView` and animating it.
 ///
-/// Channel: `cijing/reader_page_turn`
+/// Channel: `synlen/reader_page_turn`
 /// Methods:
 ///   - `preparePageTurn`   → snapshots the current web view (returns nil / error)
 ///   - `animatePageTurn`   → slides the snapshot away revealing the new content
@@ -31,7 +31,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "cijing/reader_page_turn",
+      name: "synlen/reader_page_turn",
       binaryMessenger: registrar.messenger()
     )
     let instance = ReaderPageTurnPlugin()
@@ -227,3 +227,4 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
     return nil
   }
 }
+

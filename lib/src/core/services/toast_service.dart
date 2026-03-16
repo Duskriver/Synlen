@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
 
 import '../widgets/toast_bubble.dart';
 
@@ -176,3 +176,4 @@ class _ToastOverlayState extends State<_ToastOverlay>
     );
   }
 }
+

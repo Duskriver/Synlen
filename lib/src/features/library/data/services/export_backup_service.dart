@@ -11,8 +11,8 @@ import '../../domain/shelf_book.dart';
 import '../../domain/shelf_group.dart';
 import '../book_manifest_repository.dart';
 import '../shelf_book_repository.dart';
-import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/core/storage/app_storage_constants.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/core/storage/app_storage_constants.dart';
 
 /// Result of an export operation.
 sealed class ExportResult {
@@ -337,3 +337,4 @@ class ExportBackupService {
     'children': t.children.map(_tocItemToMap).toList(),
   };
 }
+

@@ -1,16 +1,16 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/l10n/app_localizations.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/core/theme/app_theme_settings.dart';
-import 'package:lumina/src/core/widgets/integer_stepper.dart';
-import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
-import 'package:lumina/src/core/widgets/settings_section_title.dart';
-import 'package:lumina/src/core/widgets/settings_sub_label.dart';
-import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
-import 'package:lumina/src/features/reader/domain/reader_settings.dart';
+import 'package:synlen/l10n/app_localizations.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/core/theme/app_theme_settings.dart';
+import 'package:synlen/src/core/widgets/integer_stepper.dart';
+import 'package:synlen/src/core/widgets/labeled_switch_tile.dart';
+import 'package:synlen/src/core/widgets/settings_section_title.dart';
+import 'package:synlen/src/core/widgets/settings_sub_label.dart';
+import 'package:synlen/src/core/widgets/theme_variant_chip.dart';
+import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 import 'reader_font_selector.dart';
 import 'reader_link_handling_selector.dart';
@@ -114,11 +114,11 @@ class _ReaderStyleBottomSheetState
                               final fullWidth = constraints.maxWidth + 48;
 
                               final lightPresets =
-                                  LuminaThemePreset.lightPresets;
-                              final darkPresets = LuminaThemePreset.darkPresets;
+                                  SynlenThemePreset.lightPresets;
+                              final darkPresets = SynlenThemePreset.darkPresets;
 
                               // Build a plain Row of chips for the given preset list.
-                              Row presetRow(List<LuminaThemePreset> presets) {
+                              Row presetRow(List<SynlenThemePreset> presets) {
                                 return Row(
                                   children: presets.map((preset) {
                                     return Padding(
@@ -346,3 +346,4 @@ class _ReaderStyleBottomSheetState
     );
   }
 }
+

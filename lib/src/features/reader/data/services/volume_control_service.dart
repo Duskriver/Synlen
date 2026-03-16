@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 
 class VolumeControlService {
   static const MethodChannel _methodChannel = MethodChannel(
-    'cijing/volume_control',
+    'synlen/volume_control',
   );
   static const EventChannel _eventChannel = EventChannel(
-    'cijing/volume_events',
+    'synlen/volume_events',
   );
 
   static Future<void> enableInterception() async {
@@ -37,3 +37,4 @@ class VolumeControlService {
     );
   }
 }
+

@@ -1,6 +1,7 @@
-﻿import { LuminaApi } from './api/lumina_api';
+import { SynlenApi } from './api/synlen_api';
 import { Renderer } from './renderer/renderer';
 
-const api: LuminaApi = new Renderer();
+const api: SynlenApi = new Renderer();
 window.api = api;
+
 

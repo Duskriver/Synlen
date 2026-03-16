@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:lumina/src/core/config/app_info.dart';
+import 'package:synlen/src/core/config/app_info.dart';
 
 /// Displays the app icon, logo SVG, and version string at the top of the
 /// Settings screen.
@@ -55,3 +55,4 @@ class SettingsAppHeader extends StatelessWidget {
     );
   }
 }
+

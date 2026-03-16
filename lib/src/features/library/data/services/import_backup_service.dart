@@ -2,17 +2,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:lumina/src/core/file_handling/file_handling.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
-import 'package:lumina/src/core/storage/app_storage_constants.dart';
-import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
-import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
+import 'package:synlen/src/core/file_handling/file_handling.dart';
+import 'package:synlen/src/features/library/application/progress_log.dart';
+import 'package:synlen/src/core/storage/app_storage_constants.dart';
+import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
+import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:path/path.dart' as p;
 
 import '../../domain/book_manifest.dart';
 import '../../domain/shelf_book.dart';
 import '../../domain/shelf_group.dart';
-import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -476,3 +476,4 @@ class ImportBackupService {
           .toList();
   }
 }
+

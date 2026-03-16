@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme_settings.dart';
-import 'package:lumina/src/features/reader/domain/epub_theme.dart';
+import 'package:synlen/src/core/theme/app_theme_settings.dart';
+import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
 /// Controls how the reader handles external link taps.
 enum ReaderLinkHandling { ask, always, never }
@@ -89,10 +89,10 @@ class ReaderSettings {
   EpubTheme toEpubTheme(BuildContext context) {
     final appColorScheme = Theme.of(context).colorScheme;
     final appPreset =
-        Theme.of(context).extension<LuminaThemeExtension>()?.preset ??
-        LuminaThemePreset.standardLight;
+        Theme.of(context).extension<SynlenThemeExtension>()?.preset ??
+        SynlenThemePreset.standardLight;
 
-    final LuminaThemePreset preset;
+    final SynlenThemePreset preset;
     final ColorScheme colorScheme;
 
     if (followAppTheme) {
@@ -119,10 +119,11 @@ class ReaderSettings {
     );
   }
 
-  /// The [LuminaThemePreset] currently selected by [themeIndex].
-  LuminaThemePreset get currentPreset =>
-      LuminaThemePreset.fromIndex(themeIndex);
+  /// The [SynlenThemePreset] currently selected by [themeIndex].
+  SynlenThemePreset get currentPreset =>
+      SynlenThemePreset.fromIndex(themeIndex);
 
-  /// The [ColorScheme] currently selected from [LuminaThemePreset].
+  /// The [ColorScheme] currently selected from [SynlenThemePreset].
   ColorScheme get currentColorScheme => currentPreset.colorScheme;
 }
+

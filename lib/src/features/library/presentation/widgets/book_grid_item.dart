@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/widgets/middle_ellipsis_two_lines_text.dart';
+import 'package:synlen/src/core/widgets/middle_ellipsis_two_lines_text.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../domain/shelf_book.dart';
@@ -310,3 +310,4 @@ class _TopClipper extends CustomClipper<Rect> {
   bool shouldReclip(_TopClipper oldClipper) =>
       oldClipper.clipAmount != clipAmount;
 }
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/reader/data/reader_scripts.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/features/reader/data/reader_scripts.dart';
 
 class EpubTheme {
   final double zoom;
@@ -109,3 +109,4 @@ class EpubTheme {
     overrideFontFamily,
   );
 }
+
