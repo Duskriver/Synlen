@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
-import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
-import 'package:lumina/src/features/detail/presentation/book_detail_helpers.dart';
-import 'package:lumina/src/features/detail/presentation/widgets/book_detail_edit_body.dart';
-import 'package:lumina/src/features/detail/presentation/widgets/book_detail_view_body.dart';
+import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/features/library/application/bookshelf_notifier.dart';
+import 'package:synlen/src/features/library/data/repositories/shelf_book_repository_provider.dart';
+import 'package:synlen/src/features/detail/presentation/book_detail_helpers.dart';
+import 'package:synlen/src/features/detail/presentation/widgets/book_detail_edit_body.dart';
+import 'package:synlen/src/features/detail/presentation/widgets/book_detail_view_body.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -412,3 +412,4 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     );
   }
 }
+

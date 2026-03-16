@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:lumina/src/features/learning/domain/learning_exception.dart';
+import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
-import 'package:lumina/src/core/utils/wav_header_util.dart';
+import 'package:synlen/src/core/utils/wav_header_util.dart';
 
 class AliyunTTSService {
   final Dio _dio = Dio(
@@ -125,3 +125,4 @@ class AliyunTTSService {
     return file.path;
   }
 }
+

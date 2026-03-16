@@ -1,11 +1,11 @@
 /* Custom font override – applied when the user enables "Override Book Font" */
-body.lumina-force-override-font,
-body.lumina-force-override-font * {
-  font-family: var(--lumina-font-family, inherit) !important;
+body.synlen-force-override-font,
+body.synlen-force-override-font * {
+  font-family: var(--synlen-font-family, inherit) !important;
 }
 
-body.lumina-override-font {
-  font-family: var(--lumina-font-family, inherit);
+body.synlen-override-font {
+  font-family: var(--synlen-font-family, inherit);
 }
 
 /* Duokan font support */

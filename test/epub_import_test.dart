@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
-import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
-import 'package:lumina/src/features/library/domain/shelf_book.dart';
+import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
+import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
+import 'package:synlen/src/features/library/domain/shelf_book.dart';
 
 // Generate Mock classes
 @GenerateMocks([ShelfBookRepository, BookManifestRepository])
@@ -204,3 +204,4 @@ void main() {
     });
   });
 }
+

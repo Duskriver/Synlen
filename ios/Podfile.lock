@@ -29,7 +29,7 @@ PODS:
   - libwebp/sharpyuv (1.5.0)
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
-  - lumina_rust (0.0.1):
+  - synlen_rust (0.0.1):
     - Flutter
   - Mantle (2.2.0):
     - Mantle/extobjc (= 2.2.0)
@@ -59,7 +59,7 @@ DEPENDENCIES:
   - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
   - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - isar_flutter_libs (from `.symlinks/plugins/isar_flutter_libs/ios`)
-  - lumina_rust (from `.symlinks/plugins/lumina_rust/ios`)
+  - synlen_rust (from `.symlinks/plugins/synlen_rust/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -85,8 +85,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
   isar_flutter_libs:
     :path: ".symlinks/plugins/isar_flutter_libs/ios"
-  lumina_rust:
-    :path: ".symlinks/plugins/lumina_rust/ios"
+  synlen_rust:
+    :path: ".symlinks/plugins/synlen_rust/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   share_plus:
@@ -105,7 +105,7 @@ SPEC CHECKSUMS:
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   isar_flutter_libs: 9fc2cfb928c539e1b76c481ba5d143d556d94920
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  lumina_rust: 2eca04c55d6409a196bd50bdf1361d757d00d992
+  synlen_rust: 2eca04c55d6409a196bd50bdf1361d757d00d992
   Mantle: c5aa8794a29a022dfbbfc9799af95f477a69b62d
   OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
@@ -119,3 +119,4 @@ SPEC CHECKSUMS:
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
 
 COCOAPODS: 1.16.2
+

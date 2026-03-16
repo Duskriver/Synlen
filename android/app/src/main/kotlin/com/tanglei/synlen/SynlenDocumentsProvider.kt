@@ -1,4 +1,4 @@
-package com.tanglei.cijing
+package com.tanglei.synlen
 
 import android.database.Cursor
 import android.database.MatrixCursor
@@ -11,12 +11,12 @@ import java.io.File
 import java.io.FileNotFoundException
 
 /**
- * DocumentsProvider for Lumina to expose EPUB files and covers through Storage Access Framework.
+ * DocumentsProvider for Synlen to expose EPUB files and covers through Storage Access Framework.
  */
-class LuminaDocumentsProvider : DocumentsProvider() {
+class SynlenDocumentsProvider : DocumentsProvider() {
 
     companion object {
-        private const val ROOT_ID = "cijing_books_root"
+        private const val ROOT_ID = "synlen_books_root"
         
         private val DEFAULT_ROOT_PROJECTION = arrayOf(
             DocumentsContract.Root.COLUMN_ROOT_ID,
@@ -179,3 +179,4 @@ class LuminaDocumentsProvider : DocumentsProvider() {
         }
     }
 }
+

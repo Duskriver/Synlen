@@ -1,4 +1,4 @@
-package com.tanglei.cijing
+package com.tanglei.synlen
 
 import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -20,3 +20,4 @@ class MainActivity : FlutterFragmentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 }
+

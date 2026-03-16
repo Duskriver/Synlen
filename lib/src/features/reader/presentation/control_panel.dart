@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/reader/application/reader_settings_notifier.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/features/reader/application/reader_settings_notifier.dart';
 import 'widgets/reader_style_bottom_sheet.dart';
 
 class ControlPanel extends ConsumerStatefulWidget {
@@ -475,3 +475,4 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     );
   }
 }
+

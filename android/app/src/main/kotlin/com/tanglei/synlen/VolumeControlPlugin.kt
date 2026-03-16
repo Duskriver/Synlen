@@ -1,4 +1,4 @@
-package com.tanglei.cijing
+package com.tanglei.synlen
 
 import android.view.KeyEvent
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -14,10 +14,10 @@ class VolumeControlPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Even
     private var isIntercepting = false
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        methodChannel = MethodChannel(binding.binaryMessenger, "cijing/volume_control")
+        methodChannel = MethodChannel(binding.binaryMessenger, "synlen/volume_control")
         methodChannel.setMethodCallHandler(this)
 
-        eventChannel = EventChannel(binding.binaryMessenger, "cijing/volume_events")
+        eventChannel = EventChannel(binding.binaryMessenger, "synlen/volume_events")
         eventChannel.setStreamHandler(this)
     }
 
@@ -64,3 +64,4 @@ class VolumeControlPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Even
         return false
     }
 }
+

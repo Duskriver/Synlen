@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:lumina/src/features/learning/data/services/aliyun_tts_service.dart';
-import 'package:lumina/src/features/learning/data/services/deep_seek_service.dart';
+import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
+import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import '../../domain/sentence_analysis.dart';
 
-import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 
 /// 句子学习结果
 class SentenceLearningResult {
@@ -188,3 +188,4 @@ String _stableSentenceHash(String sentence) {
 
   return hash.toUnsigned(64).toRadixString(16);
 }
+

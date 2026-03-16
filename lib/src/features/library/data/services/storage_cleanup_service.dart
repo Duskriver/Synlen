@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:lumina/src/core/file_handling/file_handling.dart';
-import 'package:lumina/src/core/storage/app_storage_constants.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
+import 'package:synlen/src/core/file_handling/file_handling.dart';
+import 'package:synlen/src/core/storage/app_storage_constants.dart';
+import 'package:synlen/src/features/library/data/services/export_backup_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
 import '../shelf_book_repository.dart';
 
 /// Service that scans physical storage directories and removes files
@@ -132,3 +132,4 @@ class StorageCleanupService {
     return deleted;
   }
 }
+

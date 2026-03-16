@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:lumina/src/core/config/app_info.dart';
-import 'package:lumina/src/core/theme/app_theme_notifier.dart';
-import 'package:lumina/src/global_share_handler.dart';
+import 'package:synlen/src/core/config/app_info.dart';
+import 'package:synlen/src/core/theme/app_theme_notifier.dart';
+import 'package:synlen/src/global_share_handler.dart';
 import '../l10n/app_localizations.dart';
 import 'core/router/app_router.dart';
 
@@ -16,8 +16,8 @@ final localeProvider = Provider<Locale>((ref) {
 });
 
 /// Root application widget
-class LuminaReaderApp extends ConsumerWidget {
-  const LuminaReaderApp({super.key});
+class SynlenReaderApp extends ConsumerWidget {
+  const SynlenReaderApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -76,3 +76,4 @@ class _NoOverscrollBehavior extends ScrollBehavior {
     return child;
   }
 }
+

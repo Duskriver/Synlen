@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/config/app_info.dart';
-import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
-import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
-import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
-import 'package:lumina/src/rust/frb_generated.dart';
+import 'package:synlen/src/core/config/app_info.dart';
+import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/features/reader/data/services/epub_stream_service_provider.dart';
+import 'package:synlen/src/features/reader/presentation/reader_webview.dart';
+import 'package:synlen/src/rust/frb_generated.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'src/app.dart';
 import 'src/core/database/providers.dart';
@@ -71,7 +71,8 @@ void main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: const LuminaReaderApp(),
+      child: const SynlenReaderApp(),
     ),
   );
 }
+

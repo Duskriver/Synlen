@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import 'mixins/library_actions_mixin.dart';
@@ -469,3 +469,4 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 }
+

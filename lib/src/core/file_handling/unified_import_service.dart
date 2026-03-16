@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:lumina/src/core/storage/app_storage_constants.dart';
+import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
 import 'platform_path.dart';
@@ -43,7 +43,7 @@ class BackupPaths {
 /// Android: Uses native MethodChannel with SAF (Storage Access Framework)
 /// iOS: Uses UIDocumentPickerViewController via native MethodChannel
 class UnifiedImportService {
-  static const String _channelName = 'com.tanglei.cijing/native_picker';
+  static const String _channelName = 'com.tanglei.synlen/native_picker';
   static const MethodChannel _channel = MethodChannel(_channelName);
 
   final _safStream = SafStream();
@@ -490,3 +490,4 @@ class UnifiedImportService {
     await _cacheManager.clearAll();
   }
 }
+

@@ -3,7 +3,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// Stateful Flutter plugin that handles lazy, copy-on-demand file access for
-/// the `com.tanglei.cijing/native_picker` MethodChannel.
+/// the `com.tanglei.synlen/native_picker` MethodChannel.
 ///
 /// Security-scoped resources are kept alive across MethodChannel calls so
 /// Dart can request individual files to be copied one at a time rather than
@@ -45,7 +45,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "com.tanglei.cijing/native_picker",
+      name: "com.tanglei.synlen/native_picker",
       binaryMessenger: registrar.messenger()
     )
     let instance = NativePickerPlugin(registrar: registrar)
@@ -405,3 +405,4 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     result?([String]())
   }
 }
+

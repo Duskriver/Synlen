@@ -1,7 +1,7 @@
-import 'package:lumina/src/core/database/providers.dart';
-import 'package:lumina/src/features/learning/data/services/aliyun_tts_service.dart';
-import 'package:lumina/src/features/learning/data/services/deep_seek_service.dart';
-import 'package:lumina/src/features/learning/data/services/free_dictionary_service.dart';
+import 'package:synlen/src/core/database/providers.dart';
+import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
+import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
+import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'word_repository.dart';
@@ -56,3 +56,4 @@ SentenceRepository sentenceRepository(SentenceRepositoryRef ref) {
 
   return SentenceRepository(deepSeekService, aliyunTTSService, isar);
 }
+

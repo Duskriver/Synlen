@@ -62,7 +62,7 @@ export function convertToColumnBreak(value: string): string {
 }
 
 /**
- * Wraps numeric font-size / line-height values in a `calc(...* var(--lumina-zoom))`
+ * Wraps numeric font-size / line-height values in a `calc(...* var(--synlen-zoom))`
  * expression so the reader zoom factor is applied correctly.
  */
 export function applyRuleWithFixedValue(
@@ -75,7 +75,7 @@ export function applyRuleWithFixedValue(
     if (match) {
       style.setProperty(
         property,
-        'calc(' + value + ' * var(--lumina-zoom))',
+        'calc(' + value + ' * var(--synlen-zoom))',
         style.getPropertyPriority(property)
       );
     }
@@ -85,11 +85,11 @@ export function applyRuleWithFixedValue(
 export function applyBackgroundColorPolyfill(style: CSSStyleDeclaration): void {
   if (style.backgroundColor &&
     style.backgroundColor !== 'transparent' &&
-    !style.backgroundColor.includes('var(--lumina-')) {
+    !style.backgroundColor.includes('var(--synlen-')) {
     const oldValue = style.getPropertyValue('background-color');
     style.setProperty(
       'background-color',
-      'var(--lumina-surface-container-color, ' + oldValue + ')',
+      'var(--synlen-surface-container-color, ' + oldValue + ')',
       style.getPropertyPriority('background-color')
     );
   }
@@ -97,11 +97,11 @@ export function applyBackgroundColorPolyfill(style: CSSStyleDeclaration): void {
 
 export function removeBackgroundColorPolyfill(style: CSSStyleDeclaration): void {
   const value = style.getPropertyValue('background-color');
-  if (value.includes('var(--lumina-surface-container-color')) {
+  if (value.includes('var(--synlen-surface-container-color')) {
     // Attempt to restore the original background-color if it was overridden by the polyfill
-    const originalValue = value.replace(/var\(--lumina-surface-container-color,\s*(.+?)\)/, '$1').trim();
+    const originalValue = value.replace(/var\(--synlen-surface-container-color,\s*(.+?)\)/, '$1').trim();
     if (originalValue !== 'transparent' &&
-      !originalValue.startsWith('var(--lumina-surface-container-color')) {
+      !originalValue.startsWith('var(--synlen-surface-container-color')) {
       style.setProperty(
         'background-color',
         originalValue,
@@ -155,3 +155,4 @@ export function polyfillCss(doc: Document, shouldOverrideColor: boolean): void {
     }
   }
 }
+

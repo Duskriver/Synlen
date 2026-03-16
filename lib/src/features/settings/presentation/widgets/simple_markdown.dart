@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/l10n/app_localizations.dart';
+import 'package:synlen/l10n/app_localizations.dart';
 
 class SimpleMarkdown extends StatelessWidget {
   final String text;
@@ -134,3 +134,4 @@ class SimpleMarkdown extends StatelessWidget {
     );
   }
 }
+

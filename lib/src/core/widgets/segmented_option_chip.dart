@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
 
 /// A single option chip used inside a segmented chip-row.
 ///
@@ -113,3 +113,4 @@ class SegmentedOptionChip extends StatelessWidget {
     );
   }
 }
+

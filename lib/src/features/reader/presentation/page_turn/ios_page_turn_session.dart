@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 class IOSPageTurnSession {
   static const MethodChannel _nativePageTurnChannel = MethodChannel(
-    'cijing/reader_page_turn',
+    'synlen/reader_page_turn',
   );
 
   int _currentToken = 0;
@@ -65,3 +65,4 @@ class IOSPageTurnSession {
 
   bool get isAnimating => _isAnimating;
 }
+

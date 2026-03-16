@@ -71,7 +71,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
-        stem: 'lumina_rust',
+        stem: 'synlen_rust',
         ioDirectory: 'rust/target/release/',
         webPrefix: 'pkg/',
       );
@@ -370,3 +370,4 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     serializer.buffer.putUint8(self ? 1 : 0);
   }
 }
+

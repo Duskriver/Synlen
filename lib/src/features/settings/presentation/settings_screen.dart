@@ -4,16 +4,16 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/config/app_info.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/core/url_launcher/url_launcher.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_font_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/backup_tile.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/check_update_tile.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_tile.dart';
+import 'package:synlen/src/core/config/app_info.dart';
+import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/core/url_launcher/url_launcher.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/settings_app_header.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/settings_appearance_section.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/settings_font_section.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/settings_info_section.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/backup_tile.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/check_update_tile.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/clean_cache_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -191,7 +191,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final packageInfo = await PackageInfo.fromPlatform();
     final String applicationId = packageInfo.packageName;
     final String authority = '$applicationId.documents';
-    const String rootId = 'lumina_books_root';
+    const String rootId = 'synlen_books_root';
     final String rootUri = 'content://$authority/root/$rootId';
 
     final intent = AndroidIntent(
@@ -224,3 +224,4 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/features/library/application/progress_log.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 
@@ -169,3 +169,4 @@ class _ProgressDialogState extends State<ProgressDialog> {
     );
   }
 }
+

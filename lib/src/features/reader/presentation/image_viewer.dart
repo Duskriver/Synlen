@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/reader/domain/epub_theme.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
 import '../data/epub_webview_handler.dart';
 import '../../../core/services/toast_service.dart';
@@ -308,3 +308,4 @@ class _ImageViewerState extends State<ImageViewer>
     );
   }
 }
+

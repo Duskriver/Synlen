@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:lumina/src/features/learning/data/repositories/word_repository.dart';
-import 'package:lumina/src/features/learning/domain/audio_stream_result.dart';
-import 'package:lumina/src/features/learning/data/repositories/learning_repository_provider.dart';
+import 'package:synlen/src/features/learning/data/repositories/word_repository.dart';
+import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/data/repositories/learning_repository_provider.dart';
 
-import 'package:lumina/src/core/utils/wav_header_util.dart';
+import 'package:synlen/src/core/utils/wav_header_util.dart';
 
 /// 一个简单的流式音频源，用于播放边下载边缓存的音频字节
 class _StreamingAudioSource extends StreamAudioSource {
@@ -499,3 +499,4 @@ class _WordDefinitionDialogState extends ConsumerState<WordDefinitionDialog> {
     );
   }
 }
+

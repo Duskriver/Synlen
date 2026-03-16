@@ -18,8 +18,8 @@ export function getRenditionTypConfig(iframe: HTMLIFrameElement): RenditionTypCo
 
   const doc = iframe.contentDocument!;
   return new RenditionTypConfig(
-    doc.body.classList.contains('lumina-spine-property-rendition-COLON-page-spread-center') ||
-    doc.body.classList.contains('lumina-spine-property-page-spread-center')
+    doc.body.classList.contains('synlen-spine-property-rendition-COLON-page-spread-center') ||
+    doc.body.classList.contains('synlen-spine-property-page-spread-center')
   );
 }
 

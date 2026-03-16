@@ -1,7 +1,7 @@
-name: lumina
-description: "Lumina Reader - A lightweight, cross-platform EPUB reader built with Flutter, supporting iOS and Android systems."
+name: synlen
+description: "Synlen Reader - A lightweight, cross-platform EPUB reader built with Flutter, supporting iOS and Android systems."
 publish_to: 'none'
-homepage: https://github.com/MilkFeng/lumina
+homepage: https://github.com/tltltltltltltltl/Synlen
 license: MIT
 
 version: 0.2.3+1
@@ -72,7 +72,7 @@ dependencies:
 
   # Rust FFI bridge
   flutter_rust_bridge: 2.11.1
-  lumina_rust:
+  synlen_rust:
     path: rust_builder
   
   # Network
@@ -112,3 +112,4 @@ flutter:
     - LICENSE
     - assets/icons/icon.svg
     - assets/logos/logo.svg
+

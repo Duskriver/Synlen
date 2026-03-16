@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'cover_file_provider.g.dart';
@@ -25,3 +25,4 @@ Future<File?> coverFile(CoverFileRef ref, String? relativePath) async {
     return null;
   }
 }
+

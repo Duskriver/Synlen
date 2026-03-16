@@ -1,7 +1,7 @@
 import 'dart:io';
 
 void main() async {
-  print('🚀 start build cijing web assets...');
+  print('🚀 start build synlen web assets...');
 
   String minifiedJs = '';
   String minifiedPaginationCss = '';
@@ -79,3 +79,4 @@ void main() async {
 
   print('✅ web assets generated: $outputPath');
 }
+

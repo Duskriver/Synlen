@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/l10n/app_localizations.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
-import 'package:lumina/src/core/widgets/settings_sub_label.dart';
-import 'package:lumina/src/features/settings/application/font_manager_notifier.dart';
+import 'package:synlen/l10n/app_localizations.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/core/widgets/labeled_switch_tile.dart';
+import 'package:synlen/src/core/widgets/settings_sub_label.dart';
+import 'package:synlen/src/features/settings/application/font_manager_notifier.dart';
 
 /// Subsection widget for picking a custom font in the reader style sheet.
 ///
@@ -101,3 +101,4 @@ class ReaderFontSelector extends ConsumerWidget {
     );
   }
 }
+

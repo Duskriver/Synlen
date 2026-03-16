@@ -17,11 +17,11 @@ html {
   width: 100vw !important;
   height: 100vh !important;
 
-  padding-top: var(--lumina-padding-top) !important;
-  padding-left: var(--lumina-padding-left) !important;
+  padding-top: var(--synlen-padding-top) !important;
+  padding-left: var(--synlen-padding-left) !important;
 
-  padding-right: calc(100vw - var(--lumina-safe-width) - var(--lumina-padding-left)) !important;
-  padding-bottom: calc(100vh - var(--lumina-safe-height) - var(--lumina-padding-top)) !important;
+  padding-right: calc(100vw - var(--synlen-safe-width) - var(--synlen-padding-left)) !important;
+  padding-bottom: calc(100vh - var(--synlen-safe-height) - var(--synlen-padding-top)) !important;
 
   background-color: transparent;
   touch-action: none !important;
@@ -35,7 +35,7 @@ html {
   -webkit-tap-highlight-color: transparent;
 
   text-align: justify;
-  font-size: calc(100% * var(--lumina-zoom)) !important;
+  font-size: calc(100% * var(--synlen-zoom)) !important;
 
   -webkit-text-size-adjust: none !important;
   text-size-adjust: none !important;
@@ -60,15 +60,15 @@ body {
 
 html,
 body {
-  overflow-x: var(--lumina-reader-overflow-x) !important;
-  overflow-y: var(--lumina-reader-overflow-y) !important;
+  overflow-x: var(--synlen-reader-overflow-x) !important;
+  overflow-y: var(--synlen-reader-overflow-y) !important;
 }
 
 body {
-  column-width: var(--lumina-safe-width) !important;
+  column-width: var(--synlen-safe-width) !important;
   column-gap: 128px !important;
   column-fill: auto !important;
-  height: var(--lumina-safe-height) !important;
+  height: var(--synlen-safe-height) !important;
 }
 
 body * {
@@ -79,12 +79,12 @@ body * {
   overflow-wrap: break-word !important;
 }
 
-body.lumina-is-vertical * {
-  max-height: var(--lumina-safe-height) !important;
+body.synlen-is-vertical * {
+  max-height: var(--synlen-safe-height) !important;
 }
 
-body:not(.lumina-is-vertical) * {
-  max-width: var(--lumina-safe-width) !important;
+body:not(.synlen-is-vertical) * {
+  max-width: var(--synlen-safe-width) !important;
 }
 
 ::-webkit-scrollbar,
@@ -107,21 +107,21 @@ body::-webkit-scrollbar:vertical {
   width: 0 !important;
 }
 
-body.lumina-is-vertical {
+body.synlen-is-vertical {
 
   img,
   svg,
   video {
-    max-width: var(--lumina-safe-width) !important;
+    max-width: var(--synlen-safe-width) !important;
   }
 }
 
-body:not(.lumina-is-vertical) {
+body:not(.synlen-is-vertical) {
 
   img,
   svg,
   video {
-    max-height: var(--lumina-safe-height) !important;
+    max-height: var(--synlen-safe-height) !important;
   }
 }
 

@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// Application name
   ///
   /// In en, this message translates to:
-  /// **'词镜'**
+  /// **'Synlen'**
   String get appName;
 
   /// Settings tab label
@@ -677,7 +677,7 @@ abstract class AppLocalizations {
   /// Remote folder path hint
   ///
   /// In en, this message translates to:
-  /// **'CiJingReader/'**
+  /// **'SynlenReader/'**
   String get remoteFolderHint;
 
   /// Folder path validation error
@@ -1217,7 +1217,7 @@ abstract class AppLocalizations {
   /// Subtitle for open storage location action
   ///
   /// In en, this message translates to:
-  /// **'Open the folder where 词镜 stores its data (cache, books, etc.)'**
+  /// **'Open the folder where Synlen stores its data (cache, books, etc.)'**
   String get openStorageLocationSubtitle;
 
   /// Error message when opening storage location fails
@@ -1229,7 +1229,7 @@ abstract class AppLocalizations {
   /// Message shown on iOS when user tries to open storage location, since it's not possible to open it directly
   ///
   /// In en, this message translates to:
-  /// **'Please open the \"词镜\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.'**
+  /// **'Please open the \"Synlen\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.'**
   String get openStorageLocationIOSMessage;
 
   /// Title of the dialog shown when the user tries to leave edit mode with unsaved changes

@@ -6,10 +6,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/reader/application/reader_settings_notifier.dart';
-import 'package:lumina/src/features/reader/domain/epub_theme.dart';
-import 'package:lumina/src/features/reader/domain/reader_settings.dart';
+import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/features/reader/application/reader_settings_notifier.dart';
+import 'package:synlen/src/features/reader/domain/epub_theme.dart';
+import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
@@ -548,3 +548,4 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }
 }
+

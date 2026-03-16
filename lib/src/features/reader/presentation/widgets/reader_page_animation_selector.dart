@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/widgets/segmented_option_chip.dart';
-import 'package:lumina/src/features/reader/domain/reader_settings.dart';
+import 'package:synlen/src/core/widgets/segmented_option_chip.dart';
+import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 
 /// A segmented chip-row for choosing the page-turning animation style.
 ///
@@ -41,3 +41,4 @@ class ReaderPageAnimationSelector extends StatelessWidget {
     );
   }
 }
+

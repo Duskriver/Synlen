@@ -1,7 +1,7 @@
 import { Direction, FrameSlot, InitConfig, ThemeUpdate } from "../common/types";
 
 /// The interface exposed on `window.api`
-export interface LuminaApi {
+export interface SynlenApi {
   init(config: InitConfig): void;
 
   /// Loads the given URL into the specified frame slot
