@@ -86,12 +86,19 @@ class SentenceRepository {
     yield AudioStreamResult(
       stream: _aliyunTTSService.generateAudioStream(sentence),
       format: AudioFormat.pcm,
+      sampleRate: 24000,
+      numChannels: 1,
+      bitsPerSample: 16,
     );
   }
 
   /// 保存音频文件到本地并返回路径
-  Future<String> saveAudioFile(String sentence, List<int> bytes) {
-    return _audioFileStore.saveSentenceAudioFile(sentence, bytes);
+  Future<String> saveAudioFile(
+    String sentence,
+    List<int> bytes,
+    AudioFormat format,
+  ) {
+    return _audioFileStore.saveSentenceAudioFile(sentence, bytes, format);
   }
 
   Future<void> persistAudioPath(String sentence, String audioPath) {

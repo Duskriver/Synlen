@@ -86,7 +86,11 @@ class SentenceLearningController extends _$SentenceLearningController {
         }
 
         _updateState(
-          (current) => current.copyWith(hasAudio: true, clearAudioError: true),
+          (current) => current.copyWith(
+            audioUrl: session.playbackUri,
+            hasAudio: session.hasImmediatePlayback,
+            clearAudioError: true,
+          ),
         );
 
         final bytes = await _audio.waitForSessionFileBytes(session);
@@ -94,7 +98,11 @@ class SentenceLearningController extends _$SentenceLearningController {
           return null;
         }
 
-        final filePath = await repository.saveAudioFile(sentence, bytes);
+        final filePath = await repository.saveAudioFile(
+          sentence,
+          bytes,
+          result.format,
+        );
         await repository.persistAudioPath(sentence, filePath);
         if (_audio.isDisposed) {
           return null;

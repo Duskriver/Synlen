@@ -121,8 +121,8 @@ Dialog 不直接处理：
 音频二进制本体不放在 Isar，只放文件系统：
 
 - 目录：`documents/audio/`
-- 单词：`word_<safeWord>.mp3` / `word_<safeWord>.wav`
-- 句子：`sentence_<stableHash>.wav`
+- 单词：`word_<safeWord>.mp3` / `word_<safeWord>.pcm`
+- 句子：`sentence_<stableHash>.pcm`
 
 ## 5. 单词流程
 
@@ -188,14 +188,13 @@ Dialog 不直接处理：
 
 ## 7. 流式音频
 
-阿里云 TTS 返回的是裸 PCM 流，播放器无法直接识别。
+阿里云 TTS 返回的是裸 PCM 流。
 
 因此当前做法是：
 
-1. 流式播放阶段先补一个占位 WAV 头
-2. 播放器按 `audio/wav` 识别
-3. 流结束后重新生成正确长度的 WAV 头
-4. 落盘成最终 WAV 文件
+1. 流式播放阶段直接把 PCM 数据块送入 `flutter_sound`
+2. 同时持续拼接原始 PCM 字节用于缓存
+3. 流结束后落盘成最终 PCM 文件
 
 这一逻辑统一收敛在：
 
@@ -232,4 +231,4 @@ Dialog 不直接处理：
 
 - 句子提取仍然不是跨多 DOM 节点拼句。
 - 音频缓存目前没有容量淘汰策略。
-- `just_audio` 仍依赖 `StreamAudioSource` 的实验性用法。
+- `flutter_sound` 的流式 PCM 播放依赖顺序喂入和背压控制。

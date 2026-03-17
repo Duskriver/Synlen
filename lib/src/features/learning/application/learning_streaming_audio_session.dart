@@ -1,108 +1,111 @@
-// ignore_for_file: experimental_member_use
-
 import 'dart:async';
+import 'dart:typed_data';
 
-import 'package:just_audio/just_audio.dart';
-import 'package:synlen/src/core/utils/wav_header_util.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 
-/// Shared streaming audio session used by learning flows.
-///
-/// It allows `just_audio` to start playback before the full audio payload has
-/// arrived, while still buffering bytes for final persistence.
 class LearningStreamingAudioSession {
   final AudioFormat format;
-  final _StreamingAudioSource _audioSource;
+  final String? playbackUri;
+  final int sampleRate;
+  final int numChannels;
+  final int bitsPerSample;
+  final Stream<List<int>> _byteStream;
+  final List<Uint8List> _chunks = <Uint8List>[];
+  final BytesBuilder _buffer = BytesBuilder(copy: false);
+  final Completer<void> _doneCompleter = Completer<void>();
+  StreamSubscription<List<int>>? _subscription;
+  Completer<void>? _chunkCompleter;
+  Object? _error;
+  StackTrace? _stackTrace;
+  bool _isFinished = false;
+  bool _isDisposed = false;
 
-  LearningStreamingAudioSession._(this._audioSource, this.format);
-
-  factory LearningStreamingAudioSession({
+  LearningStreamingAudioSession._({
+    required this.format,
+    required this.playbackUri,
+    required this.sampleRate,
+    required this.numChannels,
+    required this.bitsPerSample,
     required Stream<List<int>> byteStream,
-    required AudioFormat format,
-  }) {
+  }) : _byteStream = byteStream {
+    _listen();
+  }
+
+  factory LearningStreamingAudioSession({required AudioStreamResult result}) {
     return LearningStreamingAudioSession._(
-      _StreamingAudioSource(byteStream, format),
-      format,
+      byteStream: result.stream,
+      format: result.format,
+      playbackUri: result.playbackUri,
+      sampleRate: result.sampleRate ?? 24000,
+      numChannels: result.numChannels ?? 1,
+      bitsPerSample: result.bitsPerSample ?? 16,
     );
   }
 
-  StreamAudioSource get audioSource => _audioSource;
-
-  Future<List<int>> waitForPlayableFileBytes() async {
-    await _audioSource.done;
-
-    if (format == AudioFormat.pcm) {
-      final pcmBytes = _audioSource.pcmBytes;
-      final header = WavHeaderUtil.generateWavHeader(
-        pcmBytes.length,
-        24000,
-        1,
-        16,
-      );
-      return [...header, ...pcmBytes];
-    }
-
-    return List<int>.from(_audioSource.bytes);
-  }
-
-  void dispose() {
-    _audioSource.dispose();
-  }
-}
-
-class _StreamingAudioSource extends StreamAudioSource {
-  final Stream<List<int>> _byteStream;
-  final AudioFormat _format;
-  final List<int> _buffer = [];
-  final StreamController<List<int>> _controller =
-      StreamController<List<int>>.broadcast();
-  final Completer<void> _doneCompleter = Completer<void>();
-  StreamSubscription<List<int>>? _subscription;
-  bool _isFinished = false;
-
-  _StreamingAudioSource(this._byteStream, this._format) {
-    if (_format == AudioFormat.pcm) {
-      _buffer.addAll(WavHeaderUtil.generateWavHeader(0, 24000, 1, 16));
-    }
-    _init();
-  }
-
-  List<int> get bytes => _buffer;
-
-  List<int> get pcmBytes {
-    if (_format == AudioFormat.pcm && _buffer.length >= 44) {
-      return _buffer.sublist(44);
-    }
-    return _buffer;
-  }
-
+  bool get supportsStreamingPlayback => format == AudioFormat.pcm;
+  bool get hasImmediatePlayback =>
+      supportsStreamingPlayback || playbackUri != null;
   Future<void> get done => _doneCompleter.future;
 
-  void _init() {
+  Future<List<int>> waitForPlayableFileBytes() async {
+    await done;
+    return List<int>.from(_buffer.toBytes());
+  }
+
+  Stream<Uint8List> streamFromStart() async* {
+    var index = 0;
+
+    while (true) {
+      while (index < _chunks.length) {
+        yield _chunks[index];
+        index++;
+      }
+
+      if (_error != null) {
+        Error.throwWithStackTrace(_error!, _stackTrace!);
+      }
+
+      if (_isFinished) {
+        return;
+      }
+
+      final waiter = _chunkCompleter ??= Completer<void>();
+      await waiter.future;
+    }
+  }
+
+  void _listen() {
     _subscription = _byteStream.listen(
       (chunk) {
-        _buffer.addAll(chunk);
-        if (!_controller.isClosed) {
-          _controller.add(chunk);
+        if (_isDisposed) {
+          return;
         }
+
+        final bytes = Uint8List.fromList(chunk);
+        if (bytes.isEmpty) {
+          return;
+        }
+        _chunks.add(bytes);
+        _buffer.add(bytes);
+        _chunkCompleter?.complete();
+        _chunkCompleter = null;
       },
       onDone: () {
         _isFinished = true;
+        _chunkCompleter?.complete();
+        _chunkCompleter = null;
         if (!_doneCompleter.isCompleted) {
           _doneCompleter.complete();
         }
-        if (!_controller.isClosed) {
-          _controller.close();
-        }
       },
       onError: (Object error, StackTrace stackTrace) {
+        _error = error;
+        _stackTrace = stackTrace;
         _isFinished = true;
+        _chunkCompleter?.complete();
+        _chunkCompleter = null;
         if (!_doneCompleter.isCompleted) {
           _doneCompleter.completeError(error, stackTrace);
-        }
-        if (!_controller.isClosed) {
-          _controller.addError(error, stackTrace);
-          _controller.close();
         }
       },
       cancelOnError: true,
@@ -110,38 +113,14 @@ class _StreamingAudioSource extends StreamAudioSource {
   }
 
   void dispose() {
+    _isDisposed = true;
     _subscription?.cancel();
+    _subscription = null;
     _isFinished = true;
+    _chunkCompleter?.complete();
+    _chunkCompleter = null;
     if (!_doneCompleter.isCompleted) {
       _doneCompleter.complete();
-    }
-    if (!_controller.isClosed) {
-      _controller.close();
-    }
-  }
-
-  @override
-  Future<StreamAudioResponse> request([int? start, int? end]) async {
-    start ??= 0;
-
-    return StreamAudioResponse(
-      sourceLength: _isFinished ? _buffer.length : null,
-      contentLength: _isFinished ? _buffer.length - start : null,
-      offset: start,
-      stream: _streamFrom(start),
-      contentType: _format == AudioFormat.mp3 ? 'audio/mpeg' : 'audio/wav',
-    );
-  }
-
-  Stream<List<int>> _streamFrom(int start) async* {
-    if (start < _buffer.length) {
-      yield _buffer.sublist(start);
-    }
-
-    if (!_isFinished) {
-      await for (final chunk in _controller.stream) {
-        yield chunk;
-      }
     }
   }
 }

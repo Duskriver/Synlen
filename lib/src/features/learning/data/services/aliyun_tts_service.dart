@@ -1,11 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
-
-import 'package:synlen/src/core/utils/wav_header_util.dart';
 
 class AliyunTTSService {
   final Dio _dio = Dio(
@@ -71,15 +68,7 @@ class AliyunTTSService {
             final output = data['output'];
             if (output == null) continue;
 
-            // 1. 优先尝试从 audio_bin 提取 (二进制流)
-            final audioBin = output['audio_bin'];
-            if (audioBin != null && audioBin is String && audioBin.isNotEmpty) {
-              hasAudio = true;
-              yield base64.decode(audioBin);
-              continue;
-            }
-
-            // 2. 尝试从 audio.data 中提取 Base64 音频
+            // 阿里云 TTS 音频数据位于 output.audio.data，内容为 Base64 编码的 PCM
             final audioData = output['audio']?['data'];
             if (audioData != null &&
                 audioData is String &&
@@ -103,26 +92,4 @@ class AliyunTTSService {
       throw LearningException('音频请求失败: $e');
     }
   }
-
-  /// 保持向后兼容：生成音频并保存到文件 (添加 WAV 头部)
-  Future<String?> generateAudio(String text) async {
-    final bytes = <int>[];
-    await for (final chunk in generateAudioStream(text)) {
-      bytes.addAll(chunk);
-    }
-
-    if (bytes.isEmpty) return null;
-
-    // 为 PCM 数据添加 WAV 头部
-    final header = WavHeaderUtil.generateWavHeader(bytes.length, 24000, 1, 16);
-    final fullBytes = [...header, ...bytes];
-
-    final tempDir = await getTemporaryDirectory();
-    final fileName =
-        'tts_${DateTime.now().millisecondsSinceEpoch}_${text.hashCode}.wav';
-    final file = File('${tempDir.path}/$fileName');
-    await file.writeAsBytes(fullBytes);
-    return file.path;
-  }
 }
-
