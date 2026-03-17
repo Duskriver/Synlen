@@ -110,7 +110,11 @@ class WordLearningController extends _$WordLearningController {
         }
 
         _updateState(
-          (current) => current.copyWith(hasAudio: true, clearAudioError: true),
+          (current) => current.copyWith(
+            audioUrl: session.playbackUri,
+            hasAudio: session.hasImmediatePlayback,
+            clearAudioError: true,
+          ),
         );
 
         final bytes = await _audio.waitForSessionFileBytes(session);
@@ -118,7 +122,11 @@ class WordLearningController extends _$WordLearningController {
           return null;
         }
 
-        final filePath = await repository.saveAudioFile(word, bytes);
+        final filePath = await repository.saveAudioFile(
+          word,
+          bytes,
+          result.format,
+        );
         await repository.persistAudioPath(word, filePath);
         if (_audio.isDisposed) {
           return null;

@@ -77,6 +77,7 @@ class WordRepository {
           yield AudioStreamResult(
             stream: response.data!.stream.cast<List<int>>(),
             format: AudioFormat.mp3,
+            playbackUri: dictionaryAudioUrl,
           );
           return;
         }
@@ -89,6 +90,9 @@ class WordRepository {
     yield AudioStreamResult(
       stream: _aliyunTTSService.generateAudioStream(word),
       format: AudioFormat.pcm,
+      sampleRate: 24000,
+      numChannels: 1,
+      bitsPerSample: 16,
     );
   }
 
@@ -121,8 +125,12 @@ class WordRepository {
   }
 
   /// 保存音频文件到本地并返回路径
-  Future<String> saveAudioFile(String word, List<int> bytes) {
-    return _audioFileStore.saveWordAudioFile(word, bytes);
+  Future<String> saveAudioFile(
+    String word,
+    List<int> bytes,
+    AudioFormat format,
+  ) {
+    return _audioFileStore.saveWordAudioFile(word, bytes, format);
   }
 
   Future<void> persistAudioPath(String word, String audioPath) {

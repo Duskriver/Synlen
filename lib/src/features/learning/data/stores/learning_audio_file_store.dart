@@ -1,18 +1,27 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 
 abstract class AudioFileStore {
   Future<String?> resolveWordAudioPath(String word, {String? preferredPath});
 
-  Future<String> saveWordAudioFile(String word, List<int> bytes);
+  Future<String> saveWordAudioFile(
+    String word,
+    List<int> bytes,
+    AudioFormat format,
+  );
 
   Future<String?> resolveSentenceAudioPath(
     String sentence, {
     String? preferredPath,
   });
 
-  Future<String> saveSentenceAudioFile(String sentence, List<int> bytes);
+  Future<String> saveSentenceAudioFile(
+    String sentence,
+    List<int> bytes,
+    AudioFormat format,
+  );
 }
 
 class LearningAudioFileStore implements AudioFileStore {
@@ -27,21 +36,25 @@ class LearningAudioFileStore implements AudioFileStore {
       preferredPath: preferredPath,
       candidates: [
         _audioFile('word_${_sanitizeWord(word)}.mp3'),
+        _audioFile('word_${_sanitizeWord(word)}.pcm'),
         _audioFile('word_${_sanitizeWord(word)}.wav'),
       ],
     );
   }
 
   @override
-  Future<String> saveWordAudioFile(String word, List<int> bytes) async {
+  Future<String> saveWordAudioFile(
+    String word,
+    List<int> bytes,
+    AudioFormat format,
+  ) async {
     final existingPath = await resolveWordAudioPath(word);
     if (existingPath != null) {
       return existingPath;
     }
 
-    final isWav = _isWav(bytes);
     final file = await _audioFile(
-      'word_${_sanitizeWord(word)}${isWav ? '.wav' : '.mp3'}',
+      'word_${_sanitizeWord(word)}${_extensionForFormat(format)}',
       ensureDirectory: true,
     );
     await file.writeAsBytes(bytes);
@@ -59,8 +72,10 @@ class LearningAudioFileStore implements AudioFileStore {
     return _resolveAudioPath(
       preferredPath: preferredPath,
       candidates: [
+        _audioFile('sentence_$stableHash.pcm'),
         _audioFile('sentence_$stableHash.wav'),
         _audioFile('sentence_$stableHash.mp3'),
+        _audioFile('sentence_$legacyHash.pcm'),
         _audioFile('sentence_$legacyHash.wav'),
         _audioFile('sentence_$legacyHash.mp3'),
       ],
@@ -68,14 +83,18 @@ class LearningAudioFileStore implements AudioFileStore {
   }
 
   @override
-  Future<String> saveSentenceAudioFile(String sentence, List<int> bytes) async {
+  Future<String> saveSentenceAudioFile(
+    String sentence,
+    List<int> bytes,
+    AudioFormat format,
+  ) async {
     final existingPath = await resolveSentenceAudioPath(sentence);
     if (existingPath != null) {
       return existingPath;
     }
 
     final file = await _audioFile(
-      'sentence_${_stableSentenceHash(sentence)}.wav',
+      'sentence_${_stableSentenceHash(sentence)}${_extensionForFormat(format)}',
       ensureDirectory: true,
     );
     await file.writeAsBytes(bytes);
@@ -112,12 +131,15 @@ class LearningAudioFileStore implements AudioFileStore {
     return File('${audioDir.path}/$name');
   }
 
-  bool _isWav(List<int> bytes) {
-    return bytes.length > 4 &&
-        bytes[0] == 0x52 &&
-        bytes[1] == 0x49 &&
-        bytes[2] == 0x46 &&
-        bytes[3] == 0x46;
+  String _extensionForFormat(AudioFormat format) {
+    switch (format) {
+      case AudioFormat.mp3:
+        return '.mp3';
+      case AudioFormat.pcm:
+        return '.pcm';
+      case AudioFormat.wav:
+        return '.wav';
+    }
   }
 
   String _sanitizeWord(String word) {
