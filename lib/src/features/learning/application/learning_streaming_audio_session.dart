@@ -17,6 +17,7 @@ class LearningStreamingAudioSession {
   Completer<void>? _chunkCompleter;
   Object? _error;
   StackTrace? _stackTrace;
+  int _bufferedBytes = 0;
   bool _isFinished = false;
   bool _isDisposed = false;
 
@@ -50,6 +51,21 @@ class LearningStreamingAudioSession {
   Future<List<int>> waitForPlayableFileBytes() async {
     await done;
     return List<int>.from(_buffer.toBytes());
+  }
+
+  Future<void> waitForBufferedBytes(int minBytes) async {
+    while (_bufferedBytes < minBytes) {
+      if (_error != null) {
+        Error.throwWithStackTrace(_error!, _stackTrace!);
+      }
+
+      if (_isFinished || _isDisposed) {
+        return;
+      }
+
+      final waiter = _chunkCompleter ??= Completer<void>();
+      await waiter.future;
+    }
   }
 
   Stream<Uint8List> streamFromStart() async* {
@@ -87,6 +103,7 @@ class LearningStreamingAudioSession {
         }
         _chunks.add(bytes);
         _buffer.add(bytes);
+        _bufferedBytes += bytes.length;
         _chunkCompleter?.complete();
         _chunkCompleter = null;
       },

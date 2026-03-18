@@ -34,6 +34,7 @@ class InMemoryAudioFileStore implements AudioFileStore {
   Future<String?> resolveWordAudioPath(
     String word, {
     String? preferredPath,
+    String? voice,
   }) async {
     return wordAudioPaths[word] ?? preferredPath;
   }
@@ -42,8 +43,10 @@ class InMemoryAudioFileStore implements AudioFileStore {
   Future<String> saveWordAudioFile(
     String word,
     List<int> bytes,
-    AudioFormat format,
-  ) async {
+    AudioFormat format, {
+    String? voice,
+    bool cacheByVoice = false,
+  }) async {
     return wordAudioPaths[word] ??= '/tmp/$word.pcm';
   }
 
@@ -51,6 +54,7 @@ class InMemoryAudioFileStore implements AudioFileStore {
   Future<String?> resolveSentenceAudioPath(
     String sentence, {
     String? preferredPath,
+    required String voice,
   }) async {
     return sentenceAudioPaths[sentence] ?? preferredPath;
   }
@@ -59,8 +63,9 @@ class InMemoryAudioFileStore implements AudioFileStore {
   Future<String> saveSentenceAudioFile(
     String sentence,
     List<int> bytes,
-    AudioFormat format,
-  ) async {
+    AudioFormat format, {
+    required String voice,
+  }) async {
     return sentenceAudioPaths[sentence] ??= '/tmp/sentence.pcm';
   }
 }
@@ -634,6 +639,7 @@ void main() {
           sentence,
           bufferedBytes,
           result.format,
+          cacheByVoice: result.cacheByVoice,
         );
         final savedBytes = await File(filePath).readAsBytes();
 
@@ -667,6 +673,7 @@ void main() {
           word,
           bufferedBytes,
           result.format,
+          cacheByVoice: result.cacheByVoice,
         );
         final savedBytes = await File(filePath).readAsBytes();
 

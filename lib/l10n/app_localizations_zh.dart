@@ -57,6 +57,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get password => '密码';
 
   @override
+  String get aiReading => 'AI 朗读';
+
+  @override
+  String get ttsVoice => '音色';
+
+  @override
+  String get ttsVoicePickerTitle => '选择音色';
+
+  @override
+  String get ttsVoicePickerSubtitle => '新音色会用于后续生成的朗读音频。';
+
+  @override
   String get save => '保存';
 
   @override

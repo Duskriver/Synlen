@@ -80,6 +80,26 @@
   "@password": {
     "description": "Password label"
   },
+
+  "aiReading": "AI Reading",
+  "@aiReading": {
+    "description": "AI reading settings section title"
+  },
+
+  "ttsVoice": "Voice",
+  "@ttsVoice": {
+    "description": "TTS voice setting title"
+  },
+
+  "ttsVoicePickerTitle": "Choose Voice",
+  "@ttsVoicePickerTitle": {
+    "description": "TTS voice picker title"
+  },
+
+  "ttsVoicePickerSubtitle": "New voice selections apply to newly generated reading audio.",
+  "@ttsVoicePickerSubtitle": {
+    "description": "TTS voice picker helper text"
+  },
   
   "save": "Save",
   "@save": {

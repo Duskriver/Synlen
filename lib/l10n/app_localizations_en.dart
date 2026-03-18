@@ -57,6 +57,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get password => 'Password';
 
   @override
+  String get aiReading => 'AI Reading';
+
+  @override
+  String get ttsVoice => 'Voice';
+
+  @override
+  String get ttsVoicePickerTitle => 'Choose Voice';
+
+  @override
+  String get ttsVoicePickerSubtitle =>
+      'New voice selections apply to newly generated reading audio.';
+
+  @override
   String get save => 'Save';
 
   @override

@@ -62,9 +62,11 @@ class SentenceRepository {
   Future<SentenceLearningResult> getSentenceInfo(String sentence) async {
     final cachedAnalysis = await getCachedSentence(sentence);
     final cachedPronunciation = await getCachedPronunciation(sentence);
+    final voice = _aliyunTTSService.currentVoiceParam;
     final cachedAudioPath = await _audioFileStore.resolveSentenceAudioPath(
       sentence,
       preferredPath: cachedPronunciation?.audioUrl,
+      voice: voice,
     );
 
     if (cachedAudioPath != null &&
@@ -86,6 +88,7 @@ class SentenceRepository {
     yield AudioStreamResult(
       stream: _aliyunTTSService.generateAudioStream(sentence),
       format: AudioFormat.pcm,
+      cacheByVoice: true,
       sampleRate: 24000,
       numChannels: 1,
       bitsPerSample: 16,
@@ -96,9 +99,16 @@ class SentenceRepository {
   Future<String> saveAudioFile(
     String sentence,
     List<int> bytes,
-    AudioFormat format,
-  ) {
-    return _audioFileStore.saveSentenceAudioFile(sentence, bytes, format);
+    AudioFormat format, {
+    required bool cacheByVoice,
+  }) {
+    assert(cacheByVoice);
+    return _audioFileStore.saveSentenceAudioFile(
+      sentence,
+      bytes,
+      format,
+      voice: _aliyunTTSService.currentVoiceParam,
+    );
   }
 
   Future<void> persistAudioPath(String sentence, String audioPath) {

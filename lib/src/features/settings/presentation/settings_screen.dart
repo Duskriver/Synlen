@@ -11,6 +11,7 @@ import 'package:synlen/src/features/settings/presentation/widgets/settings_app_h
 import 'package:synlen/src/features/settings/presentation/widgets/settings_appearance_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_font_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_info_section.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/settings_tts_voice_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/backup_tile.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/check_update_tile.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/clean_cache_tile.dart';
@@ -63,6 +64,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 48),
 
                 const SettingsAppearanceSection(),
+
+                const SizedBox(height: 24),
+
+                const SettingsTtsVoiceSection(),
 
                 const SizedBox(height: 24),
 
@@ -224,4 +229,3 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
-
