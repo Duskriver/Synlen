@@ -95,6 +95,26 @@
   "@theme": {
     "description": "主题设置标签"
   },
+
+  "aiReading": "AI 朗读",
+  "@aiReading": {
+    "description": "设置页 AI 朗读部分标题"
+  },
+
+  "ttsVoice": "音色",
+  "@ttsVoice": {
+    "description": "TTS 音色设置项标题"
+  },
+
+  "ttsVoicePickerTitle": "选择音色",
+  "@ttsVoicePickerTitle": {
+    "description": "TTS 音色选择弹窗标题"
+  },
+
+  "ttsVoicePickerSubtitle": "新音色会用于后续生成的朗读音频。",
+  "@ttsVoicePickerSubtitle": {
+    "description": "TTS 音色选择弹窗说明"
+  },
   
   "lastRead": "最后阅读",
   "@lastRead": {

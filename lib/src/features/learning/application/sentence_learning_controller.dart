@@ -102,6 +102,7 @@ class SentenceLearningController extends _$SentenceLearningController {
           sentence,
           bytes,
           result.format,
+          cacheByVoice: result.cacheByVoice,
         );
         await repository.persistAudioPath(sentence, filePath);
         if (_audio.isDisposed) {

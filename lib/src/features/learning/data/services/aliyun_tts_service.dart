@@ -2,19 +2,27 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import 'package:synlen/src/features/learning/domain/aliyun_tts_voice.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class AliyunTTSService {
+  AliyunTTSService({String Function()? readVoiceParam})
+    : _readVoiceParam =
+          readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
+
   final Dio _dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
+  final String Function() _readVoiceParam;
   static const String _apiKey = 'REMOVED_BEFORE_OPEN_SOURCE';
   static const String _url =
       'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
   static const String _model = 'qwen3-tts-flash';
+
+  String get currentVoiceParam => _readVoiceParam();
 
   /// 生成并流式输出语音音频
   ///
@@ -22,6 +30,7 @@ class AliyunTTSService {
   /// 返回音频字节流 [Stream<List<int>>]
   Stream<List<int>> generateAudioStream(String text) async* {
     try {
+      final voice = currentVoiceParam;
       final response = await _dio.post<ResponseBody>(
         _url,
         options: Options(
@@ -34,11 +43,7 @@ class AliyunTTSService {
         ),
         data: {
           'model': _model,
-          'input': {
-            'text': text,
-            'voice': 'Jennifer',
-            'language_type': 'English',
-          },
+          'input': {'text': text, 'voice': voice, 'language_type': 'English'},
           'parameters': {
             // 阿里云该模型目前仅支持 pcm 格式输出，采样率为 24kHz
             'audio_format': 'pcm',

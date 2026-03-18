@@ -4,26 +4,33 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:logger/logger.dart';
 import 'package:synlen/src/features/learning/application/learning_pcm_fade.dart';
+import 'package:synlen/src/features/learning/application/learning_audio_player.dart';
 import 'package:synlen/src/features/learning/application/learning_streaming_audio_session.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 
 class LearningAudioCoordinator {
   static const int _pcmFeedChunkSize = 8192;
+  static const int _pcmStartupBufferBytes = 16384;
   static const Duration _pcmFadeInDuration = Duration(milliseconds: 8);
   static const Duration _pcmFadeOutDuration = Duration(milliseconds: 8);
 
   final String debugLabel;
   final void Function(Object error)? onPlaybackError;
-  final FlutterSoundPlayer _player = FlutterSoundPlayer(logLevel: Level.error);
+  final LearningAudioPlayer _player;
   LearningStreamingAudioSession? _session;
   LearningPcmFade? _pcmFade;
   bool _isDisposed = false;
   bool _isInitialized = false;
   int _playbackToken = 0;
+  int _requestedPlayId = 0;
+  Future<void> _playSequence = Future<void>.value();
 
-  LearningAudioCoordinator({required this.debugLabel, this.onPlaybackError});
+  LearningAudioCoordinator({
+    required this.debugLabel,
+    this.onPlaybackError,
+    LearningAudioPlayer? player,
+  }) : _player = player ?? FlutterSoundLearningAudioPlayer();
 
   bool get isDisposed => _isDisposed;
 
@@ -85,46 +92,17 @@ class LearningAudioCoordinator {
       return;
     }
 
-    final token = ++_playbackToken;
-
-    try {
-      await _stopPlayback();
-      if (_isDisposed || token != _playbackToken) {
-        return;
-      }
-
-      if (audioUrl != null && audioUrl.isNotEmpty) {
-        if (_isRemoteUri(audioUrl)) {
-          await _playRemoteSource(audioUrl);
-          return;
-        }
-
-        final file = File(audioUrl);
-        if (await file.exists()) {
-          await _playLocalSource(audioUrl, token);
-          return;
-        }
-      }
-
-      final session = _session;
-      if (session != null && session.playbackUri != null) {
-        await _playRemoteSource(session.playbackUri!);
-        return;
-      }
-
-      if (session != null && session.supportsStreamingPlayback) {
-        await _playPcmStream(
-          byteStream: session.streamFromStart(),
-          sampleRate: session.sampleRate,
-          numChannels: session.numChannels,
-          bitsPerSample: session.bitsPerSample,
-          token: token,
-        );
-      }
-    } catch (error) {
-      debugPrint('$debugLabel audio play error: $error');
-      onPlaybackError?.call(error);
+    final request = await _resolvePlaybackRequest(audioUrl);
+    if (request == null) {
+      return;
     }
+
+    final playId = ++_requestedPlayId;
+    _playbackToken++;
+    _playSequence = _playSequence
+        .catchError((_) {})
+        .then((_) => _performPlay(request, playId));
+    await _playSequence;
   }
 
   void dispose() {
@@ -210,6 +188,54 @@ class LearningAudioCoordinator {
     }
   }
 
+  Future<void> _performPlay(_PlaybackRequest request, int playId) async {
+    if (_isDisposed) {
+      return;
+    }
+
+    if (playId != _requestedPlayId) {
+      return;
+    }
+
+    final token = _playbackToken;
+    try {
+      await _stopPlayback();
+      if (_isDisposed ||
+          token != _playbackToken ||
+          playId != _requestedPlayId) {
+        return;
+      }
+
+      switch (request.kind) {
+        case _PlaybackRequestKind.remote:
+          await _playRemoteSource(request.uri!);
+          break;
+        case _PlaybackRequestKind.local:
+          await _playLocalSource(request.uri!, token);
+          break;
+        case _PlaybackRequestKind.pcmSession:
+          final session = request.session!;
+          await session.waitForBufferedBytes(_pcmStartupBufferBytes);
+          if (_isDisposed ||
+              token != _playbackToken ||
+              playId != _requestedPlayId) {
+            return;
+          }
+          await _playPcmStream(
+            byteStream: session.streamFromStart(),
+            sampleRate: session.sampleRate,
+            numChannels: session.numChannels,
+            bitsPerSample: session.bitsPerSample,
+            token: token,
+          );
+          break;
+      }
+    } catch (error) {
+      debugPrint('$debugLabel audio play error: $error');
+      onPlaybackError?.call(error);
+    }
+  }
+
   Future<void> _feedPcmBytes(Uint8List bytes, int frameSize, int token) async {
     final chunkSize = (_pcmFeedChunkSize ~/ frameSize) * frameSize;
     var offset = 0;
@@ -236,6 +262,34 @@ class LearningAudioCoordinator {
     _pcmFade = null;
   }
 
+  Future<_PlaybackRequest?> _resolvePlaybackRequest(String? audioUrl) async {
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      if (_isRemoteUri(audioUrl)) {
+        return _PlaybackRequest.remote(audioUrl);
+      }
+
+      final file = File(audioUrl);
+      if (await file.exists()) {
+        return _PlaybackRequest.local(audioUrl);
+      }
+    }
+
+    final session = _session;
+    if (session == null) {
+      return null;
+    }
+
+    if (session.playbackUri != null) {
+      return _PlaybackRequest.remote(session.playbackUri!);
+    }
+
+    if (session.supportsStreamingPlayback) {
+      return _PlaybackRequest.pcmSession(session);
+    }
+
+    return null;
+  }
+
   Codec _codecForPath(String path) {
     final uri = Uri.tryParse(path);
     final normalizedPath = uri?.path.isNotEmpty == true ? uri!.path : path;
@@ -255,4 +309,44 @@ class LearningAudioCoordinator {
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.hasAuthority;
   }
+}
+
+enum _PlaybackRequestKind { remote, local, pcmSession }
+
+class _PlaybackRequest {
+  const _PlaybackRequest._({
+    required this.kind,
+    required this.sourceKey,
+    this.uri,
+    this.session,
+  });
+
+  factory _PlaybackRequest.remote(String uri) {
+    return _PlaybackRequest._(
+      kind: _PlaybackRequestKind.remote,
+      sourceKey: 'remote:$uri',
+      uri: uri,
+    );
+  }
+
+  factory _PlaybackRequest.local(String uri) {
+    return _PlaybackRequest._(
+      kind: _PlaybackRequestKind.local,
+      sourceKey: 'local:$uri',
+      uri: uri,
+    );
+  }
+
+  factory _PlaybackRequest.pcmSession(LearningStreamingAudioSession session) {
+    return _PlaybackRequest._(
+      kind: _PlaybackRequestKind.pcmSession,
+      sourceKey: 'pcm:${identityHashCode(session)}',
+      session: session,
+    );
+  }
+
+  final _PlaybackRequestKind kind;
+  final String sourceKey;
+  final String? uri;
+  final LearningStreamingAudioSession? session;
 }

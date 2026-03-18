@@ -194,6 +194,30 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get password;
 
+  /// AI reading settings section title
+  ///
+  /// In en, this message translates to:
+  /// **'AI Reading'**
+  String get aiReading;
+
+  /// TTS voice setting title
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get ttsVoice;
+
+  /// TTS voice picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Voice'**
+  String get ttsVoicePickerTitle;
+
+  /// TTS voice picker helper text
+  ///
+  /// In en, this message translates to:
+  /// **'New voice selections apply to newly generated reading audio.'**
+  String get ttsVoicePickerSubtitle;
+
   /// Save button label
   ///
   /// In en, this message translates to:

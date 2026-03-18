@@ -77,6 +77,7 @@ class WordRepository {
           yield AudioStreamResult(
             stream: response.data!.stream.cast<List<int>>(),
             format: AudioFormat.mp3,
+            cacheByVoice: false,
             playbackUri: dictionaryAudioUrl,
           );
           return;
@@ -90,6 +91,7 @@ class WordRepository {
     yield AudioStreamResult(
       stream: _aliyunTTSService.generateAudioStream(word),
       format: AudioFormat.pcm,
+      cacheByVoice: true,
       sampleRate: 24000,
       numChannels: 1,
       bitsPerSample: 16,
@@ -105,9 +107,11 @@ class WordRepository {
   Future<WordLearningResult> getWordInfo(String word, String context) async {
     final cachedExplanation = await getCachedWord(word, context);
     final cachedPronunciation = await getCachedPronunciation(word);
+    final voice = _aliyunTTSService.currentVoiceParam;
     final audioPath = await _audioFileStore.resolveWordAudioPath(
       word,
       preferredPath: cachedPronunciation?.audioUrl,
+      voice: voice,
     );
 
     if (audioPath != null &&
@@ -128,9 +132,16 @@ class WordRepository {
   Future<String> saveAudioFile(
     String word,
     List<int> bytes,
-    AudioFormat format,
-  ) {
-    return _audioFileStore.saveWordAudioFile(word, bytes, format);
+    AudioFormat format, {
+    required bool cacheByVoice,
+  }) {
+    return _audioFileStore.saveWordAudioFile(
+      word,
+      bytes,
+      format,
+      voice: _aliyunTTSService.currentVoiceParam,
+      cacheByVoice: cacheByVoice,
+    );
   }
 
   Future<void> persistAudioPath(String word, String audioPath) {

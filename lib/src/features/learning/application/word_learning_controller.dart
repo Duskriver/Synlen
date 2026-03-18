@@ -126,6 +126,7 @@ class WordLearningController extends _$WordLearningController {
           word,
           bytes,
           result.format,
+          cacheByVoice: result.cacheByVoice,
         );
         await repository.persistAudioPath(word, filePath);
         if (_audio.isDisposed) {
