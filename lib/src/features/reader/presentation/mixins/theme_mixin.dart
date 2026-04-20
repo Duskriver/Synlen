@@ -27,6 +27,10 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> updateWebViewTheme() async {
+    if (!mounted) {
+      return;
+    }
+
     final newTheme = getEpubTheme();
     final currentTheme = rendererController.currentTheme;
     if (currentTheme != null && currentTheme == newTheme) {
@@ -38,6 +42,10 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
     });
 
     await rendererController.updateTheme(getEpubTheme());
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       updatingTheme = false;

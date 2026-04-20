@@ -329,37 +329,144 @@ class EpubImportService {
   }
 
   /// Delete a file (helper for cleanup)
-  Future<void> _deleteFile(String path) async {
+  Future<Either<String, bool>> _deleteFile(String path) async {
     try {
       final absolutePath = '${AppStorage.documentsPath}$path';
       final file = File(absolutePath);
       if (await file.exists()) {
         await file.delete();
+        return right(true);
       }
+      return right(false);
     } catch (e) {
-      debugPrint('Failed to delete file $path: $e');
+      return left('Failed to delete file $path: $e');
     }
+  }
+
+  Future<Either<String, bool>> _rollbackDeleteFailure({
+    required String message,
+    required ShelfBook book,
+    required bool originalDeletedState,
+    required bool bookWasSoftDeleted,
+    required BookManifest? originalManifest,
+    required bool manifestWasDeleted,
+  }) async {
+    final rollbackErrors = <String>[];
+
+    if (manifestWasDeleted && originalManifest != null) {
+      final restoreManifestResult = await _manifestRepo.saveManifest(
+        originalManifest,
+      );
+      if (restoreManifestResult.isLeft()) {
+        rollbackErrors.add(
+          'Restore manifest failed: ${restoreManifestResult.getLeft().toNullable()!}',
+        );
+      }
+    }
+
+    if (bookWasSoftDeleted) {
+      book
+        ..isDeleted = originalDeletedState
+        ..updatedAt = DateTime.now().millisecondsSinceEpoch;
+      final restoreBookResult = await _shelfBookRepo.saveBook(book);
+      if (restoreBookResult.isLeft()) {
+        rollbackErrors.add(
+          'Restore book failed: ${restoreBookResult.getLeft().toNullable()!}',
+        );
+      }
+    }
+
+    if (rollbackErrors.isEmpty) {
+      return left(message);
+    }
+
+    return left('$message (rollback errors: ${rollbackErrors.join('; ')})');
   }
 
   /// Delete imported book (ShelfBook + BookManifest + files)
   Future<Either<String, bool>> deleteBook(ShelfBook book) async {
-    try {
-      // Delete from database
-      await _shelfBookRepo.softDeleteBook(book.id);
-      await _manifestRepo.deleteManifestByHash(book.fileHash);
+    final originalDeletedState = book.isDeleted;
+    final originalManifest = await _manifestRepo.getManifestByHash(
+      book.fileHash,
+    );
+    var bookWasSoftDeleted = false;
+    var manifestWasDeleted = false;
 
-      // Delete files
-      if (book.filePath != null) {
-        await _deleteFile(book.filePath!);
+    try {
+      final softDeleteResult = await _shelfBookRepo.softDeleteBook(book.id);
+      if (softDeleteResult.isLeft()) {
+        return left(softDeleteResult.getLeft().toNullable()!);
       }
+      if (softDeleteResult.getRight().toNullable() != true) {
+        return left('Delete book failed: book record was not updated');
+      }
+      bookWasSoftDeleted = true;
+
+      final deleteManifestResult = await _manifestRepo.deleteManifestByHash(
+        book.fileHash,
+      );
+      if (deleteManifestResult.isLeft()) {
+        return _rollbackDeleteFailure(
+          message: deleteManifestResult.getLeft().toNullable()!,
+          book: book,
+          originalDeletedState: originalDeletedState,
+          bookWasSoftDeleted: bookWasSoftDeleted,
+          originalManifest: originalManifest,
+          manifestWasDeleted: manifestWasDeleted,
+        );
+      }
+      final didDeleteManifest = deleteManifestResult.getRight().toNullable()!;
+      if (!didDeleteManifest && originalManifest != null) {
+        return _rollbackDeleteFailure(
+          message: 'Delete manifest failed: manifest record still exists',
+          book: book,
+          originalDeletedState: originalDeletedState,
+          bookWasSoftDeleted: bookWasSoftDeleted,
+          originalManifest: originalManifest,
+          manifestWasDeleted: manifestWasDeleted,
+        );
+      }
+      manifestWasDeleted = didDeleteManifest;
+
+      // Delete files after metadata is removed so a failed rollback favors
+      // keeping the primary EPUB file over the derived cover image.
       if (book.coverPath != null) {
-        await _deleteFile(book.coverPath!);
+        final coverDeleteResult = await _deleteFile(book.coverPath!);
+        if (coverDeleteResult.isLeft()) {
+          return _rollbackDeleteFailure(
+            message: coverDeleteResult.getLeft().toNullable()!,
+            book: book,
+            originalDeletedState: originalDeletedState,
+            bookWasSoftDeleted: bookWasSoftDeleted,
+            originalManifest: originalManifest,
+            manifestWasDeleted: manifestWasDeleted,
+          );
+        }
+      }
+      if (book.filePath != null) {
+        final bookFileDeleteResult = await _deleteFile(book.filePath!);
+        if (bookFileDeleteResult.isLeft()) {
+          return _rollbackDeleteFailure(
+            message: bookFileDeleteResult.getLeft().toNullable()!,
+            book: book,
+            originalDeletedState: originalDeletedState,
+            bookWasSoftDeleted: bookWasSoftDeleted,
+            originalManifest: originalManifest,
+            manifestWasDeleted: manifestWasDeleted,
+          );
+        }
       }
 
       return right(true);
     } catch (e) {
-      return left('Delete book failed: $e');
+      return _rollbackDeleteFailure(
+        message: 'Delete book failed: $e',
+        book: book,
+        originalDeletedState: originalDeletedState,
+        bookWasSoftDeleted: bookWasSoftDeleted,
+        originalManifest: originalManifest,
+        manifestWasDeleted: manifestWasDeleted,
+      );
     }
   }
 }
-

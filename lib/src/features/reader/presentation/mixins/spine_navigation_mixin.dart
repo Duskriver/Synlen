@@ -99,11 +99,18 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     await rendererController.waitForEvents(tokensForWait);
 
+    if (!mounted) {
+      return;
+    }
+
     if (restoreScrollRatio != null) {
       await rendererController.restoreScrollPosition(restoreScrollRatio);
     }
 
     await Future.delayed(const Duration(milliseconds: 30));
+    if (!mounted) {
+      return;
+    }
     setState(() {
       isWebViewLoading = false;
     });
