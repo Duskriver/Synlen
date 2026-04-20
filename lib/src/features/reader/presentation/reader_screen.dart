@@ -37,6 +37,73 @@ part 'mixins/link_handling_mixin.dart';
 part 'mixins/image_viewer_mixin.dart';
 part 'mixins/footnote_mixin.dart';
 
+class ReaderViewState {
+  bool isWebViewLoading = true;
+  bool updatingTheme = false;
+
+  int _currentSpineItemIndex = 0;
+  final ValueNotifier<int> currentSpineItemNotifier = ValueNotifier(0);
+
+  int get currentSpineItemIndex => _currentSpineItemIndex;
+  set currentSpineItemIndex(int value) {
+    if (_currentSpineItemIndex == value) {
+      return;
+    }
+    _currentSpineItemIndex = value;
+    currentSpineItemNotifier.value = value;
+  }
+
+  int _currentPageInChapter = 0;
+  final ValueNotifier<int> currentPageNotifier = ValueNotifier(0);
+
+  int get currentPageInChapter => _currentPageInChapter;
+  set currentPageInChapter(int value) {
+    if (_currentPageInChapter == value) {
+      return;
+    }
+    _currentPageInChapter = value;
+    currentPageNotifier.value = value;
+  }
+
+  int _totalPagesInChapter = 1;
+  final ValueNotifier<int> totalPagesNotifier = ValueNotifier(1);
+
+  int get totalPagesInChapter => _totalPagesInChapter;
+  set totalPagesInChapter(int value) {
+    if (_totalPagesInChapter == value) {
+      return;
+    }
+    _totalPagesInChapter = value;
+    totalPagesNotifier.value = value;
+  }
+
+  String _displayProgress = '';
+  final ValueNotifier<String> displayProgressNotifier = ValueNotifier('');
+
+  String get displayProgress => _displayProgress;
+  set displayProgress(String value) {
+    if (_displayProgress == value) {
+      return;
+    }
+    _displayProgress = value;
+    displayProgressNotifier.value = value;
+  }
+
+  final ValueNotifier<Set<TocItem>> activeTocItemsNotifier = ValueNotifier(
+    <TocItem>{},
+  );
+  final ValueNotifier<String> activeTocTitleNotifier = ValueNotifier('');
+
+  void dispose() {
+    currentSpineItemNotifier.dispose();
+    currentPageNotifier.dispose();
+    totalPagesNotifier.dispose();
+    displayProgressNotifier.dispose();
+    activeTocItemsNotifier.dispose();
+    activeTocTitleNotifier.dispose();
+  }
+}
+
 /// Reads EPUB directly from compressed file without extraction
 class ReaderScreen extends ConsumerStatefulWidget {
   final String fileHash;
@@ -66,10 +133,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   final ReaderRendererController rendererController =
       ReaderRendererController();
+  final ReaderViewState viewState = ReaderViewState();
 
   // Core UI state
   @override
-  bool isWebViewLoading = true;
+  bool get isWebViewLoading => viewState.isWebViewLoading;
+  @override
+  set isWebViewLoading(bool value) => viewState.isWebViewLoading = value;
 
   @override
   bool showControls = false;
@@ -80,54 +150,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   // Spine navigation state (used by _SpineNavigationMixin)
   @override
-  int get currentSpineItemIndex => _currentSpineItemIndex;
-  int _currentSpineItemIndex = 0;
-  final ValueNotifier<int> _currentSpineItemNotifier = ValueNotifier(0);
-
+  int get currentSpineItemIndex => viewState.currentSpineItemIndex;
   @override
-  set currentSpineItemIndex(int value) {
-    if (_currentSpineItemIndex == value) return;
-    _currentSpineItemIndex = value;
-    _currentSpineItemNotifier.value = value;
-  }
+  set currentSpineItemIndex(int value) =>
+      viewState.currentSpineItemIndex = value;
 
   // Pagination state (used by _PageNavigationMixin)
   @override
-  int get currentPageInChapter => _currentPageInChapter;
-  int _currentPageInChapter = 0;
-  final ValueNotifier<int> _currentPageNotifier = ValueNotifier(0);
+  int get currentPageInChapter => viewState.currentPageInChapter;
+  @override
+  set currentPageInChapter(int value) => viewState.currentPageInChapter = value;
 
   @override
-  set currentPageInChapter(int value) {
-    if (_currentPageInChapter == value) return;
-    _currentPageInChapter = value;
-    _currentPageNotifier.value = value;
-  }
-
+  int get totalPagesInChapter => viewState.totalPagesInChapter;
   @override
-  int get totalPagesInChapter => _totalPagesInChapter;
-  int _totalPagesInChapter = 1;
-  final ValueNotifier<int> _totalPagesNotifier = ValueNotifier(1);
-
-  @override
-  set totalPagesInChapter(int value) {
-    if (_totalPagesInChapter == value) return;
-    _totalPagesInChapter = value;
-    _totalPagesNotifier.value = value;
-  }
+  set totalPagesInChapter(int value) => viewState.totalPagesInChapter = value;
 
   // Progress state (used by _ProgressMixin)
   @override
-  String get displayProgress => _displayProgress;
-  String _displayProgress = '';
-  final ValueNotifier<String> _displayProgressNotifier = ValueNotifier('');
-
+  String get displayProgress => viewState.displayProgress;
   @override
-  set displayProgress(String value) {
-    if (_displayProgress == value) return;
-    _displayProgress = value;
-    _displayProgressNotifier.value = value;
-  }
+  set displayProgress(String value) => viewState.displayProgress = value;
 
   @override
   Timer? progressDebouncer;
@@ -138,7 +181,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   ThemeData? currentTheme;
   @override
-  bool updatingTheme = false;
+  bool get updatingTheme => viewState.updatingTheme;
+  @override
+  set updatingTheme(bool value) => viewState.updatingTheme = value;
   @override
   Timer? themeUpdateDebouncer;
 
@@ -167,10 +212,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   bool tocDrawerOpen = false;
   bool styleDrawerOpen = false;
   AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
-  final ValueNotifier<Set<TocItem>> _activeTocItemsNotifier = ValueNotifier(
-    <TocItem>{},
-  );
-  final ValueNotifier<String> _activeTocTitleNotifier = ValueNotifier('');
 
   @override
   void initState() {
@@ -235,19 +276,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     routeAnimation = null;
     themeUpdateDebouncer?.cancel();
     progressDebouncer?.cancel();
+    _saveProgressDebouncer?.cancel();
     _readerSettingsSubscription?.close();
     _volumeKeyTurnsPageSubscription?.close();
-    _currentSpineItemNotifier.dispose();
-    _currentPageNotifier.dispose();
-    _totalPagesNotifier.dispose();
-    _displayProgressNotifier.dispose();
-    _activeTocItemsNotifier.dispose();
-    _activeTocTitleNotifier.dispose();
+    viewState.dispose();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
     volumeSubscription?.cancel();
     VolumeControlService.disableInterception();
     WakelockPlus.disable();
+    webViewHandler.clearCache();
     bookSession.dispose();
     super.dispose();
   }
@@ -295,15 +333,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void refreshActiveTocState() {
     final activeItems = resolveActiveItems();
-    if (!setEquals(_activeTocItemsNotifier.value, activeItems)) {
-      _activeTocItemsNotifier.value = activeItems;
+    if (!setEquals(viewState.activeTocItemsNotifier.value, activeItems)) {
+      viewState.activeTocItemsNotifier.value = activeItems;
     }
 
     final title = activeItems.isNotEmpty
         ? activeItems.last.label
         : bookSession.book?.title ?? '';
-    if (_activeTocTitleNotifier.value != title) {
-      _activeTocTitleNotifier.value = title;
+    if (viewState.activeTocTitleNotifier.value != title) {
+      viewState.activeTocTitleNotifier.value = title;
     }
   }
 
@@ -485,7 +523,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               key: scaffoldKey,
               backgroundColor: epubTheme.colorScheme.surfaceContainer,
               drawer: ValueListenableBuilder<Set<TocItem>>(
-                valueListenable: _activeTocItemsNotifier,
+                valueListenable: viewState.activeTocItemsNotifier,
                 builder: (context, activeItems, child) {
                   return TocDrawer(
                     book: bookSession.book!,
@@ -542,28 +580,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onSentenceSelected: handleSentenceSelected,
                       shouldShowWebView: shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
-                      statusBarLeftContent: _activeTocTitleNotifier,
-                      statusBarRightContent: _displayProgressNotifier,
+                      statusBarLeftContent: viewState.activeTocTitleNotifier,
+                      statusBarRightContent: viewState.displayProgressNotifier,
                     ),
 
                     ListenableBuilder(
                       listenable: Listenable.merge([
-                        _activeTocTitleNotifier,
-                        _currentSpineItemNotifier,
-                        _currentPageNotifier,
-                        _totalPagesNotifier,
+                        viewState.activeTocTitleNotifier,
+                        viewState.currentSpineItemNotifier,
+                        viewState.currentPageNotifier,
+                        viewState.totalPagesNotifier,
                       ]),
                       builder: (context, child) {
                         return ControlPanel(
                           showControls: showControls,
                           title: bookSession.spine.isEmpty
                               ? bookSession.book!.title
-                              : _activeTocTitleNotifier.value,
+                              : viewState.activeTocTitleNotifier.value,
                           currentSpineItemIndex:
-                              _currentSpineItemNotifier.value,
+                              viewState.currentSpineItemNotifier.value,
                           totalSpineItems: bookSession.spine.length,
-                          currentPageInChapter: _currentPageNotifier.value,
-                          totalPagesInChapter: _totalPagesNotifier.value,
+                          currentPageInChapter:
+                              viewState.currentPageNotifier.value,
+                          totalPagesInChapter:
+                              viewState.totalPagesNotifier.value,
                           direction: bookSession.book!.direction,
                           onBack: () {
                             saveProgress();
@@ -619,4 +659,3 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 }
-

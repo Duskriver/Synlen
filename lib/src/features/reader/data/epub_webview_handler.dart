@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fpdart/fpdart.dart';
@@ -6,14 +7,27 @@ import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/data/services/epub_stream_service.dart';
 
+class _CachedResource {
+  final Uint8List bytes;
+  final String mimeType;
+
+  const _CachedResource({required this.bytes, required this.mimeType});
+
+  int get sizeInBytes => bytes.lengthInBytes;
+}
+
 /// WebView request handler for streaming EPUB content
 /// Intercepts requests to virtual domain and serves files from compressed EPUB
 class EpubWebViewHandler {
   final EpubStreamService _streamService;
 
-  /// 内存缓存，用于存储已加载的资源（CSS, 图片, 字体等）
-  /// 避免重复的 Isolate 通信和文件 I/O，减少主线程卡顿
-  final Map<String, (Uint8List, String)> _resourceCache = {};
+  /// 内存缓存，用于存储已加载的资源（CSS, 图片, 字体等）。
+  /// 使用 LRU + 总字节数上限，避免长时间阅读时无限增长。
+  static const int _maxCachedEntries = 256;
+  static const int _maxCacheBytes = 24 * 1024 * 1024;
+  static const int _maxCacheableEntryBytes = 2 * 1024 * 1024;
+  final LinkedHashMap<String, _CachedResource> _resourceCache = LinkedHashMap();
+  int _cachedBytes = 0;
 
   /// Virtual domain for EPUB content
   /// Format: epub://localhost/book/{fileHash}/{filePath}
@@ -27,6 +41,50 @@ class EpubWebViewHandler {
   /// 清空资源缓存（例如切换书籍时）
   void clearCache() {
     _resourceCache.clear();
+    _cachedBytes = 0;
+  }
+
+  @visibleForTesting
+  int get debugCachedResourceCount => _resourceCache.length;
+
+  @visibleForTesting
+  int get debugCachedBytes => _cachedBytes;
+
+  _CachedResource? _getCachedResource(String url) {
+    final cached = _resourceCache.remove(url);
+    if (cached == null) {
+      return null;
+    }
+
+    _resourceCache[url] = cached;
+    return cached;
+  }
+
+  void _cacheResource(String url, Uint8List bytes, String mimeType) {
+    if (bytes.lengthInBytes > _maxCacheableEntryBytes) {
+      return;
+    }
+
+    final existing = _resourceCache.remove(url);
+    if (existing != null) {
+      _cachedBytes -= existing.sizeInBytes;
+    }
+
+    final resource = _CachedResource(bytes: bytes, mimeType: mimeType);
+    _resourceCache[url] = resource;
+    _cachedBytes += resource.sizeInBytes;
+    _trimCache();
+  }
+
+  void _trimCache() {
+    while (_resourceCache.length > _maxCachedEntries ||
+        _cachedBytes > _maxCacheBytes) {
+      final oldestKey = _resourceCache.keys.first;
+      final removed = _resourceCache.remove(oldestKey);
+      if (removed != null) {
+        _cachedBytes -= removed.sizeInBytes;
+      }
+    }
   }
 
   /// Create WebView resource request handler
@@ -40,13 +98,13 @@ class EpubWebViewHandler {
       final urlString = requestUrl.toString();
 
       // 1. 优先从内存缓存中获取资源
-      if (_resourceCache.containsKey(urlString)) {
-        final cached = _resourceCache[urlString]!;
+      final cached = _getCachedResource(urlString);
+      if (cached != null) {
         return WebResourceResponse(
-          contentType: cached.$2,
+          contentType: cached.mimeType,
           statusCode: 200,
           reasonPhrase: 'OK (Cached)',
-          data: cached.$1,
+          data: cached.bytes,
           headers: _headers,
         );
       }
@@ -62,8 +120,7 @@ class EpubWebViewHandler {
           );
         }
         final cachedData = result.getRight().toNullable()!;
-        // 存入缓存
-        _resourceCache[urlString] = cachedData;
+        _cacheResource(urlString, cachedData.$1, cachedData.$2);
 
         return WebResourceResponse(
           contentType: cachedData.$2,
@@ -87,8 +144,7 @@ class EpubWebViewHandler {
       }
 
       final dataPair = result.getRight().toNullable()!;
-      // 存入缓存
-      _resourceCache[urlString] = dataPair;
+      _cacheResource(urlString, dataPair.$1, dataPair.$2);
 
       // Return the file content
       return WebResourceResponse(
@@ -117,9 +173,12 @@ class EpubWebViewHandler {
       final urlString = requestUrl.toString();
 
       // 1. 优先从内存缓存中获取资源
-      if (_resourceCache.containsKey(urlString)) {
-        final cached = _resourceCache[urlString]!;
-        return CustomSchemeResponse(contentType: cached.$2, data: cached.$1);
+      final cached = _getCachedResource(urlString);
+      if (cached != null) {
+        return CustomSchemeResponse(
+          contentType: cached.mimeType,
+          data: cached.bytes,
+        );
       }
 
       // Serve user-imported fonts.
@@ -133,7 +192,7 @@ class EpubWebViewHandler {
           );
         }
         final cachedData = result.getRight().toNullable()!;
-        _resourceCache[urlString] = cachedData;
+        _cacheResource(urlString, cachedData.$1, cachedData.$2);
         return CustomSchemeResponse(
           contentType: cachedData.$2,
           data: cachedData.$1,
@@ -151,7 +210,7 @@ class EpubWebViewHandler {
       }
 
       final dataPair = result.getRight().toNullable()!;
-      _resourceCache[urlString] = dataPair;
+      _cacheResource(urlString, dataPair.$1, dataPair.$2);
 
       return CustomSchemeResponse(contentType: dataPair.$2, data: dataPair.$1);
     } catch (e) {
@@ -281,4 +340,3 @@ class EpubWebViewHandler {
         requestUrl.path.startsWith('/fonts/');
   }
 }
-
