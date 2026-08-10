@@ -38,15 +38,20 @@ flutter pub get
 Run the app:
 
 ```bash
-flutter run
+# Learning features need API keys (word explanation / sentence analysis / TTS reading).
+# Without them those features will show an "unavailable" message.
+flutter run --dart-define=DEEPSEEK_API_KEY=your_key --dart-define=ALIYUN_TTS_API_KEY=your_key
 ```
 
 Build release packages:
 
 ```bash
-flutter build apk --release
-flutter build ios --release
+# Release builds need the same API keys injected, otherwise learning features won't work.
+flutter build apk --release --dart-define=DEEPSEEK_API_KEY=your_key --dart-define=ALIYUN_TTS_API_KEY=your_key
+flutter build ios --release --dart-define=DEEPSEEK_API_KEY=your_key --dart-define=ALIYUN_TTS_API_KEY=your_key
 ```
+
+> API keys are injected at compile time via `--dart-define` and are never stored in source code. CI release builds use GitHub Secrets (see `.github/workflows/build_release.yml`).
 
 ## Notes
 

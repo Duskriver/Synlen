@@ -38,15 +38,19 @@ flutter pub get
 运行应用：
 
 ```bash
-flutter run
+# 学习功能需要 API Key（单词解释/句子分析 + TTS 朗读），未配置时相应功能会提示不可用
+flutter run --dart-define=DEEPSEEK_API_KEY=你的key --dart-define=ALIYUN_TTS_API_KEY=你的key
 ```
 
 构建发布包：
 
 ```bash
-flutter build apk --release
-flutter build ios --release
+# 发布包同样需要注入 API Key，否则学习功能不可用
+flutter build apk --release --dart-define=DEEPSEEK_API_KEY=你的key --dart-define=ALIYUN_TTS_API_KEY=你的key
+flutter build ios --release --dart-define=DEEPSEEK_API_KEY=你的key --dart-define=ALIYUN_TTS_API_KEY=你的key
 ```
+
+> API Key 通过编译期 `--dart-define` 注入，不会写进源码或产物文件之外。CI 发布构建使用 GitHub Secrets 注入（见 `.github/workflows/build_release.yml`）。
 
 ## 说明
 
