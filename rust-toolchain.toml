@@ -1,0 +1,4 @@
+# 固定 Rust 工具链，保证可复现构建（2026-08-10 升级）
+[toolchain]
+channel = "1.97.1"
+profile = "minimal"
