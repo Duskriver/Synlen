@@ -25,7 +25,7 @@
 Clone the repository:
 
 ```bash
-git clone https://github.com/tltltltltltltltl/Synlen.git
+git clone https://github.com/Duskriver/Synlen.git
 cd Synlen
 ```
 
@@ -50,6 +50,6 @@ flutter build ios --release
 
 ## Notes
 
-- Flutter SDK >= 3.10.8
-- Dart SDK >= 3.10.8
+- Flutter SDK >= 3.38.0（推荐 3.44.9 stable）
+- Dart SDK >= 3.10.8（推荐 3.12.2 stable）
 - The original MIT license is kept in [LICENSE](./LICENSE) and is also shown inside the app's Open Source Licenses page.

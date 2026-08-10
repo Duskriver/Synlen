@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **AI 句子分析优化**：优化了 AI 句子分析的 Prompt，优先显示整句翻译并精简了语法分析内容。
 ## [Unreleased]
 
+### 中文
+
+#### 工具链与依赖升级
+
+* **Flutter 3.44.9 / Dart 3.12.2 / Rust 1.97.1**：工具链升级到最新稳定版，并新增 `rust-toolchain.toml` 固定 Rust 版本（可复现构建）。
+* **数据库迁移 Isar → drift**（ADR-0002）：Isar 已停更 3 年且与新版 codegen 链不兼容，迁移到活跃维护的 drift（SQLite）。首次启动自动迁移旧数据，迁移完成后移除旧依赖。
+* **Riverpod 3.x**：状态管理升级到 Riverpod 3（`flutter_riverpod 3.3.2` + `riverpod_annotation 4.0.3` + `riverpod_generator 4.0.4`）。`XxxRef` 参数统一为 `Ref`，Notifier provider 命名去掉 `Notifier` 后缀，`StateProvider` 改为 `Notifier` 实现。注：受 Flutter 3.44 生态锁限制（analyzer 12），riverpod 3.4.x / generator 4.0.6+ 待 Flutter 升级后解锁。
+* **依赖全面升级**：`flutter_rust_bridge 2.12.0`（Dart+Rust 同步）、`xml 7`、`go_router 17.4`、`dio 5.11`、`flutter_secure_storage 11`、`share_plus 13`、`wakelock_plus 1.7`、`package_info_plus 10`、`saf_stream 4` 等全部升级到当前 Flutter stable 可支持的最新版本。
+* **移除停更/无用依赖**：`isar`（→drift）、`isar_generator`、`flutter_speed_dial`（→ 自研 `ExpandableFab`，停更 3 年）、`saf_util`（无使用处）。
+* **代码清理**：`analyze` 零告警、测试全绿；死代码（Rust `greet`、`EpubStreamService.warmUp`）留待后续专项重构（见架构审计报告）。
+* **新增测试**：`test/database/isar_migration_test.dart` 覆盖旧 Isar 数据 → drift 的完整迁移（含嵌套 JSON 结构）。
+
 ## [v0.2.3] - 2026-03-13
 
 ### English

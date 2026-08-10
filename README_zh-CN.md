@@ -25,7 +25,7 @@
 克隆仓库：
 
 ```bash
-git clone https://github.com/tltltltltltltltl/Synlen.git
+git clone https://github.com/Duskriver/Synlen.git
 cd Synlen
 ```
 
@@ -50,6 +50,6 @@ flutter build ios --release
 
 ## 说明
 
-- Flutter SDK >= 3.10.8
-- Dart SDK >= 3.10.8
+- Flutter SDK >= 3.38.0（推荐 3.44.9 stable）
+- Dart SDK >= 3.10.8（推荐 3.12.2 stable）
 - 上游 MIT 许可证保留在 [LICENSE](./LICENSE) 中，并已接入应用内“开源许可证”页面
