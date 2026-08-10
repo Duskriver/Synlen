@@ -9,7 +9,7 @@ class AppInfo {
   static const originalRepositoryUrl = 'https://github.com/MilkFeng/lumina';
 
   static const projectRepositoryUrl =
-      'https://github.com/tltltltltltltltl/Synlen';
+      'https://github.com/Duskriver/Synlen';
   static const versionEndpoint = 'https://example.com/synlen/version';
 
   static const applicationLegalese =
