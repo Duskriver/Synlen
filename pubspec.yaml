@@ -16,11 +16,11 @@ dependencies:
   # Localization
   flutter_localizations:
     sdk: flutter
-  intl: any
+  intl: ^0.20.2
 
   # State Management
-  # 注：Flutter 3.44 生态锁（test_api 0.7.11）上限为 generator 4.0.4/analyzer 12，
-  # riverpod 3.4.x 需 analyzer 13，待 Flutter 升级后解锁
+  # 注：Flutter 3.44 生态锁（test_api 0.7.11）上限为 analyzer 12，
+  # riverpod generator 4.0.6+ / drift_dev 2.34.5+ 均需 analyzer 13，待 Flutter 升级后解锁
   flutter_riverpod: ^3.3.2
   riverpod_annotation: 4.0.3
 
@@ -35,7 +35,6 @@ dependencies:
 
   # Storage
   shared_preferences: ^2.5.4
-  flutter_secure_storage: ^11.0.0
 
   # Functional Programming
   fpdart: ^1.2.0
@@ -44,7 +43,6 @@ dependencies:
   xml: ^7.0.1
   archive: ^4.0.7
   crypto: ^3.0.7
-  convert: ^3.1.2
   
   # Reader
   flutter_inappwebview: ^6.1.5
