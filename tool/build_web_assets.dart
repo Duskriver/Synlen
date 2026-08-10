@@ -1,4 +1,5 @@
 import 'dart:io';
+// ignore_for_file: avoid_print
 
 void main() async {
   print('🚀 start build synlen web assets...');
