@@ -17,12 +17,22 @@ class AliyunTTSService {
     ),
   );
   final String Function() _readVoiceParam;
-  static const String _apiKey = 'sk-2b1f34fb5c524d7a914e1d349bd46b04';
+  // API Key 通过 --dart-define=ALIYUN_TTS_API_KEY=xxx 注入，禁止硬编码在源码中
+  static const String _apiKey = String.fromEnvironment('ALIYUN_TTS_API_KEY');
   static const String _url =
       'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
   static const String _model = 'qwen3-tts-flash';
 
   String get currentVoiceParam => _readVoiceParam();
+
+  /// 校验 API Key 是否已配置，未配置时抛出明确错误
+  void _ensureConfigured() {
+    if (_apiKey.isEmpty) {
+      throw const LearningException(
+        '未配置阿里云 TTS API Key，请在启动时传入 --dart-define=ALIYUN_TTS_API_KEY=xxx',
+      );
+    }
+  }
 
   /// 生成并流式输出语音音频
   ///
@@ -30,6 +40,7 @@ class AliyunTTSService {
   /// 返回音频字节流 [Stream<List<int>>]
   Stream<List<int>> generateAudioStream(String text) async* {
     try {
+      _ensureConfigured();
       final voice = currentVoiceParam;
       final response = await _dio.post<ResponseBody>(
         _url,

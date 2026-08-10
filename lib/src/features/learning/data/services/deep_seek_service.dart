@@ -5,9 +5,19 @@ import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 class DeepSeekService {
   final Dio _dio = Dio();
 
-  static const String _apiKey = 'sk-a01e451642ef4780bd7c701b3f2145bc';
+  // API Key 通过 --dart-define=DEEPSEEK_API_KEY=xxx 注入，禁止硬编码在源码中
+  static const String _apiKey = String.fromEnvironment('DEEPSEEK_API_KEY');
   static const String _baseUrl = 'https://api.deepseek.com/chat/completions';
   static const String _model = 'deepseek-chat';
+
+  /// 校验 API Key 是否已配置，未配置时抛出明确错误
+  void _ensureConfigured() {
+    if (_apiKey.isEmpty) {
+      throw const LearningException(
+        '未配置 DeepSeek API Key，请在启动时传入 --dart-define=DEEPSEEK_API_KEY=xxx',
+      );
+    }
+  }
 
   /// 解释单词在特定上下文中的含义
   ///
@@ -16,6 +26,7 @@ class DeepSeekService {
   /// 返回解释文本，如果出错则返回 null
   Future<String?> explainWord(String word, String context) async {
     try {
+      _ensureConfigured();
       final response = await _dio.post(
         _baseUrl,
         options: Options(
@@ -56,6 +67,7 @@ class DeepSeekService {
   /// 返回 Stream，包含生成的文本片段
   Stream<String> explainWordStream(String word, String context) async* {
     try {
+      _ensureConfigured();
       final response = await _dio.post<ResponseBody>(
         _baseUrl,
         options: Options(
@@ -130,6 +142,7 @@ class DeepSeekService {
   /// 返回分析文本，如果出错则返回 null
   Future<String?> analyzeSentence(String sentence) async {
     try {
+      _ensureConfigured();
       final response = await _dio.post(
         _baseUrl,
         options: Options(
@@ -168,6 +181,7 @@ class DeepSeekService {
   /// 返回 Stream，包含生成的文本片段
   Stream<String> analyzeSentenceStream(String sentence) async* {
     try {
+      _ensureConfigured();
       final response = await _dio.post<ResponseBody>(
         _baseUrl,
         options: Options(
