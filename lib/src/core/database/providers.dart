@@ -1,21 +1,12 @@
-import 'package:isar/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'isar_database.dart';
-import 'isar_database_impl.dart';
+import 'app_database.dart';
 
 part 'providers.g.dart';
 
-/// Provider for IsarDatabase interface
-/// Use this to access the database throughout the app
+/// AppDatabase provider（keepAlive：数据库生命周期与 App 一致）。
+/// 用 [AppDatabase] 的 QueryExecutor 注入点，测试时可通过
+/// `appDatabaseProvider.overrideWithValue(AppDatabase.forTesting(NativeDatabase.memory()))` 替换。
 @Riverpod(keepAlive: true)
-IsarDatabase isarDatabase(IsarDatabaseRef ref) {
-  return IsarDatabaseImpl();
-}
-
-/// Provider for Isar instance
-/// Convenience provider that returns the actual Isar instance
-@Riverpod(keepAlive: true)
-Future<Isar> isar(IsarRef ref) async {
-  final database = ref.watch(isarDatabaseProvider);
-  return await database.getInstance();
+AppDatabase appDatabase(Ref ref) {
+  return AppDatabase();
 }

@@ -4,21 +4,9 @@ import '../shelf_book_repository.dart';
 
 part 'shelf_book_repository_provider.g.dart';
 
-/// Provider for ShelfBookRepository
-/// Repository for managing shelf book CRUD operations
+/// 提供 [ShelfBookRepository] 实例
 @riverpod
-ShelfBookRepository shelfBookRepository(ShelfBookRepositoryRef ref) {
-  return ref
-      .watch(isarProvider)
-      .when(
-        data: (isar) => ShelfBookRepository(isar: isar),
-        loading: () => throw StateError(
-          'Database is still initializing. '
-          'Ensure the app awaits database initialization before accessing repositories.',
-        ),
-        error: (e, stack) => Error.throwWithStackTrace(
-          StateError('Database initialization failed: $e'),
-          stack,
-        ),
-      );
+ShelfBookRepository shelfBookRepository(Ref ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return ShelfBookRepository(db: db);
 }

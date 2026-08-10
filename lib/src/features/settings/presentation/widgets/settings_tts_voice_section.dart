@@ -12,7 +12,7 @@ class SettingsTtsVoiceSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final voice = ref.watch(ttsVoiceNotifierProvider);
+    final voice = ref.watch(ttsVoiceProvider);
 
     return SettingsInfoSection(
       title: l10n.aiReading,
@@ -34,7 +34,7 @@ class SettingsTtsVoiceSection extends ConsumerWidget {
     AliyunTtsVoice currentVoice,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    final notifier = ref.read(ttsVoiceNotifierProvider.notifier);
+    final notifier = ref.read(ttsVoiceProvider.notifier);
 
     return showModalBottomSheet<void>(
       context: context,

@@ -1,8 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/shared_preferences_provider.dart';
-import '../domain/shelf_book.dart';
-import '../domain/shelf_group.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import '../data/shelf_book_repository.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
@@ -125,7 +124,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     bool clearFilter = false,
   }) async {
     final currentState =
-        state.valueOrNull ?? BookshelfState.bookshelfState(books: []);
+        state.value ?? BookshelfState.bookshelfState(books: []);
 
     final actualSortBy = sortBy ?? currentState.sortBy;
     final actualViewMode = viewMode ?? currentState.viewMode;
@@ -184,7 +183,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   /// Change view mode and persist the selection.
   void changeViewMode(ViewMode mode) {
     _prefs?.setString(_viewModeKey, mode.name);
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null) return;
     state = AsyncValue.data(currentState.copyWith(viewMode: mode));
   }
@@ -207,7 +206,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Go back to root (simplified - no nesting)
   Future<void> goBack() async {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null || currentState.currentGroupId == null) {
       return;
     }
@@ -234,7 +233,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Toggle selection mode
   void toggleSelectionMode() {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null) return;
 
     if (currentState.isSelectionMode) {
@@ -254,7 +253,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Toggle item selection
   void toggleItemSelection(ShelfBook book) {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null || !currentState.isSelectionMode) return;
 
     final newSelection = Set<int>.from(currentState.selectedBookIds);
@@ -270,7 +269,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Select all books
   void selectAll() {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null) return;
 
     final bookIds = <int>{};
@@ -289,7 +288,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Clear selection
   void clearSelection() {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null) return;
 
     state = AsyncValue.data(
@@ -299,7 +298,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Move selected items to a target group (null = root)
   Future<bool> moveSelectedItems(int? targetGroupId) async {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null || !currentState.hasSelection) return false;
 
     try {
@@ -339,7 +338,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Delete selected books
   Future<bool> deleteSelected() async {
-    final currentState = state.valueOrNull;
+    final currentState = state.value;
     if (currentState == null || !currentState.hasSelection) return false;
 
     try {
@@ -380,7 +379,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   }
 
   Future<bool> reloadQuietly() async {
-    if (state.valueOrNull == null) return true;
+    if (state.value == null) return true;
     try {
       // Re-use _loadBooks so the filter/sort/cache logic is in one place.
       // Unlike refresh(), we do NOT emit AsyncLoading first, so the UI keeps
@@ -414,7 +413,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       final result = await _repository.deleteGroup(groupId: groupId);
       if (result.isLeft()) return false;
 
-      final currentState = state.valueOrNull;
+      final currentState = state.value;
       final clearFilter = currentState?.filterGroupId == groupId;
       final clearGroup = currentState?.currentGroupId == groupId;
       final newState = await _loadBooks(

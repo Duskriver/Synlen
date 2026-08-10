@@ -4,7 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
-import 'package:synlen/src/features/library/domain/shelf_book.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 
 // Generate Mock classes
 @GenerateMocks([ShelfBookRepository, BookManifestRepository])
@@ -52,9 +52,23 @@ void main() {
 
       test('ShelfBookRepository.saveBook should return book ID', () async {
         // Arrange
-        final testBook = ShelfBook()
-          ..fileHash = 'test-hash'
-          ..title = 'Test Book';
+        final testBook = ShelfBook(
+          id: 0,
+          fileHash: 'test-hash',
+          title: 'Test Book',
+          author: '',
+          authors: const [],
+          subjects: const [],
+          totalChapters: 0,
+          epubVersion: '',
+          importDate: 0,
+          updatedAt: 0,
+          direction: 0,
+          currentChapterIndex: 0,
+          readingProgress: 0.0,
+          isFinished: false,
+          isDeleted: false,
+        );
 
         when(mockShelfBookRepo.saveBook(any)).thenAnswer((_) async => right(1));
 
@@ -143,7 +157,23 @@ void main() {
           mockShelfBookRepo.saveBook(any),
         ).thenAnswer((_) async => left('Database error'));
 
-        final testBook = ShelfBook()..title = 'Test';
+        final testBook = ShelfBook(
+          id: 0,
+          fileHash: 'test-hash',
+          title: 'Test',
+          author: '',
+          authors: const [],
+          subjects: const [],
+          totalChapters: 0,
+          epubVersion: '',
+          importDate: 0,
+          updatedAt: 0,
+          direction: 0,
+          currentChapterIndex: 0,
+          readingProgress: 0.0,
+          isFinished: false,
+          isDeleted: false,
+        );
 
         // Act
         final result = await mockShelfBookRepo.saveBook(testBook);
@@ -182,7 +212,23 @@ void main() {
           mockShelfBookRepo.saveBook(any),
         ).thenThrow(Exception('Unexpected error'));
 
-        final testBook = ShelfBook()..title = 'Test';
+        final testBook = ShelfBook(
+          id: 0,
+          fileHash: 'test-hash',
+          title: 'Test',
+          author: '',
+          authors: const [],
+          subjects: const [],
+          totalChapters: 0,
+          epubVersion: '',
+          importDate: 0,
+          updatedAt: 0,
+          direction: 0,
+          currentChapterIndex: 0,
+          readingProgress: 0.0,
+          isFinished: false,
+          isDeleted: false,
+        );
 
         // Act & Assert
         expect(

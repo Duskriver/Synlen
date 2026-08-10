@@ -18,56 +18,56 @@ part 'learning_repository_provider.g.dart';
 
 /// 提供 [FreeDictionaryService] 实例
 @riverpod
-FreeDictionaryService freeDictionaryService(FreeDictionaryServiceRef ref) {
+FreeDictionaryService freeDictionaryService(Ref ref) {
   return FreeDictionaryService();
 }
 
 /// 提供 [DeepSeekService] 实例
 @riverpod
-DeepSeekService deepSeekService(DeepSeekServiceRef ref) {
+DeepSeekService deepSeekService(Ref ref) {
   return DeepSeekService();
 }
 
 /// 提供 [AliyunTTSService] 实例
 @riverpod
-AliyunTTSService aliyunTTSService(AliyunTTSServiceRef ref) {
+AliyunTTSService aliyunTTSService(Ref ref) {
   return AliyunTTSService(
-    readVoiceParam: () => ref.read(ttsVoiceNotifierProvider).voiceParam,
+    readVoiceParam: () => ref.read(ttsVoiceProvider).voiceParam,
   );
 }
 
 @riverpod
-LearningAudioFileStore learningAudioFileStore(LearningAudioFileStoreRef ref) {
+LearningAudioFileStore learningAudioFileStore(Ref ref) {
   return const LearningAudioFileStore();
 }
 
 @riverpod
-WordLearningCacheStore wordLearningCacheStore(WordLearningCacheStoreRef ref) {
-  final isar = ref.watch(isarProvider).requireValue;
-  return WordLearningCacheStore(isar);
+WordLearningCacheStore wordLearningCacheStore(Ref ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return WordLearningCacheStore(db);
 }
 
 @riverpod
 SentenceLearningCacheStore sentenceLearningCacheStore(
-  SentenceLearningCacheStoreRef ref,
+  Ref ref,
 ) {
-  final isar = ref.watch(isarProvider).requireValue;
-  return SentenceLearningCacheStore(isar);
+  final db = ref.watch(appDatabaseProvider);
+  return SentenceLearningCacheStore(db);
 }
 
 @riverpod
 SentencePronunciationCacheStore sentencePronunciationCacheStore(
-  SentencePronunciationCacheStoreRef ref,
+  Ref ref,
 ) {
-  final isar = ref.watch(isarProvider).requireValue;
-  return SentencePronunciationCacheStore(isar);
+  final db = ref.watch(appDatabaseProvider);
+  return SentencePronunciationCacheStore(db);
 }
 
 // --- Repository Providers ---
 
 /// 提供 [WordRepository] 实例
 @riverpod
-WordRepository wordRepository(WordRepositoryRef ref) {
+WordRepository wordRepository(Ref ref) {
   final freeDictionaryService = ref.watch(freeDictionaryServiceProvider);
   final deepSeekService = ref.watch(deepSeekServiceProvider);
   final aliyunTTSService = ref.watch(aliyunTTSServiceProvider);
@@ -85,7 +85,7 @@ WordRepository wordRepository(WordRepositoryRef ref) {
 
 /// 提供 [SentenceRepository] 实例
 @riverpod
-SentenceRepository sentenceRepository(SentenceRepositoryRef ref) {
+SentenceRepository sentenceRepository(Ref ref) {
   final deepSeekService = ref.watch(deepSeekServiceProvider);
   final aliyunTTSService = ref.watch(aliyunTTSServiceProvider);
   final analysisCacheStore = ref.watch(sentenceLearningCacheStoreProvider);

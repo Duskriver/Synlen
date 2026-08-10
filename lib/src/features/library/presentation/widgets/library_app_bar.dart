@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
-import '../../domain/shelf_group.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 
 /// AppBar widget for the Library screen with tabs and action buttons.
 class LibraryAppBar extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/shelf_group.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import '../../../../../l10n/app_localizations.dart';
 
 /// Dialog for selecting a group to move books to

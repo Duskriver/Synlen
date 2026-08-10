@@ -7,8 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import '../../domain/book_manifest.dart';
-import '../../domain/shelf_book.dart';
-import '../../domain/shelf_group.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import '../book_manifest_repository.dart';
 import '../shelf_book_repository.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
@@ -258,7 +257,7 @@ class ExportBackupService {
   /// Serialises [ShelfBook] to a JSON-compatible map.
   ///
   /// Intentionally excludes:
-  ///   - [id]         — Isar auto-increment, meaningless outside this device.
+  ///   - [id]         — drift auto-increment，仅在当前设备内有意义。
   ///   - [filePath]   — Absolute device path; would break on a different device.
   ///   - [coverPath]  — Same reason as filePath.
   Map<String, dynamic> _shelfBookToMap(ShelfBook b) => {

@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,21 +8,23 @@ import 'package:synlen/src/features/library/data/repositories/shelf_book_reposit
 import 'package:synlen/src/features/detail/presentation/book_detail_helpers.dart';
 import 'package:synlen/src/features/detail/presentation/widgets/book_detail_edit_body.dart';
 import 'package:synlen/src/features/detail/presentation/widgets/book_detail_view_body.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../library/domain/shelf_book.dart';
+import '../../../core/database/app_database.dart';
 import '../../../../l10n/app_localizations.dart';
-
-part 'book_detail_screen.g.dart';
 
 /// Actions available in the unsaved-changes confirmation dialog.
 enum _DiscardAction { save, discard, cancel }
 
 /// Provider to fetch a single book by file hash.
-@riverpod
-Future<ShelfBook?> bookDetail(BookDetailRef ref, String fileHash) async {
-  final repository = ref.watch(shelfBookRepositoryProvider);
-  return await repository.getBookByHash(fileHash);
-}
+///
+/// 注：手写 FutureProvider（而非 @riverpod codegen）——riverpod_generator
+/// 4.0.4 无法把 drift DataClass 作为 provider 返回类型生成代码
+/// （InvalidTypeException），待生成器/Flutter SDK 升级后可视情况改回。
+final bookDetailProvider = FutureProvider.family<ShelfBook?, String>(
+  (ref, fileHash) async {
+    final repository = ref.watch(shelfBookRepositoryProvider);
+    return repository.getBookByHash(fileHash);
+  },
+);
 
 /// Book Detail Screen - Shows detailed information about a book, with support
 /// for inline editing of title, authors, and description.
@@ -128,31 +131,21 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         .toList();
     final newDescription = _descriptionController.text.trim();
 
-    // Snapshot original values so we can roll back if the save fails,
-    // keeping the in-memory Isar object consistent with the database.
-    final originalTitle = book.title;
-    final originalAuthors = List<String>.from(book.authors);
-    final originalAuthor = book.author;
-    final originalDescription = book.description;
-    final originalUpdatedAt = book.updatedAt;
+    final updated = book.copyWith(
+      title: newTitle,
+      authors: newAuthors,
+      author: newAuthors.isNotEmpty ? newAuthors.first : '',
+      description: Value(newDescription.isEmpty ? null : newDescription),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
 
     try {
-      book.title = newTitle;
-      book.authors = newAuthors;
-      book.author = newAuthors.isNotEmpty ? newAuthors.first : '';
-      book.description = newDescription.isEmpty ? null : newDescription;
-      book.updatedAt = DateTime.now().millisecondsSinceEpoch;
-
-      final result = await ref.read(shelfBookRepositoryProvider).saveBook(book);
+      final result = await ref
+          .read(shelfBookRepositoryProvider)
+          .saveBook(updated);
 
       result.fold(
         (error) {
-          // Roll back the in-memory mutation so the object stays consistent with DB.
-          book.title = originalTitle;
-          book.authors = originalAuthors;
-          book.author = originalAuthor;
-          book.description = originalDescription;
-          book.updatedAt = originalUpdatedAt;
           if (mounted) {
             ToastService.showError(
               AppLocalizations.of(context)!.bookSaveFailed(error),
@@ -161,7 +154,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         },
         (_) {
           ref.invalidate(bookDetailProvider(widget.bookId));
-          ref.read(bookshelfNotifierProvider.notifier).refresh();
+          ref.read(bookshelfProvider.notifier).refresh();
 
           if (mounted) {
             ToastService.showSuccess(AppLocalizations.of(context)!.bookSaved);
@@ -170,17 +163,12 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         },
       );
     } catch (e) {
-      // Roll back the in-memory mutation so the object stays consistent with DB.
-      book.title = originalTitle;
-      book.authors = originalAuthors;
-      book.author = originalAuthor;
-      book.description = originalDescription;
-      book.updatedAt = originalUpdatedAt;
       if (mounted) {
         ToastService.showError(
           AppLocalizations.of(context)!.bookSaveFailed(e.toString()),
         );
       }
+      // 保存失败：数据库未变，无需回滚内存对象（drift 数据类不可变）
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -265,7 +253,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   Widget build(BuildContext context) {
     final routeAnimation = ModalRoute.of(context)?.animation;
     final bookAsync = ref.watch(bookDetailProvider(widget.bookId));
-    final book = bookAsync.valueOrNull;
+    final book = bookAsync.value;
 
     return PopScope(
       // Prevent the system from popping the route while in edit mode.

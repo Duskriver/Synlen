@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:drift/drift.dart' show Value;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -10,8 +11,7 @@ import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:path/path.dart' as p;
 
 import '../../domain/book_manifest.dart';
-import '../../domain/shelf_book.dart';
-import '../../domain/shelf_group.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 
 // ---------------------------------------------------------------------------
@@ -307,8 +307,9 @@ class ImportBackupService {
         await _shelfBookRepository.createGroup(name: backupGroup.name);
       } else {
         if (backupGroup.updatedAt > existingGroup.updatedAt) {
-          backupGroup.id = existingGroup.id;
-          await _shelfBookRepository.saveGroup(backupGroup);
+          await _shelfBookRepository.saveGroup(
+            backupGroup.copyWith(id: existingGroup.id),
+          );
         }
       }
     }
@@ -339,11 +340,15 @@ class ImportBackupService {
       if (backupBook.lastOpenedDate != null &&
           existingBook.lastOpenedDate != null) {
         if (backupBook.lastOpenedDate! > existingBook.lastOpenedDate!) {
-          existingBook.currentChapterIndex = backupBook.currentChapterIndex;
-          existingBook.readingProgress = backupBook.readingProgress;
-          existingBook.chapterScrollPosition = backupBook.chapterScrollPosition;
-          existingBook.isFinished = backupBook.isFinished;
-          existingBook.lastOpenedDate = backupBook.lastOpenedDate;
+          await _shelfBookRepository.saveBook(
+            existingBook.copyWith(
+              currentChapterIndex: backupBook.currentChapterIndex,
+              readingProgress: backupBook.readingProgress,
+              chapterScrollPosition: Value(backupBook.chapterScrollPosition),
+              isFinished: backupBook.isFinished,
+              lastOpenedDate: Value(backupBook.lastOpenedDate),
+            ),
+          );
         }
       }
 
@@ -352,16 +357,17 @@ class ImportBackupService {
       // book's metadata (title, authors, description, etc.) but keep the
       // existing reading progress.
       if (backupBook.updatedAt > existingBook.updatedAt) {
-        backupBook.id = existingBook.id;
-        if (backupBook.coverPath == null && existingBook.coverPath != null) {
-          backupBook.coverPath = existingBook.coverPath;
-        }
-        await _shelfBookRepository.saveBook(backupBook);
+        await _shelfBookRepository.saveBook(
+          backupBook.copyWith(
+            id: existingBook.id,
+            coverPath: Value(backupBook.coverPath ?? existingBook.coverPath),
+          ),
+        );
       } else {
         if (!backupBook.isDeleted && existingBook.isDeleted) {
-          backupBook.id = existingBook.id;
-          backupBook.isDeleted = false;
-          await _shelfBookRepository.saveBook(backupBook);
+          await _shelfBookRepository.saveBook(
+            backupBook.copyWith(id: existingBook.id, isDeleted: false),
+          );
         }
       }
     }
@@ -372,14 +378,16 @@ class ImportBackupService {
   // ---------------------------------------------------------------------------
 
   /// Deserialises a [ShelfGroup] from its JSON map.
-  /// The `id` field is intentionally omitted — Isar assigns it via the `name`
-  /// upsert index, preserving the existing row if the group already exists.
+  /// The `id` field is intentionally 0 — drift assigns it on insert, and the
+  /// merge logic preserves the existing row if the group already exists.
   ShelfGroup _mapToShelfGroup(Map<String, dynamic> m) {
-    return ShelfGroup()
-      ..name = m['name'] as String
-      ..creationDate = m['creationDate'] as int
-      ..updatedAt = m['updatedAt'] as int
-      ..isDeleted = (m['isDeleted'] as bool? ?? false);
+    return ShelfGroup(
+      id: 0,
+      name: m['name'] as String,
+      creationDate: m['creationDate'] as int,
+      updatedAt: m['updatedAt'] as int,
+      isDeleted: m['isDeleted'] as bool? ?? false,
+    );
   }
 
   /// Deserialises a [ShelfBook] from its JSON map.
@@ -392,49 +400,53 @@ class ImportBackupService {
     required String? filePath,
     required String? coverPath,
   }) {
-    return ShelfBook()
-      ..fileHash = m['fileHash'] as String
-      ..filePath = filePath
-      ..coverPath = coverPath
-      ..title = m['title'] as String
-      ..author = m['author'] as String
-      ..authors = (m['authors'] as List<dynamic>).cast<String>()
-      ..description = m['description'] as String?
-      ..subjects = (m['subjects'] as List<dynamic>).cast<String>()
-      ..totalChapters = m['totalChapters'] as int
-      ..epubVersion = m['epubVersion'] as String
-      ..importDate = m['importDate'] as int
-      ..currentChapterIndex = m['currentChapterIndex'] as int? ?? 0
-      ..readingProgress = (m['readingProgress'] as num? ?? 0.0).toDouble()
-      ..chapterScrollPosition = (m['chapterScrollPosition'] as num?)?.toDouble()
-      ..lastOpenedDate = m['lastOpenedDate'] as int?
-      ..isFinished = m['isFinished'] as bool? ?? false
-      ..groupName = m['groupName'] as String?
-      ..isDeleted = m['isDeleted'] as bool? ?? false
-      ..updatedAt = m['updatedAt'] as int
-      ..lastSyncedDate = m['lastSyncedDate'] as int?
-      ..direction = m['direction'] as int? ?? 0;
+    return ShelfBook(
+      id: 0,
+      fileHash: m['fileHash'] as String,
+      filePath: filePath,
+      coverPath: coverPath,
+      title: m['title'] as String,
+      author: m['author'] as String,
+      authors: (m['authors'] as List<dynamic>).cast<String>(),
+      description: m['description'] as String?,
+      subjects: (m['subjects'] as List<dynamic>).cast<String>(),
+      totalChapters: m['totalChapters'] as int,
+      epubVersion: m['epubVersion'] as String,
+      importDate: m['importDate'] as int,
+      currentChapterIndex: m['currentChapterIndex'] as int? ?? 0,
+      readingProgress: (m['readingProgress'] as num? ?? 0.0).toDouble(),
+      chapterScrollPosition: (m['chapterScrollPosition'] as num?)?.toDouble(),
+      lastOpenedDate: m['lastOpenedDate'] as int?,
+      isFinished: m['isFinished'] as bool? ?? false,
+      groupName: m['groupName'] as String?,
+      isDeleted: m['isDeleted'] as bool? ?? false,
+      updatedAt: m['updatedAt'] as int,
+      lastSyncedDate: m['lastSyncedDate'] as int?,
+      direction: m['direction'] as int? ?? 0,
+    );
   }
 
   /// Deserialises a full [BookManifest] (including all embedded objects).
   BookManifest _mapToBookManifest(Map<String, dynamic> m) {
-    return BookManifest()
-      ..fileHash = m['fileHash'] as String
-      ..opfRootPath = m['opfRootPath'] as String
-      ..epubVersion = m['epubVersion'] as String
-      ..lastUpdated = DateTime.parse(m['lastUpdated'] as String)
-      ..spine = (m['spine'] as List<dynamic>)
+    return BookManifest(
+      id: 0,
+      fileHash: m['fileHash'] as String,
+      opfRootPath: m['opfRootPath'] as String,
+      epubVersion: m['epubVersion'] as String,
+      lastUpdated: DateTime.parse(m['lastUpdated'] as String),
+      spine: (m['spine'] as List<dynamic>)
           .cast<Map<String, dynamic>>()
           .map(_mapToSpineItem)
-          .toList()
-      ..toc = (m['toc'] as List<dynamic>)
+          .toList(),
+      toc: (m['toc'] as List<dynamic>)
           .cast<Map<String, dynamic>>()
           .map(_mapToTocItem)
-          .toList()
-      ..manifest = (m['manifest'] as List<dynamic>)
+          .toList(),
+      manifest: (m['manifest'] as List<dynamic>)
           .cast<Map<String, dynamic>>()
           .map(_mapToManifestItem)
-          .toList();
+          .toList(),
+    );
   }
 
   SpineItem _mapToSpineItem(Map<String, dynamic> m) {

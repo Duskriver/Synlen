@@ -1,5 +1,5 @@
-import 'package:isar/isar.dart';
-import 'package:synlen/src/features/learning/domain/sentence_analysis.dart';
+import 'package:drift/drift.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 
 abstract class SentenceAnalysisStore {
   Future<SentenceAnalysis?> getSentence(String sentence);
@@ -10,14 +10,17 @@ abstract class SentenceAnalysisStore {
   });
 }
 
+/// 句子分析缓存（drift 实现）。
 class SentenceLearningCacheStore implements SentenceAnalysisStore {
-  final Isar _isar;
+  final AppDatabase _db;
 
-  SentenceLearningCacheStore(this._isar);
+  SentenceLearningCacheStore(this._db);
 
   @override
   Future<SentenceAnalysis?> getSentence(String sentence) {
-    return _isar.sentenceAnalysis.where().sentenceEqualTo(sentence).findFirst();
+    return (_db.select(_db.sentenceAnalyses)
+          ..where((t) => t.sentence.equals(sentence)))
+        .getSingleOrNull();
   }
 
   @override
@@ -26,13 +29,22 @@ class SentenceLearningCacheStore implements SentenceAnalysisStore {
     required String analysis,
   }) async {
     final cached = await getSentence(sentence);
-    final entry = cached ?? (SentenceAnalysis()..sentence = sentence);
-
-    entry
-      ..sentence = sentence
-      ..analysis = analysis
-      ..lastUpdated = DateTime.now();
-
-    await _isar.writeTxn(() => _isar.sentenceAnalysis.put(entry));
+    if (cached == null) {
+      await _db.into(_db.sentenceAnalyses).insert(
+            SentenceAnalysesCompanion.insert(
+              sentence: sentence,
+              analysis: analysis,
+              lastUpdated: DateTime.now(),
+            ),
+          );
+    } else {
+      await (_db.update(_db.sentenceAnalyses)..where((t) => t.id.equals(cached.id)))
+          .write(
+        SentenceAnalysesCompanion(
+          analysis: Value(analysis),
+          lastUpdated: Value(DateTime.now()),
+        ),
+      );
+    }
   }
 }

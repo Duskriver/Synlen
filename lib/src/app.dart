@@ -22,7 +22,7 @@ class SynlenReaderApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final appTheme = ref.watch(appThemeNotifierProvider);
+    final appTheme = ref.watch(appThemeProvider);
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
