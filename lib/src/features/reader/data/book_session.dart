@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../library/domain/shelf_book.dart';
+import '../../../core/database/app_database.dart';
 import '../../library/domain/book_manifest.dart';
 import '../../library/data/shelf_book_repository.dart';
 import '../../library/data/book_manifest_repository.dart';

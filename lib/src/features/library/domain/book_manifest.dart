@@ -1,72 +1,41 @@
-import 'package:isar/isar.dart';
+/// EPUB 结构模型（纯 Dart，无数据库依赖）。
+library;
+/// 这些嵌套对象（脊项/清单项/目录项）通过 JSON 序列化存储在
+/// [BookManifest] 数据库行的 text 列中。
 
-part 'book_manifest.g.dart';
+/// 文件引用：路径 + 可选锚点
+class Href {
+  String path;
+  String anchor;
 
-/// Heavy Isar collection for the reading engine.
-/// Contains complete EPUB structure (spine, TOC) for navigation.
-/// Only queried when opening the reader.
-@collection
-class BookManifest {
-  /// Auto-increment primary key
-  Id id = Isar.autoIncrement;
+  Href({this.path = '', this.anchor = 'top'});
 
-  /// SHA-256 hash of the original EPUB file (unique identifier, links to ShelfBook)
-  @Index(unique: true)
-  late String fileHash;
+  factory Href.fromJson(Map<String, dynamic> json) => Href(
+        path: json['path'] as String? ?? '',
+        anchor: json['anchor'] as String? ?? 'top',
+      );
 
-  // ==================== EPUB STRUCTURE ====================
+  Map<String, dynamic> toJson() => {'path': path, 'anchor': anchor};
 
-  /// Path to the OPF file within the ZIP
-  /// e.g., "OEBPS/content.opf" or "content.opf"
-  late String opfRootPath;
+  @override
+  bool operator ==(Object other) {
+    return other is Href && other.path == path && other.anchor == anchor;
+  }
 
-  /// Linear reading order (from spine element in OPF)
-  /// Determines sequential navigation (Next/Previous page logic)
-  /// Each item contains the complete spine metadata
-  late List<SpineItem> spine;
+  @override
+  int get hashCode => Object.hash(path, anchor);
 
-  /// Table of Contents structure (nested navigation tree)
-  /// Parsed from NCX (EPUB 2.0) or NAV document (EPUB 3.0)
-  /// Pure hierarchical navigation - does NOT need to cover every spine item
-  /// Each TocItem points to a specific location (href + anchor) and references
-  /// a spineIndex for quick lookup and progress tracking
-  late List<TocItem> toc;
-
-  /// Manifest map entries (id -> file path)
-  /// Used for resource resolution (CSS, images, fonts)
-  late List<ManifestItem> manifest;
-
-  // ==================== METADATA ====================
-
-  /// EPUB version (e.g., "2.0", "3.0")
-  late String epubVersion;
-
-  /// Timestamp when manifest was last updated
-  late DateTime lastUpdated;
+  @override
+  String toString() => '$path#$anchor';
 }
 
-/// Embedded object representing a single spine entry
-/// Spine defines the linear reading order (Next/Previous navigation)
-@embedded
+/// 单个脊项：OPF spine 中的线性阅读顺序条目
 class SpineItem {
-  /// Sequential order in the spine (0-based)
-  late int index;
-
-  /// Relative path to the content resource (e.g., "text/chap1.xhtml")
-  /// Path is relative to OPF root directory
-  late String href;
-
-  /// ID reference from the OPF manifest
-  /// Links this spine item to a manifest entry
-  late String idref;
-
-  /// Linear reading flag (from EPUB spine itemref "linear" attribute)
-  /// If false, content is auxiliary (e.g., footnotes) and should be skipped
-  /// during sequential navigation. Defaults to true.
-  late bool linear;
-
-  /// Optional properties (e.g., "duokan-page-fitwindow")
-  late String? properties;
+  int index;
+  String href;
+  String idref;
+  bool linear;
+  String? properties;
 
   SpineItem({
     this.index = 0,
@@ -75,80 +44,96 @@ class SpineItem {
     this.linear = true,
     this.properties,
   });
+
+  factory SpineItem.fromJson(Map<String, dynamic> json) => SpineItem(
+        index: json['index'] as int? ?? 0,
+        href: json['href'] as String? ?? '',
+        idref: json['idref'] as String? ?? '',
+        linear: json['linear'] as bool? ?? true,
+        properties: json['properties'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'index': index,
+        'href': href,
+        'idref': idref,
+        'linear': linear,
+        if (properties != null) 'properties': properties,
+      };
 }
 
-/// Embedded object representing a file reference with optional anchor
-@embedded
-class Href {
-  /// File path relative to OPF root
-  late String path;
-
-  /// Optional anchor (e.g., "chapter1.xhtml#section2")
-  late String anchor = 'top';
-
-  @override
-  bool operator ==(Object other) {
-    return other is Href && other.path == path && other.anchor == anchor;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(path, anchor);
-  }
-
-  @override
-  String toString() {
-    return '$path#$anchor';
-  }
-}
-
-/// Embedded object representing a single manifest entry
-@embedded
+/// 单个清单项：OPF manifest 中的文件引用
 class ManifestItem {
-  /// Item ID (referenced by spine)
-  late String id;
-
-  /// File path relative to OPF root
-  late Href href;
-
-  /// Media type (e.g., "application/xhtml+xml", "image/jpeg")
-  late String mediaType;
-
-  /// Properties (EPUB 3.0 only, e.g., "cover-image", "nav")
+  String id;
+  Href href;
+  String mediaType;
   String? properties;
+
+  ManifestItem({this.id = '', Href? href, this.mediaType = '', this.properties})
+      : href = href ?? Href();
+
+  factory ManifestItem.fromJson(Map<String, dynamic> json) => ManifestItem(
+        id: json['id'] as String? ?? '',
+        href: Href.fromJson(json['href'] as Map<String, dynamic>? ?? const {}),
+        mediaType: json['mediaType'] as String? ?? '',
+        properties: json['properties'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'href': href.toJson(),
+        'mediaType': mediaType,
+        if (properties != null) 'properties': properties,
+      };
 }
 
-/// Embedded object representing a TOC navigation point
-/// Represents a pure navigation tree entry - NOT every spine item needs a TocItem
-/// Used exclusively for rendering the navigation drawer/menu
-@embedded
+/// 目录项：导航树条目（纯层级导航，无需覆盖每个脊项）
 class TocItem {
-  /// Unique ID for this TOC item
-  /// Used for identification and state management
-  late int id;
+  int id;
+  String label;
+  Href href;
+  int depth;
 
-  /// Display label (e.g., "Chapter 1: Introduction")
-  late String label;
+  /// 对应 spine 中的索引；-1 表示不对应任何脊项起点（如深层链接）
+  int spineIndex;
+  int parentId;
+  List<TocItem> children;
 
-  /// Content file path with optional anchor
-  /// e.g., "chapter1.xhtml" or "chapter1.xhtml#section2"
-  /// This href can point anywhere in the book, including mid-chapter locations
-  late Href href;
+  TocItem({
+    this.id = 0,
+    this.label = '',
+    Href? href,
+    this.depth = 0,
+    this.spineIndex = -1,
+    this.parentId = -1,
+    List<TocItem>? children,
+  })  : href = href ?? Href(),
+        children = children ?? [];
 
-  /// Nesting level (0 = top level, 1 = first nested, etc.)
-  late int depth;
+  factory TocItem.fromJson(Map<String, dynamic> json) => TocItem(
+        id: json['id'] as int? ?? 0,
+        label: json['label'] as String? ?? '',
+        href: Href.fromJson(json['href'] as Map<String, dynamic>? ?? const {}),
+        depth: json['depth'] as int? ?? 0,
+        spineIndex: json['spineIndex'] as int? ?? -1,
+        parentId: json['parentId'] as int? ?? -1,
+        children: (json['children'] as List? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(TocItem.fromJson)
+            .toList(),
+      );
 
-  /// Index in the spine list for quick lookup and progress tracking
-  /// Used to map TOC entries to sequential reading positions
-  /// -1 means the href doesn't correspond to a spine item start (e.g., deep link)
-  int spineIndex = -1;
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        'href': href.toJson(),
+        'depth': depth,
+        'spineIndex': spineIndex,
+        'parentId': parentId,
+        'children': children.map((c) => c.toJson()).toList(),
+      };
 
-  /// Parent TOC item ID (-1 for top-level items)
-  late int parentId;
-
-  /// Nested sub-items (for hierarchical TOC)
-  late List<TocItem> children;
-
+  /// 展平为列表（不含空 href 的条目）
   List<TocItem> flatten() {
     final result = <TocItem>[];
     if (href.path.isNotEmpty) {
@@ -160,6 +145,7 @@ class TocItem {
     return result;
   }
 
+  /// 展平为列表（包含自身，即使 href 为空）
   List<TocItem> safeFlatten() {
     final result = <TocItem>[this];
     for (final child in children) {

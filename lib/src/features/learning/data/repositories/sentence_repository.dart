@@ -1,11 +1,10 @@
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
 import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/data/stores/sentence_pronunciation_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
-import 'package:synlen/src/features/learning/domain/sentence_analysis.dart';
-import 'package:synlen/src/features/learning/domain/sentence_pronunciation.dart';
 
 /// 句子学习结果
 class SentenceLearningResult {
@@ -127,7 +126,7 @@ class SentenceRepository {
       yield chunk;
     }
 
-    // 当 AI 分析流结束且内容有效时，保存到 Isar 缓存
+    // 当 AI 分析流结束且内容有效时，保存到本地缓存
     if (fullContent.isNotEmpty) {
       await _analysisCacheStore.saveAnalysis(
         sentence: sentence,

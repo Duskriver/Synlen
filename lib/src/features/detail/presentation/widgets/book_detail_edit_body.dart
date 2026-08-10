@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../library/domain/shelf_book.dart';
+import '../../../../core/database/app_database.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../../l10n/app_localizations.dart';
 

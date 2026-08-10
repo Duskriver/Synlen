@@ -243,7 +243,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     setupVolumeControl();
     WakelockPlus.enable();
     _readerSettingsSubscription = ref.listenManual(
-      readerSettingsNotifierProvider,
+      readerSettingsProvider,
       (previous, next) {
         if (previous == null || previous == next) {
           return;
@@ -260,7 +260,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       },
     );
     _volumeKeyTurnsPageSubscription = ref.listenManual(
-      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
+      readerSettingsProvider.select((s) => s.volumeKeyTurnsPage),
       (previous, next) {
         if (previous != next) {
           setupVolumeControl();
@@ -304,7 +304,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   void setupVolumeControl() {
     final resume =
-        ref.read(readerSettingsNotifierProvider).volumeKeyTurnsPage &&
+        ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
         !tocDrawerOpen &&
         !styleDrawerOpen &&
         lastLifecycleState == AppLifecycleState.resumed;
@@ -315,7 +315,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         event,
       ) {
         final isVolumeTurnEnabled = ref
-            .read(readerSettingsNotifierProvider)
+            .read(readerSettingsProvider)
             .volumeKeyTurnsPage;
         if (isVolumeTurnEnabled) {
           if (event == 'up') {
@@ -483,7 +483,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Widget build(BuildContext context) {
     // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
-    final settings = ref.watch(readerSettingsNotifierProvider);
+    final settings = ref.watch(readerSettingsProvider);
     if (!bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,

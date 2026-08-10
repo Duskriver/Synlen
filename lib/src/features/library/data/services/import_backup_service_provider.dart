@@ -9,11 +9,10 @@ part 'import_backup_service_provider.g.dart';
 
 /// Provider for [ImportBackupService].
 ///
-/// Injects the raw [Isar] instance directly so the service can call
-/// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-/// exposed through the higher-level repository layer.
+/// 直接注入数据库实例，以便服务调用 repository 层未暴露的
+/// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
 @riverpod
-ImportBackupService importBackupService(ImportBackupServiceRef ref) {
+ImportBackupService importBackupService(Ref ref) {
   final shelfBookRepo = ref.watch(shelfBookRepositoryProvider);
   final manifestRepo = ref.watch(bookManifestRepositoryProvider);
 

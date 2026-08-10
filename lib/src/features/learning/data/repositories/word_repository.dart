@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
@@ -6,8 +7,6 @@ import 'package:synlen/src/features/learning/data/services/free_dictionary_servi
 import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
 import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
-import 'package:synlen/src/features/learning/domain/word_explanation.dart';
-import 'package:synlen/src/features/learning/domain/word_pronunciation.dart';
 
 /// 单词学习结果
 class WordLearningResult {
@@ -160,7 +159,7 @@ class WordRepository {
       yield chunk;
     }
 
-    // 当 AI 解释完成时，保存到 Isar 缓存
+    // 当 AI 解释完成时，保存到本地缓存
     if (fullContent.isNotEmpty) {
       await _cacheStore.saveExplanation(
         word: word,

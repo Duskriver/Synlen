@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:synlen/src/features/library/domain/shelf_book.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/global_share_handler.dart';
 import '../services/toast_service.dart';
 import '../../features/library/presentation/library_screen.dart';
@@ -19,7 +19,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final location = state.uri.toString();
       if (location.startsWith('content://') || location.startsWith('file://')) {
         Future.microtask(() {
-          ref.read(pendingRouteFileProvider.notifier).state = location;
+          ref.read(pendingRouteFileProvider.notifier).set(location);
         });
         return '/';
       } else if (location.startsWith('/-')) {

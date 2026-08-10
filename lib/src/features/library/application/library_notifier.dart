@@ -6,7 +6,7 @@ import 'package:synlen/src/features/library/data/services/import_backup_service_
 import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
-import '../domain/shelf_book.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
 

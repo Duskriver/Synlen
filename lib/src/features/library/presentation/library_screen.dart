@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:go_router/go_router.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
+import 'package:synlen/src/core/widgets/expandable_fab.dart';
 import '../application/bookshelf_notifier.dart';
-import '../domain/shelf_book.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import 'mixins/library_actions_mixin.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/library_app_bar.dart';
@@ -70,22 +70,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     if (newIndex == _lastTabIndex) return;
     _lastTabIndex = newIndex;
 
-    final state = ref.read(bookshelfNotifierProvider).valueOrNull;
+    final state = ref.read(bookshelfProvider).value;
     if (state == null) return;
 
     if (newIndex == 0) {
-      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(null);
+      ref.read(bookshelfProvider.notifier).filterByGroup(null);
       return;
     }
 
     if (newIndex == 1) {
-      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(-1);
+      ref.read(bookshelfProvider.notifier).filterByGroup(-1);
       return;
     }
 
     final newGroupId = state.availableGroups[newIndex - 2].id;
     if (state.filterGroupId != newGroupId) {
-      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(newGroupId);
+      ref.read(bookshelfProvider.notifier).filterByGroup(newGroupId);
     }
   }
 
@@ -123,9 +123,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Widget _buildContentWidget(BuildContext context) {
-    final bookshelfState = ref.watch(bookshelfNotifierProvider);
+    final bookshelfState = ref.watch(bookshelfProvider);
 
-    final state = bookshelfState.valueOrNull;
+    final state = bookshelfState.value;
     final isSelectionMode = state?.isSelectionMode ?? false;
 
     return PopScope(
@@ -136,7 +136,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         }
 
         if (isSelectionMode) {
-          ref.read(bookshelfNotifierProvider.notifier).toggleSelectionMode();
+          ref.read(bookshelfProvider.notifier).toggleSelectionMode();
         }
       },
       child: Stack(
@@ -190,47 +190,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       return null;
     }
 
-    SpeedDialChild buildSpeedDialChild(
+    ExpandableFabChild buildFabChild(
       IconData icon,
       String label,
       VoidCallback onTap,
     ) {
-      return SpeedDialChild(
-        child: Icon(icon),
+      return ExpandableFabChild(
+        icon: icon,
         label: label,
         onTap: onTap,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-        labelBackgroundColor: Theme.of(context).colorScheme.surface,
-        labelShadow: [],
-        labelStyle: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontWeight: FontWeight.w500,
-        ),
-        elevation: 2,
       );
     }
 
-    return SpeedDial(
+    return ExpandableFab(
       icon: Icons.add_outlined,
       activeIcon: Icons.close_outlined,
-      overlayColor: Theme.of(context).colorScheme.scrim,
-      overlayOpacity: 0.5,
-      spaceBetweenChildren: 12,
-      renderOverlay: true,
-      useRotationAnimation: true,
+      spaceBetweenChildren: 8,
       children: [
-        buildSpeedDialChild(
+        buildFabChild(
           Icons.file_present_outlined,
           AppLocalizations.of(context)!.importFiles,
           () => _importFiles(context, ref),
         ),
-        buildSpeedDialChild(
+        buildFabChild(
           Icons.folder_open_outlined,
           AppLocalizations.of(context)!.importFromFolder,
           () => _scanFolder(context, ref),
         ),
-        buildSpeedDialChild(
+        buildFabChild(
           Icons.settings_backup_restore_outlined,
           AppLocalizations.of(context)!.restoreFromBackup,
           () => handleRestoreBackup(context, ref),
@@ -270,12 +259,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 tabController: _tabController!,
                 onSortPressed: () => _showStyleBottomSheet(context, ref, state),
                 onSelectionToggle: () => ref
-                    .read(bookshelfNotifierProvider.notifier)
+                    .read(bookshelfProvider.notifier)
                     .toggleSelectionMode(),
                 onSelectAll: () =>
-                    ref.read(bookshelfNotifierProvider.notifier).selectAll(),
+                    ref.read(bookshelfProvider.notifier).selectAll(),
                 onClearSelection: () => ref
-                    .read(bookshelfNotifierProvider.notifier)
+                    .read(bookshelfProvider.notifier)
                     .clearSelection(),
                 onEditGroup: (group, l10n) =>
                     showEditGroupDialog(context, ref, group, l10n),
@@ -376,13 +365,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           currentSort: state.sortBy,
           onSortSelected: (sortBy) {
             ref
-                .read(bookshelfNotifierProvider.notifier)
+                .read(bookshelfProvider.notifier)
                 .changeSortOrder(sortBy);
             Navigator.pop(context);
           },
           currentViewMode: state.viewMode,
           onViewModeSelected: (mode) {
-            ref.read(bookshelfNotifierProvider.notifier).changeViewMode(mode);
+            ref.read(bookshelfProvider.notifier).changeViewMode(mode);
             Navigator.pop(context);
           },
         ),
@@ -439,12 +428,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               onTap: () {
                 if (state.isSelectionMode) {
                   ref
-                      .read(bookshelfNotifierProvider.notifier)
+                      .read(bookshelfProvider.notifier)
                       .toggleItemSelection(book);
                   return;
                 }
 
-                final notifier = ref.read(bookshelfNotifierProvider.notifier);
+                final notifier = ref.read(bookshelfProvider.notifier);
                 context.push('/book/${book.fileHash}', extra: book).then((_) {
                   notifier.reloadQuietly();
                 });
@@ -453,10 +442,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 if (!state.isSelectionMode) {
                   HapticFeedback.selectionClick();
                   ref
-                      .read(bookshelfNotifierProvider.notifier)
+                      .read(bookshelfProvider.notifier)
                       .toggleSelectionMode();
                   ref
-                      .read(bookshelfNotifierProvider.notifier)
+                      .read(bookshelfProvider.notifier)
                       .toggleItemSelection(book);
                 }
               },

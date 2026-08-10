@@ -49,7 +49,7 @@ class _ReaderStyleBottomSheetState
   @override
   void initState() {
     super.initState();
-    final s = ref.read(readerSettingsNotifierProvider);
+    final s = ref.read(readerSettingsProvider);
     _scale = s.zoom;
     _topMargin = s.marginTop.toInt();
     _bottomMargin = s.marginBottom.toInt();
@@ -71,7 +71,7 @@ class _ReaderStyleBottomSheetState
   }
 
   ReaderSettingsNotifier get _notifier =>
-      ref.read(readerSettingsNotifierProvider.notifier);
+      ref.read(readerSettingsProvider.notifier);
 
   @override
   Widget build(BuildContext context) {

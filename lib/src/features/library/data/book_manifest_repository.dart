@@ -1,90 +1,75 @@
-import 'package:isar/isar.dart';
 import 'package:fpdart/fpdart.dart';
-import '../domain/book_manifest.dart';
+import 'package:synlen/src/core/database/app_database.dart';
+import 'package:synlen/src/features/library/domain/book_manifest.dart';
 
-/// Repository for BookManifest CRUD operations
-/// Heavy queries only when opening the reader
+/// BookManifest CRUD 仓库（drift 实现）。
+/// 重查询只在打开阅读器时进行。
 class BookManifestRepository {
-  final Isar _isar;
+  final AppDatabase _db;
 
-  BookManifestRepository({required Isar isar}) : _isar = isar;
+  BookManifestRepository({required AppDatabase db}) : _db = db;
 
-  /// Get manifest by file hash
-  /// This is the primary query when opening a book
+  /// 按文件哈希获取清单（打开书时的主查询）
   Future<BookManifest?> getManifestByHash(String fileHash) async {
-    final isar = _isar;
-    return await isar.bookManifests
-        .where()
-        .fileHashEqualTo(fileHash)
-        .findFirst();
+    return (_db.select(_db.bookManifests)
+          ..where((t) => t.fileHash.equals(fileHash)))
+        .getSingleOrNull();
   }
 
-  /// Get manifest by ID
+  /// 按 ID 获取清单
   Future<BookManifest?> getManifestById(int id) async {
-    final isar = _isar;
-    return await isar.bookManifests.get(id);
+    return (_db.select(_db.bookManifests)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
   }
 
-  /// Check if manifest exists by hash
+  /// 按哈希检查清单是否存在
   Future<bool> manifestExists(String fileHash) async {
     final manifest = await getManifestByHash(fileHash);
     return manifest != null;
   }
 
-  /// Save or update a manifest
+  /// 保存或更新清单
   Future<Either<String, int>> saveManifest(BookManifest manifest) async {
     try {
-      final isar = _isar;
-      final id = await isar.writeTxn(() async {
-        return await isar.bookManifests.put(manifest);
-      });
+      final id = await _db.into(_db.bookManifests).insertOnConflictUpdate(manifest);
       return right(id);
     } catch (e) {
       return left('Save manifest failed: $e');
     }
   }
 
-  /// Delete a manifest by file hash
+  /// 按文件哈希删除清单
   Future<Either<String, bool>> deleteManifestByHash(String fileHash) async {
     try {
-      final isar = _isar;
-      final success = await isar.writeTxn(() async {
-        final manifest = await isar.bookManifests
-            .where()
-            .fileHashEqualTo(fileHash)
-            .findFirst();
-        if (manifest != null) {
-          return await isar.bookManifests.delete(manifest.id);
-        }
-        return false;
-      });
-      return right(success);
+      final manifest = await getManifestByHash(fileHash);
+      if (manifest == null) return right(false);
+      final count = await (_db.delete(_db.bookManifests)
+            ..where((t) => t.id.equals(manifest.id)))
+          .go();
+      return right(count > 0);
     } catch (e) {
       return left('Delete manifest failed: $e');
     }
   }
 
-  /// Delete a manifest by ID
+  /// 按 ID 删除清单
   Future<Either<String, bool>> deleteManifest(int id) async {
     try {
-      final isar = _isar;
-      final success = await isar.writeTxn(() async {
-        return await isar.bookManifests.delete(id);
-      });
-      return right(success);
+      final count = await (_db.delete(_db.bookManifests)
+            ..where((t) => t.id.equals(id)))
+          .go();
+      return right(count > 0);
     } catch (e) {
       return left('Delete manifest failed: $e');
     }
   }
 
-  /// Get all manifests (rarely used, mainly for debugging/migration)
+  /// 获取全部清单（很少使用，主要供调试/迁移）
   Future<List<BookManifest>> getAllManifests() async {
-    final isar = _isar;
-    return await isar.bookManifests.where().findAll();
+    return _db.select(_db.bookManifests).get();
   }
 
-  /// Get spine item by index
-  /// Convenience method to avoid loading full manifest for simple navigation
+  /// 按索引获取脊项（避免为简单导航加载完整清单）
   Future<SpineItem?> getSpineItemByIndex(String fileHash, int index) async {
     final manifest = await getManifestByHash(fileHash);
     if (manifest != null && index >= 0 && index < manifest.spine.length) {
@@ -93,13 +78,13 @@ class BookManifestRepository {
     return null;
   }
 
-  /// Get total spine count
+  /// 获取脊项总数
   Future<int?> getSpineCount(String fileHash) async {
     final manifest = await getManifestByHash(fileHash);
     return manifest?.spine.length;
   }
 
-  /// Flatten TOC to a simple list (for UI display)
+  /// 展平目录为简单列表（供 UI 展示）
   Future<List<TocItem>> getFlattenedToc(String fileHash) async {
     final manifest = await getManifestByHash(fileHash);
     if (manifest == null) return [];
@@ -107,7 +92,7 @@ class BookManifestRepository {
     return _flattenTocItems(manifest.toc);
   }
 
-  /// Helper to recursively flatten TOC
+  /// 递归展平目录
   List<TocItem> _flattenTocItems(List<TocItem> items) {
     final result = <TocItem>[];
     for (final item in items) {

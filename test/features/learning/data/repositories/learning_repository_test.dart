@@ -15,10 +15,7 @@ import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache
 import 'package:synlen/src/features/learning/data/stores/sentence_pronunciation_cache_store.dart';
 import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
-import 'package:synlen/src/features/learning/domain/sentence_analysis.dart';
-import 'package:synlen/src/features/learning/domain/sentence_pronunciation.dart';
-import 'package:synlen/src/features/learning/domain/word_explanation.dart';
-import 'package:synlen/src/features/learning/domain/word_pronunciation.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 
 class InMemoryAudioFileStore implements AudioFileStore {
   final Map<String, String?> wordAudioPaths;
@@ -90,21 +87,23 @@ class InMemoryWordCacheStore implements WordCacheStore {
     required String context,
     required String explanation,
   }) async {
-    explanations['$word|$context'] = WordExplanation()
-      ..id = WordExplanation.generateId(word, context)
-      ..word = word
-      ..context = context
-      ..explanation = explanation
-      ..lastUpdated = DateTime(2025);
+    explanations['$word|$context'] = WordExplanation(
+      id: wordExplanationId(word, context),
+      word: word,
+      context: context,
+      explanation: explanation,
+      lastUpdated: DateTime(2025),
+    );
   }
 
   @override
   Future<void> savePronunciationPath(String word, String audioPath) async {
-    pronunciations[word] = WordPronunciation()
-      ..id = WordPronunciation.generateId(word)
-      ..word = word
-      ..audioUrl = audioPath
-      ..lastUpdated = DateTime(2025);
+    pronunciations[word] = WordPronunciation(
+      id: wordPronunciationId(word),
+      word: word,
+      audioUrl: audioPath,
+      lastUpdated: DateTime(2025),
+    );
   }
 }
 
@@ -121,10 +120,12 @@ class InMemorySentenceAnalysisStore implements SentenceAnalysisStore {
     required String sentence,
     required String analysis,
   }) async {
-    analyses[sentence] = SentenceAnalysis()
-      ..sentence = sentence
-      ..analysis = analysis
-      ..lastUpdated = DateTime(2025);
+    analyses[sentence] = SentenceAnalysis(
+      id: 0,
+      sentence: sentence,
+      analysis: analysis,
+      lastUpdated: DateTime(2025),
+    );
   }
 }
 
@@ -138,11 +139,12 @@ class InMemorySentencePronunciationStore implements SentencePronunciationStore {
 
   @override
   Future<void> saveAudioPath(String sentence, String audioPath) async {
-    pronunciations[sentence] = SentencePronunciation()
-      ..id = SentencePronunciation.generateId(sentence)
-      ..sentence = sentence
-      ..audioUrl = audioPath
-      ..lastUpdated = DateTime(2025);
+    pronunciations[sentence] = SentencePronunciation(
+      id: sentencePronunciationId(sentence),
+      sentence: sentence,
+      audioUrl: audioPath,
+      lastUpdated: DateTime(2025),
+    );
   }
 }
 

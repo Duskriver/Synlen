@@ -6,172 +6,104 @@ part of 'word_learning_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$wordLearningControllerHash() =>
-    r'39e23e03151699e3533e773570ec17151abb8a6c';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$WordLearningController
-    extends BuildlessAutoDisposeNotifier<WordLearningState> {
-  late final WordLearningRequest request;
-
-  WordLearningState build(
-    WordLearningRequest request,
-  );
-}
-
-/// See also [WordLearningController].
 @ProviderFor(WordLearningController)
-const wordLearningControllerProvider = WordLearningControllerFamily();
+final wordLearningControllerProvider = WordLearningControllerFamily._();
 
-/// See also [WordLearningController].
-class WordLearningControllerFamily extends Family<WordLearningState> {
-  /// See also [WordLearningController].
-  const WordLearningControllerFamily();
+final class WordLearningControllerProvider
+    extends $NotifierProvider<WordLearningController, WordLearningState> {
+  WordLearningControllerProvider._({
+    required WordLearningControllerFamily super.from,
+    required WordLearningRequest super.argument,
+  }) : super(
+         retry: null,
+         name: r'wordLearningControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [WordLearningController].
-  WordLearningControllerProvider call(
-    WordLearningRequest request,
-  ) {
-    return WordLearningControllerProvider(
-      request,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$wordLearningControllerHash();
+
+  @override
+  String toString() {
+    return r'wordLearningControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  WordLearningControllerProvider getProviderOverride(
-    covariant WordLearningControllerProvider provider,
-  ) {
-    return call(
-      provider.request,
-    );
-  }
+  WordLearningController create() => WordLearningController();
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'wordLearningControllerProvider';
-}
-
-/// See also [WordLearningController].
-class WordLearningControllerProvider extends AutoDisposeNotifierProviderImpl<
-    WordLearningController, WordLearningState> {
-  /// See also [WordLearningController].
-  WordLearningControllerProvider(
-    WordLearningRequest request,
-  ) : this._internal(
-          () => WordLearningController()..request = request,
-          from: wordLearningControllerProvider,
-          name: r'wordLearningControllerProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$wordLearningControllerHash,
-          dependencies: WordLearningControllerFamily._dependencies,
-          allTransitiveDependencies:
-              WordLearningControllerFamily._allTransitiveDependencies,
-          request: request,
-        );
-
-  WordLearningControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.request,
-  }) : super.internal();
-
-  final WordLearningRequest request;
-
-  @override
-  WordLearningState runNotifierBuild(
-    covariant WordLearningController notifier,
-  ) {
-    return notifier.build(
-      request,
-    );
-  }
-
-  @override
-  Override overrideWith(WordLearningController Function() create) {
-    return ProviderOverride(
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WordLearningState value) {
+    return $ProviderOverride(
       origin: this,
-      override: WordLearningControllerProvider._internal(
-        () => create()..request = request,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        request: request,
-      ),
+      providerOverride: $SyncValueProvider<WordLearningState>(value),
     );
-  }
-
-  @override
-  AutoDisposeNotifierProviderElement<WordLearningController, WordLearningState>
-      createElement() {
-    return _WordLearningControllerProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is WordLearningControllerProvider && other.request == request;
+    return other is WordLearningControllerProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, request.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin WordLearningControllerRef
-    on AutoDisposeNotifierProviderRef<WordLearningState> {
-  /// The parameter `request` of this provider.
-  WordLearningRequest get request;
-}
+String _$wordLearningControllerHash() =>
+    r'9ece9063c1b9566934e96600efd001a8385d2639';
 
-class _WordLearningControllerProviderElement
-    extends AutoDisposeNotifierProviderElement<WordLearningController,
-        WordLearningState> with WordLearningControllerRef {
-  _WordLearningControllerProviderElement(super.provider);
+final class WordLearningControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          WordLearningController,
+          WordLearningState,
+          WordLearningState,
+          WordLearningState,
+          WordLearningRequest
+        > {
+  WordLearningControllerFamily._()
+    : super(
+        retry: null,
+        name: r'wordLearningControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  WordLearningControllerProvider call(WordLearningRequest request) =>
+      WordLearningControllerProvider._(argument: request, from: this);
 
   @override
-  WordLearningRequest get request =>
-      (origin as WordLearningControllerProvider).request;
+  String toString() => r'wordLearningControllerProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+
+abstract class _$WordLearningController extends $Notifier<WordLearningState> {
+  late final _$args = ref.$arg as WordLearningRequest;
+  WordLearningRequest get request => _$args;
+
+  WordLearningState build(WordLearningRequest request);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<WordLearningState, WordLearningState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<WordLearningState, WordLearningState>,
+              WordLearningState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}

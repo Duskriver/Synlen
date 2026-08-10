@@ -6,167 +6,450 @@ part of 'learning_repository_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// 提供 [FreeDictionaryService] 实例
+
+@ProviderFor(freeDictionaryService)
+final freeDictionaryServiceProvider = FreeDictionaryServiceProvider._();
+
+/// 提供 [FreeDictionaryService] 实例
+
+final class FreeDictionaryServiceProvider
+    extends
+        $FunctionalProvider<
+          FreeDictionaryService,
+          FreeDictionaryService,
+          FreeDictionaryService
+        >
+    with $Provider<FreeDictionaryService> {
+  /// 提供 [FreeDictionaryService] 实例
+  FreeDictionaryServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'freeDictionaryServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$freeDictionaryServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<FreeDictionaryService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  FreeDictionaryService create(Ref ref) {
+    return freeDictionaryService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FreeDictionaryService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FreeDictionaryService>(value),
+    );
+  }
+}
+
 String _$freeDictionaryServiceHash() =>
     r'48e6e84143194c5ae31f2908b2c3c4b7851a2f1e';
 
-/// 提供 [FreeDictionaryService] 实例
-///
-/// Copied from [freeDictionaryService].
-@ProviderFor(freeDictionaryService)
-final freeDictionaryServiceProvider =
-    AutoDisposeProvider<FreeDictionaryService>.internal(
-  freeDictionaryService,
-  name: r'freeDictionaryServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$freeDictionaryServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+/// 提供 [DeepSeekService] 实例
 
-typedef FreeDictionaryServiceRef
-    = AutoDisposeProviderRef<FreeDictionaryService>;
-String _$deepSeekServiceHash() => r'77ca780a6061bbb0962705c37a33c8fa69d84b43';
+@ProviderFor(deepSeekService)
+final deepSeekServiceProvider = DeepSeekServiceProvider._();
 
 /// 提供 [DeepSeekService] 实例
-///
-/// Copied from [deepSeekService].
-@ProviderFor(deepSeekService)
-final deepSeekServiceProvider = AutoDisposeProvider<DeepSeekService>.internal(
-  deepSeekService,
-  name: r'deepSeekServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$deepSeekServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef DeepSeekServiceRef = AutoDisposeProviderRef<DeepSeekService>;
-String _$aliyunTTSServiceHash() => r'2b50292d88aa2cf5b4d14b00bfe7df819b04ffcd';
+final class DeepSeekServiceProvider
+    extends
+        $FunctionalProvider<DeepSeekService, DeepSeekService, DeepSeekService>
+    with $Provider<DeepSeekService> {
+  /// 提供 [DeepSeekService] 实例
+  DeepSeekServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deepSeekServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$deepSeekServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<DeepSeekService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DeepSeekService create(Ref ref) {
+    return deepSeekService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DeepSeekService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DeepSeekService>(value),
+    );
+  }
+}
+
+String _$deepSeekServiceHash() => r'77ca780a6061bbb0962705c37a33c8fa69d84b43';
 
 /// 提供 [AliyunTTSService] 实例
-///
-/// Copied from [aliyunTTSService].
-@ProviderFor(aliyunTTSService)
-final aliyunTTSServiceProvider = AutoDisposeProvider<AliyunTTSService>.internal(
-  aliyunTTSService,
-  name: r'aliyunTTSServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$aliyunTTSServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef AliyunTTSServiceRef = AutoDisposeProviderRef<AliyunTTSService>;
+@ProviderFor(aliyunTTSService)
+final aliyunTTSServiceProvider = AliyunTTSServiceProvider._();
+
+/// 提供 [AliyunTTSService] 实例
+
+final class AliyunTTSServiceProvider
+    extends
+        $FunctionalProvider<
+          AliyunTTSService,
+          AliyunTTSService,
+          AliyunTTSService
+        >
+    with $Provider<AliyunTTSService> {
+  /// 提供 [AliyunTTSService] 实例
+  AliyunTTSServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'aliyunTTSServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$aliyunTTSServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<AliyunTTSService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AliyunTTSService create(Ref ref) {
+    return aliyunTTSService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AliyunTTSService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AliyunTTSService>(value),
+    );
+  }
+}
+
+String _$aliyunTTSServiceHash() => r'354e3383c86c22f01c791ba5d95c69788230324e';
+
+@ProviderFor(learningAudioFileStore)
+final learningAudioFileStoreProvider = LearningAudioFileStoreProvider._();
+
+final class LearningAudioFileStoreProvider
+    extends
+        $FunctionalProvider<
+          LearningAudioFileStore,
+          LearningAudioFileStore,
+          LearningAudioFileStore
+        >
+    with $Provider<LearningAudioFileStore> {
+  LearningAudioFileStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'learningAudioFileStoreProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$learningAudioFileStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<LearningAudioFileStore> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  LearningAudioFileStore create(Ref ref) {
+    return learningAudioFileStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LearningAudioFileStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LearningAudioFileStore>(value),
+    );
+  }
+}
+
 String _$learningAudioFileStoreHash() =>
     r'4269f892b564a390ad8682d3ffca5f3e30754dee';
 
-/// See also [learningAudioFileStore].
-@ProviderFor(learningAudioFileStore)
-final learningAudioFileStoreProvider =
-    AutoDisposeProvider<LearningAudioFileStore>.internal(
-  learningAudioFileStore,
-  name: r'learningAudioFileStoreProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$learningAudioFileStoreHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef LearningAudioFileStoreRef
-    = AutoDisposeProviderRef<LearningAudioFileStore>;
-String _$wordLearningCacheStoreHash() =>
-    r'67bce2dc6b79634c10ae61376e58390ee3581dca';
-
-/// See also [wordLearningCacheStore].
 @ProviderFor(wordLearningCacheStore)
-final wordLearningCacheStoreProvider =
-    AutoDisposeProvider<WordLearningCacheStore>.internal(
-  wordLearningCacheStore,
-  name: r'wordLearningCacheStoreProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$wordLearningCacheStoreHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final wordLearningCacheStoreProvider = WordLearningCacheStoreProvider._();
 
-typedef WordLearningCacheStoreRef
-    = AutoDisposeProviderRef<WordLearningCacheStore>;
-String _$sentenceLearningCacheStoreHash() =>
-    r'259949859682368f751d2bbd4172d797f0dbfff2';
+final class WordLearningCacheStoreProvider
+    extends
+        $FunctionalProvider<
+          WordLearningCacheStore,
+          WordLearningCacheStore,
+          WordLearningCacheStore
+        >
+    with $Provider<WordLearningCacheStore> {
+  WordLearningCacheStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wordLearningCacheStoreProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [sentenceLearningCacheStore].
+  @override
+  String debugGetCreateSourceHash() => _$wordLearningCacheStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<WordLearningCacheStore> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  WordLearningCacheStore create(Ref ref) {
+    return wordLearningCacheStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WordLearningCacheStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WordLearningCacheStore>(value),
+    );
+  }
+}
+
+String _$wordLearningCacheStoreHash() =>
+    r'bdfe7a655a7043fb00647cd41e9b069bfbb574c5';
+
 @ProviderFor(sentenceLearningCacheStore)
 final sentenceLearningCacheStoreProvider =
-    AutoDisposeProvider<SentenceLearningCacheStore>.internal(
-  sentenceLearningCacheStore,
-  name: r'sentenceLearningCacheStoreProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sentenceLearningCacheStoreHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+    SentenceLearningCacheStoreProvider._();
 
-typedef SentenceLearningCacheStoreRef
-    = AutoDisposeProviderRef<SentenceLearningCacheStore>;
-String _$sentencePronunciationCacheStoreHash() =>
-    r'109b8679ea5b091fd95bbbd0a3e06c37f30a15e3';
+final class SentenceLearningCacheStoreProvider
+    extends
+        $FunctionalProvider<
+          SentenceLearningCacheStore,
+          SentenceLearningCacheStore,
+          SentenceLearningCacheStore
+        >
+    with $Provider<SentenceLearningCacheStore> {
+  SentenceLearningCacheStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sentenceLearningCacheStoreProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [sentencePronunciationCacheStore].
+  @override
+  String debugGetCreateSourceHash() => _$sentenceLearningCacheStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<SentenceLearningCacheStore> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SentenceLearningCacheStore create(Ref ref) {
+    return sentenceLearningCacheStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SentenceLearningCacheStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SentenceLearningCacheStore>(value),
+    );
+  }
+}
+
+String _$sentenceLearningCacheStoreHash() =>
+    r'fc4195d20008ae527e4f38236886bf862a0ae34b';
+
 @ProviderFor(sentencePronunciationCacheStore)
 final sentencePronunciationCacheStoreProvider =
-    AutoDisposeProvider<SentencePronunciationCacheStore>.internal(
-  sentencePronunciationCacheStore,
-  name: r'sentencePronunciationCacheStoreProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sentencePronunciationCacheStoreHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+    SentencePronunciationCacheStoreProvider._();
 
-typedef SentencePronunciationCacheStoreRef
-    = AutoDisposeProviderRef<SentencePronunciationCacheStore>;
-String _$wordRepositoryHash() => r'ccd559fa6773808a4b4086dfe73ef7b48e716669';
+final class SentencePronunciationCacheStoreProvider
+    extends
+        $FunctionalProvider<
+          SentencePronunciationCacheStore,
+          SentencePronunciationCacheStore,
+          SentencePronunciationCacheStore
+        >
+    with $Provider<SentencePronunciationCacheStore> {
+  SentencePronunciationCacheStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sentencePronunciationCacheStoreProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sentencePronunciationCacheStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<SentencePronunciationCacheStore> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SentencePronunciationCacheStore create(Ref ref) {
+    return sentencePronunciationCacheStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SentencePronunciationCacheStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SentencePronunciationCacheStore>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$sentencePronunciationCacheStoreHash() =>
+    r'7c74f4e09b56988cad91e977e94e0713cd90864e';
 
 /// 提供 [WordRepository] 实例
-///
-/// Copied from [wordRepository].
-@ProviderFor(wordRepository)
-final wordRepositoryProvider = AutoDisposeProvider<WordRepository>.internal(
-  wordRepository,
-  name: r'wordRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$wordRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef WordRepositoryRef = AutoDisposeProviderRef<WordRepository>;
-String _$sentenceRepositoryHash() =>
-    r'381b5c5e206abd759c0529e5c3eea19833978311';
+@ProviderFor(wordRepository)
+final wordRepositoryProvider = WordRepositoryProvider._();
+
+/// 提供 [WordRepository] 实例
+
+final class WordRepositoryProvider
+    extends $FunctionalProvider<WordRepository, WordRepository, WordRepository>
+    with $Provider<WordRepository> {
+  /// 提供 [WordRepository] 实例
+  WordRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wordRepositoryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wordRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<WordRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  WordRepository create(Ref ref) {
+    return wordRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WordRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WordRepository>(value),
+    );
+  }
+}
+
+String _$wordRepositoryHash() => r'ccd559fa6773808a4b4086dfe73ef7b48e716669';
 
 /// 提供 [SentenceRepository] 实例
-///
-/// Copied from [sentenceRepository].
-@ProviderFor(sentenceRepository)
-final sentenceRepositoryProvider =
-    AutoDisposeProvider<SentenceRepository>.internal(
-  sentenceRepository,
-  name: r'sentenceRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sentenceRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef SentenceRepositoryRef = AutoDisposeProviderRef<SentenceRepository>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+@ProviderFor(sentenceRepository)
+final sentenceRepositoryProvider = SentenceRepositoryProvider._();
+
+/// 提供 [SentenceRepository] 实例
+
+final class SentenceRepositoryProvider
+    extends
+        $FunctionalProvider<
+          SentenceRepository,
+          SentenceRepository,
+          SentenceRepository
+        >
+    with $Provider<SentenceRepository> {
+  /// 提供 [SentenceRepository] 实例
+  SentenceRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sentenceRepositoryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sentenceRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<SentenceRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SentenceRepository create(Ref ref) {
+    return sentenceRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SentenceRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SentenceRepository>(value),
+    );
+  }
+}
+
+String _$sentenceRepositoryHash() =>
+    r'381b5c5e206abd759c0529e5c3eea19833978311';

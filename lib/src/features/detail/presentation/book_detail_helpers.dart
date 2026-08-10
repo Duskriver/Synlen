@@ -6,7 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/data/services/storage_cleanup_service_provider.dart';
-import '../../library/domain/shelf_book.dart';
+import '../../../core/database/app_database.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Copies the book's EPUB source file to a sanitised temporary path, opens

@@ -1,6 +1,4 @@
-import 'package:isar/isar.dart';
-import 'package:synlen/src/features/learning/domain/word_explanation.dart';
-import 'package:synlen/src/features/learning/domain/word_pronunciation.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 
 abstract class WordCacheStore {
   Future<WordExplanation?> getExplanation(String word, String context);
@@ -16,21 +14,25 @@ abstract class WordCacheStore {
   Future<void> savePronunciationPath(String word, String audioPath);
 }
 
+/// 单词学习缓存（drift 实现）。
+/// 主键使用确定性哈希（word/word+context），保证同一词条只有一条记录。
 class WordLearningCacheStore implements WordCacheStore {
-  final Isar _isar;
+  final AppDatabase _db;
 
-  WordLearningCacheStore(this._isar);
+  WordLearningCacheStore(this._db);
 
   @override
   Future<WordExplanation?> getExplanation(String word, String context) {
-    return _isar.wordExplanations.get(
-      WordExplanation.generateId(word, context),
-    );
+    return (_db.select(_db.wordExplanations)
+          ..where((t) => t.id.equals(wordExplanationId(word, context))))
+        .getSingleOrNull();
   }
 
   @override
   Future<WordPronunciation?> getPronunciation(String word) {
-    return _isar.wordPronunciations.get(WordPronunciation.generateId(word));
+    return (_db.select(_db.wordPronunciations)
+          ..where((t) => t.id.equals(wordPronunciationId(word))))
+        .getSingleOrNull();
   }
 
   @override
@@ -39,36 +41,26 @@ class WordLearningCacheStore implements WordCacheStore {
     required String context,
     required String explanation,
   }) async {
-    final cached = await getExplanation(word, context);
-    final entry =
-        cached ??
-        (WordExplanation()
-          ..id = WordExplanation.generateId(word, context)
-          ..word = word
-          ..context = context);
-
-    entry
-      ..word = word
-      ..context = context
-      ..explanation = explanation
-      ..lastUpdated = DateTime.now();
-
-    await _isar.writeTxn(() => _isar.wordExplanations.put(entry));
+    await _db.into(_db.wordExplanations).insertOnConflictUpdate(
+          WordExplanation(
+            id: wordExplanationId(word, context),
+            word: word,
+            context: context,
+            explanation: explanation,
+            lastUpdated: DateTime.now(),
+          ),
+        );
   }
 
   @override
   Future<void> savePronunciationPath(String word, String audioPath) async {
-    final cached = await getPronunciation(word);
-    final entry =
-        cached ??
-        (WordPronunciation()
-          ..id = WordPronunciation.generateId(word)
-          ..word = word);
-
-    entry
-      ..audioUrl = audioPath
-      ..lastUpdated = DateTime.now();
-
-    await _isar.writeTxn(() => _isar.wordPronunciations.put(entry));
+    await _db.into(_db.wordPronunciations).insertOnConflictUpdate(
+          WordPronunciation(
+            id: wordPronunciationId(word),
+            word: word,
+            audioUrl: audioPath,
+            lastUpdated: DateTime.now(),
+          ),
+        );
   }
 }

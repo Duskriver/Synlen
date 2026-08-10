@@ -5,8 +5,7 @@ import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
 import 'package:synlen/src/rust/api/epub.dart' as rust_epub;
 import 'package:fpdart/fpdart.dart';
-import '../../domain/shelf_book.dart';
-import '../../domain/book_manifest.dart';
+import 'package:synlen/src/core/database/app_database.dart';
 import '../shelf_book_repository.dart';
 import '../book_manifest_repository.dart';
 
@@ -14,7 +13,7 @@ import '../book_manifest_repository.dart';
 /// - Copies EPUB to AppDocDir/books/{fileHash}.epub (keeps compressed)
 /// - Extracts cover to AppDocDir/covers/{fileHash}.jpg
 /// - Parses metadata in-memory (no full unzip)
-/// - Saves to Isar: ShelfBook + BookManifest
+/// - Saves to drift: ShelfBook + BookManifest
 class EpubImportService {
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
@@ -150,33 +149,41 @@ class EpubImportService {
     final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final shelfBook = ShelfBook()
-      ..fileHash = fileHash
-      ..filePath = relativePath
-      ..coverPath = coverPath
-      ..title = parseData.title
-      ..author = parseData.author
-      ..authors = parseData.authors
-      ..description = parseData.description
-      ..subjects = parseData.subjects
-      ..totalChapters = parseData.totalChapters
-      ..epubVersion = parseData.epubVersion
-      ..importDate = now
-      ..updatedAt = now
-      ..direction = parseData.readDirection;
+    final existingId = bookExisted
+        ? await _shelfBookRepo.getBookIdByHash(fileHash)
+        : null;
 
-    if (bookExisted) {
-      shelfBook.id = await _shelfBookRepo.getBookIdByHash(fileHash);
-    }
+    final shelfBook = ShelfBook(
+      id: existingId ?? 0,
+      fileHash: fileHash,
+      filePath: relativePath,
+      coverPath: coverPath,
+      title: parseData.title,
+      author: parseData.author,
+      authors: parseData.authors,
+      description: parseData.description,
+      subjects: parseData.subjects,
+      totalChapters: parseData.totalChapters,
+      epubVersion: parseData.epubVersion,
+      importDate: now,
+      updatedAt: now,
+      direction: parseData.readDirection,
+      currentChapterIndex: 0,
+      readingProgress: 0.0,
+      isFinished: false,
+      isDeleted: false,
+    );
 
-    final manifest = BookManifest()
-      ..fileHash = fileHash
-      ..opfRootPath = parseData.opfRootPath
-      ..spine = parseData.spine
-      ..toc = parseData.toc
-      ..manifest = parseData.manifestItems
-      ..epubVersion = parseData.epubVersion
-      ..lastUpdated = DateTime.now();
+    final manifest = BookManifest(
+      id: 0,
+      fileHash: fileHash,
+      opfRootPath: parseData.opfRootPath,
+      spine: parseData.spine,
+      toc: parseData.toc,
+      manifest: parseData.manifestItems,
+      epubVersion: parseData.epubVersion,
+      lastUpdated: DateTime.now(),
+    );
 
     return (shelfBook, manifest);
   }
@@ -203,9 +210,8 @@ class EpubImportService {
       return left(saveManifestResult.getLeft().toNullable()!);
     }
 
-    // Update book with ID from database
-    shelfBook.id = bookId;
-    return right(shelfBook);
+    // 更新 book 的数据库 ID
+    return right(shelfBook.copyWith(id: bookId));
   }
 
   /// Copy EPUB file to books directory
@@ -365,10 +371,11 @@ class EpubImportService {
     }
 
     if (bookWasSoftDeleted) {
-      book
-        ..isDeleted = originalDeletedState
-        ..updatedAt = DateTime.now().millisecondsSinceEpoch;
-      final restoreBookResult = await _shelfBookRepo.saveBook(book);
+      final restoredBook = book.copyWith(
+        isDeleted: originalDeletedState,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      final restoreBookResult = await _shelfBookRepo.saveBook(restoredBook);
       if (restoreBookResult.isLeft()) {
         rollbackErrors.add(
           'Restore book failed: ${restoreBookResult.getLeft().toNullable()!}',

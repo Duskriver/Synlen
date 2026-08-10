@@ -11,7 +11,8 @@ import 'package:synlen/src/features/reader/presentation/reader_webview.dart';
 import 'package:synlen/src/rust/frb_generated.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'src/app.dart';
-import 'src/core/database/providers.dart';
+import 'package:synlen/src/core/database/app_database.dart';
+import 'package:synlen/src/core/database/providers.dart';
 
 HeadlessInAppWebView? headlessWebView;
 
@@ -59,13 +60,16 @@ void main() async {
   // the UI first accesses them.
   final prefs = await SharedPreferences.getInstance();
 
+  // 初始化数据库
+  final database = AppDatabase();
+
   // Create provider container
   final container = ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      appDatabaseProvider.overrideWithValue(database),
+    ],
   );
-
-  // Initialize Isar database
-  await container.read(isarProvider.future);
   container.read(epubStreamServiceProvider);
 
   runApp(
@@ -75,4 +79,3 @@ void main() async {
     ),
   );
 }
-
