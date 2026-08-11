@@ -10,7 +10,13 @@ class AppInfo {
 
   static const projectRepositoryUrl =
       'https://github.com/Duskriver/Synlen';
-  static const versionEndpoint = 'https://example.com/synlen/version';
+
+  /// 版本检查端点：阿里云 OSS 上的 version.json（国内网络可达）。
+  /// 可通过 --dart-define=SYNLEN_VERSION_URL=xxx 覆盖（如自建分发源）。
+  static const versionEndpoint = String.fromEnvironment(
+    'SYNLEN_VERSION_URL',
+    defaultValue: 'https://synlen.oss-cn-hangzhou.aliyuncs.com/version.json',
+  );
 
   static const applicationLegalese =
       'Synlen is based on Lumina by MilkFeng. Original project licensed under MIT.';
