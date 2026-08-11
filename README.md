@@ -38,20 +38,26 @@ flutter pub get
 Run the app:
 
 ```bash
-# Learning features need API keys (word explanation / sentence analysis / TTS reading).
-# Without them those features will show an "unavailable" message.
-flutter run --dart-define=DEEPSEEK_API_KEY=your_key --dart-define=ALIYUN_TTS_API_KEY=your_key
+flutter run
 ```
 
 Build release packages:
 
 ```bash
-# Release builds need the same API keys injected, otherwise learning features won't work.
-flutter build apk --release --dart-define=DEEPSEEK_API_KEY=your_key --dart-define=ALIYUN_TTS_API_KEY=your_key
-flutter build ios --release --dart-define=DEEPSEEK_API_KEY=your_key --dart-define=ALIYUN_TTS_API_KEY=your_key
+flutter build apk --release
+flutter build ios --release
 ```
 
-> API keys are injected at compile time via `--dart-define` and are never stored in source code. CI release builds use GitHub Secrets (see `.github/workflows/build_release.yml`).
+### AI Service API Keys (optional)
+
+Word explanation, sentence analysis and TTS reading need API keys from **DeepSeek** and **Aliyun TTS**. **Keys are entered by the user inside the app** (Settings → AI Service) and stored in the system secure storage (Keychain / Keystore). No key is ever embedded in source code or build artifacts — this project ships open-source without any bundled keys.
+
+### In-app updates
+
+- Update checks read `version.json` from Aliyun OSS (fast in mainland China)
+- Android: downloads and installs the APK directly from OSS (no GitHub access needed)
+- iOS: opens the App Store page (available after App Store release)
+- Publishing a new version: build the release then run `./tool/upload_release.sh <tag> [bucket] [region]`, or let CI build on tag push and optionally upload to OSS
 
 ## Notes
 
