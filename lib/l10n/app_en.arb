@@ -812,6 +812,71 @@
     "description": "Theme variant: warm-tinted eye-ease look"
   },
 
+  "aiService": "AI Service",
+  "@aiService": {
+    "description": "AI service settings section title"
+  },
+
+  "aiServiceSubtitle": "Configure API keys for word explanation, sentence analysis and reading aloud",
+  "@aiServiceSubtitle": {
+    "description": "AI service settings section subtitle"
+  },
+
+  "deepSeekApiKey": "DeepSeek API Key",
+  "@deepSeekApiKey": {
+    "description": "DeepSeek API Key setting title"
+  },
+
+  "deepSeekApiKeySubtitle": "Used for word explanation and sentence analysis",
+  "@deepSeekApiKeySubtitle": {
+    "description": "DeepSeek API Key setting subtitle"
+  },
+
+  "aliyunTtsApiKey": "Aliyun TTS API Key",
+  "@aliyunTtsApiKey": {
+    "description": "Aliyun TTS API Key setting title"
+  },
+
+  "aliyunTtsApiKeySubtitle": "Used for pronunciation (Aliyun DashScope)",
+  "@aliyunTtsApiKeySubtitle": {
+    "description": "Aliyun TTS API Key setting subtitle"
+  },
+
+  "apiKeyNotConfigured": "Not configured",
+  "@apiKeyNotConfigured": {
+    "description": "API key not configured status"
+  },
+
+  "apiKeyInputHint": "Paste API key",
+  "@apiKeyInputHint": {
+    "description": "API key input hint"
+  },
+
+  "apiKeyObtainHint": "Create an API key in the {provider} console",
+  "@apiKeyObtainHint": {
+    "description": "Hint for obtaining an API key",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+
+  "apiKeySaved": "Saved",
+  "@apiKeySaved": {
+    "description": "API key saved toast"
+  },
+
+  "apiKeyCleared": "Cleared",
+  "@apiKeyCleared": {
+    "description": "API key cleared toast"
+  },
+
+  "clearKey": "Clear key",
+  "@clearKey": {
+    "description": "Clear API key button"
+  },
+
   "projectInfo": "Project Info",
   "@projectInfo": {
     "description": "Project information section title"
@@ -879,7 +944,47 @@
 
   "updateCheckFailed": "Failed to check for updates",
   "@updateCheckFailed": {
-    "description": "Update check failed message"
+    "description": "Failed to check for updates toast"
+  },
+
+  "downloadAndInstall": "Download & install",
+  "@downloadAndInstall": {
+    "description": "Download and install update button"
+  },
+
+  "goToAppStore": "Go to App Store",
+  "@goToAppStore": {
+    "description": "Go to App Store update button"
+  },
+
+  "downloadingUpdate": "Downloading update…",
+  "@downloadingUpdate": {
+    "description": "Downloading update message"
+  },
+
+  "downloadFailed": "Download failed",
+  "@downloadFailed": {
+    "description": "Download failed toast"
+  },
+
+  "downloadCompleted": "Download complete, tap to install",
+  "@downloadCompleted": {
+    "description": "Download completed message"
+  },
+
+  "installUnknownSourcesRequired": "Installing apps from unknown sources must be enabled in system settings",
+  "@installUnknownSourcesRequired": {
+    "description": "Unknown sources permission message"
+  },
+
+  "goToSettings": "Open settings",
+  "@goToSettings": {
+    "description": "Open system settings button"
+  },
+
+  "noUpdateChannel": "No update channel available for this platform yet, please check GitHub Releases",
+  "@noUpdateChannel": {
+    "description": "No update channel message"
   },
 
   "languageNameInEnglish": "English",

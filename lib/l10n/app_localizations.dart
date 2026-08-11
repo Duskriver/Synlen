@@ -938,6 +938,78 @@ abstract class AppLocalizations {
   /// **'Eye Care'**
   String get appThemeVariantEyeCare;
 
+  /// AI service settings section title
+  ///
+  /// In en, this message translates to:
+  /// **'AI Service'**
+  String get aiService;
+
+  /// AI service settings section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Configure API keys for word explanation, sentence analysis and reading aloud'**
+  String get aiServiceSubtitle;
+
+  /// DeepSeek API Key setting title
+  ///
+  /// In en, this message translates to:
+  /// **'DeepSeek API Key'**
+  String get deepSeekApiKey;
+
+  /// DeepSeek API Key setting subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Used for word explanation and sentence analysis'**
+  String get deepSeekApiKeySubtitle;
+
+  /// Aliyun TTS API Key setting title
+  ///
+  /// In en, this message translates to:
+  /// **'Aliyun TTS API Key'**
+  String get aliyunTtsApiKey;
+
+  /// Aliyun TTS API Key setting subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Used for pronunciation (Aliyun DashScope)'**
+  String get aliyunTtsApiKeySubtitle;
+
+  /// API key not configured status
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get apiKeyNotConfigured;
+
+  /// API key input hint
+  ///
+  /// In en, this message translates to:
+  /// **'Paste API key'**
+  String get apiKeyInputHint;
+
+  /// Hint for obtaining an API key
+  ///
+  /// In en, this message translates to:
+  /// **'Create an API key in the {provider} console'**
+  String apiKeyObtainHint(String provider);
+
+  /// API key saved toast
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get apiKeySaved;
+
+  /// API key cleared toast
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared'**
+  String get apiKeyCleared;
+
+  /// Clear API key button
+  ///
+  /// In en, this message translates to:
+  /// **'Clear key'**
+  String get clearKey;
+
   /// Project information section title
   ///
   /// In en, this message translates to:
@@ -1016,11 +1088,59 @@ abstract class AppLocalizations {
   /// **'Password copied'**
   String get passwordCopied;
 
-  /// Update check failed message
+  /// Failed to check for updates toast
   ///
   /// In en, this message translates to:
   /// **'Failed to check for updates'**
   String get updateCheckFailed;
+
+  /// Download and install update button
+  ///
+  /// In en, this message translates to:
+  /// **'Download & install'**
+  String get downloadAndInstall;
+
+  /// Go to App Store update button
+  ///
+  /// In en, this message translates to:
+  /// **'Go to App Store'**
+  String get goToAppStore;
+
+  /// Downloading update message
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update…'**
+  String get downloadingUpdate;
+
+  /// Download failed toast
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get downloadFailed;
+
+  /// Download completed message
+  ///
+  /// In en, this message translates to:
+  /// **'Download complete, tap to install'**
+  String get downloadCompleted;
+
+  /// Unknown sources permission message
+  ///
+  /// In en, this message translates to:
+  /// **'Installing apps from unknown sources must be enabled in system settings'**
+  String get installUnknownSourcesRequired;
+
+  /// Open system settings button
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get goToSettings;
+
+  /// No update channel message
+  ///
+  /// In en, this message translates to:
+  /// **'No update channel available for this platform yet, please check GitHub Releases'**
+  String get noUpdateChannel;
 
   /// The name of the current language in English, used to select the matching section in update logs
   ///

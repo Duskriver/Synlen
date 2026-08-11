@@ -822,6 +822,71 @@
     "description": "主题方案：暖色护眼风格"
   },
 
+  "aiService": "AI 服务",
+  "@aiService": {
+    "description": "AI 服务设置分组标题"
+  },
+
+  "aiServiceSubtitle": "配置 AI 服务的 API Key，用于单词解释、句子分析与朗读",
+  "@aiServiceSubtitle": {
+    "description": "AI 服务设置分组副标题"
+  },
+
+  "deepSeekApiKey": "DeepSeek API Key",
+  "@deepSeekApiKey": {
+    "description": "DeepSeek API Key 设置项标题"
+  },
+
+  "deepSeekApiKeySubtitle": "用于单词解释与句子分析",
+  "@deepSeekApiKeySubtitle": {
+    "description": "DeepSeek API Key 设置项副标题"
+  },
+
+  "aliyunTtsApiKey": "阿里云 TTS API Key",
+  "@aliyunTtsApiKey": {
+    "description": "阿里云 TTS API Key 设置项标题"
+  },
+
+  "aliyunTtsApiKeySubtitle": "用于朗读发音（阿里云 DashScope）",
+  "@aliyunTtsApiKeySubtitle": {
+    "description": "阿里云 TTS API Key 设置项副标题"
+  },
+
+  "apiKeyNotConfigured": "未配置",
+  "@apiKeyNotConfigured": {
+    "description": "API Key 未配置时的状态文案"
+  },
+
+  "apiKeyInputHint": "粘贴 API Key",
+  "@apiKeyInputHint": {
+    "description": "API Key 输入框提示文案"
+  },
+
+  "apiKeyObtainHint": "可在 {provider} 控制台创建 API Key",
+  "@apiKeyObtainHint": {
+    "description": "获取 API Key 的指引",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+
+  "apiKeySaved": "已保存",
+  "@apiKeySaved": {
+    "description": "API Key 保存成功提示"
+  },
+
+  "apiKeyCleared": "已清除",
+  "@apiKeyCleared": {
+    "description": "API Key 清除成功提示"
+  },
+
+  "clearKey": "清除 Key",
+  "@clearKey": {
+    "description": "清除 API Key 按钮"
+  },
+
   "projectInfo": "项目信息",
   "@projectInfo": {
     "description": "项目信息部分标题"
@@ -890,6 +955,46 @@
   "updateCheckFailed": "检查更新失败",
   "@updateCheckFailed": {
     "description": "检查更新失败提示"
+  },
+
+  "downloadAndInstall": "下载并安装",
+  "@downloadAndInstall": {
+    "description": "下载并安装更新按钮"
+  },
+
+  "goToAppStore": "前往 App Store",
+  "@goToAppStore": {
+    "description": "前往 App Store 更新按钮"
+  },
+
+  "downloadingUpdate": "正在下载更新包…",
+  "@downloadingUpdate": {
+    "description": "下载更新包提示"
+  },
+
+  "downloadFailed": "下载失败",
+  "@downloadFailed": {
+    "description": "下载失败提示"
+  },
+
+  "downloadCompleted": "下载完成，请点击安装",
+  "@downloadCompleted": {
+    "description": "下载完成提示"
+  },
+
+  "installUnknownSourcesRequired": "需要允许安装未知来源应用，请到系统设置中开启",
+  "@installUnknownSourcesRequired": {
+    "description": "安装未知来源权限提示"
+  },
+
+  "goToSettings": "去设置",
+  "@goToSettings": {
+    "description": "跳转系统设置按钮"
+  },
+
+  "noUpdateChannel": "当前平台暂无更新渠道，请留意 GitHub Releases",
+  "@noUpdateChannel": {
+    "description": "无更新渠道提示"
   },
 
   "languageNameInEnglish": "Chinese",

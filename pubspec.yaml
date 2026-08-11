@@ -35,6 +35,8 @@ dependencies:
 
   # Storage
   shared_preferences: ^2.5.4
+  # AI 服务的 API Key 由用户在设置页自填，存安全存储（开源版不含任何密钥）
+  flutter_secure_storage: ^11.0.0
 
   # Functional Programming
   fpdart: ^1.2.0

@@ -59,7 +59,7 @@ final class FreeDictionaryServiceProvider
 }
 
 String _$freeDictionaryServiceHash() =>
-    r'48e6e84143194c5ae31f2908b2c3c4b7851a2f1e';
+    r'811892f545cfc2789174dccfd08e8365e5ff638d';
 
 /// 提供 [DeepSeekService] 实例
 
@@ -106,7 +106,7 @@ final class DeepSeekServiceProvider
   }
 }
 
-String _$deepSeekServiceHash() => r'77ca780a6061bbb0962705c37a33c8fa69d84b43';
+String _$deepSeekServiceHash() => r'6134570a4f565efaccf3b8f5e419604a27cc03db';
 
 /// 提供 [AliyunTTSService] 实例
 
@@ -157,7 +157,7 @@ final class AliyunTTSServiceProvider
   }
 }
 
-String _$aliyunTTSServiceHash() => r'354e3383c86c22f01c791ba5d95c69788230324e';
+String _$aliyunTTSServiceHash() => r'1b1bba989420bc332899efe91f93e5c5b8112153';
 
 @ProviderFor(learningAudioFileStore)
 final learningAudioFileStoreProvider = LearningAudioFileStoreProvider._();
@@ -205,7 +205,7 @@ final class LearningAudioFileStoreProvider
 }
 
 String _$learningAudioFileStoreHash() =>
-    r'4269f892b564a390ad8682d3ffca5f3e30754dee';
+    r'0f293274099181ffbd53c021f88cf6d7138423e3';
 
 @ProviderFor(wordLearningCacheStore)
 final wordLearningCacheStoreProvider = WordLearningCacheStoreProvider._();
@@ -253,7 +253,7 @@ final class WordLearningCacheStoreProvider
 }
 
 String _$wordLearningCacheStoreHash() =>
-    r'bdfe7a655a7043fb00647cd41e9b069bfbb574c5';
+    r'059702318204e4efd1f91e4c4ea2a8a817b90534';
 
 @ProviderFor(sentenceLearningCacheStore)
 final sentenceLearningCacheStoreProvider =
@@ -302,7 +302,7 @@ final class SentenceLearningCacheStoreProvider
 }
 
 String _$sentenceLearningCacheStoreHash() =>
-    r'fc4195d20008ae527e4f38236886bf862a0ae34b';
+    r'3e5559b0c8fa43143eea81a373444c7ba103258d';
 
 @ProviderFor(sentencePronunciationCacheStore)
 final sentencePronunciationCacheStoreProvider =
@@ -353,7 +353,7 @@ final class SentencePronunciationCacheStoreProvider
 }
 
 String _$sentencePronunciationCacheStoreHash() =>
-    r'7c74f4e09b56988cad91e977e94e0713cd90864e';
+    r'6ac002c5dd75171a5ff1d0fb4545b9c10eeebf22';
 
 /// 提供 [WordRepository] 实例
 
@@ -399,7 +399,7 @@ final class WordRepositoryProvider
   }
 }
 
-String _$wordRepositoryHash() => r'ccd559fa6773808a4b4086dfe73ef7b48e716669';
+String _$wordRepositoryHash() => r'3cc80a58fcd6ef45d89ba511f2197ac431a41786';
 
 /// 提供 [SentenceRepository] 实例
 
@@ -452,4 +452,4 @@ final class SentenceRepositoryProvider
 }
 
 String _$sentenceRepositoryHash() =>
-    r'381b5c5e206abd759c0529e5c3eea19833978311';
+    r'dd6a6c38a83508c442c933ea6fd4d0812796db11';

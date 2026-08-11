@@ -6,9 +6,12 @@ import 'package:synlen/src/features/learning/domain/aliyun_tts_voice.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class AliyunTTSService {
-  AliyunTTSService({String Function()? readVoiceParam})
-    : _readVoiceParam =
-          readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
+  AliyunTTSService({
+    String Function()? readApiKey,
+    String Function()? readVoiceParam,
+  })  : _readApiKey = readApiKey ?? (() => ''),
+        _readVoiceParam =
+            readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -16,9 +19,10 @@ class AliyunTTSService {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
+
+  /// 运行时读取用户配置的 API Key（由设置页填写，存安全存储）
+  final String Function() _readApiKey;
   final String Function() _readVoiceParam;
-  // API Key 通过 --dart-define=ALIYUN_TTS_API_KEY=xxx 注入，禁止硬编码在源码中
-  static const String _apiKey = String.fromEnvironment('ALIYUN_TTS_API_KEY');
   static const String _url =
       'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
   static const String _model = 'qwen3-tts-flash';
@@ -27,9 +31,9 @@ class AliyunTTSService {
 
   /// 校验 API Key 是否已配置，未配置时抛出明确错误
   void _ensureConfigured() {
-    if (_apiKey.isEmpty) {
+    if (_readApiKey().isEmpty) {
       throw const LearningException(
-        '未配置阿里云 TTS API Key，请在启动时传入 --dart-define=ALIYUN_TTS_API_KEY=xxx',
+        '未配置阿里云 TTS API Key，请在 设置 → AI 服务 中配置',
       );
     }
   }
@@ -46,7 +50,7 @@ class AliyunTTSService {
         _url,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_apiKey',
+            'Authorization': 'Bearer ${_readApiKey()}',
             'Content-Type': 'application/json',
             'X-DashScope-SSE': 'enable',
           },
