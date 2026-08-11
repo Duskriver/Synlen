@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 中文
 
+#### 新功能
+
+* **AI 服务 API Key 用户自配（BYOK）**：DeepSeek 与阿里云 TTS 的 API Key 改为在「设置 → AI 服务」中由用户自行填写，存于系统安全存储（Keychain/Keystore）。源码与构建产物不再包含任何密钥，为开源分发扫清障碍。
+* **App 内更新（Android 直接安装 / iOS 跳 App Store）**：检查更新后 Android 可直接下载 APK 并安装（含下载进度与未知来源引导），iOS 跳转 App Store（上架后生效）；蓝奏云 / GitHub 保留为备选下载入口。
+* **更新分发迁移到阿里云 OSS**：`version.json` 与 APK 托管在 OSS，国内网络可达；新增 `tool/upload_release.sh` 一键发布脚本（自动生成 version.json + 上传），CI 构建的 versionCode 从 tag 派生并递增（`v0.3.0` → `300` 规则），覆盖安装不再被拒。
+
+#### 变更与优化
+
+* 移除 CI 中的 API Key 注入与相关 GitHub Secrets 依赖（发布流水线不再涉及任何密钥）。
+* 移除 `--dart-define` 传 Key 的运行方式，改为 App 内设置项。
+
 #### 工具链与依赖升级
 
 * **Flutter 3.44.9 / Dart 3.12.2 / Rust 1.97.1**：工具链升级到最新稳定版，并新增 `rust-toolchain.toml` 固定 Rust 版本（可复现构建）。

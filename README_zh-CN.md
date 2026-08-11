@@ -38,19 +38,26 @@ flutter pub get
 运行应用：
 
 ```bash
-# 学习功能需要 API Key（单词解释/句子分析 + TTS 朗读），未配置时相应功能会提示不可用
-flutter run --dart-define=DEEPSEEK_API_KEY=你的key --dart-define=ALIYUN_TTS_API_KEY=你的key
+flutter run
 ```
 
 构建发布包：
 
 ```bash
-# 发布包同样需要注入 API Key，否则学习功能不可用
-flutter build apk --release --dart-define=DEEPSEEK_API_KEY=你的key --dart-define=ALIYUN_TTS_API_KEY=你的key
-flutter build ios --release --dart-define=DEEPSEEK_API_KEY=你的key --dart-define=ALIYUN_TTS_API_KEY=你的key
+flutter build apk --release
+flutter build ios --release
 ```
 
-> API Key 通过编译期 `--dart-define` 注入，不会写进源码或产物文件之外。CI 发布构建使用 GitHub Secrets 注入（见 `.github/workflows/build_release.yml`）。
+### AI 服务 API Key（可选）
+
+单词解释、句子分析、TTS 朗读功能需要 **DeepSeek** 与**阿里云 TTS** 的 API Key。**Key 由使用者在 App 内自行填写**（设置 → AI 服务），存于系统安全存储（Keychain / Keystore）。源码与构建产物**不含任何密钥**，本项目开源分发不附带 Key——这也是开源的先决条件。
+
+### 应用内更新
+
+- 检查更新读取阿里云 OSS 上的 `version.json`（国内网络可达）
+- Android：应用内直接下载 APK 并安装（OSS 分发，无需访问 GitHub）
+- iOS：跳转 App Store 更新（上架后生效）
+- 发布新版本：构建 release 包后执行 `./tool/upload_release.sh <tag> [bucket] [region]`，或依赖 CI 打 tag 自动构建 + 可选自动上传 OSS
 
 ## 说明
 
