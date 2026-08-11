@@ -59,4 +59,4 @@ final class BookManifestRepositoryProvider
 }
 
 String _$bookManifestRepositoryHash() =>
-    r'703058308420f441ff8fc8e76948690b7fdb7e43';
+    r'c49df9686250153b04bf145d4cc05af3acf92553';

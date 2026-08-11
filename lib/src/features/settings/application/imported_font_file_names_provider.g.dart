@@ -59,4 +59,4 @@ final class ImportedFontFileNamesProvider
 }
 
 String _$importedFontFileNamesHash() =>
-    r'9fa536996bc2e5e35b667687905ada527dc2ecc3';
+    r'bd3f3e0e28b949e1ade43eabcce3151e39e0593e';

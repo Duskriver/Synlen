@@ -59,4 +59,4 @@ final class ShelfBookRepositoryProvider
 }
 
 String _$shelfBookRepositoryHash() =>
-    r'243ed6cff83834df362a34c5ee45f0a5a23ce51c';
+    r'64ed2140b9c9bcc0c8581066bfd35677f56f21fd';

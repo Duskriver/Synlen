@@ -86,7 +86,7 @@ final class UnifiedImportServiceProvider
 }
 
 String _$unifiedImportServiceHash() =>
-    r'0c1ecd50c896e25b2f150c0ea04b1f194926c670';
+    r'ab8e62d4d7a2172d38a043c68f2a69fe28fe2506';
 
 /// Provider for ImportCacheManager
 ///
@@ -148,4 +148,4 @@ final class ImportCacheManagerProvider
 }
 
 String _$importCacheManagerHash() =>
-    r'f04a068bb0a002bd1962690296a6659e8d5cb92a';
+    r'4deec75b89537584bc3db1c2b155ba69564f62c8';
