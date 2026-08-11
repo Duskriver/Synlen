@@ -61,4 +61,4 @@ final class EpubImportServiceProvider
   }
 }
 
-String _$epubImportServiceHash() => r'b0db9f20cd3a4b92998840f283708275b9183ecd';
+String _$epubImportServiceHash() => r'4ea83dd80df102c5ec2f3a19c976b793882264d1';

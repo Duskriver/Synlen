@@ -10,18 +10,16 @@ part of 'import_backup_service_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// Provider for [ImportBackupService].
 ///
-/// Injects the raw [Isar] instance directly so the service can call
-/// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-/// exposed through the higher-level repository layer.
+/// 直接注入数据库实例，以便服务调用 repository 层未暴露的
+/// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
 
 @ProviderFor(importBackupService)
 final importBackupServiceProvider = ImportBackupServiceProvider._();
 
 /// Provider for [ImportBackupService].
 ///
-/// Injects the raw [Isar] instance directly so the service can call
-/// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-/// exposed through the higher-level repository layer.
+/// 直接注入数据库实例，以便服务调用 repository 层未暴露的
+/// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
 
 final class ImportBackupServiceProvider
     extends
@@ -33,9 +31,8 @@ final class ImportBackupServiceProvider
     with $Provider<ImportBackupService> {
   /// Provider for [ImportBackupService].
   ///
-  /// Injects the raw [Isar] instance directly so the service can call
-  /// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-  /// exposed through the higher-level repository layer.
+  /// 直接注入数据库实例，以便服务调用 repository 层未暴露的
+  /// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
   ImportBackupServiceProvider._()
     : super(
         from: null,
@@ -71,4 +68,4 @@ final class ImportBackupServiceProvider
 }
 
 String _$importBackupServiceHash() =>
-    r'e902e3c607bbbf9742c2787965875250a7d9ce1b';
+    r'7c62909bc901d1b6c6fcb774c3a2c225a90f249f';

@@ -55,3 +55,6 @@ key.properties
 libisar.dylib
 
 /.cursor
+
+# ZCode agent plans
+/.zcode

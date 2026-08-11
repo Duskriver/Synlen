@@ -65,7 +65,7 @@ final class CoverFileProvider
   }
 }
 
-String _$coverFileHash() => r'69db774bf2b5d32c63765266765ff6b432eab6b4';
+String _$coverFileHash() => r'53d9da69bd65c57889a418654f6dba16b016a937';
 
 /// Provider that caches cover file lookups by relative path.
 /// Returns null if path is null/empty or file doesn't exist.
