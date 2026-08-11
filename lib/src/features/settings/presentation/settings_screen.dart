@@ -8,6 +8,7 @@ import 'package:synlen/src/core/config/app_info.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/core/url_launcher/url_launcher.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_app_header.dart';
+import 'package:synlen/src/features/settings/presentation/widgets/settings_ai_service_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_appearance_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_font_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_info_section.dart';
@@ -68,6 +69,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 24),
 
                 const SettingsTtsVoiceSection(),
+
+                const SizedBox(height: 24),
+
+                const SettingsAiServiceSection(),
 
                 const SizedBox(height: 24),
 

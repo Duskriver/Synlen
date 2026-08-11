@@ -7,6 +7,7 @@ import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.da
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:synlen/src/features/settings/application/api_key_notifier.dart';
 import 'package:synlen/src/features/settings/application/tts_voice_notifier.dart';
 
 import 'word_repository.dart';
@@ -25,13 +26,16 @@ FreeDictionaryService freeDictionaryService(Ref ref) {
 /// 提供 [DeepSeekService] 实例
 @riverpod
 DeepSeekService deepSeekService(Ref ref) {
-  return DeepSeekService();
+  return DeepSeekService(
+    readApiKey: () => ref.read(apiKeyProvider).deepSeekKey,
+  );
 }
 
 /// 提供 [AliyunTTSService] 实例
 @riverpod
 AliyunTTSService aliyunTTSService(Ref ref) {
   return AliyunTTSService(
+    readApiKey: () => ref.read(apiKeyProvider).aliyunTtsKey,
     readVoiceParam: () => ref.read(ttsVoiceProvider).voiceParam,
   );
 }

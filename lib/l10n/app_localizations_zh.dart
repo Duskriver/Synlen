@@ -473,6 +473,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appThemeVariantEyeCare => '护眼';
 
   @override
+  String get aiService => 'AI 服务';
+
+  @override
+  String get aiServiceSubtitle => '配置 AI 服务的 API Key，用于单词解释、句子分析与朗读';
+
+  @override
+  String get deepSeekApiKey => 'DeepSeek API Key';
+
+  @override
+  String get deepSeekApiKeySubtitle => '用于单词解释与句子分析';
+
+  @override
+  String get aliyunTtsApiKey => '阿里云 TTS API Key';
+
+  @override
+  String get aliyunTtsApiKeySubtitle => '用于朗读发音（阿里云 DashScope）';
+
+  @override
+  String get apiKeyNotConfigured => '未配置';
+
+  @override
+  String get apiKeyInputHint => '粘贴 API Key';
+
+  @override
+  String apiKeyObtainHint(String provider) {
+    return '可在 $provider 控制台创建 API Key';
+  }
+
+  @override
+  String get apiKeySaved => '已保存';
+
+  @override
+  String get apiKeyCleared => '已清除';
+
+  @override
+  String get clearKey => '清除 Key';
+
+  @override
   String get projectInfo => '项目信息';
 
   @override
@@ -513,6 +551,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateCheckFailed => '检查更新失败';
+
+  @override
+  String get downloadAndInstall => '下载并安装';
+
+  @override
+  String get goToAppStore => '前往 App Store';
+
+  @override
+  String get downloadingUpdate => '正在下载更新包…';
+
+  @override
+  String get downloadFailed => '下载失败';
+
+  @override
+  String get downloadCompleted => '下载完成，请点击安装';
+
+  @override
+  String get installUnknownSourcesRequired => '需要允许安装未知来源应用，请到系统设置中开启';
+
+  @override
+  String get goToSettings => '去设置';
+
+  @override
+  String get noUpdateChannel => '当前平台暂无更新渠道，请留意 GitHub Releases';
 
   @override
   String get languageNameInEnglish => 'Chinese';

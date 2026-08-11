@@ -481,6 +481,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appThemeVariantEyeCare => 'Eye Care';
 
   @override
+  String get aiService => 'AI Service';
+
+  @override
+  String get aiServiceSubtitle =>
+      'Configure API keys for word explanation, sentence analysis and reading aloud';
+
+  @override
+  String get deepSeekApiKey => 'DeepSeek API Key';
+
+  @override
+  String get deepSeekApiKeySubtitle =>
+      'Used for word explanation and sentence analysis';
+
+  @override
+  String get aliyunTtsApiKey => 'Aliyun TTS API Key';
+
+  @override
+  String get aliyunTtsApiKeySubtitle =>
+      'Used for pronunciation (Aliyun DashScope)';
+
+  @override
+  String get apiKeyNotConfigured => 'Not configured';
+
+  @override
+  String get apiKeyInputHint => 'Paste API key';
+
+  @override
+  String apiKeyObtainHint(String provider) {
+    return 'Create an API key in the $provider console';
+  }
+
+  @override
+  String get apiKeySaved => 'Saved';
+
+  @override
+  String get apiKeyCleared => 'Cleared';
+
+  @override
+  String get clearKey => 'Clear key';
+
+  @override
   String get projectInfo => 'Project Info';
 
   @override
@@ -522,6 +563,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateCheckFailed => 'Failed to check for updates';
+
+  @override
+  String get downloadAndInstall => 'Download & install';
+
+  @override
+  String get goToAppStore => 'Go to App Store';
+
+  @override
+  String get downloadingUpdate => 'Downloading update…';
+
+  @override
+  String get downloadFailed => 'Download failed';
+
+  @override
+  String get downloadCompleted => 'Download complete, tap to install';
+
+  @override
+  String get installUnknownSourcesRequired =>
+      'Installing apps from unknown sources must be enabled in system settings';
+
+  @override
+  String get goToSettings => 'Open settings';
+
+  @override
+  String get noUpdateChannel =>
+      'No update channel available for this platform yet, please check GitHub Releases';
 
   @override
   String get languageNameInEnglish => 'English';

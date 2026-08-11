@@ -3,18 +3,22 @@ import 'package:dio/dio.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class DeepSeekService {
+  DeepSeekService({String Function()? readApiKey})
+      : _readApiKey = readApiKey ?? (() => '');
+
+  /// 运行时读取用户配置的 API Key（由设置页填写，存安全存储）
+  final String Function() _readApiKey;
+
   final Dio _dio = Dio();
 
-  // API Key 通过 --dart-define=DEEPSEEK_API_KEY=xxx 注入，禁止硬编码在源码中
-  static const String _apiKey = String.fromEnvironment('DEEPSEEK_API_KEY');
   static const String _baseUrl = 'https://api.deepseek.com/chat/completions';
   static const String _model = 'deepseek-chat';
 
   /// 校验 API Key 是否已配置，未配置时抛出明确错误
   void _ensureConfigured() {
-    if (_apiKey.isEmpty) {
+    if (_readApiKey().isEmpty) {
       throw const LearningException(
-        '未配置 DeepSeek API Key，请在启动时传入 --dart-define=DEEPSEEK_API_KEY=xxx',
+        '未配置 DeepSeek API Key，请在 设置 → AI 服务 中配置',
       );
     }
   }
@@ -31,7 +35,7 @@ class DeepSeekService {
         _baseUrl,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_apiKey',
+            'Authorization': 'Bearer ${_readApiKey()}',
             'Content-Type': 'application/json',
           },
         ),
@@ -72,7 +76,7 @@ class DeepSeekService {
         _baseUrl,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_apiKey',
+            'Authorization': 'Bearer ${_readApiKey()}',
             'Content-Type': 'application/json',
           },
           responseType: ResponseType.stream,
@@ -147,7 +151,7 @@ class DeepSeekService {
         _baseUrl,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_apiKey',
+            'Authorization': 'Bearer ${_readApiKey()}',
             'Content-Type': 'application/json',
           },
         ),
@@ -186,7 +190,7 @@ class DeepSeekService {
         _baseUrl,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_apiKey',
+            'Authorization': 'Bearer ${_readApiKey()}',
             'Content-Type': 'application/json',
           },
           responseType: ResponseType.stream,
