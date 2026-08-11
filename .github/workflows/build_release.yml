@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（如 v0.3.0），手动触发时必填，用于派生 versionCode'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -54,14 +59,23 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      - name: Compute Build Number
+        id: build_number
+        run: |
+          # versionCode 从 tag 派生（vX.Y.Z → X*10000+Y*100+Z），
+          # 保证每次发版递增，覆盖安装不会被拒
+          TAG="${{ github.event.inputs.version || github.ref_name }}"
+          TAG="${TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG"
+          echo "value=$((MAJOR * 10000 + MINOR * 100 + PATCH))" >> "$GITHUB_OUTPUT"
+
       - name: Create Output Dir
         run: mkdir -p build/outputs
 
       - name: Build App Bundle
         run: |
           flutter build appbundle --release \
-            --dart-define=DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }} \
-            --dart-define=ALIYUN_TTS_API_KEY=${{ secrets.ALIYUN_TTS_API_KEY }}
+            --build-number=${{ steps.build_number.outputs.value }}
           
           NEW_NAME="synlen-${{ github.ref_name }}-bundle-release.aab"
           
@@ -71,8 +85,7 @@ jobs:
       - name: Build Universal APK
         run: |
           flutter build apk --release \
-            --dart-define=DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }} \
-            --dart-define=ALIYUN_TTS_API_KEY=${{ secrets.ALIYUN_TTS_API_KEY }}
+            --build-number=${{ steps.build_number.outputs.value }}
           
           NEW_NAME="synlen-${{ github.ref_name }}-universal-release.apk"
           
@@ -82,8 +95,7 @@ jobs:
       - name: Build Split APKs
         run: |
           flutter build apk --release --split-per-abi \
-            --dart-define=DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }} \
-            --dart-define=ALIYUN_TTS_API_KEY=${{ secrets.ALIYUN_TTS_API_KEY }}
+            --build-number=${{ steps.build_number.outputs.value }}
           
           cd build/app/outputs/flutter-apk/
           for file in app-*-release.apk; do
@@ -101,6 +113,23 @@ jobs:
         with:
           name: android-artifacts
           path: build/outputs/*
+
+      # 可选：上传到阿里云 OSS（国内分发源）。
+      # 配置 GitHub Secrets（OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET / OSS_BUCKET / OSS_REGION）后自动生效；
+      # 开源后 fork 拿不到 secrets，天然安全。未配置则跳过。
+      - name: Upload to Aliyun OSS (optional)
+        if: ${{ secrets.OSS_ACCESS_KEY_ID != '' && secrets.OSS_ACCESS_KEY_SECRET != '' && startsWith(github.ref, 'refs/tags/') }}
+        env:
+          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+        run: |
+          # 安装 ossutil v1
+          curl -sL -o /tmp/ossutil.zip "https://gosspublic.alicdn.com/ossutil/ossutil-1.7.19-linux-amd64.zip"
+          unzip -o -q /tmp/ossutil.zip -d /tmp/ossutil-bin
+          chmod +x /tmp/ossutil-bin/ossutil
+          export PATH="/tmp/ossutil-bin:$PATH"
+          # 复用发布脚本：生成 version.json 并上传 APK
+          bash tool/upload_release.sh "${{ github.ref_name }}" "${{ secrets.OSS_BUCKET }}" "${{ secrets.OSS_REGION }}"
 
   build-ios:
     name: Build iOS IPA
@@ -128,10 +157,18 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      - name: Compute Build Number
+        id: build_number
+        run: |
+          # 与 Android 侧同规则派生 CFBundleVersion，保持双端一致
+          TAG="${{ github.event.inputs.version || github.ref_name }}"
+          TAG="${TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG"
+          echo "value=$((MAJOR * 10000 + MINOR * 100 + PATCH))" >> "$GITHUB_OUTPUT"
+
       - name: Build IPA (Unsigned)
         run: flutter build ios --release --no-codesign \
-            --dart-define=DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }} \
-            --dart-define=ALIYUN_TTS_API_KEY=${{ secrets.ALIYUN_TTS_API_KEY }}
+            --build-number=${{ steps.build_number.outputs.value }}
 
       - name: Package into IPA
         run: |
