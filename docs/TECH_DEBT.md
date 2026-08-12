@@ -8,9 +8,9 @@
 
 ---
 
-## 1. 分层违规：presentation 直连 data
+## 1. 分层违规：presentation 直连 data（含 1 处 domain→data）
 
-规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **12 个文件**违规（原 ADR-0001 记录的「7 处」已过时）。
+规范 §1 禁止 `presentation → data`，禁止 `domain → data`，且禁止 feature 之间互相 import。当前实测 **13 处**违规（原 ADR-0001 记录的「7 处」已过时）。
 
 | # | 文件 | 违规性质 |
 |---|------|----------|
@@ -26,6 +26,7 @@
 | 10 | `lib/src/features/reader/presentation/widgets/footnot_popup_overlay.dart` | 引 `reader/data` |
 | 11 | `lib/src/features/settings/presentation/widgets/clean_cache_tile.dart` | **跨 feature 引 `library/data/services`** |
 | 12 | `lib/src/features/settings/presentation/widgets/backup_tile.dart` | **跨 feature 引 `library/data/services`** |
+| 13 | `lib/src/features/reader/domain/epub_theme.dart` | **domain → data**：引 `reader/data/reader_scripts.dart` 的 `colorToHex`（唯一的 domain 层违规，2026-08-13 补测试时发现） |
 
 修复方向：reader 的 `data`（book_session / epub_webview_handler / reader_scripts / epub_stream_service）要么下沉到 `core/`，要么在 `application` 层提供编排接口；settings/detail 跨 feature 依赖改为经 `library/application` 暴露的 provider。
 
@@ -85,13 +86,11 @@
 
 ---
 
-## 6. 测试覆盖缺口
+## 6. 测试覆盖缺口（reader 首批已补，2026-08-13）
 
-- 5 个测试文件 / 149 个源文件（约 3%）。
-- 测试集中在 `epub_parser` / `epub_import` / `learning`；**reader 全模块、library/settings/detail 零测试**。
-- 无任何 widget test。
-
-优先为 reader 的 mixin / 状态机补单元测试（复用 `epub_parser_test.dart` 的注入范式）。
+- **9 个测试文件 / 149 个源文件**（约 6%），**72 个用例**全绿。
+- ✅ reader 首批 27 用例（issue #5）：`ReaderSettings` copyWith/预设映射、`EpubTheme` 序列化与相等性、`ReaderSettingsNotifier` 持久化与字体失效清理（SharedPreferences mock + Riverpod 覆盖注入）、`EpubWebViewHandler` URL 工具。
+- ⏳ 仍无 widget test；reader 的 6 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；library / settings / detail 仍零测试。
 
 ---
 
