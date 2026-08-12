@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/material.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:saf_stream/saf_stream.dart';
 import 'platform_path.dart';
@@ -212,10 +212,8 @@ class ImportCacheManager {
         await cacheFile.delete();
       }
     } catch (e) {
-      // Log error but don't throw to avoid interrupting cleanup operations
-      // In production, you might want to log this to a logging service
-      // ignore: avoid_print
-      debugPrint('Warning: Failed to delete cache file ${cacheFile.path}: $e');
+      // 记录错误但不抛出，避免中断清理流程
+      appLogger.w('Warning: Failed to delete cache file ${cacheFile.path}: $e');
     }
   }
 
@@ -234,8 +232,7 @@ class ImportCacheManager {
         }
       }
     } catch (e) {
-      // ignore: avoid_print
-      debugPrint('Warning: Failed to clear import cache: $e');
+      appLogger.w('Warning: Failed to clear import cache: $e');
     }
   }
 
@@ -262,4 +259,3 @@ class ImportCacheManager {
     }
   }
 }
-

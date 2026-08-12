@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/config/app_info.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/reader/data/services/epub_stream_service_provider.dart';
@@ -20,7 +21,7 @@ void _preWarmWebView() async {
   headlessWebView = HeadlessInAppWebView(
     initialSettings: defaultSettings,
     onWebViewCreated: (controller) {
-      debugPrint("WebView Engine Warmed Up!");
+      appLogger.i("WebView Engine Warmed Up!");
     },
   );
   await headlessWebView?.run();

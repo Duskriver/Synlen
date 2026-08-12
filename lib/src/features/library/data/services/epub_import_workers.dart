@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_manifest.dart';
@@ -134,7 +135,7 @@ class ImportWorkers {
       );
       return result.isEmpty ? null : result;
     } catch (e) {
-      debugPrint('Image compression worker error: $e');
+      appLogger.w('Image compression worker error: $e');
       return null;
     }
   }

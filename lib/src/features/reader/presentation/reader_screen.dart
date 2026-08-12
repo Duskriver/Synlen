@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/url_launcher/url_launcher.dart';
 import 'package:synlen/src/features/reader/data/services/volume_control_service.dart';
@@ -242,23 +243,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     hideBottomNavigationBar();
     setupVolumeControl();
     WakelockPlus.enable();
-    _readerSettingsSubscription = ref.listenManual(
-      readerSettingsProvider,
-      (previous, next) {
-        if (previous == null || previous == next) {
-          return;
-        }
+    _readerSettingsSubscription = ref.listenManual(readerSettingsProvider, (
+      previous,
+      next,
+    ) {
+      if (previous == null || previous == next) {
+        return;
+      }
 
-        if (previous.fontFileName != next.fontFileName ||
-            previous.overrideFontFamily != next.overrideFontFamily) {
-          updateWebViewTheme();
-        } else if (previous.zoom != next.zoom) {
-          updateWebViewThemeWithDebounce();
-        } else {
-          updateWebViewTheme();
-        }
-      },
-    );
+      if (previous.fontFileName != next.fontFileName ||
+          previous.overrideFontFamily != next.overrideFontFamily) {
+        updateWebViewTheme();
+      } else if (previous.zoom != next.zoom) {
+        updateWebViewThemeWithDebounce();
+      } else {
+        updateWebViewTheme();
+      }
+    });
     _volumeKeyTurnsPageSubscription = ref.listenManual(
       readerSettingsProvider.select((s) => s.volumeKeyTurnsPage),
       (previous, next) {
@@ -424,7 +425,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   void handleWordTap(String word, String wordContext) {
-    debugPrint('Word Tapped: $word');
+    appLogger.d('Word Tapped: $word');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -453,7 +454,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   void handleSentenceSelected(String sentence) {
-    debugPrint('Sentence Selected: $sentence');
+    appLogger.d('Sentence Selected: $sentence');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

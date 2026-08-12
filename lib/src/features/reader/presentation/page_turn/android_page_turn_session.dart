@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 
 import '../reader_webview.dart';
 
@@ -55,7 +56,7 @@ class AndroidPageTurnSession {
     try {
       screenshot = await webViewController.takeScreenshot();
     } catch (e) {
-      debugPrint('Error taking screenshot: $e');
+      appLogger.e('Error taking screenshot: $e');
       screenshot = null;
     }
     return screenshot;

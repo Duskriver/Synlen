@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import 'package:flutter/foundation.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
@@ -83,7 +83,9 @@ class WordRepository {
         }
       }
     } catch (e) {
-      debugPrint('Free Dictionary Audio error, falling back to Aliyun TTS: $e');
+      appLogger.w(
+        'Free Dictionary Audio error, falling back to Aliyun TTS: $e',
+      );
     }
 
     // 2. 降级到阿里云 TTS 流式 (PCM)

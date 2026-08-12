@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/application/progress_log.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service_provider.dart';
 import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
@@ -126,7 +126,7 @@ class LibraryNotifier extends _$LibraryNotifier {
         'Failed to import from folder: $e',
         ProgressLogType.error,
       );
-      debugPrint('Import from folder error: $e');
+      appLogger.e('Import from folder error: $e');
     }
 
     yield ProgressLog(
@@ -214,7 +214,7 @@ class LibraryNotifier extends _$LibraryNotifier {
           try {
             await unifiedImportService.cleanCache(importable.cacheFile);
           } catch (cleanError) {
-            debugPrint('Failed to clean cache file: $cleanError');
+            appLogger.w('Failed to clean cache file: $cleanError');
           }
         }
         currentCount++;

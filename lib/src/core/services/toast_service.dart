@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 
 import '../widgets/toast_bubble.dart';
@@ -31,7 +32,7 @@ class ToastService {
       milliseconds: AppTheme.defaultPresentationDurationMs,
     ),
   }) {
-    debugPrint('Toast: [${type.name.toUpperCase()}] $message');
+    appLogger.d('Toast: [${type.name.toUpperCase()}] $message');
 
     final overlay = navigatorKey.currentState?.overlay;
     if (overlay == null) {
@@ -176,4 +177,3 @@ class _ToastOverlayState extends State<_ToastOverlay>
     );
   }
 }
-

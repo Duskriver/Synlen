@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+import 'package:synlen/src/core/services/app_logger.dart';
 
 /// Sealed class representing a platform-specific file path
 ///
@@ -92,8 +92,7 @@ final class AndroidUriPath extends PlatformPath {
       // Fallback: return a default name
       return 'unknown.epub';
     } catch (e) {
-      // ignore: avoid_print
-      debugPrint('Error extracting file name from URI: $e');
+      appLogger.e('Error extracting file name from URI: $e');
       return 'unknown.epub';
     }
   }
