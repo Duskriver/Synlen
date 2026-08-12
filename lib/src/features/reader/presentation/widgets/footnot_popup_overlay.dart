@@ -7,7 +7,6 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:synlen/src/features/reader/data/epub_webview_handler.dart';
-import 'package:synlen/src/features/reader/data/reader_scripts.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
 class FootnotePopupOverlay extends StatefulWidget {
@@ -376,4 +375,3 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
     }
   }
 }
-

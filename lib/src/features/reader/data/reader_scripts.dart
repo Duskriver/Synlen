@@ -1,13 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/web/web_assets.dart';
-
-String colorToHex(Color color) {
-  final argb = color.toARGB32();
-  return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
-}
 
 /// Skeleton HTML containing 3 iframes for prev/curr/next chapters
 String generateSkeletonHtml(
@@ -75,4 +69,3 @@ String generateSkeletonHtml(
 </html>
 ''';
 }
-
