@@ -6,6 +6,7 @@ import 'package:synlen/src/features/learning/application/learning_audio_coordina
 import 'package:synlen/src/features/learning/application/learning_controller_support.dart';
 import 'package:synlen/src/features/learning/application/learning_detail_state.dart';
 import 'package:synlen/src/features/learning/data/repositories/learning_repository_provider.dart';
+import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 part 'word_learning_controller.g.dart';
 
@@ -40,9 +41,7 @@ class WordLearningController extends _$WordLearningController {
     _audio = LearningAudioCoordinator(
       debugLabel: 'Word',
       onPlaybackError: (error) {
-        _updateState(
-          (current) => current.copyWith(audioError: formatLearningError(error)),
-        );
+        _updateState((current) => current.copyWith(audioError: error));
       },
     );
     ref.onDispose(_audio.dispose);
@@ -94,7 +93,7 @@ class WordLearningController extends _$WordLearningController {
           isLoading: false,
           isFetchingContent: false,
           isFetchingAudio: false,
-          contentError: formatLearningError(error),
+          contentError: error,
         ),
       );
     }
@@ -139,11 +138,9 @@ class WordLearningController extends _$WordLearningController {
         return filePath;
       }
 
-      throw StateError('音频服务没有返回可播放的音频');
+      throw const LearningException(LearningErrorCode.noPlayableAudio);
     } catch (error) {
-      _updateState(
-        (current) => current.copyWith(audioError: formatLearningError(error)),
-      );
+      _updateState((current) => current.copyWith(audioError: error));
       return null;
     } finally {
       _updateState((current) => current.copyWith(isFetchingAudio: false));
@@ -166,9 +163,7 @@ class WordLearningController extends _$WordLearningController {
         },
       );
     } catch (error) {
-      _updateState(
-        (current) => current.copyWith(contentError: formatLearningError(error)),
-      );
+      _updateState((current) => current.copyWith(contentError: error));
     } finally {
       _updateState((current) => current.copyWith(isFetchingContent: false));
     }

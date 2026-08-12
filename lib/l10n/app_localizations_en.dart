@@ -917,4 +917,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aliyunDashScopeName => 'Aliyun DashScope';
+
+  @override
+  String get learningErrorNoDeepSeekApiKey =>
+      'DeepSeek API key not configured. Please set it in Settings → AI Service';
+
+  @override
+  String get learningErrorNoAliyunTtsApiKey =>
+      'Aliyun TTS API key not configured. Please set it in Settings → AI Service';
+
+  @override
+  String get learningErrorServiceUnavailable =>
+      'AI service is temporarily unavailable';
+
+  @override
+  String get learningErrorEmptyResult => 'The service returned no content';
+
+  @override
+  String get learningErrorRequestFailed =>
+      'Request failed. Please try again later';
+
+  @override
+  String get learningErrorAudioFileMissing => 'Audio file not found';
+
+  @override
+  String get learningErrorUnsupportedFormat =>
+      'Only 16-bit PCM audio is supported';
+
+  @override
+  String get learningErrorNoPlayableAudio => 'No playable audio available';
+
+  @override
+  String get backupShareTitle => 'Synlen Backup';
 }

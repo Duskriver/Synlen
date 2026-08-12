@@ -8,6 +8,7 @@ import 'package:synlen/src/features/learning/application/learning_pcm_fade.dart'
 import 'package:synlen/src/features/learning/application/learning_audio_player.dart';
 import 'package:synlen/src/features/learning/application/learning_streaming_audio_session.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class LearningAudioCoordinator {
   static const int _pcmFeedChunkSize = 8192;
@@ -60,7 +61,7 @@ class LearningAudioCoordinator {
 
     final file = File(audioUrl);
     if (!await file.exists() && !_isDisposed) {
-      throw FileSystemException('音频文件不存在', audioUrl);
+      throw LearningException(LearningErrorCode.audioFileMissing, audioUrl);
     }
   }
 
@@ -146,7 +147,7 @@ class LearningAudioCoordinator {
     required int token,
   }) async {
     if (bitsPerSample != 16) {
-      throw UnsupportedError('仅支持 16-bit PCM 播放');
+      throw const LearningException(LearningErrorCode.unsupportedFormat);
     }
 
     final frameSize = numChannels * (bitsPerSample ~/ 8);

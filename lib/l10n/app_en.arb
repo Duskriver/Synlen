@@ -1538,5 +1538,50 @@
   "aliyunDashScopeName": "Aliyun DashScope",
   "@aliyunDashScopeName": {
     "description": "Name of the Aliyun DashScope service shown in the API key edit dialog in settings"
+  },
+
+  "learningErrorNoDeepSeekApiKey": "DeepSeek API key not configured. Please set it in Settings → AI Service",
+  "@learningErrorNoDeepSeekApiKey": {
+    "description": "Learning error message shown when the DeepSeek API key is not configured"
+  },
+
+  "learningErrorNoAliyunTtsApiKey": "Aliyun TTS API key not configured. Please set it in Settings → AI Service",
+  "@learningErrorNoAliyunTtsApiKey": {
+    "description": "Learning error message shown when the Aliyun TTS API key is not configured"
+  },
+
+  "learningErrorServiceUnavailable": "AI service is temporarily unavailable",
+  "@learningErrorServiceUnavailable": {
+    "description": "Learning error message shown when the AI service is temporarily unavailable"
+  },
+
+  "learningErrorEmptyResult": "The service returned no content",
+  "@learningErrorEmptyResult": {
+    "description": "Learning error message shown when the service returns no content"
+  },
+
+  "learningErrorRequestFailed": "Request failed. Please try again later",
+  "@learningErrorRequestFailed": {
+    "description": "Generic fallback learning error message shown when a request fails"
+  },
+
+  "learningErrorAudioFileMissing": "Audio file not found",
+  "@learningErrorAudioFileMissing": {
+    "description": "Learning error message shown when the audio file is missing"
+  },
+
+  "learningErrorUnsupportedFormat": "Only 16-bit PCM audio is supported",
+  "@learningErrorUnsupportedFormat": {
+    "description": "Learning error message shown for an unsupported audio format"
+  },
+
+  "learningErrorNoPlayableAudio": "No playable audio available",
+  "@learningErrorNoPlayableAudio": {
+    "description": "Learning error message shown when no playable audio is available"
+  },
+
+  "backupShareTitle": "Synlen Backup",
+  "@backupShareTitle": {
+    "description": "Title of the backup folder shown in the iOS share sheet"
   }
 }
