@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:synlen/src/features/settings/domain/imported_font.dart';
@@ -74,7 +74,7 @@ class FontManagerNotifier extends _$FontManagerNotifier {
             imported.add(ImportedFont.fromFileName(fileName));
           }
         } catch (e) {
-          debugPrint('Failed to import font ${platformPath.name}: $e');
+          appLogger.e('Failed to import font ${platformPath.name}: $e');
         } finally {
           // 4. Always clean the cache file immediately after use.
           if (cacheFile != null) {
@@ -113,4 +113,3 @@ class FontManagerNotifier extends _$FontManagerNotifier {
     await prefs.setString(_kImportedFonts, jsonStr);
   }
 }
-

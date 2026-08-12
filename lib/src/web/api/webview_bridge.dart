@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 
 /// Manages JS↔Dart communication over an [InAppWebViewController].
 ///
@@ -79,14 +79,14 @@ class WebViewBridge {
   Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
     final completer = _completers[token];
     if (completer == null) {
-      debugPrint('WebViewBridge: no completer for token $token');
+      appLogger.w('WebViewBridge: no completer for token $token');
       return;
     }
     return completer.future.timeout(
       Duration(milliseconds: timeoutMs),
       onTimeout: () {
         _completers.remove(token);
-        debugPrint('WebViewBridge: timeout for token $token');
+        appLogger.w('WebViewBridge: timeout for token $token');
       },
     );
   }

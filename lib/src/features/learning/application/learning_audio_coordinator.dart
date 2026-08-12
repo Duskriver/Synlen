@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/application/learning_pcm_fade.dart';
 import 'package:synlen/src/features/learning/application/learning_audio_player.dart';
 import 'package:synlen/src/features/learning/application/learning_streaming_audio_session.dart';
@@ -44,7 +44,7 @@ class LearningAudioCoordinator {
       await _player.openPlayer();
       await _player.setVolume(1.0);
     } catch (error) {
-      debugPrint('$debugLabel audio player init error: $error');
+      appLogger.e('$debugLabel audio player init error: $error');
       onPlaybackError?.call(error);
     }
   }
@@ -231,7 +231,7 @@ class LearningAudioCoordinator {
           break;
       }
     } catch (error) {
-      debugPrint('$debugLabel audio play error: $error');
+      appLogger.e('$debugLabel audio play error: $error');
       onPlaybackError?.call(error);
     }
   }

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 
 class VolumeControlService {
   static const MethodChannel _methodChannel = MethodChannel(
@@ -16,7 +16,7 @@ class VolumeControlService {
     try {
       await _methodChannel.invokeMethod('enableInterception');
     } on PlatformException catch (e) {
-      debugPrint('Volume interception enable failed: ${e.message}');
+      appLogger.w('Volume interception enable failed: ${e.message}');
     }
   }
 
@@ -25,7 +25,7 @@ class VolumeControlService {
     try {
       await _methodChannel.invokeMethod('disableInterception');
     } on PlatformException catch (e) {
-      debugPrint('Volume interception disable failed: ${e.message}');
+      appLogger.w('Volume interception disable failed: ${e.message}');
     }
   }
 
@@ -37,4 +37,3 @@ class VolumeControlService {
     );
   }
 }
-

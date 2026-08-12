@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
@@ -233,7 +233,7 @@ class UnifiedImportService {
           .map((uri) => AndroidUriPath(uri))
           .toList();
     } on PlatformException catch (e) {
-      debugPrint('Android file picker error: ${e.message}');
+      appLogger.e('Android file picker error: ${e.message}');
       return [];
     }
   }
@@ -254,7 +254,7 @@ class UnifiedImportService {
           .map((uri) => AndroidUriPath(uri))
           .toList();
     } on PlatformException catch (e) {
-      debugPrint('Android folder picker error: ${e.message}');
+      appLogger.e('Android folder picker error: ${e.message}');
       return [];
     }
   }
@@ -307,7 +307,7 @@ class UnifiedImportService {
           .map((path) => IOSFilePath(path))
           .toList();
     } on PlatformException catch (e) {
-      debugPrint('iOS file picker error: ${e.message}');
+      appLogger.e('iOS file picker error: ${e.message}');
       return [];
     }
   }
@@ -324,7 +324,7 @@ class UnifiedImportService {
           .map((path) => IOSFilePath(path))
           .toList();
     } on PlatformException catch (e) {
-      debugPrint('iOS folder picker error: ${e.message}');
+      appLogger.e('iOS folder picker error: ${e.message}');
       return [];
     }
   }
@@ -377,7 +377,7 @@ class UnifiedImportService {
           .map((uri) => AndroidUriPath(uri))
           .toList();
     } on PlatformException catch (e) {
-      debugPrint('Android font picker error: ${e.message}');
+      appLogger.e('Android font picker error: ${e.message}');
       return [];
     }
   }
@@ -394,7 +394,7 @@ class UnifiedImportService {
           .map((path) => IOSFilePath(path))
           .toList();
     } on PlatformException catch (e) {
-      debugPrint('iOS font picker error: ${e.message}');
+      appLogger.e('iOS font picker error: ${e.message}');
       return [];
     }
   }
@@ -466,7 +466,7 @@ class UnifiedImportService {
           coverPath: c['cover'],
         );
       } else {
-        debugPrint(
+        appLogger.w(
           'Warning: Missing epub or manifest for hash ${entry.key}, skipping.',
         );
       }
@@ -490,4 +490,3 @@ class UnifiedImportService {
     await _cacheManager.clearAll();
   }
 }
-

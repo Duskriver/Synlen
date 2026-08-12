@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
@@ -144,7 +145,7 @@ class _ImageViewerState extends State<ImageViewer>
               imageStream.removeListener(listener);
             },
             onError: (dynamic error, StackTrace? stackTrace) {
-              debugPrint('Error resolving image info: $error');
+              appLogger.w('Error resolving image info: $error');
               imageStream.removeListener(listener);
               _handleLoadError(themeData);
             },
@@ -156,7 +157,7 @@ class _ImageViewerState extends State<ImageViewer>
         _handleLoadError(themeData);
       }
     } catch (e) {
-      debugPrint('Error loading zoomed image: $e');
+      appLogger.w('Error loading zoomed image: $e');
       _handleLoadError(themeData);
     }
   }
@@ -308,4 +309,3 @@ class _ImageViewerState extends State<ImageViewer>
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
@@ -304,8 +305,8 @@ class EpubImportService {
 
       return '${AppStorageConstants.coversDir}/$fileHash$extension';
     } catch (e) {
-      // Cover extraction is non-critical, log and continue
-      debugPrint('Cover extraction failed: $e');
+      // 封面提取失败不影响主流程，仅记录日志
+      appLogger.w('Cover extraction failed: $e');
       return null;
     } finally {
       rust_epub.closeEpub(epubPath: epubPath).ignore();

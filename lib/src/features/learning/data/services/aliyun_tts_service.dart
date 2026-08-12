@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/domain/aliyun_tts_voice.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
@@ -9,9 +9,9 @@ class AliyunTTSService {
   AliyunTTSService({
     String Function()? readApiKey,
     String Function()? readVoiceParam,
-  })  : _readApiKey = readApiKey ?? (() => ''),
-        _readVoiceParam =
-            readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
+  }) : _readApiKey = readApiKey ?? (() => ''),
+       _readVoiceParam =
+           readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -32,9 +32,7 @@ class AliyunTTSService {
   /// 校验 API Key 是否已配置，未配置时抛出明确错误
   void _ensureConfigured() {
     if (_readApiKey().isEmpty) {
-      throw const LearningException(
-        '未配置阿里云 TTS API Key，请在 设置 → AI 服务 中配置',
-      );
+      throw const LearningException('未配置阿里云 TTS API Key，请在 设置 → AI 服务 中配置');
     }
   }
 
@@ -97,7 +95,7 @@ class AliyunTTSService {
               yield base64.decode(audioData);
             }
           } catch (e) {
-            debugPrint('Error parsing SSE line: $e');
+            appLogger.d('Error parsing SSE line: $e');
           }
         }
       }
@@ -105,7 +103,7 @@ class AliyunTTSService {
         throw const LearningException('音频服务没有返回音频数据');
       }
     } catch (e) {
-      debugPrint('AliyunTTSService error: $e');
+      appLogger.e('AliyunTTSService error: $e');
       if (e is LearningException) {
         rethrow;
       }

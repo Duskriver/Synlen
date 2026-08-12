@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show Rect;
 
-import 'package:flutter/foundation.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
@@ -128,7 +128,7 @@ class ExportBackupService {
         if (epubSrc.existsSync()) {
           await epubSrc.copy(p.join(booksOutDir.path, '$hash.epub'));
         } else {
-          debugPrint(
+          appLogger.w(
             '[ExportBackup] EPUB not found, skipping: ${epubSrc.path}',
           );
         }
@@ -151,7 +151,7 @@ class ExportBackupService {
           }
         }
         if (!coverCopied) {
-          debugPrint('[ExportBackup] Cover not found, skipping: $hash');
+          appLogger.w('[ExportBackup] Cover not found, skipping: $hash');
         }
 
         // -- Serialise BookManifest to JSON ------------------------------------
@@ -162,7 +162,7 @@ class ExportBackupService {
             p.join(manifestsOutDir.path, '$hash.json'),
           ).writeAsString(manifestJson);
         } else {
-          debugPrint('[ExportBackup] No manifest found for: $hash');
+          appLogger.w('[ExportBackup] No manifest found for: $hash');
         }
       }
 
@@ -180,7 +180,9 @@ class ExportBackupService {
       // -----------------------------------------------------------------------
       if (Platform.isAndroid) {
         // The folder is already in the public Downloads directory — done.
-        debugPrint('[ExportBackup] Android export complete: ${targetDir.path}');
+        appLogger.i(
+          '[ExportBackup] Android export complete: ${targetDir.path}',
+        );
         return ExportSuccess(path: targetDir.path);
       } else {
         // iOS: share the entire folder via the native Share Sheet.
@@ -189,23 +191,23 @@ class ExportBackupService {
           title: '词镜 Backup',
         );
         final result = await SharePlus.instance.share(shareParams);
-        debugPrint('[ExportBackup] iOS share result: $result');
+        appLogger.i('[ExportBackup] iOS share result: $result');
         if (result.status == ShareResultStatus.success) {
-          debugPrint('[ExportBackup] iOS export complete: ${targetDir.path}');
+          appLogger.i('[ExportBackup] iOS export complete: ${targetDir.path}');
           return ExportSuccess(path: targetDir.path);
         } else if (result.status == ShareResultStatus.dismissed) {
-          debugPrint('[ExportBackup] iOS export cancelled by user.');
+          appLogger.i('[ExportBackup] iOS export cancelled by user.');
           return const ExportFailure('Export cancelled');
         } else {
-          debugPrint('[ExportBackup] iOS export failed: ${result.raw}');
+          appLogger.e('[ExportBackup] iOS export failed: ${result.raw}');
           return ExportFailure('Export failed: ${result.raw}');
         }
       }
     } on FileSystemException catch (e) {
-      debugPrint('[ExportBackup] FileSystemException: $e');
+      appLogger.e('[ExportBackup] FileSystemException: $e');
       return ExportFailure('File system error: ${e.message}');
     } catch (e, st) {
-      debugPrint('[ExportBackup] Unexpected error: $e\n$st');
+      appLogger.e('[ExportBackup] Unexpected error: $e\n$st');
       return ExportFailure('Export failed: $e');
     } finally {
       // -----------------------------------------------------------------------
@@ -216,10 +218,10 @@ class ExportBackupService {
         try {
           if (targetDir.existsSync()) {
             await targetDir.delete(recursive: true);
-            debugPrint('[ExportBackup] Cleaned up temporary directory.');
+            appLogger.d('[ExportBackup] Cleaned up temporary directory.');
           }
         } catch (e) {
-          debugPrint('[ExportBackup] Cleanup failed (non-fatal): $e');
+          appLogger.w('[ExportBackup] Cleanup failed (non-fatal): $e');
         }
       }
     }
@@ -232,10 +234,10 @@ class ExportBackupService {
       try {
         if (targetDir.existsSync()) {
           await targetDir.delete(recursive: true);
-          debugPrint('[ExportBackup] Cache cleared successfully.');
+          appLogger.d('[ExportBackup] Cache cleared successfully.');
         }
       } catch (e) {
-        debugPrint('[ExportBackup] Cache clearing failed: $e');
+        appLogger.w('[ExportBackup] Cache clearing failed: $e');
       }
     }
   }
@@ -336,4 +338,3 @@ class ExportBackupService {
     'children': t.children.map(_tocItemToMap).toList(),
   };
 }
-

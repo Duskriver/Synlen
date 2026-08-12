@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 
 class IOSPageTurnSession {
   static const MethodChannel _nativePageTurnChannel = MethodChannel(
@@ -19,7 +20,7 @@ class IOSPageTurnSession {
     } on MissingPluginException {
       // no-op for configurations without iOS native channel
     } catch (e) {
-      debugPrint('preparePageTurn failed: $e');
+      appLogger.e('preparePageTurn failed: $e');
     }
   }
 
@@ -39,7 +40,7 @@ class IOSPageTurnSession {
     } on MissingPluginException {
       // no-op for configurations without iOS native channel
     } catch (e) {
-      debugPrint('animatePageTurn failed: $e');
+      appLogger.e('animatePageTurn failed: $e');
     }
   }
 
@@ -65,4 +66,3 @@ class IOSPageTurnSession {
 
   bool get isAnimating => _isAnimating;
 }
-

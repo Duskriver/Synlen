@@ -4,7 +4,7 @@ import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class DeepSeekService {
   DeepSeekService({String Function()? readApiKey})
-      : _readApiKey = readApiKey ?? (() => '');
+    : _readApiKey = readApiKey ?? (() => '');
 
   /// 运行时读取用户配置的 API Key（由设置页填写，存安全存储）
   final String Function() _readApiKey;
@@ -17,9 +17,7 @@ class DeepSeekService {
   /// 校验 API Key 是否已配置，未配置时抛出明确错误
   void _ensureConfigured() {
     if (_readApiKey().isEmpty) {
-      throw const LearningException(
-        '未配置 DeepSeek API Key，请在 设置 → AI 服务 中配置',
-      );
+      throw const LearningException('未配置 DeepSeek API Key，请在 设置 → AI 服务 中配置');
     }
   }
 
@@ -59,7 +57,6 @@ class DeepSeekService {
       }
       return null;
     } catch (e) {
-      // print('DeepSeekService explainWord error: $e');
       return null;
     }
   }
@@ -253,4 +250,3 @@ class DeepSeekService {
     }
   }
 }
-

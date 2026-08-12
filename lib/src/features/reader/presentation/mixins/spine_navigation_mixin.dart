@@ -232,7 +232,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
         AppLocalizations.of(context)!.chapterNotFoundInSpine,
         theme: getEpubTheme().themeData,
       );
-      debugPrint(
+      appLogger.w(
         'Warning: Chapter with href ${targetHref.path} not found in spine.',
       );
     }

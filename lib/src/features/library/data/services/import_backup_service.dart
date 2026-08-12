@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/application/progress_log.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
@@ -205,7 +205,7 @@ class ImportBackupService {
 
         final pathsForBook = backupPaths.bookPaths[hash];
         if (pathsForBook == null) {
-          debugPrint(
+          appLogger.w(
             '[ImportBackup] Files for book $hash not found in backup paths, skipping.',
           );
           yield ProgressLog(
@@ -240,7 +240,7 @@ class ImportBackupService {
             restoredCoverPath =
                 '${AppStorageConstants.coversDir}/$coverFileName';
           } catch (e) {
-            debugPrint('[ImportBackup] Failed to process cover for $hash: $e');
+            appLogger.w('[ImportBackup] Failed to process cover for $hash: $e');
             yield ProgressLog(
               'Warning: Failed to restore cover for "$displayName", skipping cover.',
               ProgressLogType.warning,
@@ -265,7 +265,7 @@ class ImportBackupService {
         await _mergeBook(book);
 
         importedCount++;
-        debugPrint(
+        appLogger.i(
           '[ImportBackup] Upserted "$displayName" ($importedCount/${booksJson.length}).',
         );
 
@@ -277,16 +277,18 @@ class ImportBackupService {
         );
       }
 
-      debugPrint('[ImportBackup] Import complete. Total books: $importedCount');
+      appLogger.i(
+        '[ImportBackup] Import complete. Total books: $importedCount',
+      );
       yield ProgressLog(
         'Import completed: $importedCount books imported.',
         ProgressLogType.success,
       );
     } on FormatException catch (e) {
-      debugPrint('[ImportBackup] JSON parse error: $e');
+      appLogger.e('[ImportBackup] JSON parse error: $e');
       yield failure('Failed to parse backup data: ${e.message}');
     } catch (e, st) {
-      debugPrint('[ImportBackup] Unexpected error: $e\n$st');
+      appLogger.e('[ImportBackup] Unexpected error: $e\n$st');
       yield failure('Import failed: $e');
     } finally {
       // Release all security-scoped resource accesses held by the native iOS
@@ -488,4 +490,3 @@ class ImportBackupService {
           .toList();
   }
 }
-
