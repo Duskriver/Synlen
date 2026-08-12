@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
-import 'package:synlen/src/features/reader/data/reader_scripts.dart';
+
+/// 将颜色序列化为不含 alpha 的十六进制字符串（如 `#RRGGBB`），供 WebView 注入样式使用。
+String colorToHex(Color color) {
+  final argb = color.toARGB32();
+  return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
+}
 
 class EpubTheme {
   final double zoom;
@@ -109,4 +114,3 @@ class EpubTheme {
     overrideFontFamily,
   );
 }
-
