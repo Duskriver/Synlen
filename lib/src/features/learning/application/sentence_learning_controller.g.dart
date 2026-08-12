@@ -61,7 +61,7 @@ final class SentenceLearningControllerProvider
 }
 
 String _$sentenceLearningControllerHash() =>
-    r'e33be34bcdfa54d8de682c63f97d03b492246e83';
+    r'b68823959d906012fc5b7d792c986d24cd031d34';
 
 final class SentenceLearningControllerFamily extends $Family
     with
