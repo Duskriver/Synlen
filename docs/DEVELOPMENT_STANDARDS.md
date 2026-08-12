@@ -31,7 +31,7 @@ presentation → application → domain
 
 **规则：**
 
-- **依赖方向**：`presentation → application → domain`；`data → domain`；`data` 可以被 `application` 依赖。**禁止** `presentation → data`（现状存在的 7 处违规见技术债清单，逐步修复）。**禁止** `domain → application/data/presentation`。
+- **依赖方向**：`presentation → application → domain`；`data → domain`；`data` 可以被 `application` 依赖。**禁止** `presentation → data`（现状存在的分层违规见 `docs/TECH_DEBT.md` 清单，逐步修复）。**禁止** `domain → application/data/presentation`。
 - **feature 之间**不互相 import。跨 feature 的共享能力必须下沉到 `core/`。
 - **core 是共享工具箱**，不是杂物间：放进去的东西必须被 ≥2 个 feature 使用，否则留在所属 feature。
 
