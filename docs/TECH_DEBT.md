@@ -44,18 +44,14 @@
 
 ## 3. UI 硬编码中文字符串（违反 l10n + 错误处理分离）
 
-规范 §5 与 §8.1 要求：用户可读消息走 l10n，与内部细节分离。当前实测 **84 行**硬编码中文。
+规范 §5 与 §8.1 要求：用户可读消息走 l10n，与内部细节分离。原始实测 **84 行**硬编码中文。
 
-| 位置 | 行数 |
-|------|------|
-| `learning/domain`（`aliyun_tts_voice.dart` 音色中文描述等） | 51 |
-| `learning/data`（`deep_seek_service` / `aliyun_tts_service` 的异常消息与 prompt） | 15 |
-| `learning/presentation`（`word_definition_dialog` / `sentence_analysis_dialog` / `learning_detail_dialog_view` 等） | 11 |
-| `learning/application` | 5 |
-| `settings/presentation` | 1 |
-| `library/data` | 1 |
-
-修复方向：presentation 文案迁 l10n；`LearningException` 消息与用户可读文案分离（内部细节记日志，不上屏）。
+- ✅ `learning/presentation`（11 行）与 `settings/presentation`（1 行）已迁入 ARB（2026-08-13，issue #3）：词义/句子分析弹窗、详情视图、阿里云 DashScope 服务名。
+- ⏳ 剩余 72 行 → issue #4（需设计决策）：
+  - `learning/domain`（51 行）：`aliyun_tts_voice.dart` 音色中文名与描述——建议 enum 保留默认文案，设置页 switch 映射 l10n 键。
+  - `learning/data`（15 行）：`LearningException` 用户可见消息——建议错误码 enum + 展示层映射（规范 §5「内部细节与用户文案分离」）。
+  - `learning/application`（5 行）：StateError / FileSystemException 中文消息——同上。
+  - `library/data`（1 行）：待排查。
 
 ---
 

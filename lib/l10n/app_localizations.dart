@@ -1639,6 +1639,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chapter not found in book spine'**
   String get chapterNotFoundInSpine;
+
+  /// Title of the sentence analysis dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence Analysis'**
+  String get sentenceAnalysis;
+
+  /// Tooltip and label of the word pronunciation play button
+  ///
+  /// In en, this message translates to:
+  /// **'Play pronunciation'**
+  String get playPronunciation;
+
+  /// Prefix of the error message when the word definition update fails (followed by a colon and the error detail)
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update definition'**
+  String get definitionUpdateFailed;
+
+  /// Loading hint shown while the word explanation is being fetched
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking...'**
+  String get wordExplanationLoading;
+
+  /// Tooltip of the sentence audio play button
+  ///
+  /// In en, this message translates to:
+  /// **'Play audio'**
+  String get playAudio;
+
+  /// Label of the sentence read-aloud button
+  ///
+  /// In en, this message translates to:
+  /// **'Read sentence aloud'**
+  String get readSentenceAloud;
+
+  /// Prefix of the error message when the sentence analysis update fails (followed by a colon and the error detail)
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update analysis'**
+  String get analysisUpdateFailed;
+
+  /// Loading hint shown while the sentence analysis is being fetched
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing...'**
+  String get sentenceAnalyzing;
+
+  /// Error shown when the learning dialog fails to load, {error} is the error detail
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String loadFailed(String error);
+
+  /// Error shown when audio is unavailable in the learning dialog, {error} is the error detail
+  ///
+  /// In en, this message translates to:
+  /// **'Audio unavailable: {error}'**
+  String audioUnavailable(String error);
+
+  /// Name of the Aliyun DashScope service shown in the API key edit dialog in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Aliyun DashScope'**
+  String get aliyunDashScopeName;
 }
 
 class _AppLocalizationsDelegate

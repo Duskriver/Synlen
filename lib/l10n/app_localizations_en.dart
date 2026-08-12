@@ -880,4 +880,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chapterNotFoundInSpine => 'Chapter not found in book spine';
+
+  @override
+  String get sentenceAnalysis => 'Sentence Analysis';
+
+  @override
+  String get playPronunciation => 'Play pronunciation';
+
+  @override
+  String get definitionUpdateFailed => 'Failed to update definition';
+
+  @override
+  String get wordExplanationLoading => 'Thinking...';
+
+  @override
+  String get playAudio => 'Play audio';
+
+  @override
+  String get readSentenceAloud => 'Read sentence aloud';
+
+  @override
+  String get analysisUpdateFailed => 'Failed to update analysis';
+
+  @override
+  String get sentenceAnalyzing => 'Analyzing...';
+
+  @override
+  String loadFailed(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String audioUnavailable(String error) {
+    return 'Audio unavailable: $error';
+  }
+
+  @override
+  String get aliyunDashScopeName => 'Aliyun DashScope';
 }
