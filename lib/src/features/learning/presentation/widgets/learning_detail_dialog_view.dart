@@ -2,6 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/features/learning/application/learning_detail_state.dart';
+import 'package:synlen/src/features/learning/domain/learning_exception.dart';
+
+/// 将学习模块错误转换为本地化文案（规范 §5：用户文案与内部细节分离）。
+///
+/// [LearningException] 按错误码映射；其余错误统一回退为通用提示，内部细节不上屏。
+String resolveLearningErrorText(Object? error, AppLocalizations l10n) {
+  if (error is LearningException) {
+    return switch (error.code) {
+      LearningErrorCode.noDeepSeekApiKey => l10n.learningErrorNoDeepSeekApiKey,
+      LearningErrorCode.noAliyunTtsApiKey =>
+        l10n.learningErrorNoAliyunTtsApiKey,
+      LearningErrorCode.serviceUnavailable =>
+        l10n.learningErrorServiceUnavailable,
+      LearningErrorCode.emptyResult => l10n.learningErrorEmptyResult,
+      LearningErrorCode.requestFailed => l10n.learningErrorRequestFailed,
+      LearningErrorCode.audioFileMissing => l10n.learningErrorAudioFileMissing,
+      LearningErrorCode.unsupportedFormat =>
+        l10n.learningErrorUnsupportedFormat,
+      LearningErrorCode.noPlayableAudio => l10n.learningErrorNoPlayableAudio,
+    };
+  }
+  return l10n.learningErrorRequestFailed;
+}
 
 class LearningDetailDialogView extends StatelessWidget {
   final Widget title;
@@ -87,7 +110,7 @@ class LearningDetailDialogView extends StatelessWidget {
 
 class _LearningDetailContent extends StatelessWidget {
   final LearningDetailState state;
-  final String? primaryError;
+  final Object? primaryError;
   final ScrollController? scrollController;
   final Future<void> Function() onPlayAudio;
   final String audioTooltip;
@@ -117,7 +140,9 @@ class _LearningDetailContent extends StatelessWidget {
     }
 
     if (primaryError != null && state.content.isEmpty && !state.hasAudio) {
-      return Text(l10n.loadFailed(primaryError!));
+      return Text(
+        l10n.loadFailed(resolveLearningErrorText(primaryError, l10n)),
+      );
     }
 
     return SingleChildScrollView(
@@ -144,7 +169,9 @@ class _LearningDetailContent extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                l10n.audioUnavailable(state.audioError!),
+                l10n.audioUnavailable(
+                  resolveLearningErrorText(state.audioError, l10n),
+                ),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
@@ -162,7 +189,7 @@ class _LearningDetailContent extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                '$contentUpdateErrorPrefix：${state.contentError}',
+                '$contentUpdateErrorPrefix：${resolveLearningErrorText(state.contentError, l10n)}',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),

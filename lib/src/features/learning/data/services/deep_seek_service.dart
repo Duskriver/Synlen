@@ -17,7 +17,7 @@ class DeepSeekService {
   /// 校验 API Key 是否已配置，未配置时抛出明确错误
   void _ensureConfigured() {
     if (_readApiKey().isEmpty) {
-      throw const LearningException('未配置 DeepSeek API Key，请在 设置 → AI 服务 中配置');
+      throw const LearningException(LearningErrorCode.noDeepSeekApiKey);
     }
   }
 
@@ -96,7 +96,7 @@ class DeepSeekService {
       );
 
       if (response.statusCode != 200 || response.data == null) {
-        throw const LearningException('单词解释服务暂时不可用');
+        throw const LearningException(LearningErrorCode.serviceUnavailable);
       }
 
       final stream = response.data!.stream;
@@ -127,13 +127,13 @@ class DeepSeekService {
         }
       }
       if (!hasContent) {
-        throw const LearningException('单词解释服务没有返回内容');
+        throw const LearningException(LearningErrorCode.emptyResult);
       }
     } catch (e) {
       if (e is LearningException) {
         rethrow;
       }
-      throw LearningException('单词解释请求失败: $e');
+      throw LearningException(LearningErrorCode.requestFailed, e);
     }
   }
 
@@ -209,7 +209,7 @@ class DeepSeekService {
       );
 
       if (response.statusCode != 200 || response.data == null) {
-        throw const LearningException('句子分析服务暂时不可用');
+        throw const LearningException(LearningErrorCode.serviceUnavailable);
       }
 
       final stream = response.data!.stream;
@@ -240,13 +240,13 @@ class DeepSeekService {
         }
       }
       if (!hasContent) {
-        throw const LearningException('句子分析服务没有返回内容');
+        throw const LearningException(LearningErrorCode.emptyResult);
       }
     } catch (e) {
       if (e is LearningException) {
         rethrow;
       }
-      throw LearningException('句子分析请求失败: $e');
+      throw LearningException(LearningErrorCode.requestFailed, e);
     }
   }
 }

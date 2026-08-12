@@ -1548,5 +1548,50 @@
   "aliyunDashScopeName": "阿里云 DashScope",
   "@aliyunDashScopeName": {
     "description": "阿里云 DashScope 服务名称（设置页 API Key 编辑弹窗中显示）"
+  },
+
+  "learningErrorNoDeepSeekApiKey": "未配置 DeepSeek API Key，请在 设置 → AI 服务 中配置",
+  "@learningErrorNoDeepSeekApiKey": {
+    "description": "学习模块错误提示：未配置 DeepSeek API Key"
+  },
+
+  "learningErrorNoAliyunTtsApiKey": "未配置阿里云 TTS API Key，请在 设置 → AI 服务 中配置",
+  "@learningErrorNoAliyunTtsApiKey": {
+    "description": "学习模块错误提示：未配置阿里云 TTS API Key"
+  },
+
+  "learningErrorServiceUnavailable": "AI 服务暂时不可用",
+  "@learningErrorServiceUnavailable": {
+    "description": "学习模块错误提示：AI 服务暂时不可用"
+  },
+
+  "learningErrorEmptyResult": "服务没有返回内容",
+  "@learningErrorEmptyResult": {
+    "description": "学习模块错误提示：服务没有返回内容"
+  },
+
+  "learningErrorRequestFailed": "请求失败，请稍后重试",
+  "@learningErrorRequestFailed": {
+    "description": "学习模块错误提示：请求失败的通用回退文案"
+  },
+
+  "learningErrorAudioFileMissing": "音频文件不存在",
+  "@learningErrorAudioFileMissing": {
+    "description": "学习模块错误提示：音频文件不存在"
+  },
+
+  "learningErrorUnsupportedFormat": "仅支持 16-bit PCM 音频播放",
+  "@learningErrorUnsupportedFormat": {
+    "description": "学习模块错误提示：不支持的音频格式"
+  },
+
+  "learningErrorNoPlayableAudio": "没有可播放的音频",
+  "@learningErrorNoPlayableAudio": {
+    "description": "学习模块错误提示：没有可播放的音频"
+  },
+
+  "backupShareTitle": "词镜备份",
+  "@backupShareTitle": {
+    "description": "iOS 分享面板中备份文件夹的标题"
   }
 }

@@ -892,4 +892,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aliyunDashScopeName => '阿里云 DashScope';
+
+  @override
+  String get learningErrorNoDeepSeekApiKey =>
+      '未配置 DeepSeek API Key，请在 设置 → AI 服务 中配置';
+
+  @override
+  String get learningErrorNoAliyunTtsApiKey =>
+      '未配置阿里云 TTS API Key，请在 设置 → AI 服务 中配置';
+
+  @override
+  String get learningErrorServiceUnavailable => 'AI 服务暂时不可用';
+
+  @override
+  String get learningErrorEmptyResult => '服务没有返回内容';
+
+  @override
+  String get learningErrorRequestFailed => '请求失败，请稍后重试';
+
+  @override
+  String get learningErrorAudioFileMissing => '音频文件不存在';
+
+  @override
+  String get learningErrorUnsupportedFormat => '仅支持 16-bit PCM 音频播放';
+
+  @override
+  String get learningErrorNoPlayableAudio => '没有可播放的音频';
+
+  @override
+  String get backupShareTitle => '词镜备份';
 }

@@ -1705,6 +1705,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Aliyun DashScope'**
   String get aliyunDashScopeName;
+
+  /// Learning error message shown when the DeepSeek API key is not configured
+  ///
+  /// In en, this message translates to:
+  /// **'DeepSeek API key not configured. Please set it in Settings → AI Service'**
+  String get learningErrorNoDeepSeekApiKey;
+
+  /// Learning error message shown when the Aliyun TTS API key is not configured
+  ///
+  /// In en, this message translates to:
+  /// **'Aliyun TTS API key not configured. Please set it in Settings → AI Service'**
+  String get learningErrorNoAliyunTtsApiKey;
+
+  /// Learning error message shown when the AI service is temporarily unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'AI service is temporarily unavailable'**
+  String get learningErrorServiceUnavailable;
+
+  /// Learning error message shown when the service returns no content
+  ///
+  /// In en, this message translates to:
+  /// **'The service returned no content'**
+  String get learningErrorEmptyResult;
+
+  /// Generic fallback learning error message shown when a request fails
+  ///
+  /// In en, this message translates to:
+  /// **'Request failed. Please try again later'**
+  String get learningErrorRequestFailed;
+
+  /// Learning error message shown when the audio file is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Audio file not found'**
+  String get learningErrorAudioFileMissing;
+
+  /// Learning error message shown for an unsupported audio format
+  ///
+  /// In en, this message translates to:
+  /// **'Only 16-bit PCM audio is supported'**
+  String get learningErrorUnsupportedFormat;
+
+  /// Learning error message shown when no playable audio is available
+  ///
+  /// In en, this message translates to:
+  /// **'No playable audio available'**
+  String get learningErrorNoPlayableAudio;
+
+  /// Title of the backup folder shown in the iOS share sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Synlen Backup'**
+  String get backupShareTitle;
 }
 
 class _AppLocalizationsDelegate

@@ -69,6 +69,7 @@ class ExportBackupService {
   /// Returns [ExportFailure] on any unrecoverable error.
   Future<ExportResult> exportLibraryAsFolder({
     Rect? sharePositionOrigin,
+    required String shareTitle,
   }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final backupName = 'synlen-backup-$timestamp';
@@ -188,7 +189,7 @@ class ExportBackupService {
         // iOS: share the entire folder via the native Share Sheet.
         final shareParams = ShareParams(
           files: [XFile(targetDir.path)],
-          title: '词镜 Backup',
+          title: shareTitle,
         );
         final result = await SharePlus.instance.share(shareParams);
         appLogger.i('[ExportBackup] iOS share result: $result');

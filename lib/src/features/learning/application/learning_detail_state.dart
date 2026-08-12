@@ -7,8 +7,8 @@ class LearningDetailState {
   final bool isFetchingAudio;
   final String content;
   final String? audioUrl;
-  final String? contentError;
-  final String? audioError;
+  final Object? contentError;
+  final Object? audioError;
   final bool hasAudio;
 
   const LearningDetailState({
@@ -29,9 +29,9 @@ class LearningDetailState {
     String? content,
     String? audioUrl,
     bool clearAudioUrl = false,
-    String? contentError,
+    Object? contentError,
     bool clearContentError = false,
-    String? audioError,
+    Object? audioError,
     bool clearAudioError = false,
     bool? hasAudio,
   }) {

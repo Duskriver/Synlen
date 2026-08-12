@@ -39,7 +39,10 @@ class _BackupTileState extends ConsumerState<BackupTile> {
 
     final result = await ref
         .read(exportBackupServiceProvider)
-        .exportLibraryAsFolder(sharePositionOrigin: _tileRect());
+        .exportLibraryAsFolder(
+          sharePositionOrigin: _tileRect(),
+          shareTitle: l10n.backupShareTitle,
+        );
 
     if (!mounted) {
       _isExporting = false;
@@ -89,4 +92,3 @@ class _BackupTileState extends ConsumerState<BackupTile> {
     );
   }
 }
-

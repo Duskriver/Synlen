@@ -1,10 +1,5 @@
 import 'dart:async';
 
-String formatLearningError(Object error) {
-  final text = error.toString().trim();
-  return text.isEmpty ? '请求失败，请稍后重试' : text;
-}
-
 Future<void> consumeLearningContentStream({
   required Stream<String> stream,
   required bool Function() isDisposed,

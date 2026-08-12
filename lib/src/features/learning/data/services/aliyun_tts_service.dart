@@ -32,7 +32,7 @@ class AliyunTTSService {
   /// 校验 API Key 是否已配置，未配置时抛出明确错误
   void _ensureConfigured() {
     if (_readApiKey().isEmpty) {
-      throw const LearningException('未配置阿里云 TTS API Key，请在 设置 → AI 服务 中配置');
+      throw const LearningException(LearningErrorCode.noAliyunTtsApiKey);
     }
   }
 
@@ -66,7 +66,7 @@ class AliyunTTSService {
       );
 
       if (response.statusCode != 200 || response.data == null) {
-        throw const LearningException('音频服务暂时不可用');
+        throw const LearningException(LearningErrorCode.serviceUnavailable);
       }
 
       final stream = response.data!.stream;
@@ -100,14 +100,14 @@ class AliyunTTSService {
         }
       }
       if (!hasAudio) {
-        throw const LearningException('音频服务没有返回音频数据');
+        throw const LearningException(LearningErrorCode.emptyResult);
       }
     } catch (e) {
       appLogger.e('AliyunTTSService error: $e');
       if (e is LearningException) {
         rethrow;
       }
-      throw LearningException('音频请求失败: $e');
+      throw LearningException(LearningErrorCode.requestFailed, e);
     }
   }
 }

@@ -42,16 +42,16 @@
 
 ---
 
-## 3. UI 硬编码中文字符串（违反 l10n + 错误处理分离）
+## 3. UI 硬编码中文字符串（✅ 已清理，2026-08-13）
 
 规范 §5 与 §8.1 要求：用户可读消息走 l10n，与内部细节分离。原始实测 **84 行**硬编码中文。
 
-- ✅ `learning/presentation`（11 行）与 `settings/presentation`（1 行）已迁入 ARB（2026-08-13，issue #3）：词义/句子分析弹窗、详情视图、阿里云 DashScope 服务名。
-- ⏳ 剩余 72 行 → issue #4（需设计决策）：
-  - `learning/domain`（51 行）：`aliyun_tts_voice.dart` 音色中文名与描述——建议 enum 保留默认文案，设置页 switch 映射 l10n 键。
-  - `learning/data`（15 行）：`LearningException` 用户可见消息——建议错误码 enum + 展示层映射（规范 §5「内部细节与用户文案分离」）。
-  - `learning/application`（5 行）：StateError / FileSystemException 中文消息——同上。
-  - `library/data`（1 行）：待排查。
+- ✅ `learning/presentation`（11 行）与 `settings/presentation`（1 行）已迁入 ARB（issue #3）。
+- ✅ 异常消息与状态错误（data 15 行 + application 5 行）已错误码化（issue #4）：`LearningErrorCode` enum + 展示层 `resolveLearningErrorText` 统一映射为 l10n 文案；`LearningException.details` 仅入日志，不上屏（规范 §5）。
+- ✅ `library/data`（1 行）：备份分享标题改为调用方传入 l10n 文案。
+- ✅ 已决策保留（数据性文案，非 UI 文案）：
+  - `aliyun_tts_voice.dart`（51 行）：47 个音色的名称与描述是产品目录数据（人名、方言地名、人设描述），非界面文案；全部迁 ARB 需 94 键，成本远大于收益。
+  - `deep_seek_service.dart`（6 行 LLM prompt）：发给 AI 的提示词，机器消费，非 UI 文案。
 
 ---
 
