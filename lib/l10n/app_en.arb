@@ -1473,5 +1473,70 @@
   "chapterNotFoundInSpine": "Chapter not found in book spine",
   "@chapterNotFoundInSpine": {
     "description": "Error message shown when trying to navigate to a chapter that doesn't exist in the book spine"
+  },
+
+  "sentenceAnalysis": "Sentence Analysis",
+  "@sentenceAnalysis": {
+    "description": "Title of the sentence analysis dialog"
+  },
+
+  "playPronunciation": "Play pronunciation",
+  "@playPronunciation": {
+    "description": "Tooltip and label of the word pronunciation play button"
+  },
+
+  "definitionUpdateFailed": "Failed to update definition",
+  "@definitionUpdateFailed": {
+    "description": "Prefix of the error message when the word definition update fails (followed by a colon and the error detail)"
+  },
+
+  "wordExplanationLoading": "Thinking...",
+  "@wordExplanationLoading": {
+    "description": "Loading hint shown while the word explanation is being fetched"
+  },
+
+  "playAudio": "Play audio",
+  "@playAudio": {
+    "description": "Tooltip of the sentence audio play button"
+  },
+
+  "readSentenceAloud": "Read sentence aloud",
+  "@readSentenceAloud": {
+    "description": "Label of the sentence read-aloud button"
+  },
+
+  "analysisUpdateFailed": "Failed to update analysis",
+  "@analysisUpdateFailed": {
+    "description": "Prefix of the error message when the sentence analysis update fails (followed by a colon and the error detail)"
+  },
+
+  "sentenceAnalyzing": "Analyzing...",
+  "@sentenceAnalyzing": {
+    "description": "Loading hint shown while the sentence analysis is being fetched"
+  },
+
+  "loadFailed": "Failed to load: {error}",
+  "@loadFailed": {
+    "description": "Error shown when the learning dialog fails to load, {error} is the error detail",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "audioUnavailable": "Audio unavailable: {error}",
+  "@audioUnavailable": {
+    "description": "Error shown when audio is unavailable in the learning dialog, {error} is the error detail",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "aliyunDashScopeName": "Aliyun DashScope",
+  "@aliyunDashScopeName": {
+    "description": "Name of the Aliyun DashScope service shown in the API key edit dialog in settings"
   }
 }

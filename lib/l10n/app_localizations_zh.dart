@@ -855,4 +855,41 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chapterNotFoundInSpine => '未找到该章节';
+
+  @override
+  String get sentenceAnalysis => '句子分析';
+
+  @override
+  String get playPronunciation => '播放发音';
+
+  @override
+  String get definitionUpdateFailed => '释义更新失败';
+
+  @override
+  String get wordExplanationLoading => '正在思考...';
+
+  @override
+  String get playAudio => '播放音频';
+
+  @override
+  String get readSentenceAloud => '朗读句子';
+
+  @override
+  String get analysisUpdateFailed => '分析更新失败';
+
+  @override
+  String get sentenceAnalyzing => '正在分析...';
+
+  @override
+  String loadFailed(String error) {
+    return '加载失败: $error';
+  }
+
+  @override
+  String audioUnavailable(String error) {
+    return '音频暂不可用：$error';
+  }
+
+  @override
+  String get aliyunDashScopeName => '阿里云 DashScope';
 }

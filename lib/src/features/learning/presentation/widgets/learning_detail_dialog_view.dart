@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/features/learning/application/learning_detail_state.dart';
 
 class LearningDetailDialogView extends StatelessWidget {
@@ -107,6 +108,7 @@ class _LearningDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (state.isLoading && state.content.isEmpty && !state.hasAudio) {
       return const SizedBox(
         height: 100,
@@ -115,7 +117,7 @@ class _LearningDetailContent extends StatelessWidget {
     }
 
     if (primaryError != null && state.content.isEmpty && !state.hasAudio) {
-      return Text('加载失败: $primaryError');
+      return Text(l10n.loadFailed(primaryError!));
     }
 
     return SingleChildScrollView(
@@ -142,7 +144,7 @@ class _LearningDetailContent extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                '音频暂不可用：${state.audioError}',
+                l10n.audioUnavailable(state.audioError!),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),

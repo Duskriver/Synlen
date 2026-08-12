@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/features/learning/application/word_learning_controller.dart';
 import 'package:synlen/src/features/learning/presentation/widgets/learning_detail_dialog_view.dart';
 
@@ -17,6 +18,7 @@ class WordDefinitionDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = wordLearningControllerProvider(
       WordLearningRequest(word: word, context: this.context),
     );
@@ -30,10 +32,10 @@ class WordDefinitionDialog extends ConsumerWidget {
       state: ref.watch(provider),
       scrollController: scrollController,
       onPlayAudio: ref.read(provider.notifier).playAudio,
-      audioTooltip: '播放发音',
-      audioLabel: '播放发音',
-      contentUpdateErrorPrefix: '释义更新失败',
-      loadingText: '正在思考...',
+      audioTooltip: l10n.playPronunciation,
+      audioLabel: l10n.playPronunciation,
+      contentUpdateErrorPrefix: l10n.definitionUpdateFailed,
+      loadingText: l10n.wordExplanationLoading,
     );
   }
 }

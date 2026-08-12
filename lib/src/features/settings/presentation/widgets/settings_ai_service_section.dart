@@ -29,9 +29,8 @@ class SettingsAiServiceSection extends ConsumerWidget {
             hint: l10n.deepSeekApiKeySubtitle,
             providerName: 'DeepSeek',
             initialValue: config.deepSeekKey,
-            onSave: (value) => ref
-                .read(apiKeyProvider.notifier)
-                .setDeepSeekKey(value),
+            onSave: (value) =>
+                ref.read(apiKeyProvider.notifier).setDeepSeekKey(value),
           ),
         ),
         SettingsInfoTile(
@@ -44,11 +43,10 @@ class SettingsAiServiceSection extends ConsumerWidget {
             context,
             title: l10n.aliyunTtsApiKey,
             hint: l10n.aliyunTtsApiKeySubtitle,
-            providerName: '阿里云 DashScope',
+            providerName: l10n.aliyunDashScopeName,
             initialValue: config.aliyunTtsKey,
-            onSave: (value) => ref
-                .read(apiKeyProvider.notifier)
-                .setAliyunTtsKey(value),
+            onSave: (value) =>
+                ref.read(apiKeyProvider.notifier).setAliyunTtsKey(value),
           ),
         ),
       ],
@@ -88,8 +86,7 @@ class SettingsAiServiceSection extends ConsumerWidget {
                     icon: Icon(
                       obscure ? Icons.visibility_off : Icons.visibility,
                     ),
-                    onPressed: () =>
-                        setState(() => obscure = !obscure),
+                    onPressed: () => setState(() => obscure = !obscure),
                   ),
                 ),
               ),
@@ -97,8 +94,8 @@ class SettingsAiServiceSection extends ConsumerWidget {
               Text(
                 l10n.apiKeyObtainHint(providerName),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             ],
           ),
