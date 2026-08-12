@@ -106,7 +106,7 @@ final class DeepSeekServiceProvider
   }
 }
 
-String _$deepSeekServiceHash() => r'6134570a4f565efaccf3b8f5e419604a27cc03db';
+String _$deepSeekServiceHash() => r'c870d8da1f1d1394006d658f30c514ea92165264';
 
 /// 提供 [AliyunTTSService] 实例
 
@@ -157,7 +157,7 @@ final class AliyunTTSServiceProvider
   }
 }
 
-String _$aliyunTTSServiceHash() => r'1b1bba989420bc332899efe91f93e5c5b8112153';
+String _$aliyunTTSServiceHash() => r'6059882d31c0c857462d987906ef81dd39cb25c2';
 
 @ProviderFor(learningAudioFileStore)
 final learningAudioFileStoreProvider = LearningAudioFileStoreProvider._();
