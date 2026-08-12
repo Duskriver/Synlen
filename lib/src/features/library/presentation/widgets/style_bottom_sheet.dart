@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/bookshelf_notifier.dart';
-import '../../data/shelf_book_repository.dart';
+import '../../domain/shelf_book_sort_by.dart';
 import '../../../../../l10n/app_localizations.dart';
 
 /// Bottom sheet for selecting sort order and view mode.

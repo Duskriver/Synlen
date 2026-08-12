@@ -1,18 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
+import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart';
 import 'package:collection/collection.dart';
-
-/// 书架书列表的排序选项
-enum ShelfBookSortBy {
-  titleAsc,
-  titleDesc,
-  authorAsc,
-  authorDesc,
-  recentlyRead,
-  recentlyAdded,
-  progress,
-}
 
 /// ShelfBook CRUD 仓库（drift 实现）。
 /// 轻量查询供 UI 展示与同步使用；业务规则（分组/删除/排序）已上移，
@@ -33,9 +23,9 @@ class ShelfBookRepository {
   /// 获取所有未删除书的文件哈希集合。
   /// 供 [StorageCleanupService] 判断物理文件是否有效。
   Future<Set<String>> getAllNotDeletedFileHashes() async {
-    final books = await (_db.select(_db.shelfBooks)
-          ..where((t) => t.isDeleted.equals(false)))
-        .get();
+    final books = await (_db.select(
+      _db.shelfBooks,
+    )..where((t) => t.isDeleted.equals(false))).get();
     return books.map((b) => b.fileHash).toSet();
   }
 
@@ -100,8 +90,9 @@ class ShelfBookRepository {
 
   /// 按 ID 获取分组
   Future<ShelfGroup?> getGroupById(int id) async {
-    return (_db.select(_db.shelfGroups)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.shelfGroups,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// 按名称获取分组（未删除）
@@ -121,14 +112,16 @@ class ShelfBookRepository {
   Future<Either<String, int>> createGroup({required String name}) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      final existingGroup = await (_db.select(_db.shelfGroups)
-            ..where((t) => t.name.equals(name)))
-          .getSingleOrNull();
+      final existingGroup = await (_db.select(
+        _db.shelfGroups,
+      )..where((t) => t.name.equals(name))).getSingleOrNull();
 
       if (existingGroup != null) {
         if (existingGroup.isDeleted) {
           // 分组被软删除：恢复它
-          await (_db.update(_db.shelfGroups)..where((t) => t.id.equals(existingGroup.id))).write(
+          await (_db.update(
+            _db.shelfGroups,
+          )..where((t) => t.id.equals(existingGroup.id))).write(
             ShelfGroupsCompanion(
               isDeleted: const Value(false),
               updatedAt: Value(now),
@@ -139,7 +132,9 @@ class ShelfBookRepository {
         return left('Group already exists');
       }
 
-      final id = await _db.into(_db.shelfGroups).insert(
+      final id = await _db
+          .into(_db.shelfGroups)
+          .insert(
             ShelfGroupsCompanion.insert(
               name: name,
               creationDate: now,
@@ -164,17 +159,18 @@ class ShelfBookRepository {
           return left('Group not found');
         }
         final oldGroupName = group.name;
-        await (_db.update(_db.shelfGroups)..where((t) => t.id.equals(groupId)))
-            .write(
+        await (_db.update(
+          _db.shelfGroups,
+        )..where((t) => t.id.equals(groupId))).write(
           ShelfGroupsCompanion(
             name: Value(name),
             updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
           ),
         );
 
-        await (_db.update(_db.shelfBooks)
-              ..where((t) => t.groupName.equals(oldGroupName)))
-            .write(
+        await (_db.update(
+          _db.shelfBooks,
+        )..where((t) => t.groupName.equals(oldGroupName))).write(
           ShelfBooksCompanion(
             groupName: Value(name),
             updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
@@ -198,16 +194,18 @@ class ShelfBookRepository {
 
         final now = DateTime.now().millisecondsSinceEpoch;
         // 解除书的归属
-        await (_db.update(_db.shelfBooks)..where((t) => t.groupName.equals(group.name)))
-            .write(
+        await (_db.update(
+          _db.shelfBooks,
+        )..where((t) => t.groupName.equals(group.name))).write(
           ShelfBooksCompanion(
             groupName: const Value(null),
             updatedAt: Value(now),
           ),
         );
         // 软删除分组
-        await (_db.update(_db.shelfGroups)..where((t) => t.id.equals(groupId)))
-            .write(
+        await (_db.update(
+          _db.shelfGroups,
+        )..where((t) => t.id.equals(groupId))).write(
           ShelfGroupsCompanion(
             isDeleted: const Value(true),
             updatedAt: Value(now),
@@ -227,11 +225,10 @@ class ShelfBookRepository {
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId))).write(
-        ShelfBooksCompanion(
-          groupName: Value(groupName),
-          updatedAt: Value(now),
-        ),
+      await (_db.update(
+        _db.shelfBooks,
+      )..where((t) => t.id.equals(bookId))).write(
+        ShelfBooksCompanion(groupName: Value(groupName), updatedAt: Value(now)),
       );
       return right(true);
     } catch (e) {
@@ -247,7 +244,9 @@ class ShelfBookRepository {
     try {
       if (bookIds.isEmpty) return right(true);
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(_db.shelfBooks)..where((t) => t.id.isIn(bookIds))).write(
+      await (_db.update(
+        _db.shelfBooks,
+      )..where((t) => t.id.isIn(bookIds))).write(
         ShelfBooksCompanion(
           groupName: Value(targetGroupName),
           updatedAt: Value(now),
@@ -262,7 +261,9 @@ class ShelfBookRepository {
   /// 软删除一本书
   Future<Either<String, bool>> softDeleteBook(int bookId) async {
     try {
-      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId))).write(
+      await (_db.update(
+        _db.shelfBooks,
+      )..where((t) => t.id.equals(bookId))).write(
         ShelfBooksCompanion(
           isDeleted: const Value(true),
           updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
@@ -276,14 +277,16 @@ class ShelfBookRepository {
 
   /// 按 ID 获取书
   Future<ShelfBook?> getBookById(int id) async {
-    return (_db.select(_db.shelfBooks)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.shelfBooks,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// 按文件哈希获取书
   Future<ShelfBook?> getBookByHash(String fileHash) async {
-    return (_db.select(_db.shelfBooks)..where((t) => t.fileHash.equals(fileHash)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.shelfBooks,
+    )..where((t) => t.fileHash.equals(fileHash))).getSingleOrNull();
   }
 
   /// 按哈希检查书是否存在
@@ -320,9 +323,9 @@ class ShelfBookRepository {
   /// 按 ID 永久删除一本书
   Future<Either<String, bool>> deleteBook(int id) async {
     try {
-      final count = await (_db.delete(_db.shelfBooks)
-            ..where((t) => t.id.equals(id)))
-          .go();
+      final count = await (_db.delete(
+        _db.shelfBooks,
+      )..where((t) => t.id.equals(id))).go();
       return right(count > 0);
     } catch (e) {
       return left('Delete failed: $e');
@@ -338,7 +341,9 @@ class ShelfBookRepository {
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId))).write(
+      await (_db.update(
+        _db.shelfBooks,
+      )..where((t) => t.id.equals(bookId))).write(
         ShelfBooksCompanion(
           currentChapterIndex: Value(currentChapterIndex),
           readingProgress: Value(progress),
@@ -356,7 +361,9 @@ class ShelfBookRepository {
   Future<Either<String, bool>> markAsFinished(int bookId) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId))).write(
+      await (_db.update(
+        _db.shelfBooks,
+      )..where((t) => t.id.equals(bookId))).write(
         ShelfBooksCompanion(
           isFinished: const Value(true),
           readingProgress: const Value(1.0),
@@ -372,9 +379,7 @@ class ShelfBookRepository {
   /// 获取最近打开的书
   Future<List<ShelfBook>> getRecentBooks({int limit = 10}) async {
     final query = _db.select(_db.shelfBooks)
-      ..where(
-        (t) => t.isDeleted.equals(false) & t.lastOpenedDate.isNotNull(),
-      )
+      ..where((t) => t.isDeleted.equals(false) & t.lastOpenedDate.isNotNull())
       ..orderBy([(t) => OrderingTerm.desc(t.lastOpenedDate)])
       ..limit(limit);
     return query.get();
@@ -384,10 +389,12 @@ class ShelfBookRepository {
   Future<List<ShelfBook>> searchBooks(String query) async {
     final lowercaseQuery = query.toLowerCase();
     final result = _db.select(_db.shelfBooks)
-      ..where((t) =>
-          t.isDeleted.equals(false) &
-          (t.title.lower().contains(lowercaseQuery) |
-              t.author.lower().contains(lowercaseQuery)));
+      ..where(
+        (t) =>
+            t.isDeleted.equals(false) &
+            (t.title.lower().contains(lowercaseQuery) |
+                t.author.lower().contains(lowercaseQuery)),
+      );
     return result.get();
   }
 }
