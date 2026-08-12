@@ -6,21 +6,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.2.3] - 2026-03-07
-
-### English
-
-#### Changed
-
-* **AI Word Interpretation**: Enhanced AI prompts for word interpretation to include phonetic symbols, parts of speech, and contextual analysis.
-* **AI Sentence Analysis**: Improved AI sentence analysis to prioritize natural Chinese translations and provide concise grammatical breakdowns.
-
-### Chinese
-
-#### 变更与优化
-
-* **AI 单词解释优化**：优化了 AI 单词解释的 Prompt，增加了音标、词性、变形及上下文作用分析。
-* **AI 句子分析优化**：优化了 AI 句子分析的 Prompt，优先显示整句翻译并精简了语法分析内容。
 ## [Unreleased]
 
 ### 中文
@@ -35,16 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * 移除 CI 中的 API Key 注入与相关 GitHub Secrets 依赖（发布流水线不再涉及任何密钥）。
 * 移除 `--dart-define` 传 Key 的运行方式，改为 App 内设置项。
+* **日志统一迁移到 logger**：54 处 debugPrint 全部迁移到全局共享 logger（`core/services/app_logger.dart`），删除失效的 ignore 注释与注释掉的 print，并启用 `avoid_print` lint。
 
 #### 工具链与依赖升级
 
 * **Flutter 3.44.9 / Dart 3.12.2 / Rust 1.97.1**：工具链升级到最新稳定版，并新增 `rust-toolchain.toml` 固定 Rust 版本（可复现构建）。
-* **数据库迁移 Isar → drift**（ADR-0002）：Isar 已停更 3 年且与新版 codegen 链不兼容，迁移到活跃维护的 drift（SQLite）。首次启动自动迁移旧数据，迁移完成后移除旧依赖。
+* **数据库迁移 Isar → drift**（ADR-0002）：Isar 已停更 3 年且与新版 codegen 链不兼容，迁移到活跃维护的 drift（SQLite）。因项目从未对外发布、无存量 Isar 数据，无需数据迁移（见 ADR-0002 更新）。
 * **Riverpod 3.x**：状态管理升级到 Riverpod 3（`flutter_riverpod 3.3.2` + `riverpod_annotation 4.0.3` + `riverpod_generator 4.0.4`）。`XxxRef` 参数统一为 `Ref`，Notifier provider 命名去掉 `Notifier` 后缀，`StateProvider` 改为 `Notifier` 实现。注：受 Flutter 3.44 生态锁限制（analyzer 12），riverpod 3.4.x / generator 4.0.6+ 待 Flutter 升级后解锁。
 * **依赖全面升级**：`flutter_rust_bridge 2.12.0`（Dart+Rust 同步）、`xml 7`、`go_router 17.4`、`dio 5.11`、`flutter_secure_storage 11`、`share_plus 13`、`wakelock_plus 1.7`、`package_info_plus 10`、`saf_stream 4` 等全部升级到当前 Flutter stable 可支持的最新版本。
 * **移除停更/无用依赖**：`isar`（→drift）、`isar_generator`、`flutter_speed_dial`（→ 自研 `ExpandableFab`，停更 3 年）、`saf_util`（无使用处）。
 * **代码清理**：`analyze` 零告警、测试全绿；死代码（Rust `greet`、`EpubStreamService.warmUp`）留待后续专项重构（见架构审计报告）。
-* **新增测试**：`test/database/isar_migration_test.dart` 覆盖旧 Isar 数据 → drift 的完整迁移（含嵌套 JSON 结构）。
+* **移除迁移代码**：按 ADR-0002 更新，删除旧 Isar 迁移代码与迁移测试（无存量数据，无需迁移）。
 
 ## [v0.2.3] - 2026-03-13
 
@@ -61,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed
 
+* **AI Word Interpretation**: Enhanced AI prompts for word interpretation to include phonetic symbols, parts of speech, and contextual analysis.
+* **AI Sentence Analysis**: Improved AI sentence analysis to prioritize natural Chinese translations and provide concise grammatical breakdowns.
 * **Performance & UX**: Optimized overall rendering performance and reading user experience.
 * **Title Truncation**: Long book titles on the home page now truncate in the middle for better visual balance.
 * **Rendering Styles**: Polished and optimized internal book rendering styles.
@@ -84,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### 变更与优化
 
+* **AI 单词解释优化**：优化了 AI 单词解释的 Prompt，增加了音标、词性、变形及上下文作用分析。
+* **AI 句子分析优化**：优化了 AI 句子分析的 Prompt，优先显示整句翻译并精简了语法分析内容。
 * **性能与体验**：全面优化了底层渲染性能与整体用户体验。
 * **标题省略**：主页的书籍标题过长时，现已改为在中间省略，提升视觉平衡。
 * **渲染优化**：优化了书籍的排版与渲染样式。
