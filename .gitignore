@@ -58,3 +58,6 @@ libisar.dylib
 
 # ZCode agent plans
 /.zcode
+
+# UI 演示录制工作区（syn-record-ui-demo 技能）
+/.demo-recordings/
