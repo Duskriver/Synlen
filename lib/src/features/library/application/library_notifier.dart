@@ -46,10 +46,6 @@ class ImportProgress extends ProgressLog {
 /// State for library operations (updated for ShelfBook)
 sealed class LibraryState {}
 
-class LibraryInitial extends LibraryState {}
-
-class LibraryLoading extends LibraryState {}
-
 class LibraryLoaded extends LibraryState {
   final List<ShelfBook> books;
   LibraryLoaded(this.books);
