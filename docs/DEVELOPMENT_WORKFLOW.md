@@ -58,9 +58,10 @@
 | 复杂逻辑/算法 | `tdd` | 红-绿-重构的测试驱动代码 |
 | 新模块设计 | `codebase-design`（深模块原则） | 小接口大实现的模块 |
 | 拿不准交互是否合理 | `prototype` | 可抛弃的验证原型 |
+| 推送前验证 | `syn-pre-push-checks` | 按变更类型选择的最小测试证据 + 推送门禁 |
 | 提交 | 规范 §9 | 一个逻辑一个 commit，含 `type(scope): 中文描述` |
 
-**出口**：`flutter analyze` 零告警、`flutter test` 全绿、`dart format` 已跑、代码合入分支。
+**出口**：`flutter analyze` 零告警、`dart format` 已跑、`syn-pre-push-checks` 的最小证据通过；**全量 `flutter test` 在推送 / PR 合并前必须全绿**。
 
 ## 5. 评审（Review）
 
@@ -68,7 +69,9 @@
 
 | 场景 | 用 Skill | 产出 |
 |---|---|---|
-| 改动评审 | `code-review` | 双轴结论：**标准**（是否守开发规范） + **spec**（是否贴合原需求） |
+| 改动评审 | `code-review` + `syn-code-review` | 双轴结论：**标准**（syn 版含 Flutter 分层与六项阻断清单） + **spec**（是否贴合原需求） |
+| 用户可见 UI 行为变更 | `syn-record-ui-demo` | 真实运行的演示 GIF，嵌入 PR 正文 |
+| 合并堆叠式 PR | `syn-merging-stacked-prs` | 经 GitHub 原生 stack 的整体 / 部分落地 |
 | 评审不通过 | 回到 §4 修复 | 修复后的重新评审 |
 
 **出口**：两条轴都通过 → 合并。
@@ -83,6 +86,11 @@
 | 疑难 bug / 性能回归 | `diagnosing-bugs` | 定位 + 根因 + 修复建议 |
 | 定期架构体检 | `improve-codebase-architecture` | 深化机会 HTML 报告，挑选后 `grill` |
 | git 高危操作防护（可选） | `git-guardrails-claude-code` | 阻止危险命令的 hooks |
+| 简化机会挖掘 | `syn-find-simplifications` | Agent Note 提案（`.agents/notes/proposed/`） |
+| Agent Notes 治理 | `syn-archive-agent-notes` | 归档 / 密封后的决策语料 |
+| 文档结构与审计 | `syn-doc-standards` | 层级合理、无冗余的 docs/ |
+| 文字精简与审查 | `syn-prose-standard` | 契约保留的注释 / 文案 / 文档 |
+| 会话泄漏清理 | `syn-trim-cot-leakage` | 仓库视角自足的文字 |
 
 ## 7. Skill 速查表
 
@@ -105,13 +113,22 @@
 | `diagnosing-bugs` | 6 | 疑难 bug 诊断 |
 | `improve-codebase-architecture` | 6 | 架构审计 |
 | `setup-matt-pocock-skills` | 基建 | 一次性仓库配置（已完成） |
+| `syn-pre-push-checks` | 4 | 推送前最小证据选择与门禁 |
+| `syn-code-review` | 5 | 仓库规范面评审（分层 / Riverpod / 阻断清单） |
+| `syn-record-ui-demo` | 5 | UI 行为变更演示 GIF |
+| `syn-merging-stacked-prs` | 5 | 堆叠 PR 原生合并 |
+| `syn-find-simplifications` | 6 | 简化机会 → Agent Note 提案 |
+| `syn-archive-agent-notes` | 6 | 决策笔记生命周期 |
+| `syn-doc-standards` | 6 | 文档放置与语料审计 |
+| `syn-prose-standard` | 6 | 契约保留式文字编辑 |
+| `syn-trim-cot-leakage` | 6 | 清理会话视角泄漏 |
 
-本仓库用不到的 Skill 不在列（writing-*、文档处理、TS 专属、教学等）。
+本仓库用不到的 Skill 不在列（writing-*、文档处理、TS 专属、教学等）。`syn-*` 系借鉴自 deepseek-harness 的 DSH 范式，映射见 `docs/agents/skills.md`。
 
 ## 8. 硬性底线（所有改动都受约束，规范 §6/8/9）
 
 1. **实现前必须有 ticket**（哪怕只有一句话的 issue），杜绝无主开发。
-2. **提交前必过**：`flutter analyze` + `flutter test` + `dart format`。
+2. **提交前必过**：`flutter analyze`（零 error 零 warning）+ `dart format` + 最小测试证据（`syn-pre-push-checks`）；推送 / 合并前全量 `flutter test` 必须全绿。
 3. **新功能/核心逻辑必须带测试**；测试不过不合并。
 4. **重构与功能分开提交**；重构走 ADR-0001 增量纪律（路过即修）。
 5. **注释与文档用中文**；标识符、命令、标签保持英文（规范 §8.1）。

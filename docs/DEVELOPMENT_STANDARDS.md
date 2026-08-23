@@ -121,6 +121,11 @@ presentation → application → domain
 - 存放 `docs/adr/NNNN-slug.md`，序号递增。格式见 `0001`。
 - 技术选型若带锁定效应（数据库、FFI 方案、播放引擎）必须记录；普通库不记。
 
+### 决策护栏笔记（Agent Notes）
+
+- 简化提案与决策护栏记录在 `.agents/notes/`，生命周期（提案 → 实现 / 拒绝 → 密封归档）见其 README 与技能 `syn-archive-agent-notes`。
+- 三者分工：ADR 记难逆转架构决策；`docs/TECH_DEBT.md` 记欠账清单；Agent Notes 记约束未来变更的提案与护栏。
+
 ## 7. 测试要求
 
 - **测试是硬性要求**：新增/修改核心逻辑（domain、application、parser、import）必须带测试；纯 UI 改动可豁免但鼓励补 widget test。
@@ -143,7 +148,7 @@ presentation → application → domain
 ### 工具
 
 - **`flutter analyze` 必须零 error、零 warning** 才能提交。
-- 提交前跑 `dart format` 与 `flutter test`。
+- 提交前跑 `dart format` 与按 `.agents/skills/syn-pre-push-checks` 选择的最小测试证据；推送与合并前全量 `flutter test` 必须全绿。
 - 日志用 `logger` 包，**禁止 `print` / `debugPrint`**（现状 55 处待清理）。
 - 文案一律走 `l10n`（`app_localizations_zh.dart` / `app_localizations_en.dart`），禁止 UI 硬编码字符串。
 - 自用 lint 规则逐步在 `analysis_options.yaml` 增加（如 `avoid_print`、`prefer_single_quotes`），改动需评审。
@@ -153,7 +158,7 @@ presentation → application → domain
 
 - 提交信息格式：`type(scope): 描述`，type ∈ {feat, fix, refactor, chore, docs, test, perf, merge}。描述中文，简洁说明"为什么"而非"改了什么"。
 - 提交粒度：一个逻辑改动一个 commit；**禁止把重构与功能混在一个 commit**。
-- 提交前必须通过：`flutter analyze` + `flutter test` + `dart format`。
+- 提交前必须通过：`flutter analyze` + `dart format` + 最小测试证据（`.agents/skills/syn-pre-push-checks`）；推送与合并前全量 `flutter test` 必须全绿。
 - 分支：`main` 保持可发布；功能在 `feat/xxx` 分支开发。
 
 ## 10. 增量重构纪律（架构决策 0001）
