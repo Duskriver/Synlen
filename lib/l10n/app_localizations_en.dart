@@ -18,9 +18,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importBook => 'Import Book';
 
   @override
-  String get deleteBookConfirm => 'Are you sure you want to delete this book?';
-
-  @override
   String get cancel => 'Cancel';
 
   @override
@@ -30,9 +27,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get tableOfContents => 'Table of Contents';
-
-  @override
   String get chapter => 'Chapter';
 
   @override
@@ -40,21 +34,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get progress => 'Progress';
-
-  @override
-  String get webdavSync => 'WebDAV Sync';
-
-  @override
-  String get syncNow => 'Sync Now';
-
-  @override
-  String get serverUrl => 'Server URL';
-
-  @override
-  String get username => 'Username';
-
-  @override
-  String get password => 'Password';
 
   @override
   String get aiReading => 'AI Reading';
@@ -71,15 +50,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
-
-  @override
-  String get lastRead => 'Last Read';
-
-  @override
-  String get noBooks => 'No books yet';
-
-  @override
-  String get addYourFirstBook => 'Add your first book to get started';
 
   @override
   String get sortBy => 'Sort by';
@@ -106,9 +76,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loading => 'Loading';
 
   @override
-  String get retry => 'Retry';
-
-  @override
   String get back => 'Back';
 
   @override
@@ -131,9 +98,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectAll => 'Select All';
-
-  @override
-  String get deselectAll => 'Deselect All';
 
   @override
   String get sort => 'Sort';
@@ -206,9 +170,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failedToDelete => 'Failed to delete';
 
   @override
-  String get invalidFileSelected => 'Invalid file selected';
-
-  @override
   String get importing => 'Importing';
 
   @override
@@ -220,38 +181,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String successfullyImported(String title) {
-    return 'Successfully imported \"$title\"';
-  }
-
-  @override
   String importFailed(String error) {
     return 'Import failed: $error';
   }
 
   @override
-  String importingFile(String fileName) {
-    return 'Importing \"$fileName\"';
-  }
-
-  @override
   String get details => 'Details';
-
-  @override
-  String get syncCompleted => 'Sync completed';
-
-  @override
-  String syncFailed(String message) {
-    return 'Sync failed (long press sync button for settings): $message';
-  }
-
-  @override
-  String syncError(String error) {
-    return 'Sync error: $error';
-  }
-
-  @override
-  String get tapSyncLongPressSettings => 'Tap: Sync Now\nLong press: Settings';
 
   @override
   String errorLoadingLibrary(String error) {
@@ -292,9 +227,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expandAll => 'Expand all';
 
   @override
-  String get bookManifestNotFound => 'Book manifest not found';
-
-  @override
   String errorLoadingBook(String error) {
     return 'Error loading book: $error';
   }
@@ -315,84 +247,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chapterHasNoContent => 'This chapter has no content';
 
   @override
-  String get serverSettings => 'Server Settings';
-
-  @override
-  String get serverUrlHint =>
-      'https://cloud.example.com/remote.php/dav/files/username/';
-
-  @override
-  String get serverUrlRequired => 'Server URL is required';
-
-  @override
-  String get urlMustStartWith => 'URL must start with http:// or https://';
-
-  @override
-  String get usernameRequired => 'Username is required';
-
-  @override
-  String get passwordRequired => 'Password is required';
-
-  @override
-  String get remoteFolderPath => 'Remote Folder Path';
-
-  @override
-  String get remoteFolderHint => 'SynlenReader/';
-
-  @override
-  String get folderPathRequired => 'Folder path is required';
-
-  @override
-  String get testing => 'Testing';
-
-  @override
-  String get testConnection => 'Test Connection';
-
-  @override
-  String get syncInformation => 'Sync Information';
-
-  @override
-  String get lastSync => 'Last Sync';
-
-  @override
   String get never => 'Never';
-
-  @override
-  String get justNow => 'Just now';
-
-  @override
-  String minutesAgo(int minutes) {
-    return '${minutes}m ago';
-  }
-
-  @override
-  String hoursAgo(int hours) {
-    return '${hours}h ago';
-  }
-
-  @override
-  String daysAgo(int days) {
-    return '${days}d ago';
-  }
-
-  @override
-  String get lastError => 'Last Error';
-
-  @override
-  String get fillAllRequiredFields => 'Please fill in all required fields';
-
-  @override
-  String get connectionSuccessful => 'Connection successful!';
-
-  @override
-  String connectionFailed(String details) {
-    return 'Connection failed. Check your settings: $details';
-  }
-
-  @override
-  String errorWithDetails(String error) {
-    return 'Error: $error';
-  }
 
   @override
   String get failedToCreateCategory => 'Failed to create category!';
@@ -412,23 +267,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failedToDeleteCategory => 'Failed to delete category!';
-
-  @override
-  String get experimentalFeature => 'Experimental Feature';
-
-  @override
-  String get experimentalFeatureWarning =>
-      'WebDAV sync is currently in experimental stage and may have some issues or instability.\n\nPlease ensure before using:\n• Important data is backed up\n• Understand WebDAV server configuration\n• Network connection is stable\n\nPlease provide feedback if you encounter any issues.';
-
-  @override
-  String get iKnow => 'I Know';
-
-  @override
-  String get invalidFileType =>
-      'Invalid file type. Please select an EPUB file.';
-
-  @override
-  String get fileAccessError => 'Unable to access file';
 
   @override
   String get about => 'About';
@@ -475,17 +313,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appThemeVariant => 'Theme Variant';
 
   @override
-  String get appThemeVariantStandard => 'Standard';
-
-  @override
-  String get appThemeVariantEyeCare => 'Eye Care';
-
-  @override
   String get aiService => 'AI Service';
-
-  @override
-  String get aiServiceSubtitle =>
-      'Configure API keys for word explanation, sentence analysis and reading aloud';
 
   @override
   String get deepSeekApiKey => 'DeepSeek API Key';
@@ -544,9 +372,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkForUpdatesSubtitle => 'Check if a new version is available';
 
   @override
-  String get checkingForUpdates => 'Checking for updates...';
-
-  @override
   String get upToDate => 'Already up to date';
 
   @override
@@ -571,9 +396,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goToAppStore => 'Go to App Store';
 
   @override
-  String get downloadingUpdate => 'Downloading update…';
-
-  @override
   String get downloadFailed => 'Download failed';
 
   @override
@@ -582,9 +404,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get installUnknownSourcesRequired =>
       'Installing apps from unknown sources must be enabled in system settings';
-
-  @override
-  String get goToSettings => 'Open settings';
 
   @override
   String get noUpdateChannel =>
@@ -598,10 +417,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tipLongPressTab => 'Long press on tab to edit category';
-
-  @override
-  String get tipLongPressSync =>
-      'Long press sync button to access sync settings';
 
   @override
   String get tipLongPressNextTrack =>
@@ -651,21 +466,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Export your library data as a folder, including book files and database backup';
 
   @override
-  String get restoringBackup => 'Restoring Backup';
-
-  @override
   String get restoreCompleted => 'Restore Completed';
-
-  @override
-  String restoreSuccess(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'books',
-      one: 'book',
-    );
-    return 'Successfully restored $count $_temp0.';
-  }
 
   @override
   String restoreFailed(String message) {
@@ -777,12 +578,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerFollowAppTheme => 'Follow App Theme';
 
   @override
-  String get readerThemeLight => 'Light';
-
-  @override
-  String get readerThemeDark => 'Dark';
-
-  @override
   String get readerLinkHandlingSection => 'Link Handling';
 
   @override
@@ -817,12 +612,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readerOverrideFontFamily => 'Override Book Font';
-
-  @override
-  String get readerNoCustomFonts => 'No custom fonts imported yet';
-
-  @override
-  String get readerManageFonts => 'Manage Fonts';
 
   @override
   String get readerFontManageTip => 'Manage custom fonts in Settings.';

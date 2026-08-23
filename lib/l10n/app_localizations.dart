@@ -116,12 +116,6 @@ abstract class AppLocalizations {
   /// **'Import Book'**
   String get importBook;
 
-  /// Delete book confirmation message
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this book?'**
-  String get deleteBookConfirm;
-
   /// Cancel button label
   ///
   /// In en, this message translates to:
@@ -140,12 +134,6 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get confirm;
 
-  /// Table of contents label
-  ///
-  /// In en, this message translates to:
-  /// **'Table of Contents'**
-  String get tableOfContents;
-
   /// Chapter label
   ///
   /// In en, this message translates to:
@@ -163,36 +151,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Progress'**
   String get progress;
-
-  /// WebDAV sync label
-  ///
-  /// In en, this message translates to:
-  /// **'WebDAV Sync'**
-  String get webdavSync;
-
-  /// Sync now button label
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Now'**
-  String get syncNow;
-
-  /// Server URL label
-  ///
-  /// In en, this message translates to:
-  /// **'Server URL'**
-  String get serverUrl;
-
-  /// Username label
-  ///
-  /// In en, this message translates to:
-  /// **'Username'**
-  String get username;
-
-  /// Password label
-  ///
-  /// In en, this message translates to:
-  /// **'Password'**
-  String get password;
 
   /// AI reading settings section title
   ///
@@ -223,24 +181,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
-
-  /// Last read time label
-  ///
-  /// In en, this message translates to:
-  /// **'Last Read'**
-  String get lastRead;
-
-  /// Empty library message
-  ///
-  /// In en, this message translates to:
-  /// **'No books yet'**
-  String get noBooks;
-
-  /// Empty library hint
-  ///
-  /// In en, this message translates to:
-  /// **'Add your first book to get started'**
-  String get addYourFirstBook;
 
   /// Sort by label
   ///
@@ -290,12 +230,6 @@ abstract class AppLocalizations {
   /// **'Loading'**
   String get loading;
 
-  /// Retry button label
-  ///
-  /// In en, this message translates to:
-  /// **'Retry'**
-  String get retry;
-
   /// Back button label
   ///
   /// In en, this message translates to:
@@ -343,12 +277,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select All'**
   String get selectAll;
-
-  /// Deselect all button label
-  ///
-  /// In en, this message translates to:
-  /// **'Deselect All'**
-  String get deselectAll;
 
   /// Sort button tooltip
   ///
@@ -482,12 +410,6 @@ abstract class AppLocalizations {
   /// **'Failed to delete'**
   String get failedToDelete;
 
-  /// Invalid file error message
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid file selected'**
-  String get invalidFileSelected;
-
   /// Importing progress message
   ///
   /// In en, this message translates to:
@@ -506,53 +428,17 @@ abstract class AppLocalizations {
   /// **'{success} success, {failed} failed, {remaining} remaining'**
   String importingProgress(int success, int failed, int remaining);
 
-  /// Successfully imported message
-  ///
-  /// In en, this message translates to:
-  /// **'Successfully imported \"{title}\"'**
-  String successfullyImported(String title);
-
   /// Import failed error message
   ///
   /// In en, this message translates to:
   /// **'Import failed: {error}'**
   String importFailed(String error);
 
-  /// Importing file message
-  ///
-  /// In en, this message translates to:
-  /// **'Importing \"{fileName}\"'**
-  String importingFile(String fileName);
-
   /// Details button label
   ///
   /// In en, this message translates to:
   /// **'Details'**
   String get details;
-
-  /// Sync completed message
-  ///
-  /// In en, this message translates to:
-  /// **'Sync completed'**
-  String get syncCompleted;
-
-  /// Sync failed error message
-  ///
-  /// In en, this message translates to:
-  /// **'Sync failed (long press sync button for settings): {message}'**
-  String syncFailed(String message);
-
-  /// Sync error message
-  ///
-  /// In en, this message translates to:
-  /// **'Sync error: {error}'**
-  String syncError(String error);
-
-  /// Sync button tooltip
-  ///
-  /// In en, this message translates to:
-  /// **'Tap: Sync Now\nLong press: Settings'**
-  String get tapSyncLongPressSettings;
 
   /// Error loading library message
   ///
@@ -614,12 +500,6 @@ abstract class AppLocalizations {
   /// **'Expand all'**
   String get expandAll;
 
-  /// Book manifest not found error message
-  ///
-  /// In en, this message translates to:
-  /// **'Book manifest not found'**
-  String get bookManifestNotFound;
-
   /// Error loading book message
   ///
   /// In en, this message translates to:
@@ -656,143 +536,11 @@ abstract class AppLocalizations {
   /// **'This chapter has no content'**
   String get chapterHasNoContent;
 
-  /// Server settings section title
-  ///
-  /// In en, this message translates to:
-  /// **'Server Settings'**
-  String get serverSettings;
-
-  /// Server URL input hint
-  ///
-  /// In en, this message translates to:
-  /// **'https://cloud.example.com/remote.php/dav/files/username/'**
-  String get serverUrlHint;
-
-  /// Server URL validation error
-  ///
-  /// In en, this message translates to:
-  /// **'Server URL is required'**
-  String get serverUrlRequired;
-
-  /// URL format validation error
-  ///
-  /// In en, this message translates to:
-  /// **'URL must start with http:// or https://'**
-  String get urlMustStartWith;
-
-  /// Username validation error
-  ///
-  /// In en, this message translates to:
-  /// **'Username is required'**
-  String get usernameRequired;
-
-  /// Password validation error
-  ///
-  /// In en, this message translates to:
-  /// **'Password is required'**
-  String get passwordRequired;
-
-  /// Remote folder path label
-  ///
-  /// In en, this message translates to:
-  /// **'Remote Folder Path'**
-  String get remoteFolderPath;
-
-  /// Remote folder path hint
-  ///
-  /// In en, this message translates to:
-  /// **'SynlenReader/'**
-  String get remoteFolderHint;
-
-  /// Folder path validation error
-  ///
-  /// In en, this message translates to:
-  /// **'Folder path is required'**
-  String get folderPathRequired;
-
-  /// Testing connection status
-  ///
-  /// In en, this message translates to:
-  /// **'Testing'**
-  String get testing;
-
-  /// Test connection button label
-  ///
-  /// In en, this message translates to:
-  /// **'Test Connection'**
-  String get testConnection;
-
-  /// Sync information section title
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Information'**
-  String get syncInformation;
-
-  /// Last sync time label
-  ///
-  /// In en, this message translates to:
-  /// **'Last Sync'**
-  String get lastSync;
-
   /// Never synced status
   ///
   /// In en, this message translates to:
   /// **'Never'**
   String get never;
-
-  /// Just now time indicator
-  ///
-  /// In en, this message translates to:
-  /// **'Just now'**
-  String get justNow;
-
-  /// Minutes ago time indicator
-  ///
-  /// In en, this message translates to:
-  /// **'{minutes}m ago'**
-  String minutesAgo(int minutes);
-
-  /// Hours ago time indicator
-  ///
-  /// In en, this message translates to:
-  /// **'{hours}h ago'**
-  String hoursAgo(int hours);
-
-  /// Days ago time indicator
-  ///
-  /// In en, this message translates to:
-  /// **'{days}d ago'**
-  String daysAgo(int days);
-
-  /// Last error label
-  ///
-  /// In en, this message translates to:
-  /// **'Last Error'**
-  String get lastError;
-
-  /// Fill all fields validation message
-  ///
-  /// In en, this message translates to:
-  /// **'Please fill in all required fields'**
-  String get fillAllRequiredFields;
-
-  /// Connection test success message
-  ///
-  /// In en, this message translates to:
-  /// **'Connection successful!'**
-  String get connectionSuccessful;
-
-  /// Connection test failed message
-  ///
-  /// In en, this message translates to:
-  /// **'Connection failed. Check your settings: {details}'**
-  String connectionFailed(String details);
-
-  /// Error message with details
-  ///
-  /// In en, this message translates to:
-  /// **'Error: {error}'**
-  String errorWithDetails(String error);
 
   /// Failed to create category message
   ///
@@ -823,36 +571,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to delete category!'**
   String get failedToDeleteCategory;
-
-  /// Experimental feature title
-  ///
-  /// In en, this message translates to:
-  /// **'Experimental Feature'**
-  String get experimentalFeature;
-
-  /// Experimental feature warning content
-  ///
-  /// In en, this message translates to:
-  /// **'WebDAV sync is currently in experimental stage and may have some issues or instability.\n\nPlease ensure before using:\n• Important data is backed up\n• Understand WebDAV server configuration\n• Network connection is stable\n\nPlease provide feedback if you encounter any issues.'**
-  String get experimentalFeatureWarning;
-
-  /// I know button text
-  ///
-  /// In en, this message translates to:
-  /// **'I Know'**
-  String get iKnow;
-
-  /// Invalid file type error message
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid file type. Please select an EPUB file.'**
-  String get invalidFileType;
-
-  /// File access error message
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to access file'**
-  String get fileAccessError;
 
   /// About page title
   ///
@@ -926,29 +644,11 @@ abstract class AppLocalizations {
   /// **'Theme Variant'**
   String get appThemeVariant;
 
-  /// Theme variant: standard clean look
-  ///
-  /// In en, this message translates to:
-  /// **'Standard'**
-  String get appThemeVariantStandard;
-
-  /// Theme variant: warm-tinted eye-ease look
-  ///
-  /// In en, this message translates to:
-  /// **'Eye Care'**
-  String get appThemeVariantEyeCare;
-
   /// AI service settings section title
   ///
   /// In en, this message translates to:
   /// **'AI Service'**
   String get aiService;
-
-  /// AI service settings section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Configure API keys for word explanation, sentence analysis and reading aloud'**
-  String get aiServiceSubtitle;
 
   /// DeepSeek API Key setting title
   ///
@@ -1052,12 +752,6 @@ abstract class AppLocalizations {
   /// **'Check if a new version is available'**
   String get checkForUpdatesSubtitle;
 
-  /// Checking for updates progress message
-  ///
-  /// In en, this message translates to:
-  /// **'Checking for updates...'**
-  String get checkingForUpdates;
-
   /// Up to date message
   ///
   /// In en, this message translates to:
@@ -1106,12 +800,6 @@ abstract class AppLocalizations {
   /// **'Go to App Store'**
   String get goToAppStore;
 
-  /// Downloading update message
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading update…'**
-  String get downloadingUpdate;
-
   /// Download failed toast
   ///
   /// In en, this message translates to:
@@ -1129,12 +817,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Installing apps from unknown sources must be enabled in system settings'**
   String get installUnknownSourcesRequired;
-
-  /// Open system settings button
-  ///
-  /// In en, this message translates to:
-  /// **'Open settings'**
-  String get goToSettings;
 
   /// No update channel message
   ///
@@ -1159,12 +841,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press on tab to edit category'**
   String get tipLongPressTab;
-
-  /// Tip for long pressing sync button
-  ///
-  /// In en, this message translates to:
-  /// **'Long press sync button to access sync settings'**
-  String get tipLongPressSync;
 
   /// Tip for long pressing previous/next button
   ///
@@ -1244,23 +920,11 @@ abstract class AppLocalizations {
   /// **'Export your library data as a folder, including book files and database backup'**
   String get backupLibraryDescription;
 
-  /// Title shown while restore is in progress
-  ///
-  /// In en, this message translates to:
-  /// **'Restoring Backup'**
-  String get restoringBackup;
-
   /// Title shown when restore finishes
   ///
   /// In en, this message translates to:
   /// **'Restore Completed'**
   String get restoreCompleted;
-
-  /// Restore success message with book count
-  ///
-  /// In en, this message translates to:
-  /// **'Successfully restored {count} {count, plural, =1{book} other{books}}.'**
-  String restoreSuccess(int count);
 
   /// Restore failure message
   ///
@@ -1454,18 +1118,6 @@ abstract class AppLocalizations {
   /// **'Follow App Theme'**
   String get readerFollowAppTheme;
 
-  /// Light reader theme chip label
-  ///
-  /// In en, this message translates to:
-  /// **'Light'**
-  String get readerThemeLight;
-
-  /// Dark reader theme chip label
-  ///
-  /// In en, this message translates to:
-  /// **'Dark'**
-  String get readerThemeDark;
-
   /// Reader style sheet section title for link handling
   ///
   /// In en, this message translates to:
@@ -1537,18 +1189,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Override Book Font'**
   String get readerOverrideFontFamily;
-
-  /// Hint shown in the font picker when no fonts have been imported
-  ///
-  /// In en, this message translates to:
-  /// **'No custom fonts imported yet'**
-  String get readerNoCustomFonts;
-
-  /// Button/link label to navigate to the font management screen
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Fonts'**
-  String get readerManageFonts;
 
   /// Tip shown in the reader font subsection directing users to the settings screen
   ///
