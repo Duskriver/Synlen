@@ -126,4 +126,3 @@ class ReaderSettings {
   /// The [ColorScheme] currently selected from [SynlenThemePreset].
   ColorScheme get currentColorScheme => currentPreset.colorScheme;
 }
-

@@ -41,4 +41,3 @@ class ReaderPageAnimationSelector extends StatelessWidget {
     );
   }
 }
-

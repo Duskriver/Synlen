@@ -106,4 +106,3 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
     );
   }
 }
-

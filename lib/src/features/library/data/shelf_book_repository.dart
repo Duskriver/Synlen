@@ -356,45 +356,4 @@ class ShelfBookRepository {
       return left('Update progress failed: $e');
     }
   }
-
-  /// 标记书为已读完
-  Future<Either<String, bool>> markAsFinished(int bookId) async {
-    try {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(
-        _db.shelfBooks,
-      )..where((t) => t.id.equals(bookId))).write(
-        ShelfBooksCompanion(
-          isFinished: const Value(true),
-          readingProgress: const Value(1.0),
-          lastOpenedDate: Value(now),
-        ),
-      );
-      return right(true);
-    } catch (e) {
-      return left('Mark finished failed: $e');
-    }
-  }
-
-  /// 获取最近打开的书
-  Future<List<ShelfBook>> getRecentBooks({int limit = 10}) async {
-    final query = _db.select(_db.shelfBooks)
-      ..where((t) => t.isDeleted.equals(false) & t.lastOpenedDate.isNotNull())
-      ..orderBy([(t) => OrderingTerm.desc(t.lastOpenedDate)])
-      ..limit(limit);
-    return query.get();
-  }
-
-  /// 按标题或作者搜索书（大小写不敏感）
-  Future<List<ShelfBook>> searchBooks(String query) async {
-    final lowercaseQuery = query.toLowerCase();
-    final result = _db.select(_db.shelfBooks)
-      ..where(
-        (t) =>
-            t.isDeleted.equals(false) &
-            (t.title.lower().contains(lowercaseQuery) |
-                t.author.lower().contains(lowercaseQuery)),
-      );
-    return result.get();
-  }
 }

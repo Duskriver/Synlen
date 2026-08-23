@@ -258,14 +258,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 state: state,
                 tabController: _tabController!,
                 onSortPressed: () => _showStyleBottomSheet(context, ref, state),
-                onSelectionToggle: () => ref
-                    .read(bookshelfProvider.notifier)
-                    .toggleSelectionMode(),
+                onSelectionToggle: () =>
+                    ref.read(bookshelfProvider.notifier).toggleSelectionMode(),
                 onSelectAll: () =>
                     ref.read(bookshelfProvider.notifier).selectAll(),
-                onClearSelection: () => ref
-                    .read(bookshelfProvider.notifier)
-                    .clearSelection(),
+                onClearSelection: () =>
+                    ref.read(bookshelfProvider.notifier).clearSelection(),
                 onEditGroup: (group, l10n) =>
                     showEditGroupDialog(context, ref, group, l10n),
               ),
@@ -364,9 +362,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         child: StyleBottomSheet(
           currentSort: state.sortBy,
           onSortSelected: (sortBy) {
-            ref
-                .read(bookshelfProvider.notifier)
-                .changeSortOrder(sortBy);
+            ref.read(bookshelfProvider.notifier).changeSortOrder(sortBy);
             Navigator.pop(context);
           },
           currentViewMode: state.viewMode,
@@ -441,9 +437,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               onLongPress: () {
                 if (!state.isSelectionMode) {
                   HapticFeedback.selectionClick();
-                  ref
-                      .read(bookshelfProvider.notifier)
-                      .toggleSelectionMode();
+                  ref.read(bookshelfProvider.notifier).toggleSelectionMode();
                   ref
                       .read(bookshelfProvider.notifier)
                       .toggleItemSelection(book);
@@ -458,4 +452,3 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 }
-

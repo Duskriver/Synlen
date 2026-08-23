@@ -19,12 +19,13 @@ enum _DiscardAction { save, discard, cancel }
 /// 注：手写 FutureProvider（而非 @riverpod codegen）——riverpod_generator
 /// 4.0.4 无法把 drift DataClass 作为 provider 返回类型生成代码
 /// （InvalidTypeException），待生成器/Flutter SDK 升级后可视情况改回。
-final bookDetailProvider = FutureProvider.family<ShelfBook?, String>(
-  (ref, fileHash) async {
-    final repository = ref.watch(shelfBookRepositoryProvider);
-    return repository.getBookByHash(fileHash);
-  },
-);
+final bookDetailProvider = FutureProvider.family<ShelfBook?, String>((
+  ref,
+  fileHash,
+) async {
+  final repository = ref.watch(shelfBookRepositoryProvider);
+  return repository.getBookByHash(fileHash);
+});
 
 /// Book Detail Screen - Shows detailed information about a book, with support
 /// for inline editing of title, authors, and description.
@@ -400,4 +401,3 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     );
   }
 }
-

@@ -55,4 +55,3 @@ class SettingsAppHeader extends StatelessWidget {
     );
   }
 }
-

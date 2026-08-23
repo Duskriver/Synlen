@@ -373,4 +373,3 @@ class _TocDrawerState extends State<TocDrawer> {
     );
   }
 }
-

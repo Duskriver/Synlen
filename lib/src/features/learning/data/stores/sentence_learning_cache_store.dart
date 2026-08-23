@@ -18,9 +18,9 @@ class SentenceLearningCacheStore implements SentenceAnalysisStore {
 
   @override
   Future<SentenceAnalysis?> getSentence(String sentence) {
-    return (_db.select(_db.sentenceAnalyses)
-          ..where((t) => t.sentence.equals(sentence)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.sentenceAnalyses,
+    )..where((t) => t.sentence.equals(sentence))).getSingleOrNull();
   }
 
   @override
@@ -30,7 +30,9 @@ class SentenceLearningCacheStore implements SentenceAnalysisStore {
   }) async {
     final cached = await getSentence(sentence);
     if (cached == null) {
-      await _db.into(_db.sentenceAnalyses).insert(
+      await _db
+          .into(_db.sentenceAnalyses)
+          .insert(
             SentenceAnalysesCompanion.insert(
               sentence: sentence,
               analysis: analysis,
@@ -38,8 +40,9 @@ class SentenceLearningCacheStore implements SentenceAnalysisStore {
             ),
           );
     } else {
-      await (_db.update(_db.sentenceAnalyses)..where((t) => t.id.equals(cached.id)))
-          .write(
+      await (_db.update(
+        _db.sentenceAnalyses,
+      )..where((t) => t.id.equals(cached.id))).write(
         SentenceAnalysesCompanion(
           analysis: Value(analysis),
           lastUpdated: Value(DateTime.now()),

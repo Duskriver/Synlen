@@ -52,17 +52,13 @@ WordLearningCacheStore wordLearningCacheStore(Ref ref) {
 }
 
 @riverpod
-SentenceLearningCacheStore sentenceLearningCacheStore(
-  Ref ref,
-) {
+SentenceLearningCacheStore sentenceLearningCacheStore(Ref ref) {
   final db = ref.watch(appDatabaseProvider);
   return SentenceLearningCacheStore(db);
 }
 
 @riverpod
-SentencePronunciationCacheStore sentencePronunciationCacheStore(
-  Ref ref,
-) {
+SentencePronunciationCacheStore sentencePronunciationCacheStore(Ref ref) {
   final db = ref.watch(appDatabaseProvider);
   return SentencePronunciationCacheStore(db);
 }

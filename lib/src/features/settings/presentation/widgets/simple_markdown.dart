@@ -134,4 +134,3 @@ class SimpleMarkdown extends StatelessWidget {
     );
   }
 }
-

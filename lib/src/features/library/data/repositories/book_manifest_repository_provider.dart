@@ -6,9 +6,7 @@ part 'book_manifest_repository_provider.g.dart';
 
 /// 提供 [BookManifestRepository] 实例
 @riverpod
-BookManifestRepository bookManifestRepository(
-  Ref ref,
-) {
+BookManifestRepository bookManifestRepository(Ref ref) {
   final db = ref.watch(appDatabaseProvider);
   return BookManifestRepository(db: db);
 }

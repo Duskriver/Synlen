@@ -108,4 +108,3 @@ class SettingsAppearanceSection extends ConsumerWidget {
     );
   }
 }
-

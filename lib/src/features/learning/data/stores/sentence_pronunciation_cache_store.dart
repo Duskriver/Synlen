@@ -22,7 +22,9 @@ class SentencePronunciationCacheStore implements SentencePronunciationStore {
 
   @override
   Future<void> saveAudioPath(String sentence, String audioPath) async {
-    await _db.into(_db.sentencePronunciations).insertOnConflictUpdate(
+    await _db
+        .into(_db.sentencePronunciations)
+        .insertOnConflictUpdate(
           SentencePronunciation(
             id: sentencePronunciationId(sentence),
             sentence: sentence,

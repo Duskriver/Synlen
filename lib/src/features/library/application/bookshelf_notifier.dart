@@ -196,29 +196,6 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     );
   }
 
-  /// Enter a group (folder)
-  Future<void> enterGroup(int groupId) async {
-    state = const AsyncValue.loading();
-    // Clear filter when navigating into a group
-    state = await AsyncValue.guard(
-      () => _loadBooks(groupId: groupId, clearFilter: true),
-    );
-  }
-
-  /// Go back to root (simplified - no nesting)
-  Future<void> goBack() async {
-    final currentState = state.value;
-    if (currentState == null || currentState.currentGroupId == null) {
-      return;
-    }
-
-    state = const AsyncValue.loading();
-    // Clear group and filter when navigating back
-    state = await AsyncValue.guard(
-      () => _loadBooks(groupId: null, clearFilter: true),
-    );
-  }
-
   /// Create a new group (flat structure, no nesting)
   Future<int?> createGroup(String name) async {
     final result = await _repository.createGroup(name: name);

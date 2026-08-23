@@ -13,7 +13,6 @@ import 'package:synlen/src/features/library/data/book_manifest_repository.dart'
     as _i8;
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart'
     as _i3;
-import 'package:synlen/src/features/library/domain/book_manifest.dart' as _i9;
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart'
     as _i5;
 
@@ -316,39 +315,6 @@ class MockShelfBookRepository extends _i1.Mock
             ),
           )
           as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
-  _i4.Future<_i6.Either<String, bool>> markAsFinished(int? bookId) =>
-      (super.noSuchMethod(
-            Invocation.method(#markAsFinished, [bookId]),
-            returnValue: _i4.Future<_i6.Either<String, bool>>.value(
-              _i7.dummyValue<_i6.Either<String, bool>>(
-                this,
-                Invocation.method(#markAsFinished, [bookId]),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
-  _i4.Future<List<_i2.ShelfBook>> getRecentBooks({int? limit = 10}) =>
-      (super.noSuchMethod(
-            Invocation.method(#getRecentBooks, [], {#limit: limit}),
-            returnValue: _i4.Future<List<_i2.ShelfBook>>.value(
-              <_i2.ShelfBook>[],
-            ),
-          )
-          as _i4.Future<List<_i2.ShelfBook>>);
-
-  @override
-  _i4.Future<List<_i2.ShelfBook>> searchBooks(String? query) =>
-      (super.noSuchMethod(
-            Invocation.method(#searchBooks, [query]),
-            returnValue: _i4.Future<List<_i2.ShelfBook>>.value(
-              <_i2.ShelfBook>[],
-            ),
-          )
-          as _i4.Future<List<_i2.ShelfBook>>);
 }
 
 /// A class which mocks [BookManifestRepository].
@@ -367,22 +333,6 @@ class MockBookManifestRepository extends _i1.Mock
             returnValue: _i4.Future<_i2.BookManifest?>.value(),
           )
           as _i4.Future<_i2.BookManifest?>);
-
-  @override
-  _i4.Future<_i2.BookManifest?> getManifestById(int? id) =>
-      (super.noSuchMethod(
-            Invocation.method(#getManifestById, [id]),
-            returnValue: _i4.Future<_i2.BookManifest?>.value(),
-          )
-          as _i4.Future<_i2.BookManifest?>);
-
-  @override
-  _i4.Future<bool> manifestExists(String? fileHash) =>
-      (super.noSuchMethod(
-            Invocation.method(#manifestExists, [fileHash]),
-            returnValue: _i4.Future<bool>.value(false),
-          )
-          as _i4.Future<bool>);
 
   @override
   _i4.Future<_i6.Either<String, int>> saveManifest(
@@ -411,54 +361,4 @@ class MockBookManifestRepository extends _i1.Mock
             ),
           )
           as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
-  _i4.Future<_i6.Either<String, bool>> deleteManifest(int? id) =>
-      (super.noSuchMethod(
-            Invocation.method(#deleteManifest, [id]),
-            returnValue: _i4.Future<_i6.Either<String, bool>>.value(
-              _i7.dummyValue<_i6.Either<String, bool>>(
-                this,
-                Invocation.method(#deleteManifest, [id]),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
-  _i4.Future<List<_i2.BookManifest>> getAllManifests() =>
-      (super.noSuchMethod(
-            Invocation.method(#getAllManifests, []),
-            returnValue: _i4.Future<List<_i2.BookManifest>>.value(
-              <_i2.BookManifest>[],
-            ),
-          )
-          as _i4.Future<List<_i2.BookManifest>>);
-
-  @override
-  _i4.Future<_i9.SpineItem?> getSpineItemByIndex(
-    String? fileHash,
-    int? index,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getSpineItemByIndex, [fileHash, index]),
-            returnValue: _i4.Future<_i9.SpineItem?>.value(),
-          )
-          as _i4.Future<_i9.SpineItem?>);
-
-  @override
-  _i4.Future<int?> getSpineCount(String? fileHash) =>
-      (super.noSuchMethod(
-            Invocation.method(#getSpineCount, [fileHash]),
-            returnValue: _i4.Future<int?>.value(),
-          )
-          as _i4.Future<int?>);
-
-  @override
-  _i4.Future<List<_i9.TocItem>> getFlattenedToc(String? fileHash) =>
-      (super.noSuchMethod(
-            Invocation.method(#getFlattenedToc, [fileHash]),
-            returnValue: _i4.Future<List<_i9.TocItem>>.value(<_i9.TocItem>[]),
-          )
-          as _i4.Future<List<_i9.TocItem>>);
 }

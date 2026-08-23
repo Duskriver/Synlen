@@ -137,4 +137,3 @@ class SettingsFontSection extends ConsumerWidget {
     }
   }
 }
-

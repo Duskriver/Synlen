@@ -548,4 +548,3 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }
 }
-

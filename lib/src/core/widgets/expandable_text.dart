@@ -100,4 +100,3 @@ class _ExpandableTextState extends State<ExpandableText> {
     );
   }
 }
-

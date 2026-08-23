@@ -25,4 +25,3 @@ Future<File?> coverFile(Ref ref, String? relativePath) async {
     return null;
   }
 }
-

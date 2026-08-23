@@ -51,4 +51,3 @@ class ReaderLinkHandlingSelector extends StatelessWidget {
     );
   }
 }
-

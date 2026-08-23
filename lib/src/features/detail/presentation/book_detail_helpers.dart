@@ -45,4 +45,3 @@ Future<void> shareEpub(
     }
   }
 }
-

@@ -105,4 +105,3 @@ class _ImportProgressDialogState extends State<ImportProgressDialog> {
     );
   }
 }
-

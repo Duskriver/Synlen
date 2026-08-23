@@ -303,4 +303,3 @@ class SynlenThemeExtension extends ThemeExtension<SynlenThemeExtension> {
     return t < 0.5 ? this : other;
   }
 }
-
