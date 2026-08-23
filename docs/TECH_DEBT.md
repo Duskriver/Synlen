@@ -95,10 +95,10 @@
 
 ---
 
-## 7. 文档债（见 ADR-0002 与 CHANGELOG 漂移）
+## 7. 文档债（✅ 已清理，2026-08-24）
 
-- `CHANGELOG.md` 存在两个 `[v0.2.3]`、`[Unreleased]` 位置错误，且仍写「首次启动自动迁移旧数据 / 新增 `isar_migration_test`」，与 ADR-0002 的「无需迁移、删除 legacy 目录与该测试」相矛盾（该目录与测试实际已删除）。
-- `README.md` 与 `README_zh-CN.md` 内容重复，需同步维护。
+- ✅ `CHANGELOG.md` 漂移（重复 `[v0.2.3]`、`[Unreleased]` 位置、与 ADR-0002 矛盾的迁移表述）：经核对已在早期修正（单一版本号、`[Unreleased]` 归位、迁移表述与 ADR-0002 一致），本清单未及时销账；2026-08-24 进一步移除历史条目的英文重复段落，全文件为中文。
+- ✅ `README.md` 与 `README_zh-CN.md` 内容重复：2026-08-24 统一为单一中文 `README.md`，删除 `README_zh-CN.md`；同批删除过时的英文 `.github/prompts/AGENT_INSTRUCTIONS.md`（内容与规范 §8.1、ADR-0002 冲突）。
 
 ---
 
@@ -108,4 +108,3 @@
 2. **P1**：reader 补测试安全网 → 再谈 reader 分层重构。
 3. **P1**：learning 模块硬编码中文迁 l10n。
 4. **P2**：增量修 `presentation → data` 违规（优先 `style_bottom_sheet.dart` 绕过 provider 的深违规）。
-5. **P2**：CHANGELOG 修复与 README 去重。
