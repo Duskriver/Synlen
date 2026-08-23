@@ -30,9 +30,9 @@ class WordLearningCacheStore implements WordCacheStore {
 
   @override
   Future<WordPronunciation?> getPronunciation(String word) {
-    return (_db.select(_db.wordPronunciations)
-          ..where((t) => t.id.equals(wordPronunciationId(word))))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.wordPronunciations,
+    )..where((t) => t.id.equals(wordPronunciationId(word)))).getSingleOrNull();
   }
 
   @override
@@ -41,7 +41,9 @@ class WordLearningCacheStore implements WordCacheStore {
     required String context,
     required String explanation,
   }) async {
-    await _db.into(_db.wordExplanations).insertOnConflictUpdate(
+    await _db
+        .into(_db.wordExplanations)
+        .insertOnConflictUpdate(
           WordExplanation(
             id: wordExplanationId(word, context),
             word: word,
@@ -54,7 +56,9 @@ class WordLearningCacheStore implements WordCacheStore {
 
   @override
   Future<void> savePronunciationPath(String word, String audioPath) async {
-    await _db.into(_db.wordPronunciations).insertOnConflictUpdate(
+    await _db
+        .into(_db.wordPronunciations)
+        .insertOnConflictUpdate(
           WordPronunciation(
             id: wordPronunciationId(word),
             word: word,

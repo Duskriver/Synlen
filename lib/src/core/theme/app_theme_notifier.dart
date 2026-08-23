@@ -45,4 +45,3 @@ class AppThemeNotifier extends _$AppThemeNotifier {
     state = state.copyWith(themeVariant: variant);
   }
 }
-

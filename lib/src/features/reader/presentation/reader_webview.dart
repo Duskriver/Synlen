@@ -542,4 +542,3 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _api.updateTheme(width, height, theme.toMap());
   }
 }
-

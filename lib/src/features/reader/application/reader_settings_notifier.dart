@@ -144,4 +144,3 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     state = state.copyWith(volumeKeyTurnsPage: value);
   }
 }
-

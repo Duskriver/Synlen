@@ -69,4 +69,3 @@ class ThemeVariantChip extends StatelessWidget {
     );
   }
 }
-

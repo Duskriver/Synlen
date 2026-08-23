@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/application/progress_log.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service_provider.dart';
@@ -72,34 +71,6 @@ class LibraryNotifier extends _$LibraryNotifier {
       return LibraryLoaded(books);
     } catch (e) {
       return LibraryError('Failed to load books: $e');
-    }
-  }
-
-  /// Import a new book from file
-  Future<Either<String, ShelfBook>> importBook(File file) async {
-    state = const AsyncValue.loading();
-
-    try {
-      final importService = ref.read(epubImportServiceProvider);
-      // Single call to import service handles everything
-      final importResult = await importService.importBook(file);
-
-      if (importResult.isLeft()) {
-        final error = importResult.getLeft().toNullable()!;
-        state = AsyncValue.data(LibraryError(error));
-        return left(error);
-      }
-
-      final book = importResult.getRight().toNullable()!;
-
-      // Reload books to update UI
-      state = await AsyncValue.guard(() => _loadBooks());
-
-      return right(book);
-    } catch (e) {
-      final error = 'Import failed: $e';
-      state = AsyncValue.data(LibraryError(error));
-      return left(error);
     }
   }
 
@@ -254,28 +225,6 @@ class LibraryNotifier extends _$LibraryNotifier {
       return right(true);
     } catch (e) {
       return left('Delete failed: $e');
-    }
-  }
-
-  /// Update book group
-  Future<Either<String, bool>> updateGroup({
-    required int bookId,
-    String? groupName,
-  }) async {
-    try {
-      final repository = ref.read(shelfBookRepositoryProvider);
-      final result = await repository.updateBookGroup(
-        bookId: bookId,
-        groupName: groupName,
-      );
-
-      if (result.isRight()) {
-        await refresh();
-      }
-
-      return result;
-    } catch (e) {
-      return left('Update category failed: $e');
     }
   }
 }

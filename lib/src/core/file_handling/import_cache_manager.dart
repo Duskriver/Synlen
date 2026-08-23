@@ -235,27 +235,4 @@ class ImportCacheManager {
       appLogger.w('Warning: Failed to clear import cache: $e');
     }
   }
-
-  /// Gets the size of the import cache directory in bytes
-  ///
-  /// Useful for displaying cache usage to users.
-  Future<int> getCacheSize() async {
-    try {
-      final cacheDir = await _getCacheDirectory();
-      if (!await cacheDir.exists()) {
-        return 0;
-      }
-
-      int totalSize = 0;
-      await for (final entity in cacheDir.list()) {
-        if (entity is File) {
-          final stat = await entity.stat();
-          totalSize += stat.size;
-        }
-      }
-      return totalSize;
-    } catch (e) {
-      return 0;
-    }
-  }
 }

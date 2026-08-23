@@ -132,4 +132,3 @@ class BookCover extends ConsumerWidget {
     );
   }
 }
-

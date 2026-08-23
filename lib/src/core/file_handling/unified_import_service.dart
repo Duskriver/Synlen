@@ -476,13 +476,6 @@ class UnifiedImportService {
 
   // ==================== Utility Methods ====================
 
-  /// Get the total size of the import cache
-  ///
-  /// Useful for displaying cache statistics to users.
-  Future<int> getCacheSize() async {
-    return await _cacheManager.getCacheSize();
-  }
-
   /// Clear all cached import files
   ///
   /// Use with caution as this removes all temporary import cache.

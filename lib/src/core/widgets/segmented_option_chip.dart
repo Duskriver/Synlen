@@ -113,4 +113,3 @@ class SegmentedOptionChip extends StatelessWidget {
     );
   }
 }
-

@@ -36,7 +36,7 @@ final class BookshelfNotifierProvider
   BookshelfNotifier create() => BookshelfNotifier();
 }
 
-String _$bookshelfNotifierHash() => r'aff41ebd22c85fa94a8e6ecd6480b99c3642b803';
+String _$bookshelfNotifierHash() => r'dbb563a15bb8f27f7fd11df9fb618ef30a820234';
 
 /// Notifier for managing bookshelf operations with dependency injection
 

@@ -241,4 +241,3 @@ class _MetadataChip extends StatelessWidget {
     );
   }
 }
-

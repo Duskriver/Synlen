@@ -310,4 +310,3 @@ class _TopClipper extends CustomClipper<Rect> {
   bool shouldReclip(_TopClipper oldClipper) =>
       oldClipper.clipAmount != clipAmount;
 }
-

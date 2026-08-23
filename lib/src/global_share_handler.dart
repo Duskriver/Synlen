@@ -24,8 +24,8 @@ class PendingRouteFileNotifier extends Notifier<String?> {
 
 final pendingRouteFileProvider =
     NotifierProvider<PendingRouteFileNotifier, String?>(
-  PendingRouteFileNotifier.new,
-);
+      PendingRouteFileNotifier.new,
+    );
 
 /// A transparent widget that lives above the app navigator and listens for
 /// incoming EPUB files from the OS ("Open with" / share-sheet).

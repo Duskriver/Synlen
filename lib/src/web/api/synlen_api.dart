@@ -85,4 +85,3 @@ class SynlenApi {
   Future<void> checkTapElementAt(double x, double y) =>
       _bridge.evaluate('window.api.checkTapElementAt($x, $y)');
 }
-

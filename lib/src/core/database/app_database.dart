@@ -110,16 +110,19 @@ class ShelfBooks extends Table {
   TextColumn get coverPath => text().nullable()();
   TextColumn get title => text()();
   TextColumn get author => text()();
-  TextColumn get authors =>
-      text().map(const StringListConverter()).withDefault(const Constant('[]'))();
+  TextColumn get authors => text()
+      .map(const StringListConverter())
+      .withDefault(const Constant('[]'))();
   TextColumn get description => text().nullable()();
-  TextColumn get subjects =>
-      text().map(const StringListConverter()).withDefault(const Constant('[]'))();
+  TextColumn get subjects => text()
+      .map(const StringListConverter())
+      .withDefault(const Constant('[]'))();
   IntColumn get totalChapters => integer().withDefault(const Constant(0))();
   TextColumn get epubVersion => text().withDefault(const Constant(''))();
   IntColumn get importDate => integer()();
   IntColumn get direction => integer().withDefault(const Constant(0))();
-  IntColumn get currentChapterIndex => integer().withDefault(const Constant(0))();
+  IntColumn get currentChapterIndex =>
+      integer().withDefault(const Constant(0))();
   RealColumn get readingProgress => real().withDefault(const Constant(0.0))();
   RealColumn get chapterScrollPosition =>
       real().nullable().withDefault(const Constant(0.0))();
@@ -205,7 +208,7 @@ class SentencePronunciations extends Table {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
-      : super(executor ?? driftDatabase(name: 'synlen'));
+    : super(executor ?? driftDatabase(name: 'synlen'));
 
   AppDatabase.forTesting(super.executor);
 

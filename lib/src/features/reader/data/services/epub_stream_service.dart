@@ -102,4 +102,3 @@ class EpubStreamService {
     'js': 'application/javascript',
   };
 }
-

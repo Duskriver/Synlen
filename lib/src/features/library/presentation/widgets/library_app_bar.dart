@@ -111,7 +111,9 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                         padding: const EdgeInsets.only(right: 24),
                         minimumSize: const Size(48, 48),
                         alignment: Alignment.centerLeft,
-                        foregroundColor: Theme.of(context).colorScheme.onSurface,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface,
                       ),
                       onPressed: () => context.push('/settings'),
                       child: Text(
