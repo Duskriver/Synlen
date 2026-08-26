@@ -3,10 +3,8 @@ import 'package:synlen/src/features/library/application/progress_log.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service_provider.dart';
 import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
 
 part 'library_notifier.g.dart';
@@ -42,37 +40,12 @@ class ImportProgress extends ProgressLog {
        );
 }
 
-/// State for library operations (updated for ShelfBook)
-sealed class LibraryState {}
-
-class LibraryLoaded extends LibraryState {
-  final List<ShelfBook> books;
-  LibraryLoaded(this.books);
-}
-
-class LibraryError extends LibraryState {
-  final String message;
-  LibraryError(this.message);
-}
-
-/// Notifier for managing library operations with dependency injection
+/// 导入编排 Notifier:仅承载导入/删除流程,书架数据源是 bookshelfProvider,
+/// 这里不持有任何状态。
 @riverpod
 class LibraryNotifier extends _$LibraryNotifier {
   @override
-  Future<LibraryState> build() async {
-    return await _loadBooks();
-  }
-
-  /// Load all books from database
-  Future<LibraryState> _loadBooks() async {
-    try {
-      final repository = ref.read(shelfBookRepositoryProvider);
-      final books = await repository.getAllBooks();
-      return LibraryLoaded(books);
-    } catch (e) {
-      return LibraryError('Failed to load books: $e');
-    }
-  }
+  void build() {}
 
   Stream<ProgressLog> importLibraryFromFolder(BackupPaths backupPaths) async* {
     yield ProgressLog(
@@ -100,7 +73,6 @@ class LibraryNotifier extends _$LibraryNotifier {
       'Import from folder completed. Refreshing library...',
       ProgressLogType.success,
     );
-    await refresh();
   }
 
   /// Stream pipeline to process files one by one: Cache -> Import -> Clean.
@@ -193,38 +165,5 @@ class LibraryNotifier extends _$LibraryNotifier {
       'Import completed. Refreshing library...',
       ProgressLogType.success,
     );
-    await refresh();
-  }
-
-  /// Refresh book list
-  Future<void> refresh() async {
-    state = await AsyncValue.guard(() => _loadBooks());
-  }
-
-  /// Delete a book (removes .epub file, cover, and database records)
-  Future<Either<String, bool>> deleteBook(int bookId) async {
-    try {
-      final repository = ref.read(shelfBookRepositoryProvider);
-      final importService = ref.read(epubImportServiceProvider);
-
-      final book = await repository.getBookById(bookId);
-      if (book == null) {
-        return left('Book not found');
-      }
-
-      // Let the import service coordinate soft-delete, manifest cleanup,
-      // file deletion, and rollback behavior in one place.
-      final deleteResult = await importService.deleteBook(book);
-      if (deleteResult.isLeft()) {
-        return left(deleteResult.getLeft().toNullable()!);
-      }
-
-      // Refresh list only after everything has succeeded.
-      await refresh();
-
-      return right(true);
-    } catch (e) {
-      return left('Delete failed: $e');
-    }
   }
 }
