@@ -55,16 +55,22 @@ class ImportCacheManager {
   /// For [AndroidUriPath]: Streams content from SAF URI to cache file
   /// For [IOSFilePath]: Directly copies file to cache
   ///
+  /// 缓存文件保留原始扩展名（.epub/.txt），供格式识别兜底。
+  ///
   /// Returns an [ImportableEpub] containing the cached file, its hash,
   /// and the original file name.
   Future<ImportableEpub> createCacheAndHash(PlatformPath platformPath) async {
     final cacheDir = await _getCacheDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final tempCachePath = path.join(cacheDir.path, 'temp_$timestamp.epub');
-    final tempCacheFile = File(tempCachePath);
 
     // Extract original file name from platform path
-    String originalName = platformPath.name;
+    final originalName = platformPath.name;
+    final dotIndex = originalName.lastIndexOf('.');
+    final ext = dotIndex >= 0
+        ? originalName.substring(dotIndex).toLowerCase()
+        : '.epub';
+    final tempCachePath = path.join(cacheDir.path, 'temp_$timestamp$ext');
+    final tempCacheFile = File(tempCachePath);
 
     switch (platformPath) {
       case AndroidUriPath(:final uri):

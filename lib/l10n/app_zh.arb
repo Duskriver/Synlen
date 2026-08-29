@@ -297,6 +297,10 @@
       }
     }
   },
+  "bookFormatTxt": "TXT",
+  "@bookFormatTxt": {
+    "description": "TXT 格式书籍的格式标签"
+  },
   "epubVersion": "EPUB {version}",
   "@epubVersion": {
     "description": "EPUB 版本标签",

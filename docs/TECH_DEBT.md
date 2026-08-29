@@ -92,6 +92,12 @@
 - ✅ reader 首批 27 用例（issue #5）：`ReaderSettings` / `EpubTheme` / `ReaderSettingsNotifier` / `EpubWebViewHandler`。
 - ✅ reader 第二批 12 用例：`BookSession`（spine 过滤、TOC 查找映射、URL/索引解析、激活目录解析、进度防抖落库、初始位置）。
 - ⏳ 仍无 widget test；reader 的 6 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；library / settings / detail 仍零测试。
+- ✅ TXT 支持批次（2026-08-26）：TXT 解码/章节切分/内容供给/DB v1→v2 迁移，新增 4 个测试文件 45 用例。
+- ✅ TXT 支持批次随修的预存在缺陷（2026-08-26，均已修复并带回归测试）：
+  - `LibraryNotifier` 为 autoDispose，导入流是 async*（方法体推迟到对话框订阅才执行），调用方只 `read` 无监听导致 provider 先被销毁，导入必然中断 → 改 `@Riverpod(keepAlive: true)`；
+  - TXT 章节 XHTML 缺 `xmlns`，按 `application/xhtml+xml` 解析时元素无 HTML 语义，分页引擎注入样式失败、段落展平 → 补命名空间；
+  - `saveBook`/`saveManifest` 对新书（id=0）显式写主键 rowid 0，第二次导入的 upsert 覆盖第一本书整行（书架上永远只剩最后一本）→ id=0 时主键缺席走自增；
+  - 导入失败回滚调 `_deleteFile(绝对路径)`，而该方法把入参当相对路径再拼 `documentsPath`，拼出的路径不存在导致回滚从未真正删除书籍文件，且删除未 await 存在竞态 → `_deleteFile` 兼容相对/绝对路径，回滚处改为等待删除完成（2026-08-29）。
 
 ---
 
@@ -99,6 +105,28 @@
 
 - ✅ `CHANGELOG.md` 漂移（重复 `[v0.2.3]`、`[Unreleased]` 位置、与 ADR-0002 矛盾的迁移表述）：经核对已在早期修正（单一版本号、`[Unreleased]` 归位、迁移表述与 ADR-0002 一致），本清单未及时销账；2026-08-24 进一步移除历史条目的英文重复段落，全文件为中文。
 - ✅ `README.md` 与 `README_zh-CN.md` 内容重复：2026-08-24 统一为单一中文 `README.md`，删除 `README_zh-CN.md`；同批删除过时的英文 `.github/prompts/AGENT_INSTRUCTIONS.md`（内容与规范 §8.1、ADR-0002 冲突）。
+
+---
+
+## 8. `Epub` 命名与实际多格式职责不符（2026-08-26 新增）
+
+TXT 支持落地后，以下以 `Epub` 命名的组件实际已同时处理 EPUB 与 TXT（经 `BookFormat` 分支）：
+
+| 组件 | 实际职责 |
+|------|----------|
+| `EpubImportService` / `epub_import_workers.dart` | 导入编排，内部按格式分发到 EPUB/TXT 解析 |
+| `EpubWebViewHandler` 与 `epub://` 虚拟域 | 阅读内容供给，TXT 章节也经此域返回 XHTML |
+| 原生侧 `pickEpubFiles` / `isEpubFile`（Kotlin/Swift） | 文件/文件夹选择，已接受 `.txt` |
+
+修复方向：后续路过时统一改为格式中立命名（如 `BookImportService`、`BookWebViewHandler`、`book://` 域）。虚拟域改名牵连 WebView handler、URL 拦截规则与 JS 侧资源引用，需独立 ticket 评估，不在本次范围内。
+
+---
+
+## 9. 「打开方式 / 分享进入」intent-filter 已声明但无处理代码（2026-08-29 新增）
+
+`AndroidManifest.xml` 已为 TXT 新增（EPUB 更早就有）`ACTION_VIEW` / `ACTION_SEND` 的 intent-filter，iOS `Info.plist` 也注册了文档类型，因此系统层面 Synlen 会出现在「打开方式」列表中；但 Dart 与原生两侧都没有接收 intent 并转入导入流程的代码，点进来什么也不会发生。对 EPUB 而言是预存在缺口，TXT 放大其暴露面。
+
+修复方向：接入 intent 接收（如 `receive_sharing_intent` / `app_links`），把 content URI 交给既有 `importPipelineStream`；需真机验证 SAF 权限与时序，走独立 ticket。
 
 ---
 

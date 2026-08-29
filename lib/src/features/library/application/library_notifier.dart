@@ -42,7 +42,12 @@ class ImportProgress extends ProgressLog {
 
 /// 导入编排 Notifier:仅承载导入/删除流程,书架数据源是 bookshelfProvider,
 /// 这里不持有任何状态。
-@riverpod
+///
+/// 必须 keepAlive：`importPipelineStream` / `importLibraryFromFolder` 是
+/// async* 函数，方法体推迟到 UI 对话框监听流之后才执行；若为 autoDispose，
+/// 调用方只做 `read`（无监听），provider 会在流开始运行前被销毁，方法体内的
+/// `ref.read` 随之抛出 "Cannot use the Ref ... after it has been disposed"。
+@Riverpod(keepAlive: true)
 class LibraryNotifier extends _$LibraryNotifier {
   @override
   void build() {}

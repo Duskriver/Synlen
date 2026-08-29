@@ -486,6 +486,16 @@ class $ShelfBooksTable extends ShelfBooks
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<BookFormat, String> format =
+      GeneratedColumn<String>(
+        'format',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('epub'),
+      ).withConverter<BookFormat>($ShelfBooksTable.$converterformat);
   static const VerificationMeta _importDateMeta = const VerificationMeta(
     'importDate',
   );
@@ -631,6 +641,7 @@ class $ShelfBooksTable extends ShelfBooks
     subjects,
     totalChapters,
     epubVersion,
+    format,
     importDate,
     direction,
     currentChapterIndex,
@@ -863,6 +874,12 @@ class $ShelfBooksTable extends ShelfBooks
         DriftSqlType.string,
         data['${effectivePrefix}epub_version'],
       )!,
+      format: $ShelfBooksTable.$converterformat.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}format'],
+        )!,
+      ),
       importDate: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}import_date'],
@@ -919,6 +936,8 @@ class $ShelfBooksTable extends ShelfBooks
       const StringListConverter();
   static TypeConverter<List<String>, String> $convertersubjects =
       const StringListConverter();
+  static TypeConverter<BookFormat, String> $converterformat =
+      const BookFormatConverter();
 }
 
 class ShelfBook extends DataClass implements Insertable<ShelfBook> {
@@ -933,6 +952,9 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
   final List<String> subjects;
   final int totalChapters;
   final String epubVersion;
+
+  /// 书籍格式（'epub' / 'txt'），v1 存量数据默认 EPUB
+  final BookFormat format;
   final int importDate;
   final int direction;
   final int currentChapterIndex;
@@ -956,6 +978,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     required this.subjects,
     required this.totalChapters,
     required this.epubVersion,
+    required this.format,
     required this.importDate,
     required this.direction,
     required this.currentChapterIndex,
@@ -996,6 +1019,11 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     }
     map['total_chapters'] = Variable<int>(totalChapters);
     map['epub_version'] = Variable<String>(epubVersion);
+    {
+      map['format'] = Variable<String>(
+        $ShelfBooksTable.$converterformat.toSql(format),
+      );
+    }
     map['import_date'] = Variable<int>(importDate);
     map['direction'] = Variable<int>(direction);
     map['current_chapter_index'] = Variable<int>(currentChapterIndex);
@@ -1037,6 +1065,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       subjects: Value(subjects),
       totalChapters: Value(totalChapters),
       epubVersion: Value(epubVersion),
+      format: Value(format),
       importDate: Value(importDate),
       direction: Value(direction),
       currentChapterIndex: Value(currentChapterIndex),
@@ -1076,6 +1105,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       subjects: serializer.fromJson<List<String>>(json['subjects']),
       totalChapters: serializer.fromJson<int>(json['totalChapters']),
       epubVersion: serializer.fromJson<String>(json['epubVersion']),
+      format: serializer.fromJson<BookFormat>(json['format']),
       importDate: serializer.fromJson<int>(json['importDate']),
       direction: serializer.fromJson<int>(json['direction']),
       currentChapterIndex: serializer.fromJson<int>(
@@ -1108,6 +1138,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       'subjects': serializer.toJson<List<String>>(subjects),
       'totalChapters': serializer.toJson<int>(totalChapters),
       'epubVersion': serializer.toJson<String>(epubVersion),
+      'format': serializer.toJson<BookFormat>(format),
       'importDate': serializer.toJson<int>(importDate),
       'direction': serializer.toJson<int>(direction),
       'currentChapterIndex': serializer.toJson<int>(currentChapterIndex),
@@ -1136,6 +1167,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     List<String>? subjects,
     int? totalChapters,
     String? epubVersion,
+    BookFormat? format,
     int? importDate,
     int? direction,
     int? currentChapterIndex,
@@ -1159,6 +1191,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     subjects: subjects ?? this.subjects,
     totalChapters: totalChapters ?? this.totalChapters,
     epubVersion: epubVersion ?? this.epubVersion,
+    format: format ?? this.format,
     importDate: importDate ?? this.importDate,
     direction: direction ?? this.direction,
     currentChapterIndex: currentChapterIndex ?? this.currentChapterIndex,
@@ -1196,6 +1229,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       epubVersion: data.epubVersion.present
           ? data.epubVersion.value
           : this.epubVersion,
+      format: data.format.present ? data.format.value : this.format,
       importDate: data.importDate.present
           ? data.importDate.value
           : this.importDate,
@@ -1238,6 +1272,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
           ..write('subjects: $subjects, ')
           ..write('totalChapters: $totalChapters, ')
           ..write('epubVersion: $epubVersion, ')
+          ..write('format: $format, ')
           ..write('importDate: $importDate, ')
           ..write('direction: $direction, ')
           ..write('currentChapterIndex: $currentChapterIndex, ')
@@ -1266,6 +1301,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     subjects,
     totalChapters,
     epubVersion,
+    format,
     importDate,
     direction,
     currentChapterIndex,
@@ -1293,6 +1329,7 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
           other.subjects == this.subjects &&
           other.totalChapters == this.totalChapters &&
           other.epubVersion == this.epubVersion &&
+          other.format == this.format &&
           other.importDate == this.importDate &&
           other.direction == this.direction &&
           other.currentChapterIndex == this.currentChapterIndex &&
@@ -1318,6 +1355,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
   final Value<List<String>> subjects;
   final Value<int> totalChapters;
   final Value<String> epubVersion;
+  final Value<BookFormat> format;
   final Value<int> importDate;
   final Value<int> direction;
   final Value<int> currentChapterIndex;
@@ -1341,6 +1379,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     this.subjects = const Value.absent(),
     this.totalChapters = const Value.absent(),
     this.epubVersion = const Value.absent(),
+    this.format = const Value.absent(),
     this.importDate = const Value.absent(),
     this.direction = const Value.absent(),
     this.currentChapterIndex = const Value.absent(),
@@ -1365,6 +1404,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     this.subjects = const Value.absent(),
     this.totalChapters = const Value.absent(),
     this.epubVersion = const Value.absent(),
+    this.format = const Value.absent(),
     required int importDate,
     this.direction = const Value.absent(),
     this.currentChapterIndex = const Value.absent(),
@@ -1393,6 +1433,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     Expression<String>? subjects,
     Expression<int>? totalChapters,
     Expression<String>? epubVersion,
+    Expression<String>? format,
     Expression<int>? importDate,
     Expression<int>? direction,
     Expression<int>? currentChapterIndex,
@@ -1417,6 +1458,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
       if (subjects != null) 'subjects': subjects,
       if (totalChapters != null) 'total_chapters': totalChapters,
       if (epubVersion != null) 'epub_version': epubVersion,
+      if (format != null) 'format': format,
       if (importDate != null) 'import_date': importDate,
       if (direction != null) 'direction': direction,
       if (currentChapterIndex != null)
@@ -1445,6 +1487,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     Value<List<String>>? subjects,
     Value<int>? totalChapters,
     Value<String>? epubVersion,
+    Value<BookFormat>? format,
     Value<int>? importDate,
     Value<int>? direction,
     Value<int>? currentChapterIndex,
@@ -1469,6 +1512,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
       subjects: subjects ?? this.subjects,
       totalChapters: totalChapters ?? this.totalChapters,
       epubVersion: epubVersion ?? this.epubVersion,
+      format: format ?? this.format,
       importDate: importDate ?? this.importDate,
       direction: direction ?? this.direction,
       currentChapterIndex: currentChapterIndex ?? this.currentChapterIndex,
@@ -1524,6 +1568,11 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     if (epubVersion.present) {
       map['epub_version'] = Variable<String>(epubVersion.value);
     }
+    if (format.present) {
+      map['format'] = Variable<String>(
+        $ShelfBooksTable.$converterformat.toSql(format.value),
+      );
+    }
     if (importDate.present) {
       map['import_date'] = Variable<int>(importDate.value);
     }
@@ -1576,6 +1625,7 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
           ..write('subjects: $subjects, ')
           ..write('totalChapters: $totalChapters, ')
           ..write('epubVersion: $epubVersion, ')
+          ..write('format: $format, ')
           ..write('importDate: $importDate, ')
           ..write('direction: $direction, ')
           ..write('currentChapterIndex: $currentChapterIndex, ')
@@ -1672,6 +1722,16 @@ class $BookManifestsTable extends BookManifests
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<BookFormat, String> format =
+      GeneratedColumn<String>(
+        'format',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('epub'),
+      ).withConverter<BookFormat>($BookManifestsTable.$converterformat);
   static const VerificationMeta _lastUpdatedMeta = const VerificationMeta(
     'lastUpdated',
   );
@@ -1692,6 +1752,7 @@ class $BookManifestsTable extends BookManifests
     toc,
     manifest,
     epubVersion,
+    format,
     lastUpdated,
   ];
   @override
@@ -1793,6 +1854,12 @@ class $BookManifestsTable extends BookManifests
         DriftSqlType.string,
         data['${effectivePrefix}epub_version'],
       )!,
+      format: $BookManifestsTable.$converterformat.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}format'],
+        )!,
+      ),
       lastUpdated: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_updated'],
@@ -1811,6 +1878,8 @@ class $BookManifestsTable extends BookManifests
       const TocListConverter();
   static TypeConverter<List<ManifestItem>, String> $convertermanifest =
       const ManifestListConverter();
+  static TypeConverter<BookFormat, String> $converterformat =
+      const BookFormatConverter();
 }
 
 class BookManifest extends DataClass implements Insertable<BookManifest> {
@@ -1821,6 +1890,9 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
   final List<TocItem> toc;
   final List<ManifestItem> manifest;
   final String epubVersion;
+
+  /// 书籍格式（'epub' / 'txt'），v1 存量数据默认 EPUB
+  final BookFormat format;
   final DateTime lastUpdated;
   const BookManifest({
     required this.id,
@@ -1830,6 +1902,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
     required this.toc,
     required this.manifest,
     required this.epubVersion,
+    required this.format,
     required this.lastUpdated,
   });
   @override
@@ -1854,6 +1927,11 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
       );
     }
     map['epub_version'] = Variable<String>(epubVersion);
+    {
+      map['format'] = Variable<String>(
+        $BookManifestsTable.$converterformat.toSql(format),
+      );
+    }
     map['last_updated'] = Variable<DateTime>(lastUpdated);
     return map;
   }
@@ -1867,6 +1945,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
       toc: Value(toc),
       manifest: Value(manifest),
       epubVersion: Value(epubVersion),
+      format: Value(format),
       lastUpdated: Value(lastUpdated),
     );
   }
@@ -1884,6 +1963,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
       toc: serializer.fromJson<List<TocItem>>(json['toc']),
       manifest: serializer.fromJson<List<ManifestItem>>(json['manifest']),
       epubVersion: serializer.fromJson<String>(json['epubVersion']),
+      format: serializer.fromJson<BookFormat>(json['format']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
     );
   }
@@ -1898,6 +1978,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
       'toc': serializer.toJson<List<TocItem>>(toc),
       'manifest': serializer.toJson<List<ManifestItem>>(manifest),
       'epubVersion': serializer.toJson<String>(epubVersion),
+      'format': serializer.toJson<BookFormat>(format),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
     };
   }
@@ -1910,6 +1991,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
     List<TocItem>? toc,
     List<ManifestItem>? manifest,
     String? epubVersion,
+    BookFormat? format,
     DateTime? lastUpdated,
   }) => BookManifest(
     id: id ?? this.id,
@@ -1919,6 +2001,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
     toc: toc ?? this.toc,
     manifest: manifest ?? this.manifest,
     epubVersion: epubVersion ?? this.epubVersion,
+    format: format ?? this.format,
     lastUpdated: lastUpdated ?? this.lastUpdated,
   );
   BookManifest copyWithCompanion(BookManifestsCompanion data) {
@@ -1934,6 +2017,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
       epubVersion: data.epubVersion.present
           ? data.epubVersion.value
           : this.epubVersion,
+      format: data.format.present ? data.format.value : this.format,
       lastUpdated: data.lastUpdated.present
           ? data.lastUpdated.value
           : this.lastUpdated,
@@ -1950,6 +2034,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
           ..write('toc: $toc, ')
           ..write('manifest: $manifest, ')
           ..write('epubVersion: $epubVersion, ')
+          ..write('format: $format, ')
           ..write('lastUpdated: $lastUpdated')
           ..write(')'))
         .toString();
@@ -1964,6 +2049,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
     toc,
     manifest,
     epubVersion,
+    format,
     lastUpdated,
   );
   @override
@@ -1977,6 +2063,7 @@ class BookManifest extends DataClass implements Insertable<BookManifest> {
           other.toc == this.toc &&
           other.manifest == this.manifest &&
           other.epubVersion == this.epubVersion &&
+          other.format == this.format &&
           other.lastUpdated == this.lastUpdated);
 }
 
@@ -1988,6 +2075,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
   final Value<List<TocItem>> toc;
   final Value<List<ManifestItem>> manifest;
   final Value<String> epubVersion;
+  final Value<BookFormat> format;
   final Value<DateTime> lastUpdated;
   const BookManifestsCompanion({
     this.id = const Value.absent(),
@@ -1997,6 +2085,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
     this.toc = const Value.absent(),
     this.manifest = const Value.absent(),
     this.epubVersion = const Value.absent(),
+    this.format = const Value.absent(),
     this.lastUpdated = const Value.absent(),
   });
   BookManifestsCompanion.insert({
@@ -2007,6 +2096,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
     required List<TocItem> toc,
     required List<ManifestItem> manifest,
     required String epubVersion,
+    this.format = const Value.absent(),
     required DateTime lastUpdated,
   }) : fileHash = Value(fileHash),
        opfRootPath = Value(opfRootPath),
@@ -2023,6 +2113,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
     Expression<String>? toc,
     Expression<String>? manifest,
     Expression<String>? epubVersion,
+    Expression<String>? format,
     Expression<DateTime>? lastUpdated,
   }) {
     return RawValuesInsertable({
@@ -2033,6 +2124,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
       if (toc != null) 'toc': toc,
       if (manifest != null) 'manifest': manifest,
       if (epubVersion != null) 'epub_version': epubVersion,
+      if (format != null) 'format': format,
       if (lastUpdated != null) 'last_updated': lastUpdated,
     });
   }
@@ -2045,6 +2137,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
     Value<List<TocItem>>? toc,
     Value<List<ManifestItem>>? manifest,
     Value<String>? epubVersion,
+    Value<BookFormat>? format,
     Value<DateTime>? lastUpdated,
   }) {
     return BookManifestsCompanion(
@@ -2055,6 +2148,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
       toc: toc ?? this.toc,
       manifest: manifest ?? this.manifest,
       epubVersion: epubVersion ?? this.epubVersion,
+      format: format ?? this.format,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
@@ -2089,6 +2183,11 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
     if (epubVersion.present) {
       map['epub_version'] = Variable<String>(epubVersion.value);
     }
+    if (format.present) {
+      map['format'] = Variable<String>(
+        $BookManifestsTable.$converterformat.toSql(format.value),
+      );
+    }
     if (lastUpdated.present) {
       map['last_updated'] = Variable<DateTime>(lastUpdated.value);
     }
@@ -2105,6 +2204,7 @@ class BookManifestsCompanion extends UpdateCompanion<BookManifest> {
           ..write('toc: $toc, ')
           ..write('manifest: $manifest, ')
           ..write('epubVersion: $epubVersion, ')
+          ..write('format: $format, ')
           ..write('lastUpdated: $lastUpdated')
           ..write(')'))
         .toString();
@@ -3624,6 +3724,7 @@ typedef $$ShelfBooksTableCreateCompanionBuilder =
       Value<List<String>> subjects,
       Value<int> totalChapters,
       Value<String> epubVersion,
+      Value<BookFormat> format,
       required int importDate,
       Value<int> direction,
       Value<int> currentChapterIndex,
@@ -3649,6 +3750,7 @@ typedef $$ShelfBooksTableUpdateCompanionBuilder =
       Value<List<String>> subjects,
       Value<int> totalChapters,
       Value<String> epubVersion,
+      Value<BookFormat> format,
       Value<int> importDate,
       Value<int> direction,
       Value<int> currentChapterIndex,
@@ -3727,6 +3829,12 @@ class $$ShelfBooksTableFilterComposer
     column: $table.epubVersion,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<BookFormat, BookFormat, String> get format =>
+      $composableBuilder(
+        column: $table.format,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<int> get importDate => $composableBuilder(
     column: $table.importDate,
@@ -3848,6 +3956,11 @@ class $$ShelfBooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get importDate => $composableBuilder(
     column: $table.importDate,
     builder: (column) => ColumnOrderings(column),
@@ -3952,6 +4065,9 @@ class $$ShelfBooksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumnWithTypeConverter<BookFormat, String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
   GeneratedColumn<int> get importDate => $composableBuilder(
     column: $table.importDate,
     builder: (column) => column,
@@ -4042,6 +4158,7 @@ class $$ShelfBooksTableTableManager
                 Value<List<String>> subjects = const Value.absent(),
                 Value<int> totalChapters = const Value.absent(),
                 Value<String> epubVersion = const Value.absent(),
+                Value<BookFormat> format = const Value.absent(),
                 Value<int> importDate = const Value.absent(),
                 Value<int> direction = const Value.absent(),
                 Value<int> currentChapterIndex = const Value.absent(),
@@ -4065,6 +4182,7 @@ class $$ShelfBooksTableTableManager
                 subjects: subjects,
                 totalChapters: totalChapters,
                 epubVersion: epubVersion,
+                format: format,
                 importDate: importDate,
                 direction: direction,
                 currentChapterIndex: currentChapterIndex,
@@ -4090,6 +4208,7 @@ class $$ShelfBooksTableTableManager
                 Value<List<String>> subjects = const Value.absent(),
                 Value<int> totalChapters = const Value.absent(),
                 Value<String> epubVersion = const Value.absent(),
+                Value<BookFormat> format = const Value.absent(),
                 required int importDate,
                 Value<int> direction = const Value.absent(),
                 Value<int> currentChapterIndex = const Value.absent(),
@@ -4113,6 +4232,7 @@ class $$ShelfBooksTableTableManager
                 subjects: subjects,
                 totalChapters: totalChapters,
                 epubVersion: epubVersion,
+                format: format,
                 importDate: importDate,
                 direction: direction,
                 currentChapterIndex: currentChapterIndex,
@@ -4156,6 +4276,7 @@ typedef $$BookManifestsTableCreateCompanionBuilder =
       required List<TocItem> toc,
       required List<ManifestItem> manifest,
       required String epubVersion,
+      Value<BookFormat> format,
       required DateTime lastUpdated,
     });
 typedef $$BookManifestsTableUpdateCompanionBuilder =
@@ -4167,6 +4288,7 @@ typedef $$BookManifestsTableUpdateCompanionBuilder =
       Value<List<TocItem>> toc,
       Value<List<ManifestItem>> manifest,
       Value<String> epubVersion,
+      Value<BookFormat> format,
       Value<DateTime> lastUpdated,
     });
 
@@ -4216,6 +4338,12 @@ class $$BookManifestsTableFilterComposer
     column: $table.epubVersion,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<BookFormat, BookFormat, String> get format =>
+      $composableBuilder(
+        column: $table.format,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
     column: $table.lastUpdated,
@@ -4267,6 +4395,11 @@ class $$BookManifestsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
     column: $table.lastUpdated,
     builder: (column) => ColumnOrderings(column),
@@ -4306,6 +4439,9 @@ class $$BookManifestsTableAnnotationComposer
     column: $table.epubVersion,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<BookFormat, String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
     column: $table.lastUpdated,
@@ -4351,6 +4487,7 @@ class $$BookManifestsTableTableManager
                 Value<List<TocItem>> toc = const Value.absent(),
                 Value<List<ManifestItem>> manifest = const Value.absent(),
                 Value<String> epubVersion = const Value.absent(),
+                Value<BookFormat> format = const Value.absent(),
                 Value<DateTime> lastUpdated = const Value.absent(),
               }) => BookManifestsCompanion(
                 id: id,
@@ -4360,6 +4497,7 @@ class $$BookManifestsTableTableManager
                 toc: toc,
                 manifest: manifest,
                 epubVersion: epubVersion,
+                format: format,
                 lastUpdated: lastUpdated,
               ),
           createCompanionCallback:
@@ -4371,6 +4509,7 @@ class $$BookManifestsTableTableManager
                 required List<TocItem> toc,
                 required List<ManifestItem> manifest,
                 required String epubVersion,
+                Value<BookFormat> format = const Value.absent(),
                 required DateTime lastUpdated,
               }) => BookManifestsCompanion.insert(
                 id: id,
@@ -4380,6 +4519,7 @@ class $$BookManifestsTableTableManager
                 toc: toc,
                 manifest: manifest,
                 epubVersion: epubVersion,
+                format: format,
                 lastUpdated: lastUpdated,
               ),
           withReferenceMapper: (p0) => p0

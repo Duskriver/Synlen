@@ -102,7 +102,31 @@ class UnifiedImportService {
   /// Returns [ImportableEpub] with cached file and hash.
   /// Throws exceptions on I/O errors or invalid files.
   Future<ImportableEpub> processEpub(PlatformPath path) async {
-    return await _cacheManager.createCacheAndHash(path);
+    final importable = await _cacheManager.createCacheAndHash(path);
+
+    // SAF 数字文档 ID（如 .../document/1000000018）无法从 URI 推断真实
+    // 文件名，缓存扩展名与 TXT 书名都会错；向原生查询显示名兜底。
+    if (path is AndroidUriPath) {
+      final displayName = await _resolveDisplayName(path.uri);
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        return ImportableEpub(
+          cacheFile: importable.cacheFile,
+          hash: importable.hash,
+          originalName: displayName.trim(),
+        );
+      }
+    }
+    return importable;
+  }
+
+  /// 查询 SAF 文档的显示名；失败返回 null（由调用方沿用 URI 推断结果）
+  Future<String?> _resolveDisplayName(String uri) async {
+    try {
+      return await _channel.invokeMethod<String>('getDisplayName', uri);
+    } on PlatformException catch (e) {
+      appLogger.w('getDisplayName failed: ${e.message}');
+      return null;
+    }
   }
 
   /// Process a plain text file (e.g. shelf.json) into a String
@@ -429,8 +453,9 @@ class UnifiedImportService {
       }
 
       if (parentDirName == AppStorageConstants.booksDir &&
-          fileName.endsWith('.epub')) {
-        final hash = fileName.replaceAll('.epub', '');
+          (fileName.endsWith('.epub') || fileName.endsWith('.txt'))) {
+        final dotIndex = fileName.lastIndexOf('.');
+        final hash = fileName.substring(0, dotIndex);
         tempBookComponents.putIfAbsent(hash, () => {})['epub'] =
             entry.platformPath;
       } else if (parentDirName == AppStorageConstants.manifestsDir &&

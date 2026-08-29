@@ -117,20 +117,21 @@ class ExportBackupService {
       // -----------------------------------------------------------------------
       for (final book in books) {
         final hash = book.fileHash;
+        final bookFileName = '$hash${book.format.fileExtension}';
 
-        // -- Copy .epub (zero-memory: kernel copy, no Dart byte buffers) ------
-        final epubSrc = File(
+        // -- Copy book file (zero-memory: kernel copy, no Dart byte buffers) ---
+        final bookSrc = File(
           p.join(
             AppStorage.documentsPath,
             AppStorageConstants.booksDir,
-            '$hash.epub',
+            bookFileName,
           ),
         );
-        if (epubSrc.existsSync()) {
-          await epubSrc.copy(p.join(booksOutDir.path, '$hash.epub'));
+        if (bookSrc.existsSync()) {
+          await bookSrc.copy(p.join(booksOutDir.path, bookFileName));
         } else {
           appLogger.w(
-            '[ExportBackup] EPUB not found, skipping: ${epubSrc.path}',
+            '[ExportBackup] Book file not found, skipping: ${bookSrc.path}',
           );
         }
 
@@ -272,6 +273,7 @@ class ExportBackupService {
     'subjects': b.subjects,
     'totalChapters': b.totalChapters,
     'epubVersion': b.epubVersion,
+    'format': b.format.name,
     'importDate': b.importDate,
     'currentChapterIndex': b.currentChapterIndex,
     'readingProgress': b.readingProgress,
@@ -303,6 +305,7 @@ class ExportBackupService {
     'fileHash': m.fileHash,
     'opfRootPath': m.opfRootPath,
     'epubVersion': m.epubVersion,
+    'format': m.format.name,
     'lastUpdated': m.lastUpdated.toIso8601String(),
     'spine': m.spine.map(_spineItemToMap).toList(),
     'toc': m.toc.map(_tocItemToMap).toList(),
@@ -315,6 +318,7 @@ class ExportBackupService {
     'idref': s.idref,
     'linear': s.linear,
     'properties': s.properties,
+    'sourceRange': s.sourceRange,
   };
 
   Map<String, dynamic> _hrefToMap(Href h) => {

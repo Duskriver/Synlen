@@ -310,10 +310,19 @@ class ShelfBookRepository {
     throw Exception('Book not found for hash: $fileHash');
   }
 
-  /// 保存或更新一本书，返回其 ID
+  /// 保存或更新一本书，返回其 ID。
+  ///
+  /// id 为 0 表示新书：主键必须缺席交给 SQLite 自增。若把 0 当显式主键
+  /// 插入（rowid 0），下一本新书的 upsert 会命中同一 rowid 并把上一本
+  /// 书的整行覆盖掉。
   Future<Either<String, int>> saveBook(ShelfBook book) async {
     try {
-      final id = await _db.into(_db.shelfBooks).insertOnConflictUpdate(book);
+      final companion = book.id == 0
+          ? book.toCompanion(false).copyWith(id: const Value.absent())
+          : book.toCompanion(false);
+      final id = await _db
+          .into(_db.shelfBooks)
+          .insertOnConflictUpdate(companion);
       return right(id);
     } catch (e) {
       return left('Save failed: $e');

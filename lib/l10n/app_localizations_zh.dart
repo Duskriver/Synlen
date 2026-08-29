@@ -209,6 +209,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get bookFormatTxt => 'TXT';
+
+  @override
   String epubVersion(String version) {
     return 'EPUB $version';
   }

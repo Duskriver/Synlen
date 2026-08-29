@@ -10,6 +10,7 @@ import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:path/path.dart' as p;
 
+import '../../domain/book_format.dart';
 import '../../domain/book_manifest.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
@@ -195,6 +196,10 @@ class ImportBackupService {
         final hash = bookMap['fileHash'] as String;
         final title = (bookMap['title'] as String?)?.trim();
         final displayName = (title != null && title.isNotEmpty) ? title : hash;
+        // 旧版备份无 format 字段，按 EPUB 处理
+        final format =
+            BookFormat.values.asNameMap()[bookMap['format']] ?? BookFormat.epub;
+        final bookFileName = '$hash${format.fileExtension}';
 
         // Yield “processing this book” before doing any heavy I/O.
         yield BackupImportProgress(
@@ -215,14 +220,14 @@ class ImportBackupService {
           continue;
         }
 
-        // -- A. Process & Copy EPUB --
-        final destEpub = File(p.join(internalBooksDir.path, '$hash.epub'));
-        if (!destEpub.existsSync()) {
-          final importableEpub = await _importService.processEpub(
+        // -- A. Process & Copy book file --
+        final destBook = File(p.join(internalBooksDir.path, bookFileName));
+        if (!destBook.existsSync()) {
+          final importableBook = await _importService.processEpub(
             pathsForBook.epubPath,
           );
-          await importableEpub.cacheFile.copy(destEpub.path);
-          await _importService.cleanCache(importableEpub.cacheFile);
+          await importableBook.cacheFile.copy(destBook.path);
+          await _importService.cleanCache(importableBook.cacheFile);
         }
 
         // -- B. Process & Copy Cover --
@@ -259,8 +264,9 @@ class ImportBackupService {
         // -- D. Build ShelfBook and upsert immediately --
         final book = _mapToShelfBook(
           bookMap,
-          filePath: '${AppStorageConstants.booksDir}/$hash.epub',
+          filePath: '${AppStorageConstants.booksDir}/$bookFileName',
           coverPath: restoredCoverPath,
+          format: format,
         );
         await _mergeBook(book);
 
@@ -401,6 +407,7 @@ class ImportBackupService {
     Map<String, dynamic> m, {
     required String? filePath,
     required String? coverPath,
+    required BookFormat format,
   }) {
     return ShelfBook(
       id: 0,
@@ -414,6 +421,7 @@ class ImportBackupService {
       subjects: (m['subjects'] as List<dynamic>).cast<String>(),
       totalChapters: m['totalChapters'] as int,
       epubVersion: m['epubVersion'] as String,
+      format: format,
       importDate: m['importDate'] as int,
       currentChapterIndex: m['currentChapterIndex'] as int? ?? 0,
       readingProgress: (m['readingProgress'] as num? ?? 0.0).toDouble(),
@@ -435,6 +443,7 @@ class ImportBackupService {
       fileHash: m['fileHash'] as String,
       opfRootPath: m['opfRootPath'] as String,
       epubVersion: m['epubVersion'] as String,
+      format: BookFormat.values.asNameMap()[m['format']] ?? BookFormat.epub,
       lastUpdated: DateTime.parse(m['lastUpdated'] as String),
       spine: (m['spine'] as List<dynamic>)
           .cast<Map<String, dynamic>>()
@@ -459,6 +468,7 @@ class ImportBackupService {
       idref: m['idref'] as String,
       linear: m['linear'] as bool? ?? true,
       properties: m['properties'] as String?,
+      sourceRange: m['sourceRange'] as String?,
     );
   }
 

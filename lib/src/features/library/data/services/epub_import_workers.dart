@@ -1,11 +1,14 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fpdart/fpdart.dart';
+import '../../domain/book_format.dart';
 import '../../domain/book_manifest.dart';
 import '../parsers/epub_zip_parser.dart';
+import '../parsers/txt_book_parser.dart';
 
 /// Configuration constants for import workers
 class ImportWorkerConfig {
@@ -42,6 +45,9 @@ class ParseResult {
   final List<ManifestItem> manifestItems;
   final int readDirection;
 
+  /// 书籍格式（EPUB/TXT），决定存储扩展名与阅读时的内容供给方式
+  final BookFormat format;
+
   ParseResult({
     required this.title,
     required this.author,
@@ -56,7 +62,16 @@ class ParseResult {
     required this.toc,
     required this.manifestItems,
     required this.readDirection,
+    this.format = BookFormat.epub,
   });
+}
+
+/// TXT 解析产物：统一 ParseResult + 归一化 UTF-8 字节流
+class TxtParseOutcome {
+  final ParseResult parseResult;
+  final Uint8List normalizedBytes;
+
+  TxtParseOutcome({required this.parseResult, required this.normalizedBytes});
 }
 
 /// Static utility class for EPUB import operations
@@ -112,6 +127,48 @@ class ImportWorkers {
       );
 
       return right(result);
+    } catch (e) {
+      return left('Parse error: $e');
+    }
+  }
+
+  /// Parse TXT file in-memory: decode → split chapters → normalize to UTF-8
+  static Future<Either<String, TxtParseOutcome>> parseTxt(
+    ParseParams params,
+  ) async {
+    try {
+      final bytes = await File(params.filePath).readAsBytes();
+      final result = const TxtBookParser().parseFromBytes(
+        bytes,
+        fileName: params.originalFileName,
+      );
+
+      if (result.isLeft()) {
+        return left(result.getLeft().toNullable()!);
+      }
+
+      final data = result.getRight().toNullable()!;
+
+      return right(
+        TxtParseOutcome(
+          parseResult: ParseResult(
+            title: data.title,
+            author: '',
+            authors: const [],
+            subjects: const [],
+            coverHref: null,
+            opfRootPath: '',
+            epubVersion: '',
+            totalChapters: data.totalChapters,
+            spine: data.spine,
+            toc: data.toc,
+            manifestItems: const [],
+            readDirection: 0,
+            format: BookFormat.txt,
+          ),
+          normalizedBytes: data.normalizedUtf8,
+        ),
+      );
     } catch (e) {
       return left('Parse error: $e');
     }

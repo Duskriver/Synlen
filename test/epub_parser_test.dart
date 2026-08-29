@@ -1128,4 +1128,3 @@ Uint8List _createEpubWithNavAndNcx() {
   final zipEncoder = ZipEncoder();
   return Uint8List.fromList(zipEncoder.encode(archive));
 }
-

@@ -38,12 +38,17 @@ class SpineItem {
   bool linear;
   String? properties;
 
+  /// 内容在书籍源文件中的字节范围（`"start-end"`，左闭右开）。
+  /// TXT 等整文件格式用于随机定位章节内容；EPUB 按条目名读取，为 null。
+  String? sourceRange;
+
   SpineItem({
     this.index = 0,
     this.href = '',
     this.idref = '',
     this.linear = true,
     this.properties,
+    this.sourceRange,
   });
 
   factory SpineItem.fromJson(Map<String, dynamic> json) => SpineItem(
@@ -52,6 +57,7 @@ class SpineItem {
     idref: json['idref'] as String? ?? '',
     linear: json['linear'] as bool? ?? true,
     properties: json['properties'] as String?,
+    sourceRange: json['sourceRange'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -60,6 +66,7 @@ class SpineItem {
     'idref': idref,
     'linear': linear,
     if (properties != null) 'properties': properties,
+    if (sourceRange != null) 'sourceRange': sourceRange,
   };
 }
 

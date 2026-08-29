@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/data/services/epub_stream_service.dart';
+import 'package:synlen/src/features/reader/data/services/txt_content_service.dart';
 
 class _CachedResource {
   final Uint8List bytes;
@@ -16,10 +18,12 @@ class _CachedResource {
   int get sizeInBytes => bytes.lengthInBytes;
 }
 
-/// WebView request handler for streaming EPUB content
-/// Intercepts requests to virtual domain and serves files from compressed EPUB
+/// WebView request handler for streaming book content
+/// Intercepts requests to virtual domain and serves files from compressed EPUB,
+/// 或从 TXT 单文件按字节范围切片包装为 XHTML。
 class EpubWebViewHandler {
   final EpubStreamService _streamService;
+  final TxtContentService _txtContentService;
 
   /// 内存缓存，用于存储已加载的资源（CSS, 图片, 字体等）。
   /// 使用 LRU + 总字节数上限，避免长时间阅读时无限增长。
@@ -35,8 +39,11 @@ class EpubWebViewHandler {
   static const String virtualScheme = 'epub';
   static const _headers = {'Cache-Control': 'public, max-age=31536000'};
 
-  EpubWebViewHandler({required EpubStreamService streamService})
-    : _streamService = streamService;
+  EpubWebViewHandler({
+    required EpubStreamService streamService,
+    required TxtContentService txtContentService,
+  }) : _streamService = streamService,
+       _txtContentService = txtContentService;
 
   /// 清空资源缓存（例如切换书籍时）
   void clearCache() {
@@ -222,7 +229,7 @@ class EpubWebViewHandler {
     }
   }
 
-  /// Read a file from an EPUB
+  /// Read a file from the book container (EPUB ZIP 或 TXT 单文件)
   /// Returns Either:
   ///   - Left: error message
   ///   - Right: (data, mimeType)
@@ -241,11 +248,20 @@ class EpubWebViewHandler {
 
     final fileRelativePath = relativePath.split('#')[0];
 
-    final fullEpubPath = '${AppStorage.documentsPath}$epubPath';
+    final fullBookPath = '${AppStorage.documentsPath}$epubPath';
+
+    // TXT 单文件书籍：按 manifest 的字节范围切片并包装为 XHTML
+    if (epubPath.endsWith(BookFormat.txt.fileExtension)) {
+      return _txtContentService.readChapter(
+        txtAbsolutePath: fullBookPath,
+        fileHash: fileHash,
+        relativePath: fileRelativePath,
+      );
+    }
 
     // 所有的 EPUB 文件读取都在 EpubStreamService 的后台 Isolate 中进行
     final result = await _streamService.readFileFromEpub(
-      epubPath: fullEpubPath,
+      epubPath: fullBookPath,
       targetFilePath: fileRelativePath,
     );
 

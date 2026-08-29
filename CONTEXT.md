@@ -1,6 +1,6 @@
 # Synlen Context
 
-Synlen 是一个 EPUB 阅读器：导入 EPUB 建立藏书，阅读并记录进度，支持句子/单词学习与 TTS 发音。本文档是领域统一语言，写作代码前先查术语；发现模糊或冲突立即更新这里。
+Synlen 是一个本地书籍阅读器：导入 EPUB / TXT 建立藏书，阅读并记录进度，支持句子/单词学习与 TTS 发音。本文档是领域统一语言，写作代码前先查术语；发现模糊或冲突立即更新这里。
 
 ## 藏书
 
@@ -8,12 +8,16 @@ Synlen 是一个 EPUB 阅读器：导入 EPUB 建立藏书，阅读并记录进�
 书架上的书。轻量 drift 表，只含核心元数据（标题、作者、封面）与阅读进度，用于列表展示与同步。
 _Avoid_: Book、图书、书本
 
+**BookFormat**:
+书籍文件格式枚举（`epub` / `txt`），持久化在 ShelfBook 与 BookManifest 的 `format` 列，决定导入解析器与阅读时内容供给的分支。
+_Avoid_: 文件类型、FileType
+
 **BookManifest**:
-阅读引擎使用的完整 EPUB 结构（spine、TOC），仅打开阅读器时查询。
+阅读引擎使用的完整书籍结构（spine、TOC），仅打开阅读器时查询。EPUB 的 spine 指向包内条目路径；TXT 的 spine 指向虚拟章节路径（`txt/chapter_N.xhtml`）。
 _Avoid_: manifest、内容清单、目录结构
 
 **SpineItem**:
-OPF spine 中的线性阅读顺序条目，决定上一页/下一页导航。
+spine 中的线性阅读顺序条目，决定上一页/下一页导航。TXT 条目通过 `sourceRange` 记录章节在归一化 UTF-8 字节流中的范围（`"start-end"`，左闭右开）。
 _Avoid_: 章节项、spine 项（统一用英文）
 
 **ShelfGroup**:
@@ -23,11 +27,11 @@ _Avoid_: 章节项、spine 项（统一用英文）
 阅读进度，记录每本书最后阅读位置，存储在 progress_log。
 
 **Import**:
-把 EPUB 文件加入藏书的过程。采用 "stream-from-zip" 策略：EPUB 以压缩形式存盘，不整包解压。
+把书籍文件加入藏书的过程。EPUB 采用 "stream-from-zip" 策略：以压缩形式存盘，不整包解压；TXT 导入时解码（BOM → UTF-8 → GBK）并归一化为 UTF-8 单文件存盘，阅读时不再关心原始编码。
 _Avoid_: 导入流程、Ingest
 
 **Cover**:
-书的封面图片，导入时从 EPUB 提取生成，独立于 EPUB 文件存储。
+书的封面图片，导入时从 EPUB 提取生成，独立于书籍文件存储。TXT 无封面。
 
 ## 阅读
 
