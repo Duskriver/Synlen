@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -87,7 +88,42 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "pickEpubFolder" -> pickEpubFolder(result)
             "pickBackupFolder" -> pickBackupFolder(result)
             "pickFontFiles" -> pickFontFiles(result)
+            "getDisplayName" -> {
+                val uri = Uri.parse(call.arguments as? String ?: "")
+                getDisplayName(uri, result)
+            }
             else -> result.notImplemented()
+        }
+    }
+
+    /**
+     * Queries the display name of a SAF document.
+     *
+     * 部分 provider（如 Downloads）返回数字 document ID 形式的 URI，
+     * 无法从 URI 本身推断真实文件名；书名、格式识别都依赖显示名。
+     * 查询失败（无权限 / URI 无效 / 无活动）时返回 null，由调用方兜底。
+     */
+    private fun getDisplayName(uri: Uri, result: Result) {
+        val lifecycleOwner = activity as? LifecycleOwner ?: run {
+            result.success(null)
+            return
+        }
+
+        lifecycleOwner.lifecycleScope.launch {
+            val name = withContext(Dispatchers.IO) {
+                runCatching {
+                    activity?.contentResolver?.query(
+                        uri,
+                        arrayOf(OpenableColumns.DISPLAY_NAME),
+                        null,
+                        null,
+                        null,
+                    )?.use { cursor ->
+                        if (cursor.moveToFirst()) cursor.getString(0) else null
+                    }
+                }.getOrNull()
+            }
+            result.success(name)
         }
     }
 
@@ -170,9 +206,9 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // -------------------------------------------------------------------------
 
     /**
-     * Launches file picker for selecting multiple EPUB files.
+     * Launches file picker for selecting multiple book files (EPUB / TXT).
      *
-     * Uses ACTION_OPEN_DOCUMENT with MIME type application/epub+zip.
+     * Uses ACTION_OPEN_DOCUMENT with EPUB/TXT MIME types.
      * Allows multiple file selection.
      */
     private fun pickEpubFiles(result: Result) {
@@ -185,12 +221,12 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/epub+zip"
+            type = "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            // Fallback to all files if EPUB MIME type is not recognised
+            // 限制为 EPUB / TXT；application/octet-stream 兜底不识别 MIME 的场景
             putExtra(
                 Intent.EXTRA_MIME_TYPES,
-                arrayOf("application/epub+zip", "application/octet-stream")
+                arrayOf("application/epub+zip", "text/plain", "application/octet-stream")
             )
         }
 
@@ -501,7 +537,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     current.listFiles().forEach { queue.add(it) }
                 } else if (current.isFile) {
                     val name = current.name ?: ""
-                    if (name.endsWith(".epub", ignoreCase = true)) {
+                    if (isSupportedBookFileName(name)) {
                         epubUris.add(current.uri.toString())
                     }
                 }
@@ -556,10 +592,16 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             null
         }
 
-        if (displayName?.endsWith(".epub", ignoreCase = true) == true) return true
+        if (displayName != null && isSupportedBookFileName(displayName)) return true
 
         val mimeType = activity.contentResolver.getType(uri)
-        return mimeType == "application/epub+zip"
+        return mimeType == "application/epub+zip" || mimeType == "text/plain"
+    }
+
+    /** 支持的书籍文件扩展名（.epub / .txt，大小写不敏感） */
+    private fun isSupportedBookFileName(name: String): Boolean {
+        return name.endsWith(".epub", ignoreCase = true) ||
+            name.endsWith(".txt", ignoreCase = true)
     }
 
     private fun isFontFile(uri: Uri): Boolean {

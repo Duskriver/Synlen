@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 class AppStorage {
@@ -37,5 +38,21 @@ class AppStorage {
     if (!_supportPath.endsWith('/')) {
       _supportPath += '/';
     }
+  }
+
+  /// 仅供测试：跳过 path_provider 直接指定目录，语义与 [init] 一致。
+  ///
+  /// 导入服务等组件以 `documentsPath` 为根落盘，集成测试用临时目录
+  /// 指入，避免触碰真实应用存储（同 [AppDatabase.forTesting] 的做法）。
+  @visibleForTesting
+  static void initForTesting({
+    required String documentsPath,
+    String? tempPath,
+    String? supportPath,
+  }) {
+    String normalize(String path) => path.endsWith('/') ? path : '$path/';
+    _documentsPath = normalize(documentsPath);
+    _tempPath = normalize(tempPath ?? documentsPath);
+    _supportPath = normalize(supportPath ?? documentsPath);
   }
 }

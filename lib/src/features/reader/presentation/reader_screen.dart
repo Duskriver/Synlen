@@ -21,6 +21,7 @@ import '../data/book_session.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
+import '../data/services/txt_content_service_provider.dart';
 import '../../library/data/repositories/shelf_book_repository_provider.dart';
 import '../../library/data/repositories/book_manifest_repository_provider.dart';
 import '../data/epub_webview_handler.dart';
@@ -219,6 +220,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     super.initState();
     webViewHandler = EpubWebViewHandler(
       streamService: ref.read(epubStreamServiceProvider),
+      txtContentService: ref.read(txtContentServiceProvider),
     );
     bookSession = BookSession(
       fileHash: widget.fileHash,

@@ -6,6 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
+import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/data/book_session.dart';
 
@@ -31,6 +32,7 @@ void main() {
       subjects: const [],
       totalChapters: 3,
       epubVersion: '3.0',
+      format: BookFormat.epub,
       importDate: 0,
       direction: direction,
       currentChapterIndex: currentChapterIndex,
@@ -63,6 +65,7 @@ void main() {
           ],
       manifest: const [],
       epubVersion: '3.0',
+      format: BookFormat.epub,
       lastUpdated: DateTime(2026, 1, 1),
     );
   }

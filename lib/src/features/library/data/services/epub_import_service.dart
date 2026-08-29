@@ -4,15 +4,17 @@ import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
+import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/rust/api/epub.dart' as rust_epub;
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import '../shelf_book_repository.dart';
 import '../book_manifest_repository.dart';
 
-/// Service for importing EPUB files using "stream-from-zip" strategy
-/// - Copies EPUB to AppDocDir/books/{fileHash}.epub (keeps compressed)
-/// - Extracts cover to AppDocDir/covers/{fileHash}.jpg
+/// Service for importing book files using "stream-from-zip" strategy
+/// - EPUB: Copies to AppDocDir/books/{fileHash}.epub (keeps compressed),
+///   extracts cover to AppDocDir/covers/{fileHash}.jpg
+/// - TXT: 解析后归一化为 UTF-8 写入 AppDocDir/books/{fileHash}.txt，无封面
 /// - Parses metadata in-memory (no full unzip)
 /// - Saves to drift: ShelfBook + BookManifest
 class EpubImportService {
@@ -25,7 +27,7 @@ class EpubImportService {
   }) : _shelfBookRepo = shelfBookRepo,
        _manifestRepo = manifestRepo;
 
-  /// Import an EPUB file following a clean pipeline pattern
+  /// Import a book file (EPUB or TXT) following a clean pipeline pattern
   /// Returns Either:
   ///   - Right: The imported ShelfBook
   ///   - Left: error message
@@ -36,7 +38,9 @@ class EpubImportService {
     bool moveSourceFile = false,
   }) async {
     try {
-      // Pipeline: Hash → Check → Copy → Parse → Extract → Create → Save
+      final format = await _detectFormat(file, originalFileName);
+
+      // Pipeline: Hash → Check → Store → Parse → Extract → Create → Save
       final String fileHash =
           precomputedHash ??
           await _calculateHash(file).then(
@@ -48,34 +52,58 @@ class EpubImportService {
         return left(bookExists.getLeft().toNullable()!);
       }
 
-      final epubPath = await _copyToAppStorage(
-        file,
-        fileHash,
-        moveSourceFile: moveSourceFile,
-      ).then((result) => result.getOrElse((error) => throw Exception(error)));
+      // 格式分发：TXT 先解析（产出归一化字节）再落盘；EPUB 先落盘再解析。
+      final String bookPath;
+      final ParseResult parseData;
+      String? coverPath;
 
-      final parseData =
-          await _parseAndExtract(
-            epubPath,
-            fileHash,
-            originalFileName ?? file.path.split('/').last,
-          ).then(
-            (result) => result.fold((error) {
-              _deleteFile(epubPath);
-              throw Exception(error);
-            }, (data) => data),
-          );
+      if (format == BookFormat.txt) {
+        final outcome = await compute(
+          ImportWorkers.parseTxt,
+          ParseParams(
+            filePath: file.path,
+            fileHash: fileHash,
+            originalFileName: originalFileName ?? file.path.split('/').last,
+          ),
+        ).then((result) => result.getOrElse((error) => throw Exception(error)));
+        parseData = outcome.parseResult;
+        bookPath = await _writeNormalizedTxt(
+          outcome.normalizedBytes,
+          fileHash,
+        ).then((result) => result.getOrElse((error) => throw Exception(error)));
+        coverPath = null;
+      } else {
+        bookPath = await _copyToAppStorage(
+          file,
+          fileHash,
+          moveSourceFile: moveSourceFile,
+        ).then((result) => result.getOrElse((error) => throw Exception(error)));
 
-      final coverPath = await _extractCover(
-        epubPath,
-        fileHash,
-        parseData.coverHref,
-        parseData.opfRootPath,
-      );
+        parseData =
+            await _parseAndExtract(
+              bookPath,
+              fileHash,
+              originalFileName ?? file.path.split('/').last,
+            ).then((result) async {
+              if (result.isLeft()) {
+                // 解析失败：清理已落盘的书籍文件再报错
+                await _deleteFile(bookPath);
+                throw Exception(result.getLeft().toNullable());
+              }
+              return result.getRight().toNullable()!;
+            });
+
+        coverPath = await _extractCover(
+          bookPath,
+          fileHash,
+          parseData.coverHref,
+          parseData.opfRootPath,
+        );
+      }
 
       final entities = await _createEntities(
         fileHash,
-        epubPath,
+        bookPath,
         coverPath,
         parseData,
         bookExists.getRight().toNullable()!,
@@ -85,19 +113,48 @@ class EpubImportService {
           await _saveTransaction(
             entities.$1,
             entities.$2,
-            epubPath,
+            bookPath,
             coverPath,
-          ).then(
-            (result) => result.fold((error) {
-              _deleteFile(epubPath);
-              if (coverPath != null) _deleteFile(coverPath);
-              throw Exception(error);
-            }, (book) => book),
-          );
+          ).then((result) async {
+            if (result.isLeft()) {
+              // 保存失败回滚：清理已落盘的书籍文件与封面
+              await _deleteFile(bookPath);
+              if (coverPath != null) await _deleteFile(coverPath);
+              throw Exception(result.getLeft().toNullable());
+            }
+            return result.getRight().toNullable()!;
+          });
 
       return right(savedBook);
     } catch (e) {
       return left('Import failed: $e');
+    }
+  }
+
+  /// 识别书籍格式。
+  ///
+  /// 优先按扩展名；扩展名为 .epub 时用 ZIP 魔数嗅探纠偏——
+  /// Android 系统分享进来的 content:// URI 可能取不到真实文件名
+  /// （[AndroidUriPath.name] 兜底为 unknown.epub），TXT 若被误判为
+  /// EPUB 会直接解析失败，而 EPUB 本质是 ZIP 容器，嗅探可靠。
+  Future<BookFormat> _detectFormat(File file, String? originalFileName) async {
+    final byName = BookFormat.fromFileName(originalFileName ?? file.path);
+    if (byName == BookFormat.txt) return BookFormat.txt;
+    if (await _looksLikeZip(file)) return BookFormat.epub;
+    return BookFormat.txt;
+  }
+
+  /// ZIP 容器魔数检查（"PK"）
+  Future<bool> _looksLikeZip(File file) async {
+    RandomAccessFile? raf;
+    try {
+      raf = await file.open();
+      final bytes = await raf.read(2);
+      return bytes.length == 2 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+    } catch (_) {
+      return false;
+    } finally {
+      await raf?.close();
     }
   }
 
@@ -142,12 +199,12 @@ class EpubImportService {
   /// Returns tuple (ShelfBook, BookManifest)
   Future<(ShelfBook, BookManifest)> _createEntities(
     String fileHash,
-    String epubPath,
+    String bookPath,
     String? coverPath,
     ParseResult parseData,
     bool bookExisted,
   ) async {
-    final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
+    final relativePath = bookPath.replaceAll(AppStorage.documentsPath, '');
     final now = DateTime.now().millisecondsSinceEpoch;
 
     final existingId = bookExisted
@@ -166,6 +223,7 @@ class EpubImportService {
       subjects: parseData.subjects,
       totalChapters: parseData.totalChapters,
       epubVersion: parseData.epubVersion,
+      format: parseData.format,
       importDate: now,
       updatedAt: now,
       direction: parseData.readDirection,
@@ -183,6 +241,7 @@ class EpubImportService {
       toc: parseData.toc,
       manifest: parseData.manifestItems,
       epubVersion: parseData.epubVersion,
+      format: parseData.format,
       lastUpdated: DateTime.now(),
     );
 
@@ -250,6 +309,32 @@ class EpubImportService {
       return right(targetPath);
     } catch (e) {
       return left('File copy failed: $e');
+    }
+  }
+
+  /// Write normalized UTF-8 TXT content to books directory
+  ///
+  /// 与 EPUB 的直接拷贝不同：TXT 在解析时已归一化为 UTF-8，
+  /// 此处落盘的是归一化结果而非源文件，阅读时无需关心原始编码。
+  /// Returns absolute path to the written file
+  Future<Either<String, String>> _writeNormalizedTxt(
+    Uint8List normalizedBytes,
+    String fileHash,
+  ) async {
+    try {
+      final booksDir = Directory(
+        '${AppStorage.documentsPath}${AppStorageConstants.booksDir}',
+      );
+      if (!await booksDir.exists()) {
+        await booksDir.create(recursive: true);
+      }
+
+      final targetPath =
+          '${booksDir.path}/$fileHash${BookFormat.txt.fileExtension}';
+      await File(targetPath).writeAsBytes(normalizedBytes, flush: true);
+      return right(targetPath);
+    } catch (e) {
+      return left('File write failed: $e');
     }
   }
 
@@ -338,7 +423,10 @@ class EpubImportService {
   /// Delete a file (helper for cleanup)
   Future<Either<String, bool>> _deleteFile(String path) async {
     try {
-      final absolutePath = '${AppStorage.documentsPath}$path';
+      // 数据库存的是相对路径，导入管线中的失败回滚拿到的是绝对路径，二者都接受
+      final absolutePath = path.startsWith('/')
+          ? path
+          : '${AppStorage.documentsPath}$path';
       final file = File(absolutePath);
       if (await file.exists()) {
         await file.delete();

@@ -96,7 +96,10 @@ class StorageCleanupService {
     if (!await tempDir.exists()) {
       await tempDir.create(recursive: true);
     }
-    final tempPath = '${tempDir.path}/$sanitizedTitle.epub';
+    // 分享文件沿用源文件扩展名（.epub / .txt）
+    final ext = p.extension(sourceFile.path);
+    final tempPath =
+        '${tempDir.path}/$sanitizedTitle${ext.isEmpty ? '.epub' : ext}';
     final tempFile = File(tempPath);
     await sourceFile.copy(tempFile.path);
     return tempFile;

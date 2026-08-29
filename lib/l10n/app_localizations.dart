@@ -470,6 +470,12 @@ abstract class AppLocalizations {
   /// **'{count} chapters'**
   String chaptersCount(int count);
 
+  /// TXT 格式书籍的格式标签
+  ///
+  /// In en, this message translates to:
+  /// **'TXT'**
+  String get bookFormatTxt;
+
   /// EPUB version label
   ///
   /// In en, this message translates to:

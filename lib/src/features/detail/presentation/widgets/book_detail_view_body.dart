@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:synlen/src/features/detail/presentation/book_detail_screen.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../features/library/domain/book_format.dart';
 import '../../../../features/library/domain/book_meta.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/widgets/expandable_text.dart';
@@ -136,7 +137,12 @@ class BookDetailViewBody extends ConsumerWidget {
               alignment: WrapAlignment.start,
               children: [
                 _MetadataChip(label: l10n.chaptersCount(book.totalChapters)),
-                _MetadataChip(label: l10n.epubVersion(book.epubVersion)),
+                // TXT 书没有 EPUB 版本号，显示格式标签
+                _MetadataChip(
+                  label: book.format == BookFormat.txt
+                      ? l10n.bookFormatTxt
+                      : l10n.epubVersion(book.epubVersion),
+                ),
                 _MetadataChip(label: directionToString(book.direction)),
               ],
             ),

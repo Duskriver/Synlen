@@ -4,6 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
+import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
 // Generate Mock classes
@@ -61,6 +62,7 @@ void main() {
           subjects: const [],
           totalChapters: 0,
           epubVersion: '',
+          format: BookFormat.epub,
           importDate: 0,
           updatedAt: 0,
           direction: 0,
@@ -166,6 +168,7 @@ void main() {
           subjects: const [],
           totalChapters: 0,
           epubVersion: '',
+          format: BookFormat.epub,
           importDate: 0,
           updatedAt: 0,
           direction: 0,
@@ -221,6 +224,7 @@ void main() {
           subjects: const [],
           totalChapters: 0,
           epubVersion: '',
+          format: BookFormat.epub,
           importDate: 0,
           updatedAt: 0,
           direction: 0,
@@ -250,4 +254,3 @@ void main() {
     });
   });
 }
-

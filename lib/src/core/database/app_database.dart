@@ -2,11 +2,24 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 
 part 'app_database.g.dart';
 
 // ==================== 类型转换器 ====================
+
+/// `BookFormat` ↔ 枚举名字符串（'epub' / 'txt'）；未知值回退 EPUB
+class BookFormatConverter extends TypeConverter<BookFormat, String> {
+  const BookFormatConverter();
+
+  @override
+  BookFormat fromSql(String fromDb) =>
+      BookFormat.values.asNameMap()[fromDb] ?? BookFormat.epub;
+
+  @override
+  String toSql(BookFormat value) => value.name;
+}
 
 /// `List<String>` ↔ JSON 文本（如 authors、subjects）
 class StringListConverter extends TypeConverter<List<String>, String> {
@@ -119,6 +132,11 @@ class ShelfBooks extends Table {
       .withDefault(const Constant('[]'))();
   IntColumn get totalChapters => integer().withDefault(const Constant(0))();
   TextColumn get epubVersion => text().withDefault(const Constant(''))();
+
+  /// 书籍格式（'epub' / 'txt'），v1 存量数据默认 EPUB
+  TextColumn get format => text()
+      .map(const BookFormatConverter())
+      .withDefault(const Constant('epub'))();
   IntColumn get importDate => integer()();
   IntColumn get direction => integer().withDefault(const Constant(0))();
   IntColumn get currentChapterIndex =>
@@ -134,7 +152,10 @@ class ShelfBooks extends Table {
   IntColumn get lastSyncedDate => integer().nullable()();
 }
 
-/// 阅读引擎使用的完整 EPUB 结构（spine/TOC/manifest 存 JSON 文本）
+/// 阅读引擎使用的书籍结构（spine/TOC/manifest 存 JSON 文本）
+///
+/// EPUB 时 spine 指向包内条目路径；TXT 时 spine 指向虚拟章节路径
+/// （`txt/chapter_N.xhtml`）并通过 [SpineItem.sourceRange] 记录字节范围。
 @DataClassName('BookManifest')
 class BookManifests extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -144,6 +165,11 @@ class BookManifests extends Table {
   TextColumn get toc => text().map(const TocListConverter())();
   TextColumn get manifest => text().map(const ManifestListConverter())();
   TextColumn get epubVersion => text()();
+
+  /// 书籍格式（'epub' / 'txt'），v1 存量数据默认 EPUB
+  TextColumn get format => text()
+      .map(const BookFormatConverter())
+      .withDefault(const Constant('epub'))();
   DateTimeColumn get lastUpdated => dateTime()();
 }
 
@@ -213,5 +239,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        // v2：ShelfBooks / BookManifests 增加 format 列（默认 'epub'）
+        await migrator.addColumn(shelfBooks, shelfBooks.format);
+        await migrator.addColumn(bookManifests, bookManifests.format);
+      }
+    },
+  );
 }

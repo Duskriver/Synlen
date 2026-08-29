@@ -75,7 +75,7 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
-		<!-- Register 词镜 as a handler for .epub files -->
+		<!-- Register 词镜 as a handler for .epub / .txt files -->
 		<key>CFBundleDocumentTypes</key>
 		<array>
 			<dict>
@@ -88,6 +88,18 @@
 				<key>LSItemContentTypes</key>
 				<array>
 					<string>org.idpf.epub-container</string>
+				</array>
+			</dict>
+			<dict>
+				<key>CFBundleTypeName</key>
+				<string>Plain Text Document</string>
+				<key>CFBundleTypeRole</key>
+				<string>Viewer</string>
+				<key>LSHandlerRank</key>
+				<string>Alternate</string>
+				<key>LSItemContentTypes</key>
+				<array>
+					<string>public.plain-text</string>
 				</array>
 			</dict>
 		</array>

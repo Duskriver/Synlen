@@ -105,11 +105,10 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     DispatchQueue.main.async {
       let picker: UIDocumentPickerViewController
       if #available(iOS 14.0, *) {
-        var types: [UTType] = []
+        // 书籍格式：EPUB 容器 + 纯文本（.txt）
+        var types: [UTType] = [UTType.plainText]
         if let epubType = UTType("org.idpf.epub-container") {
-          types = [epubType]
-        } else {
-          types = [UTType.data]
+          types.insert(epubType, at: 0)
         }
         picker = UIDocumentPickerViewController(
           forOpeningContentTypes: types,
@@ -117,7 +116,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
         )
       } else {
         picker = UIDocumentPickerViewController(
-          documentTypes: ["org.idpf.epub-container"],
+          documentTypes: ["org.idpf.epub-container", "public.plain-text"],
           in: .open
         )
       }
@@ -355,13 +354,14 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
       activeDirectoryUrl = folderUrl
 
       var paths: [String] = []
+      let bookExtensions: Set<String> = ["epub", "txt"]
       if let enumerator = FileManager.default.enumerator(
         at: folderUrl,
         includingPropertiesForKeys: [.isRegularFileKey],
         options: [.skipsHiddenFiles, .skipsPackageDescendants]
       ) {
         for case let fileUrl as URL in enumerator {
-          if fileUrl.pathExtension.lowercased() == "epub" {
+          if bookExtensions.contains(fileUrl.pathExtension.lowercased()) {
             paths.append(fileUrl.path)
           }
         }
@@ -379,7 +379,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
       activeDirectoryUrl = folderUrl
 
       var paths: [String] = []
-      let allowedExtensions: Set<String> = ["epub", "json", "jpg", "jpeg", "png", "webp"]
+      let allowedExtensions: Set<String> = ["epub", "txt", "json", "jpg", "jpeg", "png", "webp"]
 
       if let enumerator = FileManager.default.enumerator(
         at: folderUrl,
