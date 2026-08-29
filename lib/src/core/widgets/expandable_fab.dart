@@ -20,7 +20,7 @@ class ExpandableFabChild {
 /// 自研展开式悬浮按钮。
 ///
 /// 替换已停更（2023-05 后无更新）的 flutter_speed_dial：
-/// 点击主按钮展开/收起子按钮列表，点击遮罩收起，点击子按钮执行动作并收起。
+/// 点击主按钮展开/收起子按钮列表，点击子按钮执行动作并收起。
 /// 无第三方依赖，样式与 Material 3 FAB 一致。
 class ExpandableFab extends StatefulWidget {
   final IconData icon;
@@ -46,8 +46,6 @@ class ExpandableFab extends StatefulWidget {
 
 class _ExpandableFabState extends State<ExpandableFab>
     with SingleTickerProviderStateMixin {
-  static const double _childSpacing = 60.0;
-
   bool _isOpen = false;
   late final AnimationController _controller = AnimationController(
     vsync: this,
@@ -115,37 +113,36 @@ class _ExpandableFabState extends State<ExpandableFab>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomRight,
+    // 子按钮必须占据真实布局空间：此前用 Stack + 位移把子按钮绘制到
+    // Stack 边界外，超出父组件边界的区域不参与命中测试，导致子按钮
+    // 可见但永远点不到。改为 Column + AnimatedSize，在布局空间内展开。
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // 遮罩：点击收起
-        if (_isOpen)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _close,
-              child: ColoredBox(
-                color: theme.colorScheme.scrim.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-        // 子按钮（从主按钮上方依次排列）
-        for (var i = 0; i < widget.children.length; i++)
-          AnimatedSlide(
-            offset: Offset(
-              0,
-              _isOpen
-                  ? -((i + 1) * (_childSpacing + widget.spaceBetweenChildren))
-                  : 0,
-            ),
+        ClipRect(
+          child: AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
-            child: IgnorePointer(
-              ignoring: !_isOpen,
-              child: _buildChildButton(widget.children[i]),
-            ),
+            alignment: Alignment.bottomCenter,
+            child: _isOpen
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // 视觉上最后一个 child 显示在最上方
+                      for (var i = widget.children.length - 1; i >= 0; i--)
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: widget.spaceBetweenChildren,
+                          ),
+                          child: _buildChildButton(widget.children[i]),
+                        ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
           ),
+        ),
         // 主按钮
         FloatingActionButton(
           heroTag: null,
