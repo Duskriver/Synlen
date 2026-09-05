@@ -1,3 +1,4 @@
+import { extractLearningText } from './learning_text';
 import { QuadTree, Rect } from '../common/quad_tree';
 import type { ReaderState, InteractionItem } from '../common/types';
 import { FlutterBridge } from '../api/flutter_bridge';
@@ -355,103 +356,6 @@ export class InteractionManager {
     return container?.outerHTML ?? '';
   }
 
-  private expandToWord(range: Range): {
-    word: string;
-    start: number;
-    end: number;
-    textNode: Text;
-  } | null {
-    if (range.startContainer.nodeType !== Node.TEXT_NODE) {
-      return null;
-    }
-
-    const textNode = range.startContainer as Text;
-    const offset = range.startOffset;
-    const text = textNode.textContent || '';
-    let start = offset;
-    let end = offset;
-
-    while (start > 0 && /\w/.test(text.charAt(start - 1))) {
-      start--;
-    }
-    while (end < text.length && /\w/.test(text.charAt(end))) {
-      end++;
-    }
-
-    if (start === end) {
-      return null;
-    }
-
-    return {
-      word: text.substring(start, end),
-      start,
-      end,
-      textNode,
-    };
-  }
-
-  private expandToSentence(range: Range): string | null {
-    if (range.startContainer.nodeType !== Node.TEXT_NODE) {
-      return null;
-    }
-
-    const textNode = range.startContainer as Text;
-    const offset = range.startOffset;
-    const text = textNode.textContent || '';
-    const isSentenceEnd = (char: string) => /[.?!]/.test(char);
-
-    let start = offset;
-    while (start > 0) {
-      const char = text.charAt(start - 1);
-      if (isSentenceEnd(char)) {
-        const maybeAbbrev = text.substring(Math.max(0, start - 5), start - 1);
-        if (/(Mr|Dr|Ms|Mrs|St|Vs)$/.test(maybeAbbrev)) {
-          start--;
-          continue;
-        }
-        if (
-          start >= 3 &&
-          /[A-Z]/.test(text.charAt(start - 2)) &&
-          text.charAt(start - 3) === ' '
-        ) {
-          start--;
-          continue;
-        }
-        break;
-      }
-      start--;
-    }
-
-    let end = offset;
-    while (end < text.length) {
-      const char = text.charAt(end);
-      if (isSentenceEnd(char)) {
-        const maybeAbbrev = text.substring(Math.max(0, end - 4), end);
-        if (/(Mr|Dr|Ms|Mrs|St|Vs)$/.test(maybeAbbrev)) {
-          end++;
-          continue;
-        }
-        if (
-          end >= 1 &&
-          /[A-Z]/.test(text.charAt(end - 1)) &&
-          (end < 2 || text.charAt(end - 2) === ' ')
-        ) {
-          end++;
-          continue;
-        }
-        end++;
-        while (end < text.length && /['"鈥濃€?]/.test(text.charAt(end))) {
-          end++;
-        }
-        break;
-      }
-      end++;
-    }
-
-    const sentence = text.substring(start, end).trim();
-    return sentence.length > 0 ? sentence : null;
-  }
-
   private getRangeFromPoint(x: number, y: number): Range | null {
     const iframe = this.frameMgr.getFrame('curr');
     if (!iframe || !iframe.contentDocument) {
@@ -489,21 +393,9 @@ export class InteractionManager {
       return false;
     }
 
-    const result = this.expandToWord(range);
-    if (!result || !/^[a-zA-Z]+$/.test(result.word)) {
-      return false;
-    }
-
-    const text = result.textNode.textContent || '';
-    // Reuse sentence extraction for a better contextual prompt when possible.
-    const sentenceContext = this.expandToSentence(range);
-    const contextStart = Math.max(0, result.start - 50);
-    const contextEnd = Math.min(text.length, result.end + 50);
-    const fallbackContext = text.substring(contextStart, contextEnd);
-    FlutterBridge.onWordTap(
-      result.word,
-      sentenceContext || fallbackContext,
-    );
+    const result = extractLearningText(range, { x, y });
+    if (!result?.word) return false;
+    FlutterBridge.onWordTap(result.word, result.sentence);
     return true;
   }
 
@@ -513,12 +405,12 @@ export class InteractionManager {
       return false;
     }
 
-    const sentence = this.expandToSentence(range);
-    if (!sentence) {
+    const result = extractLearningText(range, { x, y });
+    if (!result) {
       return false;
     }
 
-    FlutterBridge.onSentenceSelected(sentence);
+    FlutterBridge.onSentenceSelected(result.sentence);
     return true;
   }
 
