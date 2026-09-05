@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:synlen/src/core/database/providers.dart';
 import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
 import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache_store.dart';
@@ -26,7 +27,10 @@ FreeDictionaryService freeDictionaryService(Ref ref) {
 /// 提供 [DeepSeekService] 实例
 @riverpod
 DeepSeekService deepSeekService(Ref ref) {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  ref.onDispose(() => dio.close(force: true));
   return DeepSeekService(
+    dio: dio,
     readApiKey: () => ref.read(apiKeyProvider).deepSeekKey,
   );
 }

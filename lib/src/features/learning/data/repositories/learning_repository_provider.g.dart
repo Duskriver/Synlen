@@ -106,7 +106,7 @@ final class DeepSeekServiceProvider
   }
 }
 
-String _$deepSeekServiceHash() => r'c870d8da1f1d1394006d658f30c514ea92165264';
+String _$deepSeekServiceHash() => r'85480a942495aea829da14018a0355a19da08121';
 
 /// 提供 [AliyunTTSService] 实例
 
