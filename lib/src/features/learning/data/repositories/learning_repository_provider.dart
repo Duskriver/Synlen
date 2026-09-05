@@ -31,7 +31,7 @@ DeepSeekService deepSeekService(Ref ref) {
   final dio = _createDio(ref);
   return DeepSeekService(
     dio: dio,
-    readApiKey: () => ref.read(apiKeyProvider).deepSeekKey,
+    readApiKey: () async => (await ref.read(apiKeyProvider.future)).deepSeekKey,
   );
 }
 
@@ -40,7 +40,8 @@ DeepSeekService deepSeekService(Ref ref) {
 AliyunTTSService aliyunTTSService(Ref ref) {
   return AliyunTTSService(
     dio: _createDio(ref),
-    readApiKey: () => ref.read(apiKeyProvider).aliyunTtsKey,
+    readApiKey: () async =>
+        (await ref.read(apiKeyProvider.future)).aliyunTtsKey,
     readVoiceParam: () => ref.read(ttsVoiceProvider).voiceParam,
   );
 }

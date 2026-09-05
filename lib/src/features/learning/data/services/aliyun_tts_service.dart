@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -10,7 +11,7 @@ import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 class AliyunTTSService {
   AliyunTTSService({
     required Dio dio,
-    String Function()? readApiKey,
+    FutureOr<String> Function()? readApiKey,
     String Function()? readVoiceParam,
   }) : _dio = dio,
        _readApiKey = readApiKey ?? (() => ''),
@@ -20,20 +21,13 @@ class AliyunTTSService {
   final Dio _dio;
 
   /// 运行时读取用户配置的 API Key（由设置页填写，存安全存储）
-  final String Function() _readApiKey;
+  final FutureOr<String> Function() _readApiKey;
   final String Function() _readVoiceParam;
   static const String _url =
       'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
   static const String _model = 'qwen3-tts-flash';
 
   String get currentVoiceParam => _readVoiceParam();
-
-  /// 校验 API Key 是否已配置，未配置时抛出明确错误
-  void _ensureConfigured() {
-    if (_readApiKey().isEmpty) {
-      throw const LearningException(LearningErrorCode.noAliyunTtsApiKey);
-    }
-  }
 
   /// 生成并流式输出语音音频
   ///
@@ -46,14 +40,18 @@ class AliyunTTSService {
     final request = LearningHttpRequest(cancellation);
     try {
       cancellation?.throwIfCancelled();
-      _ensureConfigured();
+      final apiKey = (await _readApiKey()).trim();
+      cancellation?.throwIfCancelled();
+      if (apiKey.isEmpty) {
+        throw const LearningException(LearningErrorCode.noAliyunTtsApiKey);
+      }
       final voice = currentVoiceParam;
       final response = await _dio.post<ResponseBody>(
         _url,
         cancelToken: request.cancelToken,
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${_readApiKey()}',
+            'Authorization': 'Bearer $apiKey',
             'Content-Type': 'application/json',
             'X-DashScope-SSE': 'enable',
           },

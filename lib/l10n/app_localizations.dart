@@ -1405,6 +1405,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Synlen Backup'**
   String get backupShareTitle;
+
+  /// No description provided for @apiKeyLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read saved API keys. Please retry.'**
+  String get apiKeyLoadFailed;
+
+  /// No description provided for @apiKeySaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the API key. Please retry.'**
+  String get apiKeySaveFailed;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate

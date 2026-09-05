@@ -1028,5 +1028,8 @@
   "backupShareTitle": "Synlen Backup",
   "@backupShareTitle": {
     "description": "Title of the backup folder shown in the iOS share sheet"
-  }
+  },
+  "apiKeyLoadFailed": "Could not read saved API keys. Please retry.",
+  "apiKeySaveFailed": "Could not save the API key. Please retry.",
+  "retry": "Retry"
 }
