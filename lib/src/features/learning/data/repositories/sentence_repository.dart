@@ -1,3 +1,4 @@
+import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
@@ -58,16 +59,22 @@ class SentenceRepository {
   /// [sentence] 目标句子
   /// 返回 [SentenceLearningResult]，如果 analysis 为 null 且 isFromCache 为 false，
   /// UI 应并行启动 getSentenceAnalysisStream 和 getPronunciationStream
-  Future<SentenceLearningResult> getSentenceInfo(String sentence) async {
+  Future<SentenceLearningResult> getSentenceInfo(
+    String sentence, {
+    LearningCancellation? cancellation,
+  }) async {
+    cancellation?.throwIfCancelled();
+    final voice = _aliyunTTSService.currentVoiceParam;
     final cachedAnalysis = await getCachedSentence(sentence);
     final cachedPronunciation = await getCachedPronunciation(sentence);
-    final voice = _aliyunTTSService.currentVoiceParam;
+    cancellation?.throwIfCancelled();
     final cachedAudioPath = await _audioFileStore.resolveSentenceAudioPath(
       sentence,
       preferredPath: cachedPronunciation?.audioUrl,
       voice: voice,
     );
 
+    cancellation?.throwIfCancelled();
     if (cachedAudioPath != null &&
         (cachedPronunciation == null ||
             cachedPronunciation.audioUrl != cachedAudioPath)) {
@@ -83,9 +90,16 @@ class SentenceRepository {
   }
 
   /// 获取句子的发音音频字节流结果 (PCM)
-  Stream<AudioStreamResult> getPronunciationStream(String sentence) async* {
+  Stream<AudioStreamResult> getPronunciationStream(
+    String sentence, {
+    LearningCancellation? cancellation,
+  }) async* {
+    cancellation?.throwIfCancelled();
     yield AudioStreamResult(
-      stream: _aliyunTTSService.generateAudioStream(sentence),
+      stream: _aliyunTTSService.generateAudioStream(
+        sentence,
+        cancellation: cancellation,
+      ),
       format: AudioFormat.pcm,
       cacheByVoice: true,
       sampleRate: 24000,
@@ -115,17 +129,23 @@ class SentenceRepository {
   }
 
   /// 流式获取句子分析并自动持久化
-  Stream<String> getSentenceAnalysisStream(String sentence) async* {
+  Stream<String> getSentenceAnalysisStream(
+    String sentence, {
+    LearningCancellation? cancellation,
+  }) async* {
+    cancellation?.throwIfCancelled();
     String fullContent = '';
 
     // 调用 DeepSeek AI 进行句子分析
     await for (final chunk in _deepSeekService.analyzeSentenceStream(
       sentence,
+      cancellation: cancellation,
     )) {
       fullContent += chunk;
       yield chunk;
     }
 
+    cancellation?.throwIfCancelled();
     // 当 AI 分析流结束且内容有效时，保存到本地缓存
     if (fullContent.isNotEmpty) {
       await _analysisCacheStore.saveAnalysis(

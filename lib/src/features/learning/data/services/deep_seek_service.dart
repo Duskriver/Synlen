@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 /// HTTP 客户端由调用方持有并释放；每次订阅拥有独立请求。
@@ -23,23 +24,33 @@ class DeepSeekService {
   static const String _model = 'deepseek-v4-flash';
 
   /// 解释单词；只有完整成功的响应才正常结束，残文不得作为缓存提交。
-  Stream<String> explainWordStream(String word, String context) =>
-      _complete("优先显示$word的音标、词性及变形。然后解释单词 '$word' 在上下文 '$context' 中的含义。");
+  Stream<String> explainWordStream(
+    String word,
+    String context, {
+    LearningCancellation? cancellation,
+  }) => _complete(
+    "优先显示$word的音标、词性及变形。然后解释单词 '$word' 在上下文 '$context' 中的含义。",
+    cancellation,
+  );
 
   /// 分析句子；取消订阅会取消正在等待响应头或正文的请求。
-  Stream<String> analyzeSentenceStream(String sentence) =>
-      _complete("优先显示原句及翻译，然后教我理解，最后分析它的语法和成分。'$sentence'");
+  Stream<String> analyzeSentenceStream(
+    String sentence, {
+    LearningCancellation? cancellation,
+  }) => _complete("优先显示原句及翻译，然后教我理解，最后分析它的语法和成分。'$sentence'", cancellation);
 
-  Stream<String> _complete(String prompt) {
+  Stream<String> _complete(String prompt, LearningCancellation? cancellation) {
     final cancelToken = CancelToken();
     StreamIterator<String>? lines;
     Timer? deadline;
+    void Function()? unregister;
     var cancelled = false;
     late final StreamController<String> output;
 
     Future<void> cancel() async {
       cancelled = true;
       deadline?.cancel();
+      unregister?.call();
       cancelToken.cancel();
       await lines?.cancel();
     }
@@ -47,7 +58,7 @@ class DeepSeekService {
     void fail(Object error, [StackTrace? stackTrace]) {
       if (cancelled || output.isClosed) return;
       output.addError(
-        error is LearningException
+        error is LearningException || error is LearningCancelled
             ? error
             : LearningException(LearningErrorCode.requestFailed, error),
         stackTrace,
@@ -57,6 +68,10 @@ class DeepSeekService {
     }
 
     Future<void> run() async {
+      unregister = cancellation?.onCancel(
+        () => fail(const LearningCancelled()),
+      );
+      if (cancelled) return;
       deadline = Timer(requestTimeout, () {
         fail(TimeoutException('DeepSeek request exceeded its deadline'));
       });
@@ -147,6 +162,7 @@ class DeepSeekService {
       } catch (error, stackTrace) {
         fail(error, stackTrace);
       } finally {
+        unregister?.call();
         deadline?.cancel();
         await lines?.cancel();
       }

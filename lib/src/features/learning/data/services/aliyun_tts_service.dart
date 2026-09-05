@@ -1,24 +1,23 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'learning_http_request.dart';
+import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/domain/aliyun_tts_voice.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class AliyunTTSService {
   AliyunTTSService({
+    required Dio dio,
     String Function()? readApiKey,
     String Function()? readVoiceParam,
-  }) : _readApiKey = readApiKey ?? (() => ''),
+  }) : _dio = dio,
+       _readApiKey = readApiKey ?? (() => ''),
        _readVoiceParam =
            readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
 
-  final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 30),
-    ),
-  );
+  final Dio _dio;
 
   /// 运行时读取用户配置的 API Key（由设置页填写，存安全存储）
   final String Function() _readApiKey;
@@ -40,12 +39,18 @@ class AliyunTTSService {
   ///
   /// [text] 要转换的文本
   /// 返回音频字节流 [Stream<List<int>>]
-  Stream<List<int>> generateAudioStream(String text) async* {
+  Stream<List<int>> generateAudioStream(
+    String text, {
+    LearningCancellation? cancellation,
+  }) async* {
+    final request = LearningHttpRequest(cancellation);
     try {
+      cancellation?.throwIfCancelled();
       _ensureConfigured();
       final voice = currentVoiceParam;
       final response = await _dio.post<ResponseBody>(
         _url,
+        cancelToken: request.cancelToken,
         options: Options(
           headers: {
             'Authorization': 'Bearer ${_readApiKey()}',
@@ -103,11 +108,14 @@ class AliyunTTSService {
         throw const LearningException(LearningErrorCode.emptyResult);
       }
     } catch (e) {
+      cancellation?.throwIfCancelled();
       appLogger.e('AliyunTTSService error: $e');
       if (e is LearningException) {
         rethrow;
       }
       throw LearningException(LearningErrorCode.requestFailed, e);
+    } finally {
+      request.dispose();
     }
   }
 }

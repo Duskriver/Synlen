@@ -65,8 +65,39 @@ class FakeLearningAudioPlayer implements LearningAudioPlayer {
   }
 }
 
+class DeferredOpenPlayer extends FakeLearningAudioPlayer {
+  final opened = Completer<void>();
+  final closed = Completer<void>();
+  int volumeCalls = 0;
+
+  @override
+  Future<void> openPlayer() => opened.future;
+
+  @override
+  Future<void> closePlayer() async => closed.complete();
+
+  @override
+  Future<void> setVolume(double volume) async => volumeCalls++;
+}
+
 void main() {
   group('LearningAudioCoordinator', () {
+    test('初始化尚未结束时关闭，等待打开后释放且不再设置音量', () async {
+      final player = DeferredOpenPlayer();
+      final coordinator = LearningAudioCoordinator(
+        debugLabel: 'test',
+        player: player,
+      );
+      final initialized = coordinator.initialize();
+      coordinator.dispose();
+      coordinator.dispose();
+      expect(player.closed.isCompleted, isFalse);
+      player.opened.complete();
+      await initialized;
+      await player.closed.future.timeout(const Duration(seconds: 1));
+      expect(player.volumeCalls, 0);
+    });
+
     test('restarts the same remote source when play is tapped again', () async {
       final player = FakeLearningAudioPlayer();
       final coordinator = LearningAudioCoordinator(
