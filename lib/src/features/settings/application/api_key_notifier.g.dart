@@ -8,29 +8,20 @@ part of 'api_key_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// AI 服务（DeepSeek / 阿里云 TTS）的 API Key 配置。
-///
-/// 密钥由用户自己在设置页填写，存于 [FlutterSecureStorage]（系统安全存储），
-/// 不写入源码与构建产物，保证开源分发不含任何密钥。
+/// 密钥加载完成前保持 loading；读取失败不得冒充空配置。
 
 @ProviderFor(ApiKeyNotifier)
 final apiKeyProvider = ApiKeyNotifierProvider._();
 
-/// AI 服务（DeepSeek / 阿里云 TTS）的 API Key 配置。
-///
-/// 密钥由用户自己在设置页填写，存于 [FlutterSecureStorage]（系统安全存储），
-/// 不写入源码与构建产物，保证开源分发不含任何密钥。
+/// 密钥加载完成前保持 loading；读取失败不得冒充空配置。
 final class ApiKeyNotifierProvider
-    extends $NotifierProvider<ApiKeyNotifier, ApiKeyConfig> {
-  /// AI 服务（DeepSeek / 阿里云 TTS）的 API Key 配置。
-  ///
-  /// 密钥由用户自己在设置页填写，存于 [FlutterSecureStorage]（系统安全存储），
-  /// 不写入源码与构建产物，保证开源分发不含任何密钥。
+    extends $AsyncNotifierProvider<ApiKeyNotifier, ApiKeyConfig> {
+  /// 密钥加载完成前保持 loading；读取失败不得冒充空配置。
   ApiKeyNotifierProvider._()
     : super(
         from: null,
         argument: null,
-        retry: null,
+        retry: _noApiKeyRetry,
         name: r'apiKeyProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -43,34 +34,23 @@ final class ApiKeyNotifierProvider
   @$internal
   @override
   ApiKeyNotifier create() => ApiKeyNotifier();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ApiKeyConfig value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ApiKeyConfig>(value),
-    );
-  }
 }
 
-String _$apiKeyNotifierHash() => r'b934cc74eeb3dc763ecb220349d215b60d07a6a0';
+String _$apiKeyNotifierHash() => r'b82481f591e79cd397e2eceafc7630288ce86a93';
 
-/// AI 服务（DeepSeek / 阿里云 TTS）的 API Key 配置。
-///
-/// 密钥由用户自己在设置页填写，存于 [FlutterSecureStorage]（系统安全存储），
-/// 不写入源码与构建产物，保证开源分发不含任何密钥。
+/// 密钥加载完成前保持 loading；读取失败不得冒充空配置。
 
-abstract class _$ApiKeyNotifier extends $Notifier<ApiKeyConfig> {
-  ApiKeyConfig build();
+abstract class _$ApiKeyNotifier extends $AsyncNotifier<ApiKeyConfig> {
+  FutureOr<ApiKeyConfig> build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<ApiKeyConfig, ApiKeyConfig>;
+    final ref = this.ref as $Ref<AsyncValue<ApiKeyConfig>, ApiKeyConfig>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ApiKeyConfig, ApiKeyConfig>,
-              ApiKeyConfig,
+              AnyNotifier<AsyncValue<ApiKeyConfig>, ApiKeyConfig>,
+              AsyncValue<ApiKeyConfig>,
               Object?,
               Object?
             >;

@@ -722,4 +722,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupShareTitle => '词镜备份';
+
+  @override
+  String get apiKeyLoadFailed => '无法读取已保存的密钥，请重试。';
+
+  @override
+  String get apiKeySaveFailed => '密钥保存失败，请重试。';
+
+  @override
+  String get retry => '重试';
 }

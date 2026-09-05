@@ -1036,5 +1036,8 @@
   "backupShareTitle": "词镜备份",
   "@backupShareTitle": {
     "description": "iOS 分享面板中备份文件夹的标题"
-  }
+  },
+  "apiKeyLoadFailed": "无法读取已保存的密钥，请重试。",
+  "apiKeySaveFailed": "密钥保存失败，请重试。",
+  "retry": "重试"
 }

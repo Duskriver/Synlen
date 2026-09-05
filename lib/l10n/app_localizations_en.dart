@@ -741,4 +741,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupShareTitle => 'Synlen Backup';
+
+  @override
+  String get apiKeyLoadFailed => 'Could not read saved API keys. Please retry.';
+
+  @override
+  String get apiKeySaveFailed => 'Could not save the API key. Please retry.';
+
+  @override
+  String get retry => 'Retry';
 }
