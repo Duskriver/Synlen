@@ -1,3 +1,4 @@
+import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -152,8 +153,8 @@ class FakeFreeDictionaryService extends FreeDictionaryService {
   FakeFreeDictionaryService({
     required this.pronunciationUrl,
     required this.audioBytes,
-  }) : _dio = Dio() {
-    _dio.interceptors.add(
+  }) : super(dio: testDio()) {
+    dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
           handler.resolve(
@@ -176,22 +177,24 @@ class FakeFreeDictionaryService extends FreeDictionaryService {
 
   final String pronunciationUrl;
   final List<int> audioBytes;
-  final Dio _dio;
 
   @override
-  Dio get dio => _dio;
-
-  @override
-  Future<String?> getPronunciationUrl(String word) async => pronunciationUrl;
+  Future<String?> getPronunciationUrl(
+    String word, {
+    LearningCancellation? cancellation,
+  }) async => pronunciationUrl;
 }
 
 class ThrowingFreeDictionaryService extends FreeDictionaryService {
-  ThrowingFreeDictionaryService(this.error);
+  ThrowingFreeDictionaryService(this.error) : super(dio: testDio());
 
   final Object error;
 
   @override
-  Future<String?> getPronunciationUrl(String word) async {
+  Future<String?> getPronunciationUrl(
+    String word, {
+    LearningCancellation? cancellation,
+  }) async {
     throw error;
   }
 }
@@ -212,23 +215,33 @@ class FakeDeepSeekService extends DeepSeekService {
   final List<String> sentenceChunks;
 
   @override
-  Stream<String> explainWordStream(String word, String context) async* {
+  Stream<String> explainWordStream(
+    String word,
+    String context, {
+    LearningCancellation? cancellation,
+  }) async* {
     yield* Stream<String>.fromIterable(wordChunks);
   }
 
   @override
-  Stream<String> analyzeSentenceStream(String sentence) async* {
+  Stream<String> analyzeSentenceStream(
+    String sentence, {
+    LearningCancellation? cancellation,
+  }) async* {
     yield* Stream<String>.fromIterable(sentenceChunks);
   }
 }
 
 class FakeAliyunTTSService extends AliyunTTSService {
-  FakeAliyunTTSService(this.chunks);
+  FakeAliyunTTSService(this.chunks) : super(dio: testDio());
 
   final List<List<int>> chunks;
 
   @override
-  Stream<List<int>> generateAudioStream(String text) async* {
+  Stream<List<int>> generateAudioStream(
+    String text, {
+    LearningCancellation? cancellation,
+  }) async* {
     yield* Stream<List<int>>.fromIterable(chunks);
   }
 }
@@ -264,9 +277,9 @@ void main() {
         );
 
         final repository = WordRepository(
-          FreeDictionaryService(),
+          FreeDictionaryService(dio: testDio()),
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           cacheStore,
           InMemoryAudioFileStore(),
         );
@@ -289,9 +302,9 @@ void main() {
         await cacheStore.savePronunciationPath(word, '/tmp/clarity.wav');
 
         final repository = WordRepository(
-          FreeDictionaryService(),
+          FreeDictionaryService(dio: testDio()),
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           cacheStore,
           InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
         );
@@ -317,9 +330,9 @@ void main() {
       await cacheStore.savePronunciationPath(word, '/tmp/clarity.wav');
 
       final repository = WordRepository(
-        FreeDictionaryService(),
+        FreeDictionaryService(dio: testDio()),
         DeepSeekService(dio: testDio()),
-        AliyunTTSService(),
+        AliyunTTSService(dio: testDio()),
         cacheStore,
         InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
       );
@@ -342,9 +355,9 @@ void main() {
         await cacheStore.savePronunciationPath(word, '/tmp/stale.wav');
 
         final repository = WordRepository(
-          FreeDictionaryService(),
+          FreeDictionaryService(dio: testDio()),
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           cacheStore,
           InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/fresh.wav'}),
         );
@@ -368,7 +381,7 @@ void main() {
             audioBytes: const <int>[1, 2, 3, 4],
           ),
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           cacheStore,
           InMemoryAudioFileStore(),
         );
@@ -418,9 +431,9 @@ void main() {
       const word = 'clarity';
       const context = 'Clarity matters.';
       final repository = WordRepository(
-        FreeDictionaryService(),
+        FreeDictionaryService(dio: testDio()),
         FakeDeepSeekService(wordChunks: const <String>['clear', ' ', 'idea']),
-        AliyunTTSService(),
+        AliyunTTSService(dio: testDio()),
         cacheStore,
         InMemoryAudioFileStore(),
       );
@@ -458,7 +471,7 @@ void main() {
 
         final repository = SentenceRepository(
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           analysisStore,
           pronunciationStore,
           InMemoryAudioFileStore(),
@@ -482,7 +495,7 @@ void main() {
 
         final repository = SentenceRepository(
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           analysisStore,
           pronunciationStore,
           InMemoryAudioFileStore(
@@ -510,7 +523,7 @@ void main() {
 
       final repository = SentenceRepository(
         DeepSeekService(dio: testDio()),
-        AliyunTTSService(),
+        AliyunTTSService(dio: testDio()),
         analysisStore,
         pronunciationStore,
         InMemoryAudioFileStore(
@@ -536,7 +549,7 @@ void main() {
 
         final repository = SentenceRepository(
           DeepSeekService(dio: testDio()),
-          AliyunTTSService(),
+          AliyunTTSService(dio: testDio()),
           analysisStore,
           pronunciationStore,
           InMemoryAudioFileStore(
@@ -588,7 +601,7 @@ void main() {
         FakeDeepSeekService(
           sentenceChunks: const <String>['translation', '\n', 'analysis'],
         ),
-        AliyunTTSService(),
+        AliyunTTSService(dio: testDio()),
         analysisStore,
         pronunciationStore,
         InMemoryAudioFileStore(),

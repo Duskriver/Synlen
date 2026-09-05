@@ -59,7 +59,7 @@ final class FreeDictionaryServiceProvider
 }
 
 String _$freeDictionaryServiceHash() =>
-    r'811892f545cfc2789174dccfd08e8365e5ff638d';
+    r'46950e35df2a752e14f3f4e628015db8f8201ec3';
 
 /// 提供 [DeepSeekService] 实例
 
@@ -106,7 +106,7 @@ final class DeepSeekServiceProvider
   }
 }
 
-String _$deepSeekServiceHash() => r'85480a942495aea829da14018a0355a19da08121';
+String _$deepSeekServiceHash() => r'9674c4494cd7ebe5013d0ab412100250b74710b5';
 
 /// 提供 [AliyunTTSService] 实例
 
@@ -157,7 +157,7 @@ final class AliyunTTSServiceProvider
   }
 }
 
-String _$aliyunTTSServiceHash() => r'6059882d31c0c857462d987906ef81dd39cb25c2';
+String _$aliyunTTSServiceHash() => r'cfb202329c41b140cdceb318726b5d3ac795da66';
 
 @ProviderFor(learningAudioFileStore)
 final learningAudioFileStoreProvider = LearningAudioFileStoreProvider._();

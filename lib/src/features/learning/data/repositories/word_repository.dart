@@ -1,3 +1,5 @@
+import '../services/learning_http_request.dart';
+import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'package:dio/dio.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
@@ -62,19 +64,28 @@ class WordRepository {
   /// 1. 首先尝试从免费词典 API 获取 URL (返回 mp3)
   /// 2. 如果成功，流式下载该 URL 的内容
   /// 3. 如果失败，降级调用阿里云 TTS 流式接口 (返回 pcm)
-  Stream<AudioStreamResult> getPronunciationStream(String word) async* {
+  Stream<AudioStreamResult> getPronunciationStream(
+    String word, {
+    LearningCancellation? cancellation,
+  }) async* {
+    final request = LearningHttpRequest(cancellation);
+    var responseTransferred = false;
     try {
+      cancellation?.throwIfCancelled();
       // 1. 尝试免费词典
       final dictionaryAudioUrl = await _freeDictionaryService
-          .getPronunciationUrl(word);
+          .getPronunciationUrl(word, cancellation: cancellation);
+      cancellation?.throwIfCancelled();
       if (dictionaryAudioUrl != null && dictionaryAudioUrl.isNotEmpty) {
         final response = await _freeDictionaryService.dio.get<ResponseBody>(
           dictionaryAudioUrl,
+          cancelToken: request.cancelToken,
           options: Options(responseType: ResponseType.stream),
         );
         if (response.statusCode == 200 && response.data != null) {
+          responseTransferred = true;
           yield AudioStreamResult(
-            stream: response.data!.stream.cast<List<int>>(),
+            stream: request.bind(response.data!.stream.cast<List<int>>()),
             format: AudioFormat.mp3,
             cacheByVoice: false,
             playbackUri: dictionaryAudioUrl,
@@ -83,14 +94,21 @@ class WordRepository {
         }
       }
     } catch (e) {
+      cancellation?.throwIfCancelled();
       appLogger.w(
         'Free Dictionary Audio error, falling back to Aliyun TTS: $e',
       );
+    } finally {
+      if (!responseTransferred) request.dispose();
     }
 
+    cancellation?.throwIfCancelled();
     // 2. 降级到阿里云 TTS 流式 (PCM)
     yield AudioStreamResult(
-      stream: _aliyunTTSService.generateAudioStream(word),
+      stream: _aliyunTTSService.generateAudioStream(
+        word,
+        cancellation: cancellation,
+      ),
       format: AudioFormat.pcm,
       cacheByVoice: true,
       sampleRate: 24000,
@@ -105,16 +123,23 @@ class WordRepository {
   /// [context] 上下文句子
   /// 返回 [WordLearningResult]，如果 explanation 为 null 且 isFromCache 为 false，
   /// UI 应并行启动 getWordExplanationStream 和 getPronunciationStream
-  Future<WordLearningResult> getWordInfo(String word, String context) async {
+  Future<WordLearningResult> getWordInfo(
+    String word,
+    String context, {
+    LearningCancellation? cancellation,
+  }) async {
+    cancellation?.throwIfCancelled();
+    final voice = _aliyunTTSService.currentVoiceParam;
     final cachedExplanation = await getCachedWord(word, context);
     final cachedPronunciation = await getCachedPronunciation(word);
-    final voice = _aliyunTTSService.currentVoiceParam;
+    cancellation?.throwIfCancelled();
     final audioPath = await _audioFileStore.resolveWordAudioPath(
       word,
       preferredPath: cachedPronunciation?.audioUrl,
       voice: voice,
     );
 
+    cancellation?.throwIfCancelled();
     if (audioPath != null &&
         (cachedPronunciation == null ||
             cachedPronunciation.audioUrl != audioPath)) {
@@ -150,17 +175,27 @@ class WordRepository {
   }
 
   /// 流式获取单词解释并自动持久化
-  Stream<String> getWordExplanationStream(String word, String context) async* {
+  Stream<String> getWordExplanationStream(
+    String word,
+    String context, {
+    LearningCancellation? cancellation,
+  }) async* {
+    cancellation?.throwIfCancelled();
     String fullContent = '';
 
     // 同时启动 AI 查询
-    final aiStream = _deepSeekService.explainWordStream(word, context);
+    final aiStream = _deepSeekService.explainWordStream(
+      word,
+      context,
+      cancellation: cancellation,
+    );
 
     await for (final chunk in aiStream) {
       fullContent += chunk;
       yield chunk;
     }
 
+    cancellation?.throwIfCancelled();
     // 当 AI 解释完成时，保存到本地缓存
     if (fullContent.isNotEmpty) {
       await _cacheStore.saveExplanation(

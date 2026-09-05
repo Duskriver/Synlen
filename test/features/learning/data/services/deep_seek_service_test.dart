@@ -212,15 +212,15 @@ void main() {
       final sentenceCache = InMemorySentenceAnalysisStore();
       final client = service();
       final wordRepository = WordRepository(
-        FreeDictionaryService(),
+        FreeDictionaryService(dio: dio),
         client,
-        AliyunTTSService(),
+        AliyunTTSService(dio: dio),
         wordCache,
         InMemoryAudioFileStore(),
       );
       final sentenceRepository = SentenceRepository(
         client,
-        AliyunTTSService(),
+        AliyunTTSService(dio: dio),
         sentenceCache,
         InMemorySentencePronunciationStore(),
         InMemoryAudioFileStore(),

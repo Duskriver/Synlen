@@ -23,6 +23,7 @@ class LearningAudioCoordinator {
   LearningPcmFade? _pcmFade;
   bool _isDisposed = false;
   bool _isInitialized = false;
+  Future<void>? _initialization;
   int _playbackToken = 0;
   int _requestedPlayId = 0;
   Future<void> _playSequence = Future<void>.value();
@@ -35,7 +36,9 @@ class LearningAudioCoordinator {
 
   bool get isDisposed => _isDisposed;
 
-  Future<void> initialize() async {
+  Future<void> initialize() => _initialization ??= _initialize();
+
+  Future<void> _initialize() async {
     if (_isInitialized || _isDisposed) {
       return;
     }
@@ -43,10 +46,11 @@ class LearningAudioCoordinator {
     _isInitialized = true;
     try {
       await _player.openPlayer();
+      if (_isDisposed) return;
       await _player.setVolume(1.0);
     } catch (error) {
       appLogger.e('$debugLabel audio player init error: $error');
-      onPlaybackError?.call(error);
+      if (!_isDisposed) onPlaybackError?.call(error);
     }
   }
 
@@ -107,11 +111,26 @@ class LearningAudioCoordinator {
   }
 
   void dispose() {
+    if (_isDisposed) return;
     _isDisposed = true;
     _playbackToken++;
     _session?.dispose();
-    unawaited(_stopPlayback());
-    unawaited(_player.closePlayer());
+    unawaited(_closePlayer());
+  }
+
+  Future<void> _closePlayer() async {
+    try {
+      await _initialization;
+      await _stopPlayback();
+    } catch (error) {
+      appLogger.w('$debugLabel audio stop error: $error');
+    } finally {
+      try {
+        await _player.closePlayer();
+      } catch (error) {
+        appLogger.w('$debugLabel audio close error: $error');
+      }
+    }
   }
 
   Future<void> _playLocalSource(String audioUrl, int token) async {
@@ -233,7 +252,7 @@ class LearningAudioCoordinator {
       }
     } catch (error) {
       appLogger.e('$debugLabel audio play error: $error');
-      onPlaybackError?.call(error);
+      if (!_isDisposed) onPlaybackError?.call(error);
     }
   }
 

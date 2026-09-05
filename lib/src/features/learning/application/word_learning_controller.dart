@@ -7,6 +7,7 @@ import 'package:synlen/src/features/learning/application/learning_controller_sup
 import 'package:synlen/src/features/learning/application/learning_detail_state.dart';
 import 'package:synlen/src/features/learning/data/repositories/learning_repository_provider.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
+import 'package:synlen/src/features/learning/data/repositories/word_repository.dart';
 
 part 'word_learning_controller.g.dart';
 
@@ -34,33 +35,49 @@ typedef WordLearningState = LearningDetailState;
 
 @riverpod
 class WordLearningController extends _$WordLearningController {
-  late final LearningAudioCoordinator _audio;
+  late LearningControllerSession<WordRepository> _session;
 
   @override
   WordLearningState build(WordLearningRequest request) {
-    _audio = LearningAudioCoordinator(
-      debugLabel: 'Word',
-      onPlaybackError: (error) {
-        _updateState((current) => current.copyWith(audioError: error));
-      },
+    final repository = ref.watch(wordRepositoryProvider);
+    final createPlayer = ref.watch(learningAudioPlayerFactoryProvider);
+    late final LearningControllerSession<WordRepository> session;
+    session = LearningControllerSession(
+      repository: repository,
+      audio: LearningAudioCoordinator(
+        debugLabel: 'Word',
+        player: createPlayer(),
+        onPlaybackError: (error) {
+          _updateState(
+            session,
+            (current) => current.copyWith(audioError: error),
+          );
+        },
+      ),
     );
-    ref.onDispose(_audio.dispose);
-    unawaited(_loadData(request));
+    _session = session;
+    ref.onDispose(session.dispose);
+    unawaited(_loadData(request, session));
     return const WordLearningState();
   }
 
-  Future<void> playAudio() => _audio.play(state.audioUrl);
+  Future<void> playAudio() => _session.audio.play(state.audioUrl);
 
-  Future<void> _loadData(WordLearningRequest request) async {
+  Future<void> _loadData(
+    WordLearningRequest request,
+    LearningControllerSession<WordRepository> session,
+  ) async {
     try {
-      await _audio.initialize();
+      await session.audio.initialize();
+      if (session.isDisposed) return;
 
-      final repository = ref.read(wordRepositoryProvider);
+      final repository = session.repository;
       final result = await repository.getWordInfo(
         request.word,
         request.context,
+        cancellation: session.cancellation,
       );
-      if (_audio.isDisposed) {
+      if (session.isDisposed) {
         return;
       }
 
@@ -73,22 +90,26 @@ class WordLearningController extends _$WordLearningController {
         hasAudio: result.hasCachedAudio,
       );
 
-      await _audio.prepareLocalSource(result.audioUrl);
-      if (_audio.isDisposed) {
+      await session.audio.prepareLocalSource(result.audioUrl);
+      if (session.isDisposed) {
         return;
       }
 
       if (!result.hasCachedAudio) {
-        unawaited(_fetchAndCacheAudio(request.word));
+        unawaited(_fetchAndCacheAudio(request.word, session));
       }
 
       if (result.hasCachedExplanation) {
-        _updateState((current) => current.copyWith(isFetchingContent: false));
+        _updateState(
+          session,
+          (current) => current.copyWith(isFetchingContent: false),
+        );
       } else {
-        await _fetchExplanation(request.word, request.context);
+        await _fetchExplanation(request.word, request.context, session);
       }
     } catch (error) {
       _updateState(
+        session,
         (current) => current.copyWith(
           isLoading: false,
           isFetchingContent: false,
@@ -99,24 +120,31 @@ class WordLearningController extends _$WordLearningController {
     }
   }
 
-  Future<String?> _fetchAndCacheAudio(String word) async {
+  Future<String?> _fetchAndCacheAudio(
+    String word,
+    LearningControllerSession<WordRepository> session,
+  ) async {
     try {
-      final repository = ref.read(wordRepositoryProvider);
-      await for (final result in repository.getPronunciationStream(word)) {
-        final session = await _audio.attachStreamingSource(result);
-        if (session == null) {
+      final repository = session.repository;
+      await for (final result in repository.getPronunciationStream(
+        word,
+        cancellation: session.cancellation,
+      )) {
+        final audioSession = await session.audio.attachStreamingSource(result);
+        if (audioSession == null) {
           return null;
         }
 
         _updateState(
+          session,
           (current) => current.copyWith(
-            audioUrl: session.playbackUri,
-            hasAudio: session.hasImmediatePlayback,
+            audioUrl: audioSession.playbackUri,
+            hasAudio: audioSession.hasImmediatePlayback,
             clearAudioError: true,
           ),
         );
 
-        final bytes = await _audio.waitForSessionFileBytes(session);
+        final bytes = await session.audio.waitForSessionFileBytes(audioSession);
         if (bytes == null) {
           return null;
         }
@@ -127,12 +155,14 @@ class WordLearningController extends _$WordLearningController {
           result.format,
           cacheByVoice: result.cacheByVoice,
         );
+        if (session.isDisposed) return null;
         await repository.persistAudioPath(word, filePath);
-        if (_audio.isDisposed) {
+        if (session.isDisposed) {
           return null;
         }
 
         _updateState(
+          session,
           (current) => current.copyWith(audioUrl: filePath, hasAudio: true),
         );
         return filePath;
@@ -140,21 +170,34 @@ class WordLearningController extends _$WordLearningController {
 
       throw const LearningException(LearningErrorCode.noPlayableAudio);
     } catch (error) {
-      _updateState((current) => current.copyWith(audioError: error));
+      _updateState(session, (current) => current.copyWith(audioError: error));
       return null;
     } finally {
-      _updateState((current) => current.copyWith(isFetchingAudio: false));
+      _updateState(
+        session,
+        (current) => current.copyWith(isFetchingAudio: false),
+      );
     }
   }
 
-  Future<void> _fetchExplanation(String word, String context) async {
+  Future<void> _fetchExplanation(
+    String word,
+    String context,
+    LearningControllerSession<WordRepository> session,
+  ) async {
     try {
-      final repository = ref.read(wordRepositoryProvider);
+      final repository = session.repository;
       await consumeLearningContentStream(
-        stream: repository.getWordExplanationStream(word, context),
-        isDisposed: () => _audio.isDisposed,
+        stream: repository.getWordExplanationStream(
+          word,
+          context,
+          cancellation: session.cancellation,
+        ),
+        cancellation: session.cancellation,
+        isDisposed: () => session.isDisposed,
         onContent: (appendedContent) {
           _updateState(
+            session,
             (current) => current.copyWith(
               content: current.content + appendedContent,
               clearContentError: true,
@@ -163,16 +206,20 @@ class WordLearningController extends _$WordLearningController {
         },
       );
     } catch (error) {
-      _updateState((current) => current.copyWith(contentError: error));
+      _updateState(session, (current) => current.copyWith(contentError: error));
     } finally {
-      _updateState((current) => current.copyWith(isFetchingContent: false));
+      _updateState(
+        session,
+        (current) => current.copyWith(isFetchingContent: false),
+      );
     }
   }
 
   void _updateState(
+    LearningControllerSession<WordRepository> session,
     WordLearningState Function(WordLearningState current) update,
   ) {
-    if (_audio.isDisposed) {
+    if (session.isDisposed) {
       return;
     }
     state = update(state);

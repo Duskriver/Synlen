@@ -21,14 +21,14 @@ part 'learning_repository_provider.g.dart';
 /// 提供 [FreeDictionaryService] 实例
 @riverpod
 FreeDictionaryService freeDictionaryService(Ref ref) {
-  return FreeDictionaryService();
+  final dio = _createDio(ref);
+  return FreeDictionaryService(dio: dio);
 }
 
 /// 提供 [DeepSeekService] 实例
 @riverpod
 DeepSeekService deepSeekService(Ref ref) {
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  ref.onDispose(() => dio.close(force: true));
+  final dio = _createDio(ref);
   return DeepSeekService(
     dio: dio,
     readApiKey: () => ref.read(apiKeyProvider).deepSeekKey,
@@ -39,6 +39,7 @@ DeepSeekService deepSeekService(Ref ref) {
 @riverpod
 AliyunTTSService aliyunTTSService(Ref ref) {
   return AliyunTTSService(
+    dio: _createDio(ref),
     readApiKey: () => ref.read(apiKeyProvider).aliyunTtsKey,
     readVoiceParam: () => ref.read(ttsVoiceProvider).voiceParam,
   );
@@ -105,4 +106,16 @@ SentenceRepository sentenceRepository(Ref ref) {
     pronunciationCacheStore,
     audioFileStore,
   );
+}
+
+Dio _createDio(Ref ref) {
+  final dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+    ),
+  );
+  ref.onDispose(() => dio.close(force: true));
+  return dio;
 }

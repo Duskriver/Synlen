@@ -1,16 +1,26 @@
 import 'package:dio/dio.dart';
+import 'learning_http_request.dart';
+import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 
 class FreeDictionaryService {
-  final Dio dio = Dio();
+  FreeDictionaryService({required this.dio});
+
+  final Dio dio;
 
   /// 获取单词发音 URL
   ///
   /// [word] 要查询的单词
-  /// 返回音频 URL，如果未找到或出错则返回 null
-  Future<String?> getPronunciationUrl(String word) async {
+  /// 未找到或请求失败返回 null；查询取消向调用方传播。
+  Future<String?> getPronunciationUrl(
+    String word, {
+    LearningCancellation? cancellation,
+  }) async {
+    final request = LearningHttpRequest(cancellation);
     try {
+      cancellation?.throwIfCancelled();
       final response = await dio.get(
-        'https://api.dictionaryapi.dev/api/v2/entries/en/$word',
+        'https://api.dictionaryapi.dev/api/v2/entries/en/${Uri.encodeComponent(word)}',
+        cancelToken: request.cancelToken,
       );
 
       if (response.statusCode == 200 && response.data is List) {
@@ -36,8 +46,10 @@ class FreeDictionaryService {
       }
       return null;
     } catch (e) {
-      // 出错时返回 null
+      cancellation?.throwIfCancelled();
       return null;
+    } finally {
+      request.dispose();
     }
   }
 
