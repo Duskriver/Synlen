@@ -1,173 +1,161 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
+/// HTTP 客户端由调用方持有并释放；每次订阅拥有独立请求。
 class DeepSeekService {
-  DeepSeekService({String Function()? readApiKey})
-    : _readApiKey = readApiKey ?? (() => '');
+  DeepSeekService({
+    FutureOr<String> Function()? readApiKey,
+    required Dio dio,
+    this.requestTimeout = const Duration(minutes: 2),
+    this.idleTimeout = const Duration(seconds: 30),
+  }) : _readApiKey = readApiKey ?? (() => ''),
+       _dio = dio;
 
-  /// 运行时读取用户配置的 API Key（由设置页填写，存安全存储）
-  final String Function() _readApiKey;
-
-  final Dio _dio = Dio();
+  final FutureOr<String> Function() _readApiKey;
+  final Dio _dio;
+  final Duration requestTimeout;
+  final Duration idleTimeout;
 
   static const String _baseUrl = 'https://api.deepseek.com/chat/completions';
-  static const String _model = 'deepseek-chat';
+  static const String _model = 'deepseek-v4-flash';
 
-  /// 校验 API Key 是否已配置，未配置时抛出明确错误
-  void _ensureConfigured() {
-    if (_readApiKey().isEmpty) {
-      throw const LearningException(LearningErrorCode.noDeepSeekApiKey);
+  /// 解释单词；只有完整成功的响应才正常结束，残文不得作为缓存提交。
+  Stream<String> explainWordStream(String word, String context) =>
+      _complete("优先显示$word的音标、词性及变形。然后解释单词 '$word' 在上下文 '$context' 中的含义。");
+
+  /// 分析句子；取消订阅会取消正在等待响应头或正文的请求。
+  Stream<String> analyzeSentenceStream(String sentence) =>
+      _complete("优先显示原句及翻译，然后教我理解，最后分析它的语法和成分。'$sentence'");
+
+  Stream<String> _complete(String prompt) {
+    final cancelToken = CancelToken();
+    StreamIterator<String>? lines;
+    Timer? deadline;
+    var cancelled = false;
+    late final StreamController<String> output;
+
+    Future<void> cancel() async {
+      cancelled = true;
+      deadline?.cancel();
+      cancelToken.cancel();
+      await lines?.cancel();
     }
-  }
 
-  /// 解释单词在特定上下文中的含义（流式输出）
-  ///
-  /// [word] 要解释的单词
-  /// [context] 单词所在的上下文句子
-  /// 返回 Stream，包含生成的文本片段
-  Stream<String> explainWordStream(String word, String context) async* {
-    try {
-      _ensureConfigured();
-      final response = await _dio.post<ResponseBody>(
-        _baseUrl,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer ${_readApiKey()}',
-            'Content-Type': 'application/json',
-          },
-          responseType: ResponseType.stream,
-        ),
-        data: {
-          'model': _model,
-          'messages': [
-            {
-              "role": "system",
-              "content": "你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。",
-            },
-            {
-              'role': 'user',
-              'content':
-                  "优先显示$word的音标、词性及变形。然后解释单词 '$word' 在上下文 '$context' 中的含义。",
-            },
-          ],
-          'stream': true,
-        },
+    void fail(Object error, [StackTrace? stackTrace]) {
+      if (cancelled || output.isClosed) return;
+      output.addError(
+        error is LearningException
+            ? error
+            : LearningException(LearningErrorCode.requestFailed, error),
+        stackTrace,
       );
-
-      if (response.statusCode != 200 || response.data == null) {
-        throw const LearningException(LearningErrorCode.serviceUnavailable);
-      }
-
-      final stream = response.data!.stream;
-      final lineStream = stream
-          .cast<List<int>>()
-          .transform(utf8.decoder)
-          .transform(const LineSplitter());
-      var hasContent = false;
-
-      await for (final line in lineStream) {
-        final trimmedLine = line.trim();
-        if (trimmedLine.isEmpty) continue;
-        if (trimmedLine == 'data: [DONE]') break;
-
-        if (trimmedLine.startsWith('data: ')) {
-          final jsonStr = trimmedLine.substring(6);
-          try {
-            final data = json.decode(jsonStr);
-            final delta = data['choices'][0]['delta'];
-            final content = delta['content'];
-            if (content != null && content is String) {
-              hasContent = true;
-              yield content;
-            }
-          } catch (e) {
-            // 解析 JSON 出错，跳过
-          }
-        }
-      }
-      if (!hasContent) {
-        throw const LearningException(LearningErrorCode.emptyResult);
-      }
-    } catch (e) {
-      if (e is LearningException) {
-        rethrow;
-      }
-      throw LearningException(LearningErrorCode.requestFailed, e);
+      unawaited(output.close());
+      unawaited(cancel());
     }
-  }
 
-  /// 分析句子的语法和成分（流式输出）
-  ///
-  /// [sentence] 要分析的句子
-  /// 返回 Stream，包含生成的文本片段
-  Stream<String> analyzeSentenceStream(String sentence) async* {
-    try {
-      _ensureConfigured();
-      final response = await _dio.post<ResponseBody>(
-        _baseUrl,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer ${_readApiKey()}',
-            'Content-Type': 'application/json',
+    Future<void> run() async {
+      deadline = Timer(requestTimeout, () {
+        fail(TimeoutException('DeepSeek request exceeded its deadline'));
+      });
+      try {
+        final apiKey = (await _readApiKey()).trim();
+        if (cancelled) return;
+        if (apiKey.isEmpty) {
+          throw const LearningException(LearningErrorCode.noDeepSeekApiKey);
+        }
+        final response = await _dio.post<ResponseBody>(
+          _baseUrl,
+          cancelToken: cancelToken,
+          options: Options(
+            headers: {'Authorization': 'Bearer $apiKey'},
+            contentType: Headers.jsonContentType,
+            responseType: ResponseType.stream,
+            sendTimeout: const Duration(seconds: 15),
+            receiveTimeout: idleTimeout,
+          ),
+          data: {
+            'model': _model,
+            'thinking': {'type': 'disabled'},
+            'max_tokens': 4096,
+            'messages': [
+              {
+                'role': 'system',
+                'content': '你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。',
+              },
+              {'role': 'user', 'content': prompt},
+            ],
+            'stream': true,
           },
-          responseType: ResponseType.stream,
-        ),
-        data: {
-          'model': _model,
-          'messages': [
-            {
-              "role": "system",
-              "content": "你是一位资深英语老师，你的目的是帮助用户学好英语，你不喜欢讲废话。使用markdown格式输出。",
-            },
-            {
-              'role': 'user',
-              'content': "优先显示原句及翻译，然后教我理解，最后分析它的语法和成分。'$sentence'",
-            },
-          ],
-          'stream': true,
-        },
-      );
-
-      if (response.statusCode != 200 || response.data == null) {
-        throw const LearningException(LearningErrorCode.serviceUnavailable);
-      }
-
-      final stream = response.data!.stream;
-      final lineStream = stream
-          .cast<List<int>>()
-          .transform(utf8.decoder)
-          .transform(const LineSplitter());
-      var hasContent = false;
-
-      await for (final line in lineStream) {
-        final trimmedLine = line.trim();
-        if (trimmedLine.isEmpty) continue;
-        if (trimmedLine == 'data: [DONE]') break;
-
-        if (trimmedLine.startsWith('data: ')) {
-          final jsonStr = trimmedLine.substring(6);
-          try {
-            final data = json.decode(jsonStr);
-            final delta = data['choices'][0]['delta'];
-            final content = delta['content'];
-            if (content != null && content is String) {
-              hasContent = true;
-              yield content;
-            }
-          } catch (e) {
-            // 解析 JSON 出错，跳过
-          }
+        );
+        if (cancelled) return;
+        if (response.statusCode != 200 || response.data == null) {
+          throw const LearningException(LearningErrorCode.serviceUnavailable);
         }
+        lines = StreamIterator(
+          response.data!.stream
+              .cast<List<int>>()
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())
+              .timeout(idleTimeout),
+        );
+        var hasContent = false;
+        var stopped = false;
+        var done = false;
+        while (await lines!.moveNext()) {
+          if (cancelled) return;
+          final line = lines!.current;
+          if (!line.startsWith('data:')) continue;
+          final payload = line.substring(5).trim();
+          if (payload == '[DONE]') {
+            done = true;
+            break;
+          }
+          final event = jsonDecode(payload) as Map<String, dynamic>;
+          final choices = event['choices'] as List<dynamic>;
+          // 兼容仅含 usage 的事件，不将它视为完成标志。
+          if (choices.isEmpty) continue;
+          final choice = choices.single as Map<String, dynamic>;
+          final reason = choice['finish_reason'];
+          if (reason != null && reason != 'stop') {
+            throw const LearningException(LearningErrorCode.requestFailed);
+          }
+          final delta = choice['delta'] as Map<String, dynamic>;
+          final content = delta['content'];
+          if (content != null && content is! String) {
+            throw const FormatException('Invalid DeepSeek content');
+          }
+          if (content is String && content.isNotEmpty) {
+            if (stopped) {
+              throw const FormatException('Content after DeepSeek completion');
+            }
+            hasContent = hasContent || content.trim().isNotEmpty;
+            output.add(content);
+          }
+          stopped = stopped || reason == 'stop';
+        }
+        if (cancelled) return;
+        if (!done || !stopped) {
+          throw const LearningException(LearningErrorCode.requestFailed);
+        }
+        if (!hasContent) {
+          throw const LearningException(LearningErrorCode.emptyResult);
+        }
+        unawaited(output.close());
+      } catch (error, stackTrace) {
+        fail(error, stackTrace);
+      } finally {
+        deadline?.cancel();
+        await lines?.cancel();
       }
-      if (!hasContent) {
-        throw const LearningException(LearningErrorCode.emptyResult);
-      }
-    } catch (e) {
-      if (e is LearningException) {
-        rethrow;
-      }
-      throw LearningException(LearningErrorCode.requestFailed, e);
     }
+
+    output = StreamController<String>(
+      onListen: () => unawaited(run()),
+      onCancel: cancel,
+    );
+    return output.stream;
   }
 }

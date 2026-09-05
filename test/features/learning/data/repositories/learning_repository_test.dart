@@ -196,11 +196,17 @@ class ThrowingFreeDictionaryService extends FreeDictionaryService {
   }
 }
 
+Dio testDio() {
+  final dio = Dio();
+  addTearDown(() => dio.close(force: true));
+  return dio;
+}
+
 class FakeDeepSeekService extends DeepSeekService {
   FakeDeepSeekService({
     this.wordChunks = const <String>[],
     this.sentenceChunks = const <String>[],
-  });
+  }) : super(dio: testDio());
 
   final List<String> wordChunks;
   final List<String> sentenceChunks;
@@ -259,7 +265,7 @@ void main() {
 
         final repository = WordRepository(
           FreeDictionaryService(),
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           cacheStore,
           InMemoryAudioFileStore(),
@@ -284,7 +290,7 @@ void main() {
 
         final repository = WordRepository(
           FreeDictionaryService(),
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           cacheStore,
           InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
@@ -312,7 +318,7 @@ void main() {
 
       final repository = WordRepository(
         FreeDictionaryService(),
-        DeepSeekService(),
+        DeepSeekService(dio: testDio()),
         AliyunTTSService(),
         cacheStore,
         InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
@@ -337,7 +343,7 @@ void main() {
 
         final repository = WordRepository(
           FreeDictionaryService(),
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           cacheStore,
           InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/fresh.wav'}),
@@ -361,7 +367,7 @@ void main() {
             pronunciationUrl: url,
             audioBytes: const <int>[1, 2, 3, 4],
           ),
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           cacheStore,
           InMemoryAudioFileStore(),
@@ -384,7 +390,7 @@ void main() {
       const word = 'clarity';
       final repository = WordRepository(
         ThrowingFreeDictionaryService(Exception('dictionary failed')),
-        DeepSeekService(),
+        DeepSeekService(dio: testDio()),
         FakeAliyunTTSService(const <List<int>>[
           <int>[1, 2],
           <int>[3, 4],
@@ -451,7 +457,7 @@ void main() {
         );
 
         final repository = SentenceRepository(
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           analysisStore,
           pronunciationStore,
@@ -475,7 +481,7 @@ void main() {
         await pronunciationStore.saveAudioPath(sentence, '/tmp/sentence.wav');
 
         final repository = SentenceRepository(
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           analysisStore,
           pronunciationStore,
@@ -503,7 +509,7 @@ void main() {
       await pronunciationStore.saveAudioPath(sentence, '/tmp/sentence.wav');
 
       final repository = SentenceRepository(
-        DeepSeekService(),
+        DeepSeekService(dio: testDio()),
         AliyunTTSService(),
         analysisStore,
         pronunciationStore,
@@ -529,7 +535,7 @@ void main() {
         await pronunciationStore.saveAudioPath(sentence, '/tmp/stale.wav');
 
         final repository = SentenceRepository(
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           AliyunTTSService(),
           analysisStore,
           pronunciationStore,
@@ -551,7 +557,7 @@ void main() {
     test('returns pcm stream metadata for sentence pronunciation', () async {
       const sentence = 'Clarity matters.';
       final repository = SentenceRepository(
-        DeepSeekService(),
+        DeepSeekService(dio: testDio()),
         FakeAliyunTTSService(const <List<int>>[
           <int>[5, 6],
           <int>[7, 8],
@@ -623,7 +629,7 @@ void main() {
         const sentence = 'Clarity matters.';
         const originalBytes = <int>[1, 2, 3, 4, 5, 6, 7, 8];
         final repository = SentenceRepository(
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           FakeAliyunTTSService(const <List<int>>[
             <int>[1, 2, 3],
             <int>[4, 5],
@@ -658,7 +664,7 @@ void main() {
         const originalBytes = <int>[11, 22, 33, 44, 55, 66];
         final repository = WordRepository(
           ThrowingFreeDictionaryService(Exception('dictionary failed')),
-          DeepSeekService(),
+          DeepSeekService(dio: testDio()),
           FakeAliyunTTSService(const <List<int>>[
             <int>[11, 22],
             <int>[33],
