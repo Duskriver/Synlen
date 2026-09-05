@@ -21,3 +21,5 @@ out/
 *.suo
 *.ntvs*
 *.njsproj
+/test-results/
+/playwright-report/

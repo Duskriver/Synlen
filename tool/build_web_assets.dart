@@ -12,10 +12,12 @@ void main() async {
     const targetArgs = ['--target=es2015,chrome80,safari12,ios12'];
 
     final result = await Process.run(
-      'npx',
-      ['esbuild', ...args, ...targetArgs],
+      File(
+        'web_assets/controller.js/node_modules/.bin/esbuild${Platform.isWindows ? '.cmd' : ''}',
+      ).absolute.path,
+      [...args, ...targetArgs],
       workingDirectory: workingDirectory,
-      runInShell: true,
+      runInShell: Platform.isWindows,
     );
 
     if (result.exitCode != 0) {
@@ -76,8 +78,7 @@ void main() async {
   if (!outFile.parent.existsSync()) {
     outFile.parent.createSync(recursive: true);
   }
-  await outFile.writeAsString(buffer.toString());
+  await outFile.writeAsString('${buffer.toString().trimRight()}\n');
 
   print('✅ web assets generated: $outputPath');
 }
-
