@@ -750,4 +750,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retry => 'Retry';
+
+  @override
+  String get readingProgressSaveFailed =>
+      'Could not save your reading position. Please retry.';
 }

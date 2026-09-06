@@ -13,6 +13,7 @@ import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../application/reader_settings_notifier.dart';
+import '../application/reading_progress_controller.dart';
 import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
@@ -67,8 +68,8 @@ class ReaderViewState {
     currentPageNotifier.value = value;
   }
 
-  int _totalPagesInChapter = 1;
-  final ValueNotifier<int> totalPagesNotifier = ValueNotifier(1);
+  int _totalPagesInChapter = 0;
+  final ValueNotifier<int> totalPagesNotifier = ValueNotifier(0);
 
   int get totalPagesInChapter => _totalPagesInChapter;
   set totalPagesInChapter(int value) {
@@ -177,7 +178,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Timer? progressDebouncer;
   @override
-  Timer? _saveProgressDebouncer;
+  late final ReadingProgressController progressController;
+  @override
+  bool isChangingChapter = false;
+  bool _exitInProgress = false;
+  String? _progressSaveFailedMessage;
 
   // Theme state (used by _ThemeMixin)
   @override
@@ -226,6 +231,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       fileHash: widget.fileHash,
       shelfBookRepository: ref.read(shelfBookRepositoryProvider),
       manifestRepository: ref.read(bookManifestRepositoryProvider),
+    );
+    progressController = ReadingProgressController(
+      save: bookSession.saveProgress,
+      onSaveFailed: () {
+        final message = _progressSaveFailedMessage;
+        if (message != null) ToastService.showError(message);
+      },
     );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -279,7 +291,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     routeAnimation = null;
     themeUpdateDebouncer?.cancel();
     progressDebouncer?.cancel();
-    _saveProgressDebouncer?.cancel();
+    saveProgressDebounced();
+    unawaited(progressController.close());
     _readerSettingsSubscription?.close();
     _volumeKeyTurnsPageSubscription?.close();
     viewState.dispose();
@@ -289,7 +302,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     VolumeControlService.disableInterception();
     WakelockPlus.disable();
     webViewHandler.clearCache();
-    bookSession.dispose();
     super.dispose();
   }
 
@@ -297,12 +309,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
-      saveProgress();
+      unawaited(saveProgress());
     }
 
     lastLifecycleState = state;
     setupVolumeControl();
+  }
+
+  Future<void> _leaveReader() async {
+    if (_exitInProgress) return;
+    _exitInProgress = true;
+    final saved = await saveProgress();
+    _exitInProgress = false;
+    if (!mounted || !saved) return;
+    if (ModalRoute.of(context)?.isCurrent == true) context.pop();
   }
 
   void setupVolumeControl() {
@@ -362,6 +384,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _progressSaveFailedMessage = AppLocalizations.of(
+      context,
+    )!.readingProgressSaveFailed;
 
     // Update WebView theme when system theme changes
     if (currentTheme == null) {
@@ -513,7 +538,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return PopScope(
       canPop: footnoteOverlayEntry == null,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
+        if (didPop) {
+          unawaited(saveProgress());
+          return;
+        }
         if (footnoteOverlayEntry != null) {
           removeFootnoteOverlay();
         }
@@ -608,10 +636,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           totalPagesInChapter:
                               viewState.totalPagesNotifier.value,
                           direction: bookSession.book!.direction,
-                          onBack: () {
-                            saveProgress();
-                            context.pop();
-                          },
+                          onBack: _leaveReader,
                           onOpenDrawer: openDrawer,
                           onPreviousPage: () =>
                               rendererController.performPreviousPageTurn(),

@@ -1039,5 +1039,6 @@
   },
   "apiKeyLoadFailed": "无法读取已保存的密钥，请重试。",
   "apiKeySaveFailed": "密钥保存失败，请重试。",
-  "retry": "重试"
+  "retry": "重试",
+  "readingProgressSaveFailed": "阅读进度保存失败，请重试。"
 }

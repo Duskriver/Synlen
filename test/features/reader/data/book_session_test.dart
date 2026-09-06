@@ -1,4 +1,4 @@
-import 'package:fake_async/fake_async.dart';
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
@@ -291,45 +291,108 @@ void main() {
       ).thenAnswer((_) async => const Right(true));
     }
 
-    test('should debounce rapid saves into a single update', () async {
+    test('等待真实写入完成并按线性章节计算进度', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
+      when(
+        shelfRepo.getBookByHash('hash1'),
+      ).thenAnswer((_) async => buildBook());
+      when(manifestRepo.getManifestByHash('hash1')).thenAnswer(
+        (_) async => buildManifest(
+          spine: [
+            SpineItem(index: 0, href: 'a.xhtml'),
+            SpineItem(index: 1, href: 'skip.xhtml', linear: false),
+            SpineItem(index: 2, href: 'b.xhtml'),
+          ],
+        ),
+      );
+      final write = Completer<Either<String, bool>>();
+      when(
+        shelfRepo.updateProgress(
+          bookId: 1,
+          currentChapterIndex: 1,
+          progress: 0.8,
+          scrollPosition: 0.5,
+        ),
+      ).thenAnswer((_) => write.future);
+      await session.loadBook();
+      var completed = false;
+      final saving = session
+          .saveProgress((chapterIndex: 1, pageIndex: 5, pageCount: 10))
+          .then((_) => completed = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, isFalse);
+      write.complete(const Right(true));
+      await saving;
+      expect(completed, isTrue);
+      verify(
+        shelfRepo.updateProgress(
+          bookId: 1,
+          currentChapterIndex: 1,
+          progress: 0.8,
+          scrollPosition: 0.5,
+        ),
+      ).called(1);
+    });
+
+    for (final result in <Either<String, bool>>[
+      const Left('磁盘不可写'),
+      const Right(false),
+    ]) {
+      test('仓库返回 $result 时必须报告失败', () async {
+        final (session, shelfRepo, manifestRepo) = buildSession();
+        when(
+          shelfRepo.getBookByHash('hash1'),
+        ).thenAnswer((_) async => buildBook());
+        when(
+          manifestRepo.getManifestByHash('hash1'),
+        ).thenAnswer((_) async => buildManifest());
+        when(
+          shelfRepo.updateProgress(
+            bookId: anyNamed('bookId'),
+            currentChapterIndex: anyNamed('currentChapterIndex'),
+            progress: anyNamed('progress'),
+            scrollPosition: anyNamed('scrollPosition'),
+          ),
+        ).thenAnswer((_) async => result);
+        await session.loadBook();
+        await expectLater(
+          session.saveProgress((chapterIndex: 0, pageIndex: 0, pageCount: 10)),
+          throwsStateError,
+        );
+      });
+    }
+
+    test('无效位置与未加载会话不得写入数据库', () async {
+      final (session, shelfRepo, manifestRepo) = buildSession();
+      stubUpdateProgress(shelfRepo);
+      await expectLater(
+        session.saveProgress((chapterIndex: 0, pageIndex: 0, pageCount: 10)),
+        throwsStateError,
+      );
       when(
         shelfRepo.getBookByHash('hash1'),
       ).thenAnswer((_) async => buildBook());
       when(
         manifestRepo.getManifestByHash('hash1'),
       ).thenAnswer((_) async => buildManifest());
-      stubUpdateProgress(shelfRepo);
       await session.loadBook();
-
-      fakeAsync((async) {
-        session.saveProgress(
-          currentChapterIndex: 0,
-          currentPageInChapter: 1,
-          totalPagesInChapter: 10,
-        );
-        session.saveProgress(
-          currentChapterIndex: 0,
-          currentPageInChapter: 5,
-          totalPagesInChapter: 10,
-        );
-
-        async.elapse(const Duration(milliseconds: 20));
-        async.flushMicrotasks();
-
-        // 两次连续保存只落库一次，且保留最后一次的进度：
-        // progress = 0 + 1.0 * ((5 + 1) / 10) = 0.6，scrollPosition = 0.5。
-        final verification = verify(
-          shelfRepo.updateProgress(
-            bookId: captureAnyNamed('bookId'),
-            currentChapterIndex: captureAnyNamed('currentChapterIndex'),
-            progress: captureAnyNamed('progress'),
-            scrollPosition: captureAnyNamed('scrollPosition'),
-          ),
-        );
-        verification.called(1);
-        expect(verification.captured, [1, 0, 0.6, 0.5]);
-      });
+      for (final position in [
+        (chapterIndex: -1, pageIndex: 0, pageCount: 10),
+        (chapterIndex: 1, pageIndex: 0, pageCount: 10),
+        (chapterIndex: 0, pageIndex: -1, pageCount: 10),
+        (chapterIndex: 0, pageIndex: 10, pageCount: 10),
+        (chapterIndex: 0, pageIndex: 0, pageCount: 0),
+      ]) {
+        await expectLater(session.saveProgress(position), throwsArgumentError);
+      }
+      verifyNever(
+        shelfRepo.updateProgress(
+          bookId: anyNamed('bookId'),
+          currentChapterIndex: anyNamed('currentChapterIndex'),
+          progress: anyNamed('progress'),
+          scrollPosition: anyNamed('scrollPosition'),
+        ),
+      );
     });
   });
 

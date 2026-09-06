@@ -1031,5 +1031,6 @@
   },
   "apiKeyLoadFailed": "Could not read saved API keys. Please retry.",
   "apiKeySaveFailed": "Could not save the API key. Please retry.",
-  "retry": "Retry"
+  "retry": "Retry",
+  "readingProgressSaveFailed": "Could not save your reading position. Please retry."
 }

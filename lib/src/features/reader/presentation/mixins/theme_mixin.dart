@@ -13,6 +13,8 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
   Timer? get themeUpdateDebouncer;
   set themeUpdateDebouncer(Timer? v);
 
+  void saveProgressDebounced();
+
   EpubTheme getEpubTheme() {
     final settings = ref.read(readerSettingsProvider);
     return settings.toEpubTheme(context);
@@ -50,5 +52,6 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
     setState(() {
       updatingTheme = false;
     });
+    saveProgressDebounced();
   }
 }

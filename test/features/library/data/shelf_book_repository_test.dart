@@ -58,6 +58,17 @@ void main() {
     lastUpdated: DateTime.fromMillisecondsSinceEpoch(0),
   );
 
+  test('进度更新找不到书籍时返回 false', () async {
+    final result = await shelfRepo.updateProgress(
+      bookId: 999,
+      currentChapterIndex: 0,
+      progress: 0.5,
+      scrollPosition: 0.4,
+    );
+    expect(unwrap(result), isFalse);
+    expect(await db.select(db.shelfBooks).get(), isEmpty);
+  });
+
   test('连续保存两本 id=0 的书各自成行，互不覆盖', () async {
     final idA = unwrap(await shelfRepo.saveBook(buildBook('hash-A', '书A')));
     final idB = unwrap(await shelfRepo.saveBook(buildBook('hash-B', '书B')));
