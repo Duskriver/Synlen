@@ -154,20 +154,22 @@ class WordRepository {
     );
   }
 
-  /// 保存音频文件到本地并返回路径
+  /// 保存音频文件到本地并返回路径；保存后按容量预算清退最旧音频。
   Future<String> saveAudioFile(
     String word,
     List<int> bytes,
     AudioFormat format, {
     required bool cacheByVoice,
-  }) {
-    return _audioFileStore.saveWordAudioFile(
+  }) async {
+    final path = await _audioFileStore.saveWordAudioFile(
       word,
       bytes,
       format,
       voice: _aliyunTTSService.currentVoiceParam,
       cacheByVoice: cacheByVoice,
     );
+    await _audioFileStore.evictAudioCache();
+    return path;
   }
 
   Future<void> persistAudioPath(String word, String audioPath) {

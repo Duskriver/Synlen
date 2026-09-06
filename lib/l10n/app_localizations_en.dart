@@ -281,7 +281,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cleanCache => 'Clean Cache';
 
   @override
-  String get cleanCacheSubtitle => 'Remove unused orphan files from storage';
+  String get cleanCacheSubtitle =>
+      'Remove orphan files and clear the rebuildable learning cache (explanations and audio)';
 
   @override
   String cleanCacheSuccessWithCount(int count) {

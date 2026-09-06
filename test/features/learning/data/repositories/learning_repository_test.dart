@@ -66,6 +66,9 @@ class InMemoryAudioFileStore implements AudioFileStore {
   }) async {
     return sentenceAudioPaths[sentence] ??= '/tmp/sentence.pcm';
   }
+
+  @override
+  Future<int> evictAudioCache({int? maxBytes}) async => 0;
 }
 
 class InMemoryWordCacheStore implements WordCacheStore {

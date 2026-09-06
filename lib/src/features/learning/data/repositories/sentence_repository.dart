@@ -108,20 +108,22 @@ class SentenceRepository {
     );
   }
 
-  /// 保存音频文件到本地并返回路径
+  /// 保存音频文件到本地并返回路径；保存后按容量预算清退最旧音频。
   Future<String> saveAudioFile(
     String sentence,
     List<int> bytes,
     AudioFormat format, {
     required bool cacheByVoice,
-  }) {
+  }) async {
     assert(cacheByVoice);
-    return _audioFileStore.saveSentenceAudioFile(
+    final path = await _audioFileStore.saveSentenceAudioFile(
       sentence,
       bytes,
       format,
       voice: _aliyunTTSService.currentVoiceParam,
     );
+    await _audioFileStore.evictAudioCache();
+    return path;
   }
 
   Future<void> persistAudioPath(String sentence, String audioPath) {

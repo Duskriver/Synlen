@@ -4,7 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i5;
-import 'dart:io' as _i3;
+import 'dart:io' as _i4;
 import 'dart:typed_data' as _i8;
 
 import 'package:fpdart/fpdart.dart' as _i10;
@@ -14,7 +14,7 @@ import 'package:synlen/src/core/database/app_database.dart' as _i11;
 import 'package:synlen/src/core/file_handling/importable_epub.dart' as _i2;
 import 'package:synlen/src/core/file_handling/platform_path.dart' as _i6;
 import 'package:synlen/src/core/file_handling/unified_import_service.dart'
-    as _i4;
+    as _i3;
 import 'package:synlen/src/features/library/data/services/epub_import_service.dart'
     as _i9;
 
@@ -39,8 +39,13 @@ class _FakeImportableEpub_0 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
-class _FakeFile_1 extends _i1.SmartFake implements _i3.File {
-  _FakeFile_1(Object parent, Invocation parentInvocation)
+class _FakeBackupPaths_1 extends _i1.SmartFake implements _i3.BackupPaths {
+  _FakeBackupPaths_1(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeFile_2 extends _i1.SmartFake implements _i4.File {
+  _FakeFile_2(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -48,7 +53,7 @@ class _FakeFile_1 extends _i1.SmartFake implements _i3.File {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockUnifiedImportService extends _i1.Mock
-    implements _i4.UnifiedImportService {
+    implements _i3.UnifiedImportService {
   MockUnifiedImportService() {
     _i1.throwOnMissingStub(this);
   }
@@ -130,15 +135,36 @@ class MockUnifiedImportService extends _i1.Mock
           as _i5.Future<void>);
 
   @override
-  _i5.Future<_i4.BackupPaths?> pickBackupFolder() =>
+  _i5.Future<_i3.BackupPaths?> pickBackupFolder() =>
       (super.noSuchMethod(
             Invocation.method(#pickBackupFolder, []),
-            returnValue: _i5.Future<_i4.BackupPaths?>.value(),
+            returnValue: _i5.Future<_i3.BackupPaths?>.value(),
           )
-          as _i5.Future<_i4.BackupPaths?>);
+          as _i5.Future<_i3.BackupPaths?>);
 
   @override
-  _i5.Future<void> cleanCache(_i3.File? cacheFile) =>
+  _i5.Future<_i6.PlatformPath?> pickBackupZipFile() =>
+      (super.noSuchMethod(
+            Invocation.method(#pickBackupZipFile, []),
+            returnValue: _i5.Future<_i6.PlatformPath?>.value(),
+          )
+          as _i5.Future<_i6.PlatformPath?>);
+
+  @override
+  _i5.Future<_i3.BackupPaths> processBackupZip(_i6.PlatformPath? zipPath) =>
+      (super.noSuchMethod(
+            Invocation.method(#processBackupZip, [zipPath]),
+            returnValue: _i5.Future<_i3.BackupPaths>.value(
+              _FakeBackupPaths_1(
+                this,
+                Invocation.method(#processBackupZip, [zipPath]),
+              ),
+            ),
+          )
+          as _i5.Future<_i3.BackupPaths>);
+
+  @override
+  _i5.Future<void> cleanCache(_i4.File? cacheFile) =>
       (super.noSuchMethod(
             Invocation.method(#cleanCache, [cacheFile]),
             returnValue: _i5.Future<void>.value(),
@@ -157,14 +183,14 @@ class MockUnifiedImportService extends _i1.Mock
           as _i5.Future<List<_i6.PlatformPath>>);
 
   @override
-  _i5.Future<_i3.File> processFontFile(_i6.PlatformPath? path) =>
+  _i5.Future<_i4.File> processFontFile(_i6.PlatformPath? path) =>
       (super.noSuchMethod(
             Invocation.method(#processFontFile, [path]),
-            returnValue: _i5.Future<_i3.File>.value(
-              _FakeFile_1(this, Invocation.method(#processFontFile, [path])),
+            returnValue: _i5.Future<_i4.File>.value(
+              _FakeFile_2(this, Invocation.method(#processFontFile, [path])),
             ),
           )
-          as _i5.Future<_i3.File>);
+          as _i5.Future<_i4.File>);
 
   @override
   _i5.Future<void> clearAllCache() =>
@@ -186,7 +212,7 @@ class MockEpubImportService extends _i1.Mock implements _i9.EpubImportService {
 
   @override
   _i5.Future<_i10.Either<String, _i11.ShelfBook>> importBook(
-    _i3.File? file, {
+    _i4.File? file, {
     String? precomputedHash,
     String? originalFileName,
     bool? moveSourceFile = false,

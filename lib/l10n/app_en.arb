@@ -393,7 +393,7 @@
   "@cleanCache": {
     "description": "Clean cache button label"
   },
-  "cleanCacheSubtitle": "Remove unused orphan files from storage",
+  "cleanCacheSubtitle": "Remove orphan files and clear the rebuildable learning cache (explanations and audio)",
   "@cleanCacheSubtitle": {
     "description": "Clean cache subtitle"
   },

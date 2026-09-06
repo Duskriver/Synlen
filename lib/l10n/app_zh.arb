@@ -401,7 +401,7 @@
   "@cleanCache": {
     "description": "清理缓存按钮文本"
   },
-  "cleanCacheSubtitle": "删除存储中无用的孤立文件",
+  "cleanCacheSubtitle": "删除孤立文件，并清理可重建的学习缓存（解释文本与发音音频）",
   "@cleanCacheSubtitle": {
     "description": "清理缓存副标题"
   },

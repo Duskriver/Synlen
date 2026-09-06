@@ -4,6 +4,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:synlen/src/features/learning/domain/aliyun_tts_voice.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 
+/// 音频缓存容量上限。24 kHz 单声道 16 位 PCM 每秒约 48 KB，
+/// 256 MB 可容纳数千条短句，超出后按文件修改时间最旧优先清退。
+const int kAudioCacheBudgetBytes = 256 * 1024 * 1024;
+
 abstract class AudioFileStore {
   Future<String?> resolveWordAudioPath(
     String word, {
@@ -31,6 +35,11 @@ abstract class AudioFileStore {
     AudioFormat format, {
     required String voice,
   });
+
+  /// 音频文件总量超过 [maxBytes] 时按修改时间最旧优先清退，返回删除数。
+  /// 传 0 表示清空全部音频缓存（文件缺失时 Pronunciation 缓存路径会由
+  /// resolve 逻辑的存在性检查兜底，无需同步表记录）。
+  Future<int> evictAudioCache({int? maxBytes});
 }
 
 class LearningAudioFileStore implements AudioFileStore {
@@ -164,9 +173,48 @@ class LearningAudioFileStore implements AudioFileStore {
     return null;
   }
 
-  Future<File> _audioFile(String name, {bool ensureDirectory = false}) async {
+  @override
+  Future<int> evictAudioCache({int? maxBytes}) async {
+    final budget = maxBytes ?? kAudioCacheBudgetBytes;
+    final audioDir = await _audioDirectory();
+    if (!await audioDir.exists()) return 0;
+
+    final entries = <({File file, int size, DateTime modified})>[];
+    var total = 0;
+    await for (final entity in audioDir.list()) {
+      if (entity is! File) continue;
+      try {
+        final stat = await entity.stat();
+        entries.add((file: entity, size: stat.size, modified: stat.modified));
+        total += stat.size;
+      } on FileSystemException {
+        continue;
+      }
+    }
+    if (total <= budget) return 0;
+
+    entries.sort((a, b) => a.modified.compareTo(b.modified));
+    var deleted = 0;
+    for (final entry in entries) {
+      if (total <= budget) break;
+      try {
+        await entry.file.delete();
+        total -= entry.size;
+        deleted++;
+      } on FileSystemException {
+        // 文件被占用等场景跳过，下轮清退重试。
+      }
+    }
+    return deleted;
+  }
+
+  Future<Directory> _audioDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
-    final audioDir = Directory('${appDir.path}/audio');
+    return Directory('${appDir.path}/audio');
+  }
+
+  Future<File> _audioFile(String name, {bool ensureDirectory = false}) async {
+    final audioDir = await _audioDirectory();
     if (ensureDirectory && !await audioDir.exists()) {
       await audioDir.create(recursive: true);
     }

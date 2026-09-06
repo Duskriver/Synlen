@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/features/learning/data/services/learning_cache_cleanup_service_provider.dart';
 import 'package:synlen/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -25,8 +26,12 @@ class _CleanCacheTileState extends ConsumerState<CleanCacheTile> {
     final deletedBookCount = await service.cleanOrphanFiles();
     await service.cleanShareFiles();
     final deletedFontCount = await service.cleanOrphanFontFiles();
+    final deletedAudioCount = await ref
+        .read(learningCacheCleanupServiceProvider)
+        .cleanAll();
 
-    final deletedCount = deletedBookCount + deletedFontCount;
+    final deletedCount =
+        deletedBookCount + deletedFontCount + deletedAudioCount;
 
     await Future.delayed(const Duration(milliseconds: 200));
 
