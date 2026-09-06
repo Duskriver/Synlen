@@ -450,7 +450,7 @@
   "@aliyunTtsApiKey": {
     "description": "Aliyun TTS API Key setting title"
   },
-  "aliyunTtsApiKeySubtitle": "Used for pronunciation (Aliyun DashScope)",
+  "aliyunTtsApiKeySubtitle": "Used for read-aloud (Aliyun Model Studio, Beijing region endpoint only)",
   "@aliyunTtsApiKeySubtitle": {
     "description": "Aliyun TTS API Key setting subtitle"
   },

@@ -677,7 +677,7 @@ abstract class AppLocalizations {
   /// Aliyun TTS API Key setting subtitle
   ///
   /// In en, this message translates to:
-  /// **'Used for pronunciation (Aliyun DashScope)'**
+  /// **'Used for read-aloud (Aliyun Model Studio, Beijing region endpoint only)'**
   String get aliyunTtsApiKeySubtitle;
 
   /// API key not configured status

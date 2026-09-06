@@ -15,8 +15,51 @@ permissions:
   contents: write
 
 jobs:
+  # 发布前置质量门禁：测试不过不构建产物。
+  quality-gates:
+    name: Quality Gates (analyze · test · assets drift)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Install web toolchain
+        working-directory: web_assets/controller.js
+        run: npm ci
+
+      - name: Typecheck reader TypeScript
+        working-directory: web_assets/controller.js
+        run: npm run typecheck
+
+      - name: Detect generated assets drift
+        run: |
+          dart run tool/build_web_assets.dart
+          git diff --exit-code lib/src/web/web_assets.dart
+
   build-android:
     name: Build Android APKs & AAB
+    needs: [quality-gates]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -133,6 +176,7 @@ jobs:
 
   build-ios:
     name: Build iOS IPA
+    needs: [quality-gates]
     runs-on: macos-latest
     timeout-minutes: 60
     steps:

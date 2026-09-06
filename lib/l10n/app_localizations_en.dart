@@ -331,7 +331,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aliyunTtsApiKeySubtitle =>
-      'Used for pronunciation (Aliyun DashScope)';
+      'Used for read-aloud (Aliyun Model Studio, Beijing region endpoint only)';
 
   @override
   String get apiKeyNotConfigured => 'Not configured';

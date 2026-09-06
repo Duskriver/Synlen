@@ -52,7 +52,7 @@ presentation → application → domain
 
 ### data（数据访问层）
 
-- Repository：Isar 存取（`ShelfBookRepository`）。
+- Repository：Drift 存取（`ShelfBookRepository`）。
 - Service：文件解析（`EpubZipParser`）、导入/导出（`epub_import_service.dart`）、备份、存储清理。
 - **通过 provider 暴露**：`xxx_repository_provider.dart` / `xxx_service_provider.dart`，依赖从 `ref.watch(...)` 注入，**不在内部 `new` 自己的依赖**。
 - 命名：`xxx_repository.dart` / `xxx_service.dart` / `xxx_parser.dart`。
@@ -132,7 +132,7 @@ presentation → application → domain
 - 分层策略：
   - domain → 纯单元测试（无 mock）
   - application → 注入 fake repository/audio（seam 处替换），测状态机与编排
-  - data → 测 parser/import（已有 `epub_parser_test.dart` 为范例），Isar 仓库用真实临时库
+  - data → 测 parser/import（已有 `epub_parser_test.dart` 为范例），Drift 仓库用真实临时库（内存 SQLite，见 `import_backup_service_test.dart`）
 - 命名：`xxx_test.dart` 与源码同目录；mock 产物 `.mocks.dart` 不手改。
 - 依赖注入使测试不需要真实网络/文件系统/平台通道。
 
