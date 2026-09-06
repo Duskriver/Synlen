@@ -1429,6 +1429,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save your reading position. Please retry.'**
   String get readingProgressSaveFailed;
+
+  /// No description provided for @restoreIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore incomplete. Check the backup and retry.'**
+  String get restoreIncomplete;
 }
 
 class _AppLocalizationsDelegate

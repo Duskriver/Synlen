@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'dart:io';
+import 'package:fpdart/fpdart.dart';
 
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
@@ -85,7 +86,7 @@ class BackupImportProgress extends ProgressLog {
   /// Title (or hash) of the book currently being processed.
   final String currentFileName;
 
-  /// Populated only on the final event. Either [ImportSuccess] or [ImportFailure].
+  /// 单本保存成功或恢复中止时携带结果；流结束代表本次恢复结束。
   final ImportResult? result;
 }
 
@@ -129,15 +130,17 @@ class ImportBackupService {
   /// Restores a library from [backupPaths], emitting [BackupImportProgress]
   /// events in real time so the UI can display a progress indicator.
   ///
-  /// The final event always has [BackupImportProgress.isCompleted] == `true`
-  /// and its [BackupImportProgress.result] is either [ImportSuccess] or
-  /// [ImportFailure].
+  /// 单本的全部数据库写入成功后才计数；失败事件保留此前成功数并中止恢复。
   Stream<ProgressLog> importLibraryFromFolder(BackupPaths backupPaths) async* {
-    // Helper to emit a completed failure event.
+    var importedCount = 0;
+    var totalCount = 0;
+    var currentFileName = '';
+
+    // 失败不会清零已成功恢复的书籍数。
     BackupImportProgress failure(String message) => BackupImportProgress(
-      current: 0,
-      total: 0,
-      currentFileName: '',
+      current: importedCount,
+      total: totalCount,
+      currentFileName: currentFileName,
       result: ImportFailure(message),
     );
 
@@ -155,6 +158,7 @@ class ImportBackupService {
           .cast<Map<String, dynamic>>();
       final booksJson = (shelfJson['books'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
+      totalCount = booksJson.length;
 
       // Emit the initial state so the UI can show indeterminate progress
       // while groups & directories are being set up.
@@ -190,12 +194,12 @@ class ImportBackupService {
       // 4. Restore books one-by-one, yielding progress; upsert each immediately.
       // -----------------------------------------------------------------------
       yield ProgressLog('Restoring books...', ProgressLogType.info);
-      int importedCount = 0;
 
       for (final bookMap in booksJson) {
         final hash = bookMap['fileHash'] as String;
         final title = (bookMap['title'] as String?)?.trim();
         final displayName = (title != null && title.isNotEmpty) ? title : hash;
+        currentFileName = displayName;
         // 旧版备份无 format 字段，按 EPUB 处理
         final format =
             BookFormat.values.asNameMap()[bookMap['format']] ?? BookFormat.epub;
@@ -210,14 +214,7 @@ class ImportBackupService {
 
         final pathsForBook = backupPaths.bookPaths[hash];
         if (pathsForBook == null) {
-          appLogger.w(
-            '[ImportBackup] Files for book $hash not found in backup paths, skipping.',
-          );
-          yield ProgressLog(
-            'Warning: Files for "$displayName" not found, skipping.',
-            ProgressLogType.warning,
-          );
-          continue;
+          throw StateError('备份缺少书籍或清单：$hash');
         }
 
         // -- A. Process & Copy book file --
@@ -226,13 +223,25 @@ class ImportBackupService {
           final importableBook = await _importService.processEpub(
             pathsForBook.epubPath,
           );
-          await importableBook.cacheFile.copy(destBook.path);
-          await _importService.cleanCache(importableBook.cacheFile);
+          try {
+            await importableBook.cacheFile.copy(destBook.path);
+          } finally {
+            await _importService.cleanCache(importableBook.cacheFile);
+          }
         }
 
         // -- B. Process & Copy Cover --
-        String? restoredCoverPath;
-        if (pathsForBook.coverPath != null) {
+        final existingBook = await _shelfBookRepository.getBookByHash(hash);
+        final existingCover = existingBook?.coverPath;
+        final keepLocalCover =
+            existingBook != null &&
+            existingBook.updatedAt >= (bookMap['updatedAt'] as int) &&
+            existingCover != null &&
+            await File(
+              p.join(AppStorage.documentsPath, existingCover),
+            ).exists();
+        String? restoredCoverPath = keepLocalCover ? existingCover : null;
+        if (!keepLocalCover && pathsForBook.coverPath != null) {
           try {
             final coverBytes = await _importService.processBinaryFile(
               pathsForBook.coverPath!,
@@ -259,6 +268,9 @@ class ImportBackupService {
         );
         final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
         final manifest = _mapToBookManifest(manifestMap);
+        if (manifest.fileHash != hash || manifest.format != format) {
+          throw const FormatException('书架与清单的书籍标识或格式不一致');
+        }
         await _mergeManifest(manifest);
 
         // -- D. Build ShelfBook and upsert immediately --
@@ -312,7 +324,10 @@ class ImportBackupService {
       );
 
       if (existingGroup == null) {
-        await _shelfBookRepository.createGroup(name: backupGroup.name);
+        final id = _requireSaved(
+          await _shelfBookRepository.createGroup(name: backupGroup.name),
+        );
+        await _shelfBookRepository.saveGroup(backupGroup.copyWith(id: id));
       } else {
         if (backupGroup.updatedAt > existingGroup.updatedAt) {
           await _shelfBookRepository.saveGroup(
@@ -323,62 +338,63 @@ class ImportBackupService {
     }
   }
 
+  T _requireSaved<T>(Either<String, T> result) =>
+      result.fold((error) => throw StateError(error), (value) => value);
+
+  /// Drift 的 dateTime 列按秒存储；毫秒差会被截断，必须按同一精度比较，
+  /// 否则同秒内的旧备份会被误判为较新。
+  bool _isManifestNewer(DateTime backup, DateTime existing) =>
+      backup.millisecondsSinceEpoch ~/ 1000 >
+      existing.millisecondsSinceEpoch ~/ 1000;
+
   Future<void> _mergeManifest(BookManifest backupManifest) async {
-    final existingManifest = await _bookManifestRepository.getManifestByHash(
+    final existing = await _bookManifestRepository.getManifestByHash(
       backupManifest.fileHash,
     );
-
-    if (existingManifest == null) {
-      await _bookManifestRepository.saveManifest(backupManifest);
-    } else {
-      if (backupManifest.lastUpdated.isAfter(existingManifest.lastUpdated)) {
-        await _bookManifestRepository.saveManifest(backupManifest);
-      }
+    if (existing != null &&
+        !_isManifestNewer(backupManifest.lastUpdated, existing.lastUpdated)) {
+      return;
     }
+    _requireSaved(
+      await _bookManifestRepository.saveManifest(
+        backupManifest.copyWith(id: existing?.id ?? 0),
+      ),
+    );
   }
 
   Future<void> _mergeBook(ShelfBook backupBook) async {
-    final existingBook = await _shelfBookRepository.getBookByHash(
+    final existing = await _shelfBookRepository.getBookByHash(
       backupBook.fileHash,
     );
-    if (existingBook == null) {
-      await _shelfBookRepository.saveBook(backupBook);
-    } else {
-      // merge `currentChapterIndex` and `readingProgress` by `lastOpenedDate`
-      if (backupBook.lastOpenedDate != null &&
-          existingBook.lastOpenedDate != null) {
-        if (backupBook.lastOpenedDate! > existingBook.lastOpenedDate!) {
-          await _shelfBookRepository.saveBook(
-            existingBook.copyWith(
-              currentChapterIndex: backupBook.currentChapterIndex,
-              readingProgress: backupBook.readingProgress,
-              chapterScrollPosition: Value(backupBook.chapterScrollPosition),
-              isFinished: backupBook.isFinished,
-              lastOpenedDate: Value(backupBook.lastOpenedDate),
-            ),
-          );
-        }
-      }
-
-      // For other fields, use `updatedAt` as the source of truth. This means
-      // that if the backup's metadata is newer, it will overwrite the existing
-      // book's metadata (title, authors, description, etc.) but keep the
-      // existing reading progress.
-      if (backupBook.updatedAt > existingBook.updatedAt) {
-        await _shelfBookRepository.saveBook(
-          backupBook.copyWith(
-            id: existingBook.id,
-            coverPath: Value(backupBook.coverPath ?? existingBook.coverPath),
-          ),
-        );
-      } else {
-        if (!backupBook.isDeleted && existingBook.isDeleted) {
-          await _shelfBookRepository.saveBook(
-            backupBook.copyWith(id: existingBook.id, isDeleted: false),
-          );
-        }
-      }
+    if (existing == null) {
+      _requireSaved(await _shelfBookRepository.saveBook(backupBook));
+      return;
     }
+
+    // 元数据与阅读位置分别按各自时间选择；相同或都未知时保留本机值。
+    final metadata = backupBook.updatedAt > existing.updatedAt
+        ? backupBook
+        : existing;
+    final backupReadAt = backupBook.lastOpenedDate;
+    final localReadAt = existing.lastOpenedDate;
+    final progress =
+        backupReadAt != null &&
+            (localReadAt == null || backupReadAt > localReadAt)
+        ? backupBook
+        : existing;
+    final merged = metadata.copyWith(
+      id: existing.id,
+      filePath: Value(backupBook.filePath),
+      coverPath: Value(metadata.coverPath ?? existing.coverPath),
+      currentChapterIndex: progress.currentChapterIndex,
+      readingProgress: progress.readingProgress,
+      chapterScrollPosition: Value(progress.chapterScrollPosition),
+      isFinished: progress.isFinished,
+      lastOpenedDate: Value(progress.lastOpenedDate),
+      // 显式恢复包含此书的备份时撤销本机软删除，同时保留选定的较新数据。
+      isDeleted: backupBook.isDeleted && metadata.isDeleted,
+    );
+    _requireSaved(await _shelfBookRepository.saveBook(merged));
   }
 
   // ---------------------------------------------------------------------------

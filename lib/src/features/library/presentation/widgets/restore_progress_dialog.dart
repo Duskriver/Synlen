@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
 import 'package:synlen/src/features/library/application/progress_log.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service.dart';
@@ -34,6 +35,7 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
   int _failedCount = 0;
   String _currentFileName = '';
   bool _isCompleted = false;
+  bool _hasFailed = false;
   final List<ProgressLog> _logs = [];
 
   @override
@@ -58,7 +60,8 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
         if (log.result is ImportSuccess) {
           _successCount++;
         } else if (log.result is ImportFailure) {
-          _failedCount++;
+          _hasFailed = true;
+          if (_currentCount < _totalCount) _failedCount++;
         }
       }
     });
@@ -66,14 +69,21 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
 
   void _onError(Object error, StackTrace st) {
     if (!mounted) return;
-    setState(() => _isCompleted = true);
-    ToastService.showError(widget.l10n.restoreFailed(error.toString()));
+    appLogger.e('恢复流失败', error: error, stackTrace: st);
+    setState(() {
+      _hasFailed = true;
+      _isCompleted = true;
+    });
   }
 
   void _onDone() {
     if (!mounted) return;
     setState(() => _isCompleted = true);
-    ToastService.showSuccess(widget.l10n.restoreCompleted);
+    if (_hasFailed) {
+      ToastService.showError(widget.l10n.restoreIncomplete);
+    } else {
+      ToastService.showSuccess(widget.l10n.restoreCompleted);
+    }
   }
 
   @override
@@ -85,15 +95,17 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
   @override
   Widget build(BuildContext context) {
     final hasProgress = _totalCount > 0;
-    final isDone =
-        _isCompleted || (_totalCount > 0 && _currentCount == _totalCount);
+    final isDone = _isCompleted;
     final progressValue = hasProgress
-        ? (isDone ? 1.0 : _currentCount / _totalCount)
-        : null;
+        ? _currentCount / _totalCount
+        : (isDone ? 0.0 : null);
 
     return ProgressDialog(
       title: widget.l10n.restoring,
-      completeTitle: widget.l10n.restoreCompleted,
+      completeTitle: _hasFailed
+          ? widget.l10n.restoreIncomplete
+          : widget.l10n.restoreCompleted,
+      completedMessage: _hasFailed ? '' : null,
       progressMessage: widget.l10n.restoringProgress(
         _successCount,
         _failedCount,

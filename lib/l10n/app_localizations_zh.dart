@@ -734,4 +734,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get readingProgressSaveFailed => '阅读进度保存失败，请重试。';
+
+  @override
+  String get restoreIncomplete => '恢复未完成，请检查备份后重试。';
 }
