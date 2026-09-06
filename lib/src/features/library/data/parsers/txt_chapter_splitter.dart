@@ -32,7 +32,7 @@ class TxtChapter {
 /// 策略：
 /// 1. 扫描独立标题行（第X章/回/节/集/部/篇、第X卷、Chapter N、
 ///    楔子/序言/后记等特殊行、纯数字行），标题行即新章节起点；
-/// 2. 首个标题之前的非空内容归为引导块章节；
+/// 2. 首个标题之前的非空内容归为引导块章节，纯空白并入第一章；
 /// 3. 全文找不到任何标题行时，超过 [_splitThreshold] 的正文按段落
 ///    边界切分为固定大小的"部分"，避免单页 HTML 过大。
 class TxtChapterSplitter {
@@ -104,7 +104,7 @@ class TxtChapterSplitter {
 
     for (var h = 0; h < headingLines.length; h++) {
       final lineIndex = headingLines[h];
-      final start = lineStarts[lineIndex];
+      final start = h == 0 && chapters.isEmpty ? 0 : lineStarts[lineIndex];
       final end = h + 1 < headingLines.length
           ? lineStarts[headingLines[h + 1]]
           : text.length;
@@ -203,6 +203,15 @@ class TxtChapterSplitter {
         if (paragraphBreak > start + targetPartLength ~/ 2) {
           end = paragraphBreak;
         }
+      }
+      // UTF-16 的代理对不能分到不同章节，否则分别编码 UTF-8 会损坏字符。
+      if (end < text.length &&
+          end > start &&
+          text.codeUnitAt(end - 1) >= 0xD800 &&
+          text.codeUnitAt(end - 1) <= 0xDBFF &&
+          text.codeUnitAt(end) >= 0xDC00 &&
+          text.codeUnitAt(end) <= 0xDFFF) {
+        end++;
       }
       chapters.add(
         TxtChapter(

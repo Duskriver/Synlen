@@ -147,6 +147,42 @@ void main() {
   });
 
   group('TxtBookParser.parseFromText', () {
+    final roundTrips = <String, String>{
+      '前导空行': '\n\nChapter 1\nFirst sentence.\nChapter 2\nFinal sentence.',
+      '混合空白与多字节字符': ' \t\r\n\r\n第一章 开始\r\n中文😀 café\r\n第二章 结束\r\n末尾🚀',
+      '正文引导块': '\n介绍😀\nChapter 1\nBody.\nChapter 2\nEnd.',
+      '体积边界上的代理对': '${'a' * (TxtChapterSplitter.targetPartLength - 1)}😀tail',
+    };
+    for (final entry in roundTrips.entries) {
+      test('${entry.key}：各章节分别解码并拼接可无损还原全文', () {
+        final text = entry.value;
+        final chapters = splitter.split(text);
+        final result = unwrap(parser.parseFromText(text));
+        final reconstructed = StringBuffer();
+        var previousEnd = 0;
+        expect(chapters.first.start, 0);
+        for (var i = 0; i < result.spine.length; i++) {
+          final range = result.spine[i].sourceRange!
+              .split('-')
+              .map(int.parse)
+              .toList();
+          expect(range[0], previousEnd);
+          final decoded = utf8.decode(
+            result.normalizedUtf8.sublist(range[0], range[1]),
+          );
+          expect(decoded, text.substring(chapters[i].start, chapters[i].end));
+          reconstructed.write(decoded);
+          previousEnd = range[1];
+        }
+        expect(previousEnd, result.normalizedUtf8.length);
+        expect(reconstructed.toString(), text);
+        if (entry.key == '前导空行') {
+          expect(result.totalChapters, 2);
+          expect(result.toc.first.label, 'Chapter 1');
+        }
+      });
+    }
+
     test('生成 spine：虚拟路径 + 字节范围与归一化字节流严格对齐', () {
       const text = '引子\n序幕内容\n第一章 开始\n第一章内容\n第二章 继续\n第二章内容';
       final result = unwrap(parser.parseFromText(text, fileName: '测试书.txt'));
