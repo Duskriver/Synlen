@@ -37,6 +37,10 @@ class LearningDetailDialogView extends StatelessWidget {
   final String contentUpdateErrorPrefix;
   final String loadingText;
 
+  /// 本地立即展示的固定内容（如句子分析的原句），不依赖模型输出，
+  /// 置于所有流式内容之前。
+  final Widget? header;
+
   const LearningDetailDialogView({
     super.key,
     required this.title,
@@ -48,6 +52,7 @@ class LearningDetailDialogView extends StatelessWidget {
     required this.audioLabel,
     required this.contentUpdateErrorPrefix,
     required this.loadingText,
+    this.header,
   });
 
   @override
@@ -108,6 +113,7 @@ class LearningDetailDialogView extends StatelessWidget {
               audioLabel: audioLabel,
               contentUpdateErrorPrefix: contentUpdateErrorPrefix,
               loadingText: loadingText,
+              header: header,
             ),
           ),
         ],
@@ -125,6 +131,7 @@ class _LearningDetailContent extends StatelessWidget {
   final String audioLabel;
   final String contentUpdateErrorPrefix;
   final String loadingText;
+  final Widget? header;
 
   const _LearningDetailContent({
     required this.state,
@@ -135,21 +142,29 @@ class _LearningDetailContent extends StatelessWidget {
     required this.audioLabel,
     required this.contentUpdateErrorPrefix,
     required this.loadingText,
+    this.header,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     if (state.isLoading && state.content.isEmpty && !state.hasAudio) {
-      return const SizedBox(
-        height: 100,
-        child: Center(child: CircularProgressIndicator()),
+      // 加载中原句仍立即展示。
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [?header, _loadingBox()],
       );
     }
 
     if (primaryError != null && state.content.isEmpty && !state.hasAudio) {
-      return Text(
-        l10n.loadFailed(resolveLearningErrorText(primaryError, l10n)),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ?header,
+          Text(l10n.loadFailed(resolveLearningErrorText(primaryError, l10n))),
+        ],
       );
     }
 
@@ -159,6 +174,7 @@ class _LearningDetailContent extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ?header,
           if (state.hasAudio)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -212,4 +228,10 @@ class _LearningDetailContent extends StatelessWidget {
       ),
     );
   }
+
+  Widget _loadingBox() => const SizedBox(
+    width: double.infinity,
+    height: 100,
+    child: Center(child: CircularProgressIndicator()),
+  );
 }
