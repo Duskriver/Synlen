@@ -1044,5 +1044,9 @@
   "restoreSourceFolder": "备份文件夹（旧版）",
   "@restoreSourceFolder": {
     "description": "选择备份文件夹选项"
+  },
+  "originalSentence": "原句",
+  "@originalSentence": {
+    "description": "句子分析弹窗中的原句标签"
   }
 }

@@ -763,4 +763,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restoreSourceFolder => 'Backup folder (legacy)';
+
+  @override
+  String get originalSentence => 'Original sentence';
 }

@@ -1036,5 +1036,9 @@
   "restoreSourceFolder": "Backup folder (legacy)",
   "@restoreSourceFolder": {
     "description": "Choose legacy backup folder option"
+  },
+  "originalSentence": "Original sentence",
+  "@originalSentence": {
+    "description": "句子分析弹窗中的原句标签"
   }
 }

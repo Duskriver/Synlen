@@ -741,4 +741,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restoreSourceFolder => '备份文件夹（旧版）';
+
+  @override
+  String get originalSentence => '原句';
 }

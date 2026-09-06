@@ -11,16 +11,20 @@ abstract class SentenceAnalysisStore {
 }
 
 /// 句子分析缓存（drift 实现）。
+/// 存储键带 prompt 版本前缀：输出契约变更时旧缓存自然失效。
 class SentenceLearningCacheStore implements SentenceAnalysisStore {
   final AppDatabase _db;
 
   SentenceLearningCacheStore(this._db);
 
+  String _cacheKey(String sentence) =>
+      'v$kLearningTextPromptVersion|$sentence';
+
   @override
   Future<SentenceAnalysis?> getSentence(String sentence) {
     return (_db.select(
       _db.sentenceAnalyses,
-    )..where((t) => t.sentence.equals(sentence))).getSingleOrNull();
+    )..where((t) => t.sentence.equals(_cacheKey(sentence)))).getSingleOrNull();
   }
 
   @override
@@ -34,7 +38,7 @@ class SentenceLearningCacheStore implements SentenceAnalysisStore {
           .into(_db.sentenceAnalyses)
           .insert(
             SentenceAnalysesCompanion.insert(
-              sentence: sentence,
+              sentence: _cacheKey(sentence),
               analysis: analysis,
               lastUpdated: DateTime.now(),
             ),

@@ -1447,6 +1447,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup folder (legacy)'**
   String get restoreSourceFolder;
+
+  /// 句子分析弹窗中的原句标签
+  ///
+  /// In en, this message translates to:
+  /// **'Original sentence'**
+  String get originalSentence;
 }
 
 class _AppLocalizationsDelegate

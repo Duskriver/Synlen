@@ -105,6 +105,38 @@ void main() {
     }
   });
 
+  test('prompt 固定输出契约：单词四节、句子两节且不回显原句', () async {
+    Future<String> capturePrompt(Future<void> Function() send) async {
+      final adapter = FakeChatAdapter(
+        (_) async => body(
+          '${event(content: 'x')}${event(reason: 'stop')}data: [DONE]\n\n',
+        ),
+      );
+      dio.httpClientAdapter = adapter;
+      await send();
+      final request = await adapter.started.future;
+      final messages = request.data['messages'] as List<dynamic>;
+      return (messages.last as Map<String, dynamic>)['content'] as String;
+    }
+
+    final wordPrompt = await capturePrompt(
+      () => service().explainWordStream('run', 'I run fast.').toList(),
+    );
+    for (final section in ['## 音标', '## 直译', '## 常见用法', '## 句中含义']) {
+      expect(wordPrompt, contains(section));
+    }
+    expect(wordPrompt, contains('run'));
+    expect(wordPrompt, contains('I run fast.'));
+
+    final sentencePrompt = await capturePrompt(
+      () => service().analyzeSentenceStream('She said hello.').toList(),
+    );
+    expect(sentencePrompt, contains('## 翻译'));
+    expect(sentencePrompt, contains('## 语法分析'));
+    expect(sentencePrompt, contains('She said hello.'));
+    expect(sentencePrompt, isNot(contains('原句及翻译')));
+  });
+
   final invalidResponses = <String, String>{
     '提前 EOF': event(content: '残文'),
     '缺少 DONE': '${event(content: '残文')}${event(reason: 'stop')}',
