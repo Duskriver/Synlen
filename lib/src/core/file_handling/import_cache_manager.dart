@@ -33,6 +33,9 @@ class ImportCacheManager {
   ImportCacheManager({Future<String> Function(String)? iosFetchCallback})
     : _iosFetchCallback = iosFetchCallback;
 
+  /// 暴露导入缓存目录（已按需创建），供 ZIP 备份解压等复用缓存区的流程使用。
+  Future<Directory> getCacheDirectory() => _getCacheDirectory();
+
   /// Gets the import cache directory, creating it if necessary
   Future<Directory> _getCacheDirectory() async {
     if (_cacheDirectory != null) {

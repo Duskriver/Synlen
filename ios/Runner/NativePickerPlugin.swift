@@ -36,6 +36,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     case epubFiles
     case epubFolder
     case backupFolder
+    case backupFile
     case fontFiles
   }
 
@@ -67,6 +68,9 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
 
     case "pickBackupFolder":
       pickBackupFolder(result: result)
+
+    case "pickBackupFile":
+      pickBackupFile(result: result)
 
     case "pickFontFiles":
       pickFontFiles(result: result)
@@ -177,6 +181,36 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
       } else {
         picker = UIDocumentPickerViewController(
           documentTypes: ["public.folder"],
+          in: .open
+        )
+      }
+      picker.allowsMultipleSelection = false
+      picker.delegate = self
+      picker.modalPresentationStyle = .formSheet
+      self.presentPicker(picker)
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // MARK: - pickBackupFile  (lazy – file remains security-scoped)
+  // -------------------------------------------------------------------------
+
+  private func pickBackupFile(result: @escaping FlutterResult) {
+    releaseActiveFileUrls()
+
+    pendingPickerResult = result
+    pendingPickerMode = .backupFile
+
+    DispatchQueue.main.async {
+      let picker: UIDocumentPickerViewController
+      if #available(iOS 14.0, *) {
+        picker = UIDocumentPickerViewController(
+          forOpeningContentTypes: [UTType.zip],
+          asCopy: false
+        )
+      } else {
+        picker = UIDocumentPickerViewController(
+          documentTypes: ["public.zip-archive", "org.gnu.zip"],
           in: .open
         )
       }
@@ -335,6 +369,16 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
 
     // -- Multiple font files ------------------------------------------------
     case .fontFiles:
+      var paths: [String] = []
+      for url in urls {
+        let _ = url.startAccessingSecurityScopedResource()
+        activeFileUrls.append(url)
+        paths.append(url.path)
+      }
+      result(paths)
+
+    // -- Single backup ZIP -------------------------------------------------
+    case .backupFile:
       var paths: [String] = []
       for url in urls {
         let _ = url.startAccessingSecurityScopedResource()

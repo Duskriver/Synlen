@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:archive/archive_io.dart';
 import 'package:flutter/services.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
@@ -204,6 +205,113 @@ class UnifiedImportService {
       return await _pickBackupFolderIOS();
     } else {
       throw UnsupportedError('Platform not supported');
+    }
+  }
+
+  /// Pick a single backup ZIP archive.
+  ///
+  /// Android: SAF document picker filtered to ZIP MIME types.
+  /// iOS:     Document picker restricted to the zip UTType; the file stays
+  ///          security-scoped until [releaseIosAccess].
+  ///
+  /// Returns null if the user cancels.
+  Future<PlatformPath?> pickBackupZipFile() async {
+    if (Platform.isAndroid) {
+      return await _pickBackupZipFileAndroid();
+    } else if (Platform.isIOS) {
+      return await _pickBackupZipFileIOS();
+    } else {
+      throw UnsupportedError('Platform not supported');
+    }
+  }
+
+  /// Extracts a picked ZIP backup into the import cache and classifies the
+  /// entries into [BackupPaths].
+  ///
+  /// ZIP 原始字节不整体进内存：选取的文件先由缓存层落盘，再用
+  /// [InputFileStream] 流式解码并逐条目写盘。返回的 rootPath 是导入缓存区内
+  /// 的解压目录，恢复结束后由调用方负责删除。
+  Future<BackupPaths> processBackupZip(PlatformPath zipPath) async {
+    final cacheDir = await _cacheManager.getCacheDirectory();
+    final extractDir = Directory(
+      p.join(
+        cacheDir.path,
+        'backup_extract_${DateTime.now().millisecondsSinceEpoch}',
+      ),
+    );
+    File? rawZip;
+    try {
+      rawZip = await _cacheManager.createRawCacheFile(zipPath);
+      final archive = ZipDecoder().decodeStream(InputFileStream(rawZip.path));
+      await extractArchiveToDisk(archive, extractDir.path);
+    } catch (_) {
+      await _deleteQuietly(extractDir);
+      rethrow;
+    } finally {
+      if (rawZip != null) await _cacheManager.clean(rawZip);
+      // 选取的 ZIP 已缓存落盘，安全作用域到此即可释放。
+      await releaseIosAccess();
+    }
+
+    final entries = extractDir
+        .listSync(recursive: true, followLinks: false)
+        .whereType<File>()
+        .map(
+          (file) => (
+            displayPath: file.path,
+            platformPath: IOSFilePath(file.path) as PlatformPath,
+          ),
+        )
+        .toList();
+
+    final classified = _classifyBackupFiles(entries);
+    if (classified.shelfFile == null) {
+      await _deleteQuietly(extractDir);
+      throw Exception(
+        'Invalid backup: ${AppStorageConstants.shelfFile} not found',
+      );
+    }
+
+    final bookPaths = _buildBookPaths(classified.tempBookComponents);
+    final rootPath = p.dirname((classified.shelfFile! as IOSFilePath).path);
+    return BackupPaths(
+      rootPath: IOSFilePath(rootPath),
+      shelfFile: classified.shelfFile!,
+      bookPaths: bookPaths,
+    );
+  }
+
+  Future<void> _deleteQuietly(Directory dir) async {
+    try {
+      if (dir.existsSync()) await dir.delete(recursive: true);
+    } catch (e) {
+      appLogger.w('Backup extract cleanup failed: $e');
+    }
+  }
+
+  Future<PlatformPath?> _pickBackupZipFileAndroid() async {
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickBackupFile',
+      );
+      if (result == null || result.isEmpty) return null;
+      return AndroidUriPath(result.whereType<String>().first);
+    } on PlatformException catch (e) {
+      appLogger.e('Android backup file picker error: ${e.message}');
+      return null;
+    }
+  }
+
+  Future<PlatformPath?> _pickBackupZipFileIOS() async {
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickBackupFile',
+      );
+      if (result == null || result.isEmpty) return null;
+      return IOSFilePath(result.whereType<String>().first);
+    } on PlatformException catch (e) {
+      appLogger.e('iOS backup file picker error: ${e.message}');
+      return null;
     }
   }
 

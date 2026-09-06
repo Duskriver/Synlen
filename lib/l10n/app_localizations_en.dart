@@ -435,11 +435,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importFiles => 'Import Files';
 
   @override
-  String backupSavedToDownloads(String path) {
-    return 'Backup successfully saved to Downloads: $path';
-  }
-
-  @override
   String get backupShared => 'Backup successfully shared';
 
   @override
@@ -466,7 +461,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupLibraryDescription =>
-      'Export your library data as a folder, including book files and database backup';
+      'Export your library as a single backup file via the system share sheet';
 
   @override
   String get restoreCompleted => 'Restore Completed';
@@ -758,4 +753,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get restoreIncomplete =>
       'Restore incomplete. Check the backup and retry.';
+
+  @override
+  String get restoreSourceHint =>
+      'Choose a .zip backup file, or restore from a backup folder exported by an older version.';
+
+  @override
+  String get restoreSourceFile => 'Backup file (.zip)';
+
+  @override
+  String get restoreSourceFolder => 'Backup folder (legacy)';
 }

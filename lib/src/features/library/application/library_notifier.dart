@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/application/progress_log.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service_provider.dart';
@@ -52,32 +54,49 @@ class LibraryNotifier extends _$LibraryNotifier {
   @override
   void build() {}
 
-  Stream<ProgressLog> importLibraryFromFolder(BackupPaths backupPaths) async* {
-    yield ProgressLog(
-      'Starting import from folder: ${backupPaths.rootPath}',
-      ProgressLogType.info,
-    );
-
-    final importService = ref.read(importBackupServiceProvider);
-
+  /// [cleanupDir] 是 ZIP 备份的解压目录（导入缓存区内）；流结束或被取消时
+  /// 删除，避免残留临时文件。文件夹恢复不传该参数。
+  Stream<ProgressLog> importLibraryFromFolder(
+    BackupPaths backupPaths, {
+    Directory? cleanupDir,
+  }) async* {
     try {
-      await for (final progress in importService.importLibraryFromFolder(
-        backupPaths,
-      )) {
-        yield progress;
-      }
-    } catch (e) {
       yield ProgressLog(
-        'Failed to import from folder: $e',
-        ProgressLogType.error,
+        'Starting import from folder: ${backupPaths.rootPath}',
+        ProgressLogType.info,
       );
-      appLogger.e('Import from folder error: $e');
-    }
 
-    yield ProgressLog(
-      'Import from folder completed. Refreshing library...',
-      ProgressLogType.success,
-    );
+      final importService = ref.read(importBackupServiceProvider);
+
+      try {
+        await for (final progress in importService.importLibraryFromFolder(
+          backupPaths,
+        )) {
+          yield progress;
+        }
+      } catch (e) {
+        yield ProgressLog(
+          'Failed to import from folder: $e',
+          ProgressLogType.error,
+        );
+        appLogger.e('Import from folder error: $e');
+      }
+
+      yield ProgressLog(
+        'Import from folder completed. Refreshing library...',
+        ProgressLogType.success,
+      );
+    } finally {
+      if (cleanupDir != null) {
+        try {
+          if (cleanupDir.existsSync()) {
+            await cleanupDir.delete(recursive: true);
+          }
+        } catch (e) {
+          appLogger.w('Backup extract cleanup failed: $e');
+        }
+      }
+    }
   }
 
   /// Stream pipeline to process files one by one: Cache -> Import -> Clean.

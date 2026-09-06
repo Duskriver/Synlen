@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,9 @@ import '../../application/library_notifier.dart';
 import '../../data/services/unified_import_service_provider.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import '../widgets/group_selection_dialog.dart';
+
+/// 恢复备份的来源：标准 ZIP 备份文件，或旧版本导出的文件夹。
+enum RestoreBackupSource { zipFile, folder }
 
 /// Mixin that provides action methods for LibraryScreen.
 /// Handles imports, deletions, group management, and file operations.
@@ -304,39 +308,61 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
   // Backup
   // ---------------------------------------------------------------------------
 
-  /// Triggers a full library backup restore.
-  ///
-  /// Uses [UnifiedImportService.pickBackupDirectory] to select the folder so
-  /// that all platform-specific picker logic stays in one place.
+  /// 触发完整书库恢复：先选来源（ZIP 文件或旧版文件夹），再走各自的
+  /// 选取流程，最后打开恢复进度对话框监听导入流。
   Future<void> handleRestoreBackup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final source = await showDialog<RestoreBackupSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.restoreFromBackup),
+        content: Text(l10n.restoreSourceHint),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, RestoreBackupSource.folder),
+            child: Text(l10n.restoreSourceFolder),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, RestoreBackupSource.zipFile),
+            child: Text(l10n.restoreSourceFile),
+          ),
+        ],
+      ),
+    );
+
+    // User cancelled the source chooser — exit silently.
+    if (source == null || !context.mounted) return;
+
     isSelectingFiles = true;
     try {
-      // 1. Ask the user to select the backup directory.
-      final selectedPath = await ref
-          .read(unifiedImportServiceProvider)
-          .pickBackupFolder();
+      final importService = ref.read(unifiedImportServiceProvider);
+      final BackupPaths paths;
+      Directory? cleanupDir;
 
-      // User cancelled — exit silently.
-      if (selectedPath == null) {
-        isSelectingFiles = false;
-        return;
+      if (source == RestoreBackupSource.zipFile) {
+        final picked = await importService.pickBackupZipFile();
+        if (picked == null || !context.mounted) return;
+
+        paths = await importService.processBackupZip(picked);
+        // processBackupZip 的 rootPath 即导入缓存区内的解压目录。
+        cleanupDir = Directory((paths.rootPath as IOSFilePath).path);
+      } else {
+        final picked = await importService.pickBackupFolder();
+        if (picked == null || !context.mounted) return;
+        paths = picked;
       }
 
-      if (!context.mounted) {
-        isSelectingFiles = false;
-        return;
-      }
+      if (!context.mounted) return;
 
       // 2. Start the stream before opening the dialog so that no work is
       //    duplicated on dialog rebuilds.
       final progressStream = ref
           .read(libraryProvider.notifier)
-          .importLibraryFromFolder(selectedPath);
+          .importLibraryFromFolder(paths, cleanupDir: cleanupDir);
 
       // 3. Show the restore dialog; it subscribes to the stream and returns
       //    the final ImportResult when the user closes it.
-      final l10n = AppLocalizations.of(context)!;
-
       await showDialog(
         context: context,
         barrierDismissible: false,
