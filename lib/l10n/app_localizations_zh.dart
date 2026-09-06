@@ -422,11 +422,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importFiles => '导入文件';
 
   @override
-  String backupSavedToDownloads(String path) {
-    return '备份已成功保存到下载文件夹：$path';
-  }
-
-  @override
   String get backupShared => '备份已通过分享功能导出';
 
   @override
@@ -452,7 +447,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get library => '书库';
 
   @override
-  String get backupLibraryDescription => '将书库数据导出为一个文件夹，包括书籍文件和数据库备份';
+  String get backupLibraryDescription => '将书库导出为单个备份文件，并通过系统分享面板保存';
 
   @override
   String get restoreCompleted => '恢复完成';
@@ -737,4 +732,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restoreIncomplete => '恢复未完成，请检查备份后重试。';
+
+  @override
+  String get restoreSourceHint => '选择一个 .zip 备份文件，或从旧版本导出的备份文件夹恢复。';
+
+  @override
+  String get restoreSourceFile => '备份文件（.zip）';
+
+  @override
+  String get restoreSourceFolder => '备份文件夹（旧版）';
 }

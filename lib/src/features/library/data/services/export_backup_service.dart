@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show Rect;
 
+import 'package:archive/archive_io.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
@@ -18,10 +19,9 @@ sealed class ExportResult {
   const ExportResult();
 }
 
-/// Export succeeded. [path] is the backup directory (Android only; iOS uses Share Sheet).
+/// Export succeeded and the backup file was handed to the system share sheet.
 final class ExportSuccess extends ExportResult {
-  final String? path;
-  const ExportSuccess({this.path});
+  const ExportSuccess();
 }
 
 /// Export failed with [message].
@@ -30,68 +30,59 @@ final class ExportFailure extends ExportResult {
   const ExportFailure(this.message);
 }
 
-/// Zero-memory overhead library backup export service.
+/// Library backup export service.
 ///
-/// Platform strategy:
-///   Android — builds the folder directly in the public Downloads directory
-///             (/storage/emulated/0/Download/Synlen/) so the user can find it
-///             without any further action. No Share Sheet required.
-///   iOS     — builds the folder inside the OS-managed temporary directory,
-///             then hands it to the native Share Sheet via share_plus.
-///             APFS Copy-on-Write means the temporary copy costs virtually no
-///             extra disk space.  The temp folder is deleted in `finally`.
+/// 所有平台统一：先在应用临时目录拼装备份文件夹（shelf.json + 书籍/封面/
+/// 清单），再压缩成单个 ZIP 通过系统分享面板交由用户保存。应用私有缓存目录
+/// 的写入不需要任何存储权限，Android 分区存储与 iOS 均适用；分享面板由
+/// share_plus 的 FileProvider 提供，也不触碰公共存储。
 ///
 /// Memory profile:
 ///   Physical files (.epub, cover images) are transferred with [File.copy]
 ///   which is a kernel-level operation — no bytes are ever loaded into the
-///   Dart heap.  Only the JSON payloads (manifest + shelf metadata) are
-///   materialised in memory, and those are small by design.
+///   Dart heap.  ZIP 压缩由 [ZipFileEncoder] 流式写出，只有 JSON 载荷
+///   （manifest + shelf 元数据）进入内存，且刻意保持很小。
 class ExportBackupService {
-  static const _kIOSBackupSubdir = 'backup';
+  static const _kBackupTempDir = 'backup';
 
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
+  final Future<ShareResult> Function(ShareParams params) _share;
 
   ExportBackupService({
     required ShelfBookRepository shelfBookRepo,
     required BookManifestRepository manifestRepo,
+    Future<ShareResult> Function(ShareParams params)? share,
   }) : _shelfBookRepo = shelfBookRepo,
-       _manifestRepo = manifestRepo;
+       _manifestRepo = manifestRepo,
+       _share = share ?? ((params) => SharePlus.instance.share(params));
 
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
 
-  /// Exports the entire library as a self-contained folder.
+  /// Exports the entire library as a single ZIP backup and hands it to the
+  /// system share sheet ([shareTitle] anchors iOS popover to
+  /// [sharePositionOrigin]).
   ///
-  /// Returns [ExportSuccess] with the folder path on Android, or [ExportSuccess]
-  /// with null on iOS (the Share Sheet handles delivery).
-  /// Returns [ExportFailure] on any unrecoverable error.
-  Future<ExportResult> exportLibraryAsFolder({
+  /// Returns [ExportSuccess] when the backup was shared, [ExportFailure] on
+  /// unrecoverable errors or when the user dismisses the share sheet.
+  Future<ExportResult> exportLibraryAsFile({
     Rect? sharePositionOrigin,
     required String shareTitle,
   }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final backupName = 'synlen-backup-$timestamp';
     Directory? targetDir;
+    File? zipFile;
 
     try {
       // -----------------------------------------------------------------------
-      // 1. Resolve platform-specific root directory.
+      // 1. Assemble the backup folder inside the app-private temp directory.
       // -----------------------------------------------------------------------
-      if (Platform.isAndroid) {
-        // Android: write directly to the public Downloads folder so the file
-        // manager and other apps can access it without extra permissions.
-        targetDir = Directory(
-          '/storage/emulated/0/Download/Synlen/$backupName',
-        );
-      } else {
-        // iOS: use the system temporary directory.  Files here survive long
-        // enough to be picked up by the Share Sheet, and we delete them in
-        // `finally` to avoid wasting space.
-        final tempDir = AppStorage.tempPath;
-        targetDir = Directory(p.join(tempDir, _kIOSBackupSubdir, backupName));
-      }
+      targetDir = Directory(
+        p.join(AppStorage.tempPath, _kBackupTempDir, backupName),
+      );
 
       // -----------------------------------------------------------------------
       // 2. Create sub-directories.
@@ -178,32 +169,35 @@ class ExportBackupService {
       ).writeAsString(shelfJson);
 
       // -----------------------------------------------------------------------
-      // 6. Platform-specific delivery.
+      // 6. Zip the folder (streamed, bounded memory) and share the file.
       // -----------------------------------------------------------------------
-      if (Platform.isAndroid) {
-        // The folder is already in the public Downloads directory — done.
-        appLogger.i(
-          '[ExportBackup] Android export complete: ${targetDir.path}',
-        );
-        return ExportSuccess(path: targetDir.path);
-      } else {
-        // iOS: share the entire folder via the native Share Sheet.
-        final shareParams = ShareParams(
-          files: [XFile(targetDir.path)],
+      zipFile = File(p.join(targetDir.parent.path, '$backupName.zip'));
+      final encoder = ZipFileEncoder();
+      await encoder.zipDirectory(targetDir, filename: zipFile.path);
+
+      final result = await _share(
+        ShareParams(
+          files: [
+            XFile(
+              zipFile.path,
+              mimeType: 'application/zip',
+              name: p.basename(zipFile.path),
+            ),
+          ],
           title: shareTitle,
-        );
-        final result = await SharePlus.instance.share(shareParams);
-        appLogger.i('[ExportBackup] iOS share result: $result');
-        if (result.status == ShareResultStatus.success) {
-          appLogger.i('[ExportBackup] iOS export complete: ${targetDir.path}');
-          return ExportSuccess(path: targetDir.path);
-        } else if (result.status == ShareResultStatus.dismissed) {
-          appLogger.i('[ExportBackup] iOS export cancelled by user.');
+          sharePositionOrigin: sharePositionOrigin,
+        ),
+      );
+      appLogger.i('[ExportBackup] Share result: $result');
+      switch (result.status) {
+        case ShareResultStatus.success:
+          return const ExportSuccess();
+        case ShareResultStatus.dismissed:
+          appLogger.i('[ExportBackup] Export cancelled by user.');
           return const ExportFailure('Export cancelled');
-        } else {
-          appLogger.e('[ExportBackup] iOS export failed: ${result.raw}');
+        default:
+          appLogger.e('[ExportBackup] Export failed: ${result.raw}');
           return ExportFailure('Export failed: ${result.raw}');
-        }
       }
     } on FileSystemException catch (e) {
       appLogger.e('[ExportBackup] FileSystemException: $e');
@@ -213,14 +207,14 @@ class ExportBackupService {
       return ExportFailure('Export failed: $e');
     } finally {
       // -----------------------------------------------------------------------
-      // 7. Cleanup — only on iOS (and other non-Android platforms).
-      //    On Android the folder lives in a public directory and must be kept.
+      // 7. Cleanup — the folder and ZIP live in the app-private temp
+      //    directory and are obsolete once the share sheet has copies.
       // -----------------------------------------------------------------------
-      if (!Platform.isAndroid && targetDir != null) {
+      for (final entity in [targetDir, zipFile]) {
         try {
-          if (targetDir.existsSync()) {
-            await targetDir.delete(recursive: true);
-            appLogger.d('[ExportBackup] Cleaned up temporary directory.');
+          if (entity != null && entity.existsSync()) {
+            await entity.delete(recursive: true);
+            appLogger.d('[ExportBackup] Cleaned up ${entity.path}.');
           }
         } catch (e) {
           appLogger.w('[ExportBackup] Cleanup failed (non-fatal): $e');
@@ -229,18 +223,16 @@ class ExportBackupService {
     }
   }
 
+  /// 删除残留的导出临时目录；目录位于应用缓存区，随时可安全重建。
   Future<void> clearCache() async {
-    if (Platform.isIOS) {
-      final tempDir = AppStorage.tempPath;
-      final targetDir = Directory(p.join(tempDir, _kIOSBackupSubdir));
-      try {
-        if (targetDir.existsSync()) {
-          await targetDir.delete(recursive: true);
-          appLogger.d('[ExportBackup] Cache cleared successfully.');
-        }
-      } catch (e) {
-        appLogger.w('[ExportBackup] Cache clearing failed: $e');
+    final targetDir = Directory(p.join(AppStorage.tempPath, _kBackupTempDir));
+    try {
+      if (targetDir.existsSync()) {
+        await targetDir.delete(recursive: true);
+        appLogger.d('[ExportBackup] Cache cleared successfully.');
       }
+    } catch (e) {
+      appLogger.w('[ExportBackup] Cache clearing failed: $e');
     }
   }
 

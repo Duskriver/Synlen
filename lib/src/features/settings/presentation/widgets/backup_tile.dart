@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/features/library/data/services/export_backup_service.dart';
@@ -39,7 +38,7 @@ class _BackupTileState extends ConsumerState<BackupTile> {
 
     final result = await ref
         .read(exportBackupServiceProvider)
-        .exportLibraryAsFolder(
+        .exportLibraryAsFile(
           sharePositionOrigin: _tileRect(),
           shareTitle: l10n.backupShareTitle,
         );
@@ -50,11 +49,8 @@ class _BackupTileState extends ConsumerState<BackupTile> {
     }
 
     switch (result) {
-      case ExportSuccess(:final path):
-        final message = (Platform.isAndroid && path != null)
-            ? l10n.backupSavedToDownloads(path)
-            : l10n.backupShared;
-        ToastService.showSuccess(message);
+      case ExportSuccess():
+        ToastService.showSuccess(l10n.backupShared);
       case ExportFailure(:final message):
         ToastService.showError(l10n.exportFailed(message));
     }

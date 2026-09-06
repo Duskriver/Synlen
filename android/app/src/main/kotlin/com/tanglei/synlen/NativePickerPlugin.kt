@@ -39,6 +39,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var pickFilesLauncher: ActivityResultLauncher<Intent>? = null
     private var pickFolderLauncher: ActivityResultLauncher<Intent>? = null
     private var pickBackupFolderLauncher: ActivityResultLauncher<Intent>? = null
+    private var pickBackupFileLauncher: ActivityResultLauncher<Intent>? = null
     private var pickFontFilesLauncher: ActivityResultLauncher<Intent>? = null
 
     // -------------------------------------------------------------------------
@@ -87,6 +88,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "pickEpubFiles" -> pickEpubFiles(result)
             "pickEpubFolder" -> pickEpubFolder(result)
             "pickBackupFolder" -> pickBackupFolder(result)
+            "pickBackupFile" -> pickBackupFile(result)
             "pickFontFiles" -> pickFontFiles(result)
             "getDisplayName" -> {
                 val uri = Uri.parse(call.arguments as? String ?: "")
@@ -179,6 +181,20 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
         }
 
+        pickBackupFileLauncher = registry.register(
+            "NativePickerPlugin_pickBackupFile",
+            lifecycleOwner,
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val pendingResult = this.pendingResult ?: return@register
+            this.pendingResult = null
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                handlePickBackupFileResult(result.data!!, pendingResult)
+            } else {
+                pendingResult.success(emptyList<String>())
+            }
+        }
+
         pickFontFilesLauncher = registry.register(
             "NativePickerPlugin_pickFontFiles",
             lifecycleOwner,
@@ -198,6 +214,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         pickFilesLauncher = null
         pickFolderLauncher = null
         pickBackupFolderLauncher = null
+        pickBackupFileLauncher = null
         pickFontFilesLauncher = null
     }
 
@@ -299,6 +316,46 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         } catch (e: Exception) {
             pendingResult = null
             result.error("PICKER_ERROR", "Failed to launch folder picker: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Launches file picker for selecting a Synlen backup ZIP archive.
+     *
+     * Uses ACTION_OPEN_DOCUMENT with ZIP MIME types. Single selection.
+     * application/octet-stream 兜底不识别 MIME 的文档提供方；
+     * 文件内容有效性由 Dart 侧解压时校验。
+     */
+    private fun pickBackupFile(result: Result) {
+        if (pendingResult != null) {
+            result.error("ALREADY_ACTIVE", "File picker is already active", null)
+            return
+        }
+
+        pendingResult = result
+
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf(
+                    "application/zip",
+                    "application/x-zip-compressed",
+                    "application/octet-stream"
+                )
+            )
+        }
+
+        try {
+            pickBackupFileLauncher?.launch(intent)
+                ?: run {
+                    pendingResult = null
+                    result.error("NO_ACTIVITY", "Plugin not attached to an activity", null)
+                }
+        } catch (e: Exception) {
+            pendingResult = null
+            result.error("PICKER_ERROR", "Failed to launch file picker: ${e.message}", null)
         }
     }
 
@@ -479,6 +536,15 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      * Extracts URIs from single or multiple file selection and filters for
      * valid font files (.ttf / .otf). Runs ContentResolver work on Dispatchers.IO.
      */
+    /**
+     * Handles the backup ZIP picker result. Single selection;
+     * returns an empty list on cancel so Dart can detect it with isEmpty.
+     */
+    private fun handlePickBackupFileResult(data: Intent, result: Result) {
+        val uri = data.data
+        result.success(if (uri != null) listOf(uri.toString()) else emptyList<String>())
+    }
+
     private fun handlePickFontFilesResult(data: Intent, result: Result) {
         val lifecycleOwner = activity as? LifecycleOwner ?: run {
             result.error("NO_ACTIVITY", "Plugin not attached to an activity", null)

@@ -587,15 +587,6 @@
   "@importFiles": {
     "description": "Import files option label"
   },
-  "backupSavedToDownloads": "Backup successfully saved to Downloads: {path}",
-  "@backupSavedToDownloads": {
-    "description": "Backup saved success message with path",
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "backupShared": "Backup successfully shared",
   "@backupShared": {
     "description": "Backup shared success message"
@@ -634,7 +625,7 @@
   "@library": {
     "description": "Library section title"
   },
-  "backupLibraryDescription": "Export your library data as a folder, including book files and database backup",
+  "backupLibraryDescription": "Export your library as a single backup file via the system share sheet",
   "@backupLibraryDescription": {
     "description": "Backup library feature description"
   },
@@ -1033,5 +1024,17 @@
   "apiKeySaveFailed": "Could not save the API key. Please retry.",
   "retry": "Retry",
   "readingProgressSaveFailed": "Could not save your reading position. Please retry.",
-  "restoreIncomplete": "Restore incomplete. Check the backup and retry."
+  "restoreIncomplete": "Restore incomplete. Check the backup and retry.",
+  "restoreSourceHint": "Choose a .zip backup file, or restore from a backup folder exported by an older version.",
+  "@restoreSourceHint": {
+    "description": "Restore backup source chooser hint"
+  },
+  "restoreSourceFile": "Backup file (.zip)",
+  "@restoreSourceFile": {
+    "description": "Choose ZIP backup file option"
+  },
+  "restoreSourceFolder": "Backup folder (legacy)",
+  "@restoreSourceFolder": {
+    "description": "Choose legacy backup folder option"
+  }
 }

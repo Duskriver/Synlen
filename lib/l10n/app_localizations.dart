@@ -872,12 +872,6 @@ abstract class AppLocalizations {
   /// **'Import Files'**
   String get importFiles;
 
-  /// Backup saved success message with path
-  ///
-  /// In en, this message translates to:
-  /// **'Backup successfully saved to Downloads: {path}'**
-  String backupSavedToDownloads(String path);
-
   /// Backup shared success message
   ///
   /// In en, this message translates to:
@@ -923,7 +917,7 @@ abstract class AppLocalizations {
   /// Backup library feature description
   ///
   /// In en, this message translates to:
-  /// **'Export your library data as a folder, including book files and database backup'**
+  /// **'Export your library as a single backup file via the system share sheet'**
   String get backupLibraryDescription;
 
   /// Title shown when restore finishes
@@ -1435,6 +1429,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restore incomplete. Check the backup and retry.'**
   String get restoreIncomplete;
+
+  /// Restore backup source chooser hint
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a .zip backup file, or restore from a backup folder exported by an older version.'**
+  String get restoreSourceHint;
+
+  /// Choose ZIP backup file option
+  ///
+  /// In en, this message translates to:
+  /// **'Backup file (.zip)'**
+  String get restoreSourceFile;
+
+  /// Choose legacy backup folder option
+  ///
+  /// In en, this message translates to:
+  /// **'Backup folder (legacy)'**
+  String get restoreSourceFolder;
 }
 
 class _AppLocalizationsDelegate

@@ -595,15 +595,6 @@
   "@importFiles": {
     "description": "导入文件选项标签"
   },
-  "backupSavedToDownloads": "备份已成功保存到下载文件夹：{path}",
-  "@backupSavedToDownloads": {
-    "description": "备份保存成功消息",
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "backupShared": "备份已通过分享功能导出",
   "@backupShared": {
     "description": "备份分享成功消息"
@@ -642,7 +633,7 @@
   "@backupLibrary": {
     "description": "备份书库选项标签"
   },
-  "backupLibraryDescription": "将书库数据导出为一个文件夹，包括书籍文件和数据库备份",
+  "backupLibraryDescription": "将书库导出为单个备份文件，并通过系统分享面板保存",
   "@backupLibraryDescription": {
     "description": "备份书库功能描述"
   },
@@ -1041,5 +1032,17 @@
   "apiKeySaveFailed": "密钥保存失败，请重试。",
   "retry": "重试",
   "readingProgressSaveFailed": "阅读进度保存失败，请重试。",
-  "restoreIncomplete": "恢复未完成，请检查备份后重试。"
+  "restoreIncomplete": "恢复未完成，请检查备份后重试。",
+  "restoreSourceHint": "选择一个 .zip 备份文件，或从旧版本导出的备份文件夹恢复。",
+  "@restoreSourceHint": {
+    "description": "恢复备份来源选择提示"
+  },
+  "restoreSourceFile": "备份文件（.zip）",
+  "@restoreSourceFile": {
+    "description": "选择 ZIP 备份文件选项"
+  },
+  "restoreSourceFolder": "备份文件夹（旧版）",
+  "@restoreSourceFolder": {
+    "description": "选择备份文件夹选项"
+  }
 }
