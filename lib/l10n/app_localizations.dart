@@ -599,7 +599,7 @@ abstract class AppLocalizations {
   /// Clean cache subtitle
   ///
   /// In en, this message translates to:
-  /// **'Remove unused orphan files from storage'**
+  /// **'Remove orphan files and clear the rebuildable learning cache (explanations and audio)'**
   String get cleanCacheSubtitle;
 
   /// Clean cache success message

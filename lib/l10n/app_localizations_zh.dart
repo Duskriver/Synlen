@@ -280,7 +280,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cleanCache => '清理缓存';
 
   @override
-  String get cleanCacheSubtitle => '删除存储中无用的孤立文件';
+  String get cleanCacheSubtitle => '删除孤立文件，并清理可重建的学习缓存（解释文本与发音音频）';
 
   @override
   String cleanCacheSuccessWithCount(int count) {
