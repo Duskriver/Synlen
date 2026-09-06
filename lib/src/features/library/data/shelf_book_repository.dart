@@ -350,17 +350,18 @@ class ShelfBookRepository {
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(
-        _db.shelfBooks,
-      )..where((t) => t.id.equals(bookId))).write(
-        ShelfBooksCompanion(
-          currentChapterIndex: Value(currentChapterIndex),
-          readingProgress: Value(progress),
-          chapterScrollPosition: Value(scrollPosition),
-          lastOpenedDate: Value(now),
-        ),
-      );
-      return right(true);
+      final count =
+          await (_db.update(
+            _db.shelfBooks,
+          )..where((t) => t.id.equals(bookId))).write(
+            ShelfBooksCompanion(
+              currentChapterIndex: Value(currentChapterIndex),
+              readingProgress: Value(progress),
+              chapterScrollPosition: Value(scrollPosition),
+              lastOpenedDate: Value(now),
+            ),
+          );
+      return right(count > 0);
     } catch (e) {
       return left('Update progress failed: $e');
     }

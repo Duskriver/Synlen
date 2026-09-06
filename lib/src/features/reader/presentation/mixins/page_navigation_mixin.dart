@@ -20,12 +20,19 @@ mixin _PageNavigationMixin on ConsumerState<ReaderScreen> {
 
   // === Cross-mixin: _ProgressMixin ===
   void updateProgressDebounced();
-  void saveProgress();
+  void saveProgressDebounced();
+
+  bool get isWebViewLoading;
+  bool get updatingTheme;
+  bool get isChangingChapter;
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
 
   bool canPerformPageTurn(bool isNext) {
+    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+      return false;
+    }
     if (isNext) {
       if (currentPageInChapter >= totalPagesInChapter - 1 &&
           currentSpineItemIndex >= bookSession.spine.length - 1) {
@@ -56,13 +63,13 @@ mixin _PageNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> goToPage(int pageIndex) async {
+    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+      return;
+    }
     if (pageIndex < 0 || pageIndex >= totalPagesInChapter) return;
 
-    currentPageInChapter = pageIndex;
-    updateProgressDebounced();
-
     await rendererController.jumpToPage(pageIndex);
-    saveProgress();
+    saveProgressDebounced();
   }
 
   Future<void> nextPage() async {
@@ -71,7 +78,6 @@ mixin _PageNavigationMixin on ConsumerState<ReaderScreen> {
     } else {
       await nextSpineItem();
     }
-    saveProgress();
   }
 
   Future<void> previousPage() async {
@@ -80,6 +86,5 @@ mixin _PageNavigationMixin on ConsumerState<ReaderScreen> {
     } else {
       await previousSpineItem();
     }
-    saveProgress();
   }
 }

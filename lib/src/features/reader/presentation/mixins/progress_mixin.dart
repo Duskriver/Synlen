@@ -18,8 +18,10 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
   Timer? get progressDebouncer;
   set progressDebouncer(Timer? v);
 
-  Timer? get _saveProgressDebouncer;
-  set _saveProgressDebouncer(Timer? v);
+  ReadingProgressController get progressController;
+
+  bool get updatingTheme;
+  bool get isChangingChapter;
 
   void updateProgressDebounced() {
     progressDebouncer?.cancel();
@@ -37,18 +39,24 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
   }
 
   void saveProgressDebounced() {
-    _saveProgressDebouncer?.cancel();
-    _saveProgressDebouncer = Timer(const Duration(seconds: 1), () {
-      if (!mounted) return;
-      saveProgress();
-    });
+    if (!mounted) return;
+    progressController.record(
+      (
+        chapterIndex: currentSpineItemIndex,
+        pageIndex: currentPageInChapter,
+        pageCount: totalPagesInChapter,
+      ),
+      isReady:
+          bookSession.isLoaded &&
+          currentSpineItemIndex < bookSession.spine.length &&
+          !isWebViewLoading &&
+          !updatingTheme &&
+          !isChangingChapter,
+    );
   }
 
-  void saveProgress() {
-    bookSession.saveProgress(
-      currentChapterIndex: currentSpineItemIndex,
-      currentPageInChapter: currentPageInChapter,
-      totalPagesInChapter: totalPagesInChapter,
-    );
+  Future<bool> saveProgress() {
+    saveProgressDebounced();
+    return progressController.flush();
   }
 }

@@ -1423,6 +1423,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// No description provided for @readingProgressSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your reading position. Please retry.'**
+  String get readingProgressSaveFailed;
 }
 
 class _AppLocalizationsDelegate

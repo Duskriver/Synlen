@@ -17,7 +17,12 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
   // === Cross-mixin: _ProgressMixin ===
   void updateProgressDebounced();
-  void saveProgress();
+  void saveProgressDebounced();
+
+  bool get updatingTheme;
+  bool get isChangingChapter;
+  set isChangingChapter(bool value);
+  set totalPagesInChapter(int value);
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
@@ -45,7 +50,8 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     int? overrideSpineIndex,
     double? restoreScrollRatio,
   }) async {
-    if (bookSession.spine.isEmpty) return;
+    if (!mounted || bookSession.spine.isEmpty) return;
+    totalPagesInChapter = 0;
     if (mounted) {
       setState(() {
         isWebViewLoading = true;
@@ -114,6 +120,8 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       isWebViewLoading = false;
     });
+    updateProgressDebounced();
+    saveProgressDebounced();
   }
 
   Future<void> preloadNextOf(int currentIndex) async {
@@ -143,6 +151,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> navigateToSpineItem(int index, [String anchor = 'top']) async {
+    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+      return;
+    }
     if (index < 0 || index >= bookSession.spine.length) return;
 
     currentSpineItemIndex = index;
@@ -151,10 +162,12 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     updateProgressDebounced();
 
     await loadCarousel(anchor: anchor);
-    saveProgress();
   }
 
   Future<void> previousSpineItem() async {
+    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+      return;
+    }
     if (currentSpineItemIndex <= 0) {
       ToastService.showError(
         AppLocalizations.of(context)!.firstChapterOfBook,
@@ -163,16 +176,23 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       return;
     }
 
+    isChangingChapter = true;
+    totalPagesInChapter = 0;
     await rendererController.jumpToPreviousChapterLastPage();
+    if (!mounted) return;
 
     currentSpineItemIndex--;
+    isChangingChapter = false;
     refreshActiveTocState();
 
     preloadPreviousOf(currentSpineItemIndex);
-    saveProgress();
+    saveProgressDebounced();
   }
 
   Future<void> previousSpineItemFirstPage() async {
+    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+      return;
+    }
     if (currentSpineItemIndex <= 0) {
       ToastService.showError(
         AppLocalizations.of(context)!.firstChapterOfBook,
@@ -181,18 +201,25 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       return;
     }
 
+    isChangingChapter = true;
+    totalPagesInChapter = 0;
     await rendererController.jumpToPreviousChapterFirstPage();
+    if (!mounted) return;
 
     currentSpineItemIndex--;
+    isChangingChapter = false;
     currentPageInChapter = 0;
     refreshActiveTocState();
     updateProgressDebounced();
 
     preloadPreviousOf(currentSpineItemIndex);
-    saveProgress();
+    saveProgressDebounced();
   }
 
   Future<void> nextSpineItem() async {
+    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+      return;
+    }
     if (currentSpineItemIndex >= bookSession.spine.length - 1) {
       ToastService.showError(
         AppLocalizations.of(context)!.lastChapterOfBook,
@@ -201,15 +228,19 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       return;
     }
 
+    isChangingChapter = true;
+    totalPagesInChapter = 0;
     await rendererController.jumpToNextChapter();
+    if (!mounted) return;
 
     currentSpineItemIndex++;
+    isChangingChapter = false;
     currentPageInChapter = 0;
     refreshActiveTocState();
     updateProgressDebounced();
 
     preloadNextOf(currentSpineItemIndex);
-    saveProgress();
+    saveProgressDebounced();
   }
 
   Future<void> navigateToTocItem(TocItem item) async {

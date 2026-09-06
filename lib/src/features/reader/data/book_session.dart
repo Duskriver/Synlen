@@ -1,9 +1,9 @@
-import 'dart:async';
 import '../../../core/database/app_database.dart';
 import '../../library/domain/book_manifest.dart';
 import '../../library/data/shelf_book_repository.dart';
 import '../../library/data/book_manifest_repository.dart';
 import 'epub_webview_handler.dart';
+import '../domain/reading_progress.dart';
 
 /// Manages the current reading session including book data, manifest, and TOC state
 class BookSession {
@@ -23,19 +23,12 @@ class BookSession {
   final List<SpineItem> _spine = [];
   final List<SpineItem> _noLinearSpine = [];
 
-  Timer? _debounceTimer;
-
   BookSession({
     required this.fileHash,
     required ShelfBookRepository shelfBookRepository,
     required BookManifestRepository manifestRepository,
   }) : _shelfBookRepo = shelfBookRepository,
        _manifestRepo = manifestRepository;
-
-  void dispose() {
-    _debounceTimer?.cancel();
-    _debounceTimer = null;
-  }
 
   // Getters
   ShelfBook? get book => _book;
@@ -128,41 +121,27 @@ class BookSession {
     }
   }
 
-  /// Save reading progress to database
-  void saveProgress({
-    required int currentChapterIndex,
-    required int currentPageInChapter,
-    required int totalPagesInChapter,
-  }) {
-    if (_book == null || _manifest == null) return;
-
-    if (_debounceTimer?.isActive ?? false) {
-      _debounceTimer!.cancel();
+  /// 完整位置直接落库；未加载、无效位置和写入失败均交由调用者处理。
+  Future<void> saveProgress(ReadingProgress position) async {
+    if (!isLoaded) throw StateError('书籍尚未加载');
+    if (position.chapterIndex < 0 ||
+        position.chapterIndex >= _spine.length ||
+        position.pageCount <= 0 ||
+        position.pageIndex < 0 ||
+        position.pageIndex >= position.pageCount) {
+      throw ArgumentError.value(position, 'position', '无效的阅读位置');
     }
-
-    _debounceTimer = Timer(const Duration(milliseconds: 10), () async {
-      double? scrollPosition;
-      if (totalPagesInChapter > 0) {
-        scrollPosition = currentPageInChapter / totalPagesInChapter;
-      }
-
-      var progress = 0.0;
-      if (_spine.isNotEmpty) {
-        final delta = 1.0 / _spine.length;
-        progress = (currentChapterIndex + 1) / _spine.length;
-        if (totalPagesInChapter > 0) {
-          progress -= delta;
-          progress +=
-              delta * ((currentPageInChapter + 1) / totalPagesInChapter);
-        }
-      }
-
-      await _shelfBookRepo.updateProgress(
-        bookId: _book!.id,
-        currentChapterIndex: currentChapterIndex,
-        progress: progress,
-        scrollPosition: scrollPosition,
-      );
+    final result = await _shelfBookRepo.updateProgress(
+      bookId: _book!.id,
+      currentChapterIndex: position.chapterIndex,
+      progress:
+          (position.chapterIndex +
+              (position.pageIndex + 1) / position.pageCount) /
+          _spine.length,
+      scrollPosition: position.pageIndex / position.pageCount,
+    );
+    result.fold((error) => throw StateError(error), (updated) {
+      if (!updated) throw StateError('保存进度时书籍已不存在');
     });
   }
 
