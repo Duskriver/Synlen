@@ -13,6 +13,7 @@ class ProgressDialog extends StatefulWidget {
   final String progressMessage;
   final String processingMessage;
   final double? progressValue;
+  final String? completedMessage;
 
   /// When `true` the dialog shows the complete title and enables the Close
   /// button. Set this from the parent once the stream is done or errors.
@@ -29,6 +30,7 @@ class ProgressDialog extends StatefulWidget {
     required this.progressValue,
     required this.isCompleted,
     required this.logs,
+    this.completedMessage,
     super.key,
   });
 
@@ -75,7 +77,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                   Expanded(
                     child: Text(
                       widget.isCompleted
-                          ? l10n.progressedAll
+                          ? (widget.completedMessage ?? l10n.progressedAll)
                           : widget.processingMessage,
                       maxLines: 2,
                       softWrap: false,

@@ -754,4 +754,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get readingProgressSaveFailed =>
       'Could not save your reading position. Please retry.';
+
+  @override
+  String get restoreIncomplete =>
+      'Restore incomplete. Check the backup and retry.';
 }
