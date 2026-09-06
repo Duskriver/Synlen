@@ -60,7 +60,7 @@ final class WordLearningControllerProvider
 }
 
 String _$wordLearningControllerHash() =>
-    r'a0dd63312eab45749062b5653579c8bbbad7977e';
+    r'8a351e2f5aa3ccfaefb8b125c63d8253ccc4a482';
 
 final class WordLearningControllerFamily extends $Family
     with

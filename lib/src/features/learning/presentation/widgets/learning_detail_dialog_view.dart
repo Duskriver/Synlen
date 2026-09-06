@@ -28,6 +28,7 @@ String resolveLearningErrorText(Object? error, AppLocalizations l10n) {
 
 class LearningDetailDialogView extends StatelessWidget {
   final Widget title;
+  final VoidCallback onRetry;
   final LearningDetailState state;
   final ScrollController? scrollController;
   final Future<void> Function() onPlayAudio;
@@ -39,6 +40,7 @@ class LearningDetailDialogView extends StatelessWidget {
   const LearningDetailDialogView({
     super.key,
     required this.title,
+    required this.onRetry,
     required this.state,
     required this.scrollController,
     required this.onPlayAudio,
@@ -90,6 +92,12 @@ class LearningDetailDialogView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          if (primaryError != null && !state.isLoading)
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(AppLocalizations.of(context)!.retry),
+            ),
           Flexible(
             child: _LearningDetailContent(
               state: state,

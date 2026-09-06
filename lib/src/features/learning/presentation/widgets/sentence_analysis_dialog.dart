@@ -27,6 +27,7 @@ class SentenceAnalysisDialog extends ConsumerWidget {
       state: ref.watch(provider),
       scrollController: scrollController,
       onPlayAudio: ref.read(provider.notifier).playAudio,
+      onRetry: ref.read(provider.notifier).retry,
       audioTooltip: l10n.playAudio,
       audioLabel: l10n.readSentenceAloud,
       contentUpdateErrorPrefix: l10n.analysisUpdateFailed,

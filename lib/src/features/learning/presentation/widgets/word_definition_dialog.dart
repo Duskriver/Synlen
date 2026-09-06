@@ -32,6 +32,7 @@ class WordDefinitionDialog extends ConsumerWidget {
       state: ref.watch(provider),
       scrollController: scrollController,
       onPlayAudio: ref.read(provider.notifier).playAudio,
+      onRetry: ref.read(provider.notifier).retry,
       audioTooltip: l10n.playPronunciation,
       audioLabel: l10n.playPronunciation,
       contentUpdateErrorPrefix: l10n.definitionUpdateFailed,

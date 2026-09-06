@@ -61,6 +61,11 @@ class WordLearningController extends _$WordLearningController {
     return const WordLearningState();
   }
 
+  /// 重建查询会话，取消旧请求并重新检查已完成的缓存。
+  void retry() {
+    if (ref.mounted) ref.invalidateSelf();
+  }
+
   Future<void> playAudio() => _session.audio.play(state.audioUrl);
 
   Future<void> _loadData(
