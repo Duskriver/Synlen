@@ -61,7 +61,7 @@
 - `reader/presentation`：**4788 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 661 行）。
 - `reader/application`：**1 文件 / 147 行**（`reader_settings_notifier.dart`，通篇 SharedPreferences 的 get/set 透传）。
 
-这是规范 §3「深模块 = 小接口大实现」的反例（浅模块），也印证 ADR-0001「reader 层逻辑集中在 UI」的判断。修复需先补 reader 测试安全网（当前 reader 零测试）。
+这是规范 §3「深模块 = 小接口大实现」的反例（浅模块），也印证 ADR-0001「reader 层逻辑集中在 UI」的判断。reader 已有单测安全网（见 §6），可开始增量重构（见 ADR-0001）。
 
 ---
 
@@ -88,16 +88,17 @@
 
 ## 6. 测试覆盖缺口（reader 已补两批，2026-08-13）
 
-- **10 个测试文件 / 149 个源文件**（约 7%），**84 个用例**全绿。
+- 2026-09-06 更新：**33 个测试文件 / 160 个源文件（约 21%）**，**246 个用例**全绿。
 - ✅ reader 首批 27 用例（issue #5）：`ReaderSettings` / `EpubTheme` / `ReaderSettingsNotifier` / `EpubWebViewHandler`。
 - ✅ reader 第二批 12 用例：`BookSession`（spine 过滤、TOC 查找映射、URL/索引解析、激活目录解析、进度防抖落库、初始位置）。
-- ⏳ 仍无 widget test；reader 的 6 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；library / settings / detail 仍零测试。
 - ✅ TXT 支持批次（2026-08-26）：TXT 解码/章节切分/内容供给/DB v1→v2 迁移，新增 4 个测试文件 45 用例。
 - ✅ TXT 支持批次随修的预存在缺陷（2026-08-26，均已修复并带回归测试）：
   - `LibraryNotifier` 为 autoDispose，导入流是 async*（方法体推迟到对话框订阅才执行），调用方只 `read` 无监听导致 provider 先被销毁，导入必然中断 → 改 `@Riverpod(keepAlive: true)`；
   - TXT 章节 XHTML 缺 `xmlns`，按 `application/xhtml+xml` 解析时元素无 HTML 语义，分页引擎注入样式失败、段落展平 → 补命名空间；
   - `saveBook`/`saveManifest` 对新书（id=0）显式写主键 rowid 0，第二次导入的 upsert 覆盖第一本书整行（书架上永远只剩最后一本）→ id=0 时主键缺席走自增；
   - 导入失败回滚调 `_deleteFile(绝对路径)`，而该方法把入参当相对路径再拼 `documentsPath`，拼出的路径不存在导致回滚从未真正删除书籍文件，且删除未 await 存在竞态 → `_deleteFile` 兼容相对/绝对路径，回滚处改为等待删除完成（2026-08-29）。
+- ✅ 恢复开发批次（2026-09-05/06）：学习请求生命周期与取消、备份恢复往返（库内 SQLite）、恢复对话框 widget test、学习弹窗 widget test、音频清退与学习缓存清理测试。
+- ⏳ reader 的 6 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；settings / detail 仍零测试；无端到端测试。
 
 ---
 
@@ -132,7 +133,9 @@ TXT 支持落地后，以下以 `Epub` 命名的组件实际已同时处理 EPUB
 
 ## 优先修复顺序（建议）
 
-1. **P0**：日志方案落定——引入 `custom_lint` 拦截 `debugPrint`，或全量迁 `logger`。
-2. **P1**：reader 补测试安全网 → 再谈 reader 分层重构。
-3. **P1**：learning 模块硬编码中文迁 l10n。
-4. **P2**：增量修 `presentation → data` 违规（优先 `style_bottom_sheet.dart` 绕过 provider 的深违规）。
+> 2026-09-06 校准：原列表中「reader 补测试」「learning 硬编码中文」「style_bottom_sheet」均已完成销账。
+
+1. **P1**：增量修 `presentation → data` 违规（§1 表中 11 处，reader 侧与跨 feature 引用为主）。
+2. **P1**：reader 分层重构（§4），按 ADR-0001 增量推进。
+3. **P2**：引入 `custom_lint` 拦截 `debugPrint`（§2 的可选加固）。
+4. **P2**：`Epub` 命名多格式化（§8）、intent 接收（§9）。

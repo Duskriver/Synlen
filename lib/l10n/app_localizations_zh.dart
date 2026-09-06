@@ -321,7 +321,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aliyunTtsApiKey => '阿里云 TTS API Key';
 
   @override
-  String get aliyunTtsApiKeySubtitle => '用于朗读发音（阿里云 DashScope）';
+  String get aliyunTtsApiKeySubtitle => '用于朗读发音（阿里云百炼，北京地域端点，其他地域的 Key 无法使用）';
 
   @override
   String get apiKeyNotConfigured => '未配置';

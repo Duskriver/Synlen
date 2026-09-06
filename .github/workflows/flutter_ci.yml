@@ -7,10 +7,36 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  test:
-    name: Run Flutter Test
+  flutter:
+    name: Format · Analyze · Test
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # Flutter 版本固定为本地验证过的 stable，升级需单独验证后再改
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+  web-assets:
+    name: Reader TS typecheck & generated assets drift
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,11 +44,47 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.44.9'
           channel: 'stable'
           cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      # 安装 lockfile 锁定的 typescript / esbuild（构建脚本使用本地 .bin/esbuild）
+      - name: Install web toolchain
+        working-directory: web_assets/controller.js
+        run: npm ci
+
+      - name: Typecheck reader TypeScript
+        working-directory: web_assets/controller.js
+        run: npm run typecheck
+
+      # 重新生成 web_assets.dart 并检测漂移：TS/CSS 源码改动必须同步生成物
+      - name: Detect generated assets drift
+        run: |
+          dart run tool/build_web_assets.dart
+          git diff --exit-code lib/src/web/web_assets.dart
+
+  rust:
+    name: Rust compile & test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Run Rust tests
+        run: cargo test --locked --manifest-path rust/Cargo.toml
