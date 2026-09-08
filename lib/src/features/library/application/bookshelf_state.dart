@@ -1,4 +1,5 @@
 import 'package:synlen/src/core/database/app_database.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart';
 
 /// How densely books are shown in the grid.
@@ -15,7 +16,7 @@ class BookshelfState {
   final Set<int> selectedBookIds;
   final Set<int> selectedGroupIds;
   final bool isSelectionMode;
-  final List<ShelfGroup> availableGroups;
+  final List<GroupOption> availableGroups;
   final Map<int?, List<ShelfBook>> cachedBooks;
   // Note: cacheOrder (LRU eviction order) is managed internally by
   // BookshelfTabCache and is *not* part of the UI state.
@@ -42,7 +43,7 @@ class BookshelfState {
     Set<int>? selectedBookIds,
     Set<int>? selectedGroupIds,
     bool? isSelectionMode,
-    List<ShelfGroup>? availableGroups,
+    List<GroupOption>? availableGroups,
     Map<int?, List<ShelfBook>>? cachedBooks,
     bool clearGroup = false,
     bool clearFilter = false,
