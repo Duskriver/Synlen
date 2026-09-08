@@ -2,17 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:synlen/src/core/widgets/middle_ellipsis_two_lines_text.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../application/bookshelf_notifier.dart';
-
-/// 网格卡片展示一本书所需的字段；不持有持久化行类型。
-typedef GridBookView = ({
-  int id,
-  String title,
-  String author,
-  String? coverPath,
-  double readingProgress,
-  bool isFinished,
-  bool isDeleted,
-});
+import '../../domain/book_views.dart';
 
 /// Book grid item widget displays a single book in the grid.
 class BookGridItem extends StatelessWidget {

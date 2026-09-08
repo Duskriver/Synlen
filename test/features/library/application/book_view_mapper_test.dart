@@ -23,6 +23,18 @@ ShelfBook buildBook() => ShelfBook(
 );
 
 void main() {
+  test('gridBookView 映射网格卡片需要的字段', () {
+    final view = gridBookView(buildBook());
+
+    expect(view.id, 7);
+    expect(view.title, '测试书');
+    expect(view.author, '作者');
+    expect(view.coverPath, isNull);
+    expect(view.readingProgress, 0.5);
+    expect(view.isFinished, isFalse);
+    expect(view.isDeleted, isFalse);
+  });
+
   test('detailBookView 映射详情视图需要的字段', () {
     final view = detailBookView(buildBook());
 

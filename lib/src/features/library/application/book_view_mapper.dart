@@ -2,6 +2,16 @@ import '../../library/domain/book_views.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
 /// drift 行 → 展示视图的映射集中在这里：presentation 只吃视图类型。
+GridBookView gridBookView(ShelfBook book) => (
+  id: book.id,
+  title: book.title,
+  author: book.author,
+  coverPath: book.coverPath,
+  readingProgress: book.readingProgress,
+  isFinished: book.isFinished,
+  isDeleted: book.isDeleted,
+);
+
 DetailBookView detailBookView(ShelfBook book) => (
   id: book.id,
   fileHash: book.fileHash,
