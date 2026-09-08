@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_manifest.dart';
+import '../../domain/txt_chapter_path.dart';
 import 'txt_chapter_splitter.dart';
 import 'txt_decoder.dart';
 
@@ -42,20 +43,6 @@ class TxtBookParser {
   static const _decoder = TxtDecoder();
   static const _splitter = TxtChapterSplitter();
 
-  /// 阅读时 WebView 请求的虚拟章节路径前缀
-  static const String chapterPathPrefix = 'txt/chapter_';
-
-  static const String chapterPathSuffix = '.xhtml';
-
-  /// 从虚拟章节路径解析 spine 索引，路径非法时返回 null
-  static int? chapterIndexFromPath(String relativePath) {
-    final match = RegExp(
-      '^${RegExp.escape(chapterPathPrefix)}(\\d+)${RegExp.escape(chapterPathSuffix)}\$',
-    ).firstMatch(relativePath);
-    if (match == null) return null;
-    return int.tryParse(match.group(1)!);
-  }
-
   Either<String, TxtBookParseResult> parseFromBytes(
     Uint8List bytes, {
     String? fileName,
@@ -91,7 +78,7 @@ class TxtBookParser {
         spine.add(
           SpineItem(
             index: i,
-            href: '$chapterPathPrefix$i$chapterPathSuffix',
+            href: '$txtChapterPathPrefix$i$txtChapterPathSuffix',
             idref: 'txt-chapter-$i',
             linear: true,
             sourceRange: '$byteOffset-${byteOffset + sliceBytes.length}',
@@ -127,7 +114,7 @@ class TxtBookParser {
     for (var i = 0; i < chapters.length; i++) {
       final chapter = chapters[i];
       final href = Href(
-        path: '$chapterPathPrefix$i$chapterPathSuffix',
+        path: '$txtChapterPathPrefix$i$txtChapterPathSuffix',
         anchor: 'top',
       );
 

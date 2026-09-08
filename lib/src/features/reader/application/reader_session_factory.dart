@@ -2,9 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../library/application/book_queries.dart';
 import '../data/services/epub_stream_service_provider.dart';
-import '../data/services/txt_content_service_provider.dart';
 import 'book_session.dart';
 import 'epub_webview_handler.dart';
+import 'txt_content_service_provider.dart';
 
 part 'reader_session_factory.g.dart';
 

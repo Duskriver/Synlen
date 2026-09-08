@@ -1,3 +1,5 @@
+import '../../domain/txt_heading.dart';
+
 /// TXT 章节切分结果：一个章节的标题与在全文中的字符区间。
 ///
 /// 所有章节的 [start, end) 区间连续覆盖全文 [0, length)，
@@ -38,41 +40,11 @@ class TxtChapter {
 class TxtChapterSplitter {
   const TxtChapterSplitter();
 
-  /// 标题行最大长度（trim 后），防止把正文误判为标题
-  static const int maxHeadingLength = 50;
-
   /// 无标题正文触发按体积分割的字符数阈值
   static const int splitThreshold = 50000;
 
   /// 按体积分割时的目标单部分字符数（在段落边界就近截断）
   static const int targetPartLength = 50000;
-
-  /// 卷级标题（层级 > 章）：第X卷
-  static final RegExp volumeHeading = RegExp(
-    r'^\s*第[0-9０-９一二三四五六七八九十百千万两零〇]{1,9}\s*卷'
-    r'([：:、．.\-—\s]+.{0,40})?\s*$',
-  );
-
-  /// 章级标题：第X章/回/节/集/部/篇
-  static final RegExp chapterHeading = RegExp(
-    r'^\s*第[0-9０-９一二三四五六七八九十百千万两零〇]{1,9}\s*[章节回集部篇]'
-    r'([：:、．.\-—\s]+.{0,40})?\s*$',
-  );
-
-  /// 英文章节标题：Chapter N
-  static final RegExp englishChapterHeading = RegExp(
-    r'^\s*chapter\s+[0-9]{1,5}([：:、．.\-—\s]+.{0,40})?\s*$',
-    caseSensitive: false,
-  );
-
-  /// 特殊独立标题行（整行匹配，番外/外传允许短后缀）
-  static final RegExp specialHeading = RegExp(
-    r'^\s*(楔子|引子|序言?|序章|前言|自序|后记|终章|尾声|作者的话|'
-    r'番外[：:、．.\-—\s].{0,30}|外传[：:、．.\-—\s].{0,30})\s*$',
-  );
-
-  /// 纯数字标题行（部分英文/网文 TXT 用 1、2、3 分章）
-  static final RegExp numberHeading = RegExp(r'^\s*\d{1,4}\s*$');
 
   List<TxtChapter> split(String text) {
     if (text.trim().isEmpty) return const [];
@@ -80,7 +52,7 @@ class TxtChapterSplitter {
     final lineStarts = _lineStarts(text);
     final headingLines = <int>[
       for (var i = 0; i < lineStarts.length; i++)
-        if (isHeadingLine(_lineAt(text, lineStarts, i))) i,
+        if (isTxtHeadingLine(_lineAt(text, lineStarts, i))) i,
     ];
 
     if (headingLines.isEmpty) {
@@ -115,23 +87,12 @@ class TxtChapterSplitter {
           start: start,
           end: end,
           hasHeading: true,
-          isVolume: volumeHeading.hasMatch(line),
+          isVolume: isTxtVolumeHeading(line),
         ),
       );
     }
 
     return chapters;
-  }
-
-  /// 判断一行是否为标题行（对外暴露供阅读时的 HTML 首行判定复用）
-  bool isHeadingLine(String line) {
-    final trimmed = line.trim();
-    if (trimmed.isEmpty || trimmed.length > maxHeadingLength) return false;
-    return volumeHeading.hasMatch(trimmed) ||
-        chapterHeading.hasMatch(trimmed) ||
-        englishChapterHeading.hasMatch(trimmed) ||
-        specialHeading.hasMatch(trimmed) ||
-        numberHeading.hasMatch(trimmed);
   }
 
   /// 返回每一行的起始字符偏移（兼容 \n、\r\n、\r）

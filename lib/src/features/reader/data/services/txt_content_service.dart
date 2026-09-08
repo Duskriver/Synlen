@@ -3,10 +3,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fpdart/fpdart.dart';
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
-import 'package:synlen/src/features/library/data/parsers/txt_chapter_splitter.dart';
-import 'package:synlen/src/features/library/data/parsers/txt_book_parser.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/txt_chapter_path.dart';
+import 'package:synlen/src/features/library/domain/txt_heading.dart';
+
+import 'txt_spine_source.dart';
 
 /// TXT 章节内容供给服务。
 ///
@@ -14,13 +15,13 @@ import 'package:synlen/src/features/library/domain/book_manifest.dart';
 /// 字节范围（[SpineItem.sourceRange]）随机读取，包装为 XHTML 后经
 /// `epub://` 虚拟域交给渲染引擎——对前端分页引擎而言与 EPUB 章节无异。
 class TxtContentService {
-  final BookManifestRepository _manifestRepo;
+  final TxtSpineSource _spineSource;
 
   /// fileHash → spine 的会话级缓存，避免每次翻章都查库
   final Map<String, List<SpineItem>> _spineCache = {};
 
-  TxtContentService({required BookManifestRepository manifestRepo})
-    : _manifestRepo = manifestRepo;
+  TxtContentService({required TxtSpineSource spineSource})
+    : _spineSource = spineSource;
 
   /// 读取指定虚拟路径（`txt/chapter_N.xhtml`）的章节 XHTML。
   /// Returns Either:
@@ -31,7 +32,7 @@ class TxtContentService {
     required String fileHash,
     required String relativePath,
   }) async {
-    final chapterIndex = TxtBookParser.chapterIndexFromPath(relativePath);
+    final chapterIndex = txtChapterIndexFromPath(relativePath);
     if (chapterIndex == null) {
       return left('Not a TXT chapter path: $relativePath');
     }
@@ -71,13 +72,12 @@ class TxtContentService {
       )
       ..write('<meta name="generator" content="synlen" /></head><body>');
 
-    const splitter = TxtChapterSplitter();
     var isFirstContentLine = true;
     for (final rawLine in text.split(RegExp(r'\r\n|\r|\n'))) {
       final trimmed = rawLine.trim();
       if (trimmed.isEmpty) continue;
       final escaped = _escapeHtml(trimmed);
-      if (isFirstContentLine && splitter.isHeadingLine(rawLine)) {
+      if (isFirstContentLine && isTxtHeadingLine(rawLine)) {
         buffer.write('<h2>$escaped</h2>');
       } else {
         buffer.write('<p>$escaped</p>');
@@ -98,8 +98,7 @@ class TxtContentService {
     final cached = _spineCache[fileHash];
     if (cached != null) return cached;
 
-    final manifest = await _manifestRepo.getManifestByHash(fileHash);
-    final spine = manifest?.spine;
+    final spine = await _spineSource.spineFor(fileHash);
     if (spine != null) {
       _spineCache[fileHash] = spine;
     }

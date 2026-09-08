@@ -2,47 +2,36 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-import 'package:synlen/src/core/database/app_database.dart';
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/parsers/txt_book_parser.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/data/services/txt_content_service.dart';
+import 'package:synlen/src/features/reader/data/services/txt_spine_source.dart';
 
-import 'txt_content_service_test.mocks.dart';
+/// 记录调用次数的 spine 来源 fake，用于验证会话级缓存
+class _FakeSpineSource implements TxtSpineSource {
+  _FakeSpineSource(this.spine);
 
-@GenerateMocks([BookManifestRepository])
+  List<SpineItem>? spine;
+  int calls = 0;
+
+  @override
+  Future<List<SpineItem>?> spineFor(String fileHash) async {
+    calls++;
+    return spine;
+  }
+}
+
 void main() {
-  late MockBookManifestRepository manifestRepo;
-  late TxtContentService service;
-
   const fileHash = 'txt-hash-1';
   const bookText = '本书简介\n介绍文字\n第一章 开始\n第一章内容 <>&\n第二章 继续\n第二章内容';
 
   late Directory tempDir;
   late File txtFile;
   late List<SpineItem> spine;
-
-  BookManifest buildManifest({List<SpineItem>? spineOverride}) {
-    return BookManifest(
-      id: 1,
-      fileHash: fileHash,
-      opfRootPath: '',
-      spine: spineOverride ?? spine,
-      toc: const [],
-      manifest: const [],
-      epubVersion: '',
-      format: BookFormat.txt,
-      lastUpdated: DateTime(2026, 1, 1),
-    );
-  }
+  late _FakeSpineSource spineSource;
+  late TxtContentService service;
 
   setUp(() async {
-    manifestRepo = MockBookManifestRepository();
-    service = TxtContentService(manifestRepo: manifestRepo);
-
     // 用解析器产出归一化字节与 spine，落到临时文件模拟已导入的 TXT 书籍
     final parsed = const TxtBookParser()
         .parseFromText(bookText, fileName: '测试书.txt')
@@ -52,6 +41,9 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('synlen_txt_content_test_');
     txtFile = File('${tempDir.path}/$fileHash.txt');
     await txtFile.writeAsBytes(parsed.normalizedUtf8, flush: true);
+
+    spineSource = _FakeSpineSource(spine);
+    service = TxtContentService(spineSource: spineSource);
   });
 
   tearDown(() async {
@@ -105,10 +97,6 @@ void main() {
 
   group('TxtContentService.readChapter', () {
     test('按字节范围读取章节并包装为 XHTML', () async {
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => buildManifest());
-
       final result = await service.readChapter(
         txtAbsolutePath: txtFile.path,
         fileHash: fileHash,
@@ -126,10 +114,6 @@ void main() {
     });
 
     test('引导块章节（无标题行）也可读取', () async {
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => buildManifest());
-
       final result = await service.readChapter(
         txtAbsolutePath: txtFile.path,
         fileHash: fileHash,
@@ -143,11 +127,7 @@ void main() {
       expect(html, isNot(contains('第一章')));
     });
 
-    test('spine 缓存：多次读取只查一次库', () async {
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => buildManifest());
-
+    test('spine 缓存：多次读取只取一次 spine', () async {
       await service.readChapter(
         txtAbsolutePath: txtFile.path,
         fileHash: fileHash,
@@ -159,10 +139,10 @@ void main() {
         relativePath: 'txt/chapter_2.xhtml',
       );
 
-      verify(manifestRepo.getManifestByHash(fileHash)).called(1);
+      expect(spineSource.calls, 1);
     });
 
-    test('非法章节路径返回 left', () async {
+    test('非法章节路径返回 left 且不查询 spine', () async {
       final result = await service.readChapter(
         txtAbsolutePath: txtFile.path,
         fileHash: fileHash,
@@ -170,14 +150,10 @@ void main() {
       );
 
       expect(result.isLeft(), isTrue);
-      verifyNever(manifestRepo.getManifestByHash(any));
+      expect(spineSource.calls, 0);
     });
 
     test('章节索引越界返回 left', () async {
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => buildManifest());
-
       final result = await service.readChapter(
         txtAbsolutePath: txtFile.path,
         fileHash: fileHash,
@@ -187,10 +163,8 @@ void main() {
       expect(result.isLeft(), isTrue);
     });
 
-    test('manifest 不存在返回 left', () async {
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => null);
+    test('spine 不存在返回 left', () async {
+      spineSource.spine = null;
 
       final result = await service.readChapter(
         txtAbsolutePath: txtFile.path,
@@ -202,16 +176,13 @@ void main() {
     });
 
     test('spine 缺少字节范围返回 left', () async {
-      final noRangeSpine = [
+      spineSource.spine = [
         SpineItem(
           index: 0,
           href: 'txt/chapter_0.xhtml',
           idref: 'txt-chapter-0',
         ),
       ];
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => buildManifest(spineOverride: noRangeSpine));
 
       final result = await service.readChapter(
         txtAbsolutePath: txtFile.path,
@@ -223,10 +194,6 @@ void main() {
     });
 
     test('TXT 文件缺失返回 left', () async {
-      when(
-        manifestRepo.getManifestByHash(fileHash),
-      ).thenAnswer((_) async => buildManifest());
-
       final result = await service.readChapter(
         txtAbsolutePath: '${tempDir.path}/not_exist.txt',
         fileHash: fileHash,
