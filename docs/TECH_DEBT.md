@@ -10,7 +10,7 @@
 
 ## 1. 分层违规：presentation 直连 data
 
-规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **5 个文件 / 14 处 import** 违规（全部集中在 reader 内部）（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
+规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。**2026-09-08：presentation → data 已全部清零**（原 13 处 → 0）。下表保留销账记录。（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
 
 | # | 文件 | 违规性质 |
 |---|------|----------|
@@ -19,11 +19,11 @@
 | 3 | ~~`lib/src/features/library/presentation/mixins/library_actions_mixin.dart`~~ | ✅ 已修复：`UnifiedImportService` 的 provider 移到 `core/providers/`（该服务被 3 个 feature 消费） |
 | 4 | ~~`lib/src/features/library/presentation/widgets/style_bottom_sheet.dart`~~ | ✅ 已修复（issue #7）：`ShelfBookSortBy` 下沉 domain，不再引 data |
 | 5 | ~~`lib/src/features/library/presentation/widgets/restore_progress_dialog.dart`~~ | ✅ 已修复：进度事件类型下沉 `library/domain/import_progress.dart`，顺带消除 `data → application` 逆向依赖 |
-| 6 | `lib/src/features/reader/presentation/reader_webview.dart` | 引 `reader/data` |
-| 7 | `lib/src/features/reader/presentation/reader_renderer.dart` | 引 `reader/data` |
-| 8 | `lib/src/features/reader/presentation/image_viewer.dart` | 引 `reader/data` |
-| 9 | `lib/src/features/reader/presentation/reader_screen.dart` | 引 `reader/data` + **跨 feature 引 `library/data`**（6 处 import） |
-| 10 | `lib/src/features/reader/presentation/widgets/footnot_popup_overlay.dart` | 引 `reader/data` |
+| 6 | ~~`lib/src/features/reader/presentation/reader_webview.dart`~~ | ✅ 已修复：`book_session` / `epub_webview_handler` / `reader_scripts` 下沉 `reader/application` |
+| 7 | ~~`lib/src/features/reader/presentation/reader_renderer.dart`~~ | ✅ 已修复：同上 |
+| 8 | ~~`lib/src/features/reader/presentation/image_viewer.dart`~~ | ✅ 已修复：同上 |
+| 9 | ~~`lib/src/features/reader/presentation/reader_screen.dart`~~ | ✅ 已修复：装配集中到 `reader/application/reader_session_factory.dart`，屏幕不再 `ref.read` 任何 data provider |
+| 10 | ~~`lib/src/features/reader/presentation/widgets/footnot_popup_overlay.dart`~~ | ✅ 已修复：同上 |
 | 11 | ~~`lib/src/features/settings/presentation/widgets/clean_cache_tile.dart`~~ | ✅ 已修复：跨 feature 编排移入 `settings/application/cache_cleanup.dart`（ADR-0003 组合面） |
 | 12 | ~~`lib/src/features/settings/presentation/widgets/backup_tile.dart`~~ | ✅ 已修复：导出用例移入 `settings/application/backup_export.dart`（ADR-0003） |
 | 13 | ~~`lib/src/features/reader/domain/epub_theme.dart`~~ | ✅ 已修复（issue #6）：`colorToHex` 下沉 domain，domain→data 清零，顺带消除 epub_theme↔reader_scripts 循环 import |
@@ -59,8 +59,9 @@
 
 ## 4. reader 模块分层失衡
 
-- `reader/presentation`：**4852 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 689 行）。
-- `reader/application`：**2 文件 / 232 行**（`reader_settings_notifier.dart` 146 行，通篇 SharedPreferences 的 get/set 透传；`reading_progress_controller.dart` 86 行，已具备可注入的落库 seam）。
+- `reader/presentation`：**4843 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 680 行）。
+- `reader/application`：**7 文件 / 999 行**（2026-09-08 起 `book_session` / `epub_webview_handler` / `reader_scripts` / `volume_control_service` / `reader_session_factory` 迁入；装配与内容供给已不在 UI 层）。
+- 比例从 21:1 收敛到约 4.8:1，下一步是把 7 个 part mixin 拆成可测单元。
 
 这是规范 §3「深模块 = 小接口大实现」的反例（浅模块），也印证 ADR-0001「reader 层逻辑集中在 UI」的判断。reader 已有单测安全网（见 §6），可开始增量重构（见 ADR-0001）。
 
@@ -73,7 +74,7 @@
 | 文件 | 行数 |
 |------|------|
 | `library/data/parsers/epub_zip_parser.dart` | 880 |
-| `reader/presentation/reader_screen.dart` | 689 |
+| `reader/presentation/reader_screen.dart` | 680 |
 | `core/file_handling/unified_import_service.dart` | 618 |
 | `library/data/services/epub_import_service.dart` | 568 |
 | `reader/presentation/reader_renderer.dart` | 550 |
@@ -159,3 +160,20 @@ TXT 支持落地后，以下以 `Epub` 命名的组件实际已同时处理 EPUB
 3. **P2**：引入 `custom_lint` 拦截 `debugPrint`（§2 的可选加固）。
 4. **P2**：`Epub` 命名多格式化（§8）、intent 接收（§9）。
 5. **P3**：注释语言按路过即译推进（§10）。
+
+---
+
+## 11. 跨 feature 依赖（2026-09-08 新增）
+
+`presentation → data` 清零后，规范 §1 的第二条（feature 互不 import）仍有 15 条边。按 ADR-0003，只有组合面（settings）可以跨 feature 依赖；其余需要收敛：
+
+| 边 | 条数 | 性质与方向 |
+|---|---|---|
+| `reader/application → library/data` | 2 | 阅读会话需要书目仓库；应改为经 `library/application` 暴露查询用例，或把书目模型下沉 `core/` |
+| `reader/presentation → learning/presentation` | 1 | 阅读器弹窗复用学习弹窗，presentation 互依赖（最重的一条） |
+| `reader/application·presentation → settings/application` | 2 | 阅读设置读 API Key 音色等配置 |
+| `settings/* → learning/domain·data`、`settings/presentation → learning/domain` | 4 | 组合面例外，ADR-0003 允许 |
+| `settings/application → library/data` | 2 | 组合面例外，ADR-0003 允许 |
+| `reader/* → library/domain`、`learning → settings/application` 等 | 4 | 值类型与配置读取，风险低 |
+
+修复方向：先处理 `reader → learning/presentation`（把学习弹窗的调用改成 application 用例或事件），再评估 `reader → library` 的书目读取入口。
