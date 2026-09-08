@@ -26,7 +26,7 @@
 
 1. 打开：`EpubStreamService.openBook` → `loadEpub`；同一路径重复打开复用缓存，切换书籍时先关掉旧缓存。
 2. 读取：`readEpubFile` 在读锁内只做 `Arc::clone`（微秒级），随后在私有文件句柄上顺序解压，多个 WebView 拦截请求可并行。
-3. 关闭：阅读侧 `EpubStreamService.dispose` 与导入侧 `EpubImportService` 提取封面后的 `finally` 都调 `closeEpub`。
+3. 关闭：阅读侧 `EpubStreamService.dispose` 与导入侧 `BookImportService` 提取封面后的 `finally` 都调 `closeEpub`。
 4. codegen：改 `rust/src/api/` 后重跑 flutter_rust_bridge codegen，重新生成 `rust/src/frb_generated.rs`、`lib/src/rust/frb_generated.dart` 与 `lib/src/rust/api/*.dart`，生成物提交入库、不手改。
 5. 验证：`cargo test --locked --manifest-path rust/Cargo.toml`（CI 的 rust 任务同此命令），再跑 analyze 与阅读器冒烟测试。
 

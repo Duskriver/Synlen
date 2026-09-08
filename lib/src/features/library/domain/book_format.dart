@@ -1,7 +1,7 @@
 /// 书籍文件格式。
 ///
 /// Synlen 当前支持 EPUB 与 TXT；新格式在此扩展，
-/// 并在 `EpubImportService` 的解析分发与原生选择器过滤中同步放开。
+/// 并在 `BookImportService` 的解析分发与原生选择器过滤中同步放开。
 enum BookFormat {
   epub,
   txt;

@@ -62,7 +62,7 @@ final class LibraryNotifierProvider
   }
 }
 
-String _$libraryNotifierHash() => r'e6c6194b86dd96c027a5a1a4b624fe9af6248530';
+String _$libraryNotifierHash() => r'6e3fd99a5ac649e195c175003ec2a3f05c95c2a6';
 
 /// 导入编排 Notifier:仅承载导入/删除流程,书架数据源是 bookshelfProvider,
 /// 这里不持有任何状态。

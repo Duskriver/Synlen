@@ -16,7 +16,7 @@
    ```
 
 3. `domain`：放实体、值对象、枚举与 `XxxException`（`toString() => message`）。纯 Dart，不 import Riverpod，不碰 data 与 presentation。
-4. `data`：实现与暴露分文件——`xxx_repository.dart` / `xxx_service.dart` 写实现，`xxx_repository_provider.dart` / `xxx_service_provider.dart` 暴露；依赖从 `ref.watch` 注入，不在内部 `new`。范例是 `lib/src/features/library/data/services/epub_import_service.dart` 与同目录的 `epub_import_service_provider.dart`。
+4. `data`：实现与暴露分文件——`xxx_repository.dart` / `xxx_service.dart` 写实现，`xxx_repository_provider.dart` / `xxx_service_provider.dart` 暴露；依赖从 `ref.watch` 注入，不在内部 `new`。范例是 `lib/src/features/library/data/services/book_import_service.dart` 与同目录的 `book_import_service_provider.dart`。
 5. `application`：用 `@riverpod class XxxController extends _$XxxController` 或函数式 provider。`build()` 只做初始化与订阅，异步加载放私有方法；`build()` 里创建的资源（音频协调器、流订阅、控制器）必须在 `ref.onDispose` 里成对释放。跨 feature 只调对方 `application` 的入口，例如宿主经 `lib/src/features/learning/application/learning_entry.dart` 使用学习能力。
 6. `presentation`：只 `ref.watch` provider，不构造 repository 或 service。`AsyncValue` 三态齐全，禁止裸 `.value`，写法参考 `lib/src/features/library/presentation/library_screen.dart` 里的 `bookshelfState.when(...)`。
 7. 错误落点：错误码枚举放 `domain`（参考 `lib/src/features/learning/domain/learning_exception.dart`）；`application` 捕获异常后转成状态字段，presentation 只渲染状态。用户可读文案在展示层映射，参考 `lib/src/features/learning/presentation/widgets/learning_detail_dialog_view.dart` 的 `resolveLearningErrorText`；内部细节只进 `appLogger`（`lib/src/core/services/app_logger.dart`）。

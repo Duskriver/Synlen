@@ -19,7 +19,7 @@ import 'cover_extractor.dart';
 /// - TXT: 解析后归一化为 UTF-8 写入 AppDocDir/books/{fileHash}.txt，无封面
 /// - Parses metadata in-memory (no full unzip)
 /// - Saves to drift: ShelfBook + BookManifest
-class EpubImportService {
+class BookImportService {
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
 
@@ -27,7 +27,7 @@ class EpubImportService {
   static const _fileStore = BookFileStore();
   static const _coverExtractor = CoverExtractor();
 
-  EpubImportService({
+  BookImportService({
     required ShelfBookRepository shelfBookRepo,
     required BookManifestRepository manifestRepo,
   }) : _shelfBookRepo = shelfBookRepo,

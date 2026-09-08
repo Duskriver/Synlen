@@ -5,8 +5,8 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart';
 import '../data/shelf_book_repository.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
-import '../data/services/epub_import_service_provider.dart';
-import '../data/services/epub_import_service.dart';
+import '../data/services/book_import_service_provider.dart';
+import '../data/services/book_import_service.dart';
 import 'bookshelf_selection.dart';
 import 'bookshelf_state.dart';
 import 'bookshelf_tab_cache.dart';
@@ -28,7 +28,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   // Access repositories via providers (lazy initialization)
   ShelfBookRepository get _repository => ref.read(shelfBookRepositoryProvider);
-  EpubImportService get _importService => ref.read(epubImportServiceProvider);
+  BookImportService get _importService => ref.read(bookImportServiceProvider);
 
   @override
   Future<BookshelfState> build() async {
