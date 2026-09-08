@@ -10,7 +10,7 @@ import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
 import 'package:synlen/src/features/library/data/services/epub_import_service.dart';
 import 'package:synlen/src/features/library/data/services/epub_import_service_provider.dart';
-import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 
 import 'library_notifier_test.mocks.dart';

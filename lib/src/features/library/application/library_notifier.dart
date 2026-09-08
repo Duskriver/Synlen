@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service_provider.dart';
-import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/database/app_database.dart';

@@ -8,30 +8,18 @@ part of 'unified_import_service_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provider for UnifiedImportService
+/// 统一导入服务的 provider：跨 Android SAF / iOS 文件系统提供同一套选书与入缓存接口。
 ///
-/// This service provides a unified interface for importing EPUB files
-/// across different platforms (Android SAF and iOS file system).
-///
-/// Features:
-/// - Pick multiple EPUB files
-/// - Pick folder and scan for EPUB files recursively
-/// - Process files into cached, hashed ImportableEpub objects
-/// - Platform-agnostic API with native performance
+/// 能力：多选文件、选文件夹递归扫描、把选中文件转成带哈希的 ImportableEpub。
+/// 该服务被 library、settings 与分享入口共同消费，因此 provider 落在 core/providers。
 
 @ProviderFor(unifiedImportService)
 final unifiedImportServiceProvider = UnifiedImportServiceProvider._();
 
-/// Provider for UnifiedImportService
+/// 统一导入服务的 provider：跨 Android SAF / iOS 文件系统提供同一套选书与入缓存接口。
 ///
-/// This service provides a unified interface for importing EPUB files
-/// across different platforms (Android SAF and iOS file system).
-///
-/// Features:
-/// - Pick multiple EPUB files
-/// - Pick folder and scan for EPUB files recursively
-/// - Process files into cached, hashed ImportableEpub objects
-/// - Platform-agnostic API with native performance
+/// 能力：多选文件、选文件夹递归扫描、把选中文件转成带哈希的 ImportableEpub。
+/// 该服务被 library、settings 与分享入口共同消费，因此 provider 落在 core/providers。
 
 final class UnifiedImportServiceProvider
     extends
@@ -41,16 +29,10 @@ final class UnifiedImportServiceProvider
           UnifiedImportService
         >
     with $Provider<UnifiedImportService> {
-  /// Provider for UnifiedImportService
+  /// 统一导入服务的 provider：跨 Android SAF / iOS 文件系统提供同一套选书与入缓存接口。
   ///
-  /// This service provides a unified interface for importing EPUB files
-  /// across different platforms (Android SAF and iOS file system).
-  ///
-  /// Features:
-  /// - Pick multiple EPUB files
-  /// - Pick folder and scan for EPUB files recursively
-  /// - Process files into cached, hashed ImportableEpub objects
-  /// - Platform-agnostic API with native performance
+  /// 能力：多选文件、选文件夹递归扫描、把选中文件转成带哈希的 ImportableEpub。
+  /// 该服务被 library、settings 与分享入口共同消费，因此 provider 落在 core/providers。
   UnifiedImportServiceProvider._()
     : super(
         from: null,
@@ -88,18 +70,12 @@ final class UnifiedImportServiceProvider
 String _$unifiedImportServiceHash() =>
     r'ab8e62d4d7a2172d38a043c68f2a69fe28fe2506';
 
-/// Provider for ImportCacheManager
-///
-/// Manages the import cache directory and file operations.
-/// Can be used directly if you need lower-level cache management.
+/// 导入缓存目录与文件操作的 provider；需要更底层的缓存管理时可直接使用。
 
 @ProviderFor(importCacheManager)
 final importCacheManagerProvider = ImportCacheManagerProvider._();
 
-/// Provider for ImportCacheManager
-///
-/// Manages the import cache directory and file operations.
-/// Can be used directly if you need lower-level cache management.
+/// 导入缓存目录与文件操作的 provider；需要更底层的缓存管理时可直接使用。
 
 final class ImportCacheManagerProvider
     extends
@@ -109,10 +85,7 @@ final class ImportCacheManagerProvider
           ImportCacheManager
         >
     with $Provider<ImportCacheManager> {
-  /// Provider for ImportCacheManager
-  ///
-  /// Manages the import cache directory and file operations.
-  /// Can be used directly if you need lower-level cache management.
+  /// 导入缓存目录与文件操作的 provider；需要更底层的缓存管理时可直接使用。
   ImportCacheManagerProvider._()
     : super(
         from: null,
