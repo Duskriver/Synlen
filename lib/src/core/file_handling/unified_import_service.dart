@@ -6,33 +6,11 @@ import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
+import 'backup_paths.dart';
+import 'native_file_picker.dart';
 import 'platform_path.dart';
 import 'importable_epub.dart';
 import 'import_cache_manager.dart';
-
-class BackupPathsForBook {
-  PlatformPath epubPath;
-  PlatformPath manifestPath;
-  PlatformPath? coverPath;
-
-  BackupPathsForBook({
-    required this.epubPath,
-    required this.manifestPath,
-    required this.coverPath,
-  });
-}
-
-class BackupPaths {
-  PlatformPath rootPath;
-  PlatformPath shelfFile;
-  Map<String, BackupPathsForBook> bookPaths; // Keyed by book hash
-
-  BackupPaths({
-    required this.rootPath,
-    required this.shelfFile,
-    required this.bookPaths,
-  });
-}
 
 /// Unified entry point for EPUB file import across platforms
 ///
@@ -44,53 +22,21 @@ class BackupPaths {
 /// Android: Uses native MethodChannel with SAF (Storage Access Framework)
 /// iOS: Uses UIDocumentPickerViewController via native MethodChannel
 class UnifiedImportService {
-  static const String _channelName = 'com.tanglei.synlen/native_picker';
-  static const MethodChannel _channel = MethodChannel(_channelName);
-
   final _safStream = SafStream();
+
+  final NativeFilePicker _picker;
 
   // Use `late final` so we can pass `fetchIosFileToTemp` as a callback
   // into ImportCacheManager without a circular-reference problem.
   late final ImportCacheManager _cacheManager;
 
-  UnifiedImportService({ImportCacheManager? cacheManager}) {
+  UnifiedImportService({
+    ImportCacheManager? cacheManager,
+    NativeFilePicker? picker,
+  }) : _picker = picker ?? NativeFilePicker() {
     _cacheManager =
         cacheManager ??
         ImportCacheManager(iosFetchCallback: fetchIosFileToTemp);
-  }
-
-  /// Pick multiple EPUB files using platform-appropriate picker
-  ///
-  /// Android: Uses native SAF document picker via MethodChannel
-  /// iOS: Currently unsupported - returns empty list
-  ///
-  /// Returns a list of [PlatformPath] objects representing selected files.
-  /// Returns empty list if user cancels or no files are selected.
-  Future<List<PlatformPath>> pickFiles() async {
-    if (Platform.isAndroid) {
-      return await _pickFilesAndroid();
-    } else if (Platform.isIOS) {
-      return await _pickFilesIOS();
-    } else {
-      throw UnsupportedError('Platform not supported');
-    }
-  }
-
-  /// Pick a folder and recursively scan for EPUB files
-  ///
-  /// Android: Uses native SAF tree picker with background traversal via MethodChannel
-  /// iOS: Currently unsupported - returns empty list
-  ///
-  /// Returns a list of [PlatformPath] objects for all EPUB files found.
-  /// Returns empty list if user cancels or no EPUB files are found.
-  Future<List<PlatformPath>> pickFolder() async {
-    if (Platform.isAndroid) {
-      return await _pickFolderAndroid();
-    } else if (Platform.isIOS) {
-      return await _pickFolderIOS();
-    } else {
-      throw UnsupportedError('Platform not supported');
-    }
   }
 
   /// Process an EPUB file into a cached, hashed ImportableEpub
@@ -108,7 +54,7 @@ class UnifiedImportService {
     // SAF 数字文档 ID（如 .../document/1000000018）无法从 URI 推断真实
     // 文件名，缓存扩展名与 TXT 书名都会错；向原生查询显示名兜底。
     if (path is AndroidUriPath) {
-      final displayName = await _resolveDisplayName(path.uri);
+      final displayName = await _picker.resolveDisplayName(path.uri);
       if (displayName != null && displayName.trim().isNotEmpty) {
         return ImportableEpub(
           cacheFile: importable.cacheFile,
@@ -118,16 +64,6 @@ class UnifiedImportService {
       }
     }
     return importable;
-  }
-
-  /// 查询 SAF 文档的显示名；失败返回 null（由调用方沿用 URI 推断结果）
-  Future<String?> _resolveDisplayName(String uri) async {
-    try {
-      return await _channel.invokeMethod<String>('getDisplayName', uri);
-    } on PlatformException catch (e) {
-      appLogger.w('getDisplayName failed: ${e.message}');
-      return null;
-    }
   }
 
   /// Process a plain text file (e.g. shelf.json) into a String
@@ -155,73 +91,13 @@ class UnifiedImportService {
         return await _safStream.readFileBytes(uri);
       case IOSFilePath(path: final pathStr):
         // 1. Fetch just-in-time inside the active security scope.
-        final tempPath = await fetchIosFileToTemp(pathStr);
+        final tempPath = await _picker.fetchIosFileToTemp(pathStr);
         final tempFile = File(tempPath);
         // 2. Read into memory.
         final bytes = await tempFile.readAsBytes();
         // 3. Clean up the temp copy immediately.
         if (await tempFile.exists()) await tempFile.delete();
         return bytes;
-    }
-  }
-
-  /// Asks Swift to copy [originalPath] (inside the active security scope)
-  /// to a fresh unique file in `NSTemporaryDirectory()` and returns the
-  /// resulting absolute temp path.
-  ///
-  /// iOS only.  On other platforms this is a no-op that returns the original
-  /// path unchanged.
-  Future<String> fetchIosFileToTemp(String originalPath) async {
-    if (!Platform.isIOS) return originalPath;
-    final tempPath = await _channel.invokeMethod<String>(
-      'fetchIosFile',
-      originalPath,
-    );
-    return tempPath ?? originalPath;
-  }
-
-  /// Releases all security-scoped resource accesses held on the native side.
-  ///
-  /// **Must** be called in the `finally` block of any iOS pick+process
-  /// operation to prevent resource leaks.
-  Future<void> releaseIosAccess() async {
-    if (Platform.isIOS) {
-      await _channel.invokeMethod<void>('releaseIosAccess');
-    }
-  }
-
-  /// Pick a backup directory and return its real filesystem path.
-  ///
-  /// Android: Invokes the native `pickBackupFolder` channel method which
-  ///          presents ACTION_OPEN_DOCUMENT_TREE and converts the SAF tree
-  ///          URI to an absolute path so [File] API works directly.
-  /// iOS:     Not yet implemented — returns null.
-  ///
-  /// Returns null if the user cancels or the path cannot be resolved.
-  Future<BackupPaths?> pickBackupFolder() async {
-    if (Platform.isAndroid) {
-      return await _pickBackupFolderAndroid();
-    } else if (Platform.isIOS) {
-      return await _pickBackupFolderIOS();
-    } else {
-      throw UnsupportedError('Platform not supported');
-    }
-  }
-
-  /// Pick a single backup ZIP archive.
-  ///
-  /// Android: SAF document picker filtered to ZIP MIME types.
-  /// iOS:     Document picker restricted to the zip UTType; the file stays
-  ///          security-scoped until [releaseIosAccess].
-  ///
-  /// Returns null if the user cancels.
-  Future<PlatformPath?> pickBackupZipFile() async {
-    if (Platform.isAndroid) {
-      return await _pickBackupZipFileAndroid();
-    } else if (Platform.isIOS) {
-      return await _pickBackupZipFileIOS();
-    } else {
-      throw UnsupportedError('Platform not supported');
     }
   }
 
@@ -264,7 +140,7 @@ class UnifiedImportService {
         )
         .toList();
 
-    final classified = _classifyBackupFiles(entries);
+    final classified = classifyBackupEntries(entries);
     if (classified.shelfFile == null) {
       await _deleteQuietly(extractDir);
       throw Exception(
@@ -272,7 +148,7 @@ class UnifiedImportService {
       );
     }
 
-    final bookPaths = _buildBookPaths(classified.tempBookComponents);
+    final bookPaths = buildBackupBookPaths(classified.tempBookComponents);
     final rootPath = p.dirname((classified.shelfFile! as IOSFilePath).path);
     return BackupPaths(
       rootPath: IOSFilePath(rootPath),
@@ -289,54 +165,11 @@ class UnifiedImportService {
     }
   }
 
-  Future<PlatformPath?> _pickBackupZipFileAndroid() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickBackupFile',
-      );
-      if (result == null || result.isEmpty) return null;
-      return AndroidUriPath(result.whereType<String>().first);
-    } on PlatformException catch (e) {
-      appLogger.e('Android backup file picker error: ${e.message}');
-      return null;
-    }
-  }
-
-  Future<PlatformPath?> _pickBackupZipFileIOS() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickBackupFile',
-      );
-      if (result == null || result.isEmpty) return null;
-      return IOSFilePath(result.whereType<String>().first);
-    } on PlatformException catch (e) {
-      appLogger.e('iOS backup file picker error: ${e.message}');
-      return null;
-    }
-  }
-
   /// Clean up a cached file
   ///
   /// Delegates to [ImportCacheManager.clean]
   Future<void> cleanCache(File cacheFile) async {
     await _cacheManager.clean(cacheFile);
-  }
-
-  /// Pick multiple font files (.ttf / .otf) using platform-appropriate picker.
-  ///
-  /// Android: Uses native SAF document picker via MethodChannel.
-  /// iOS: Uses UIDocumentPickerViewController restricted to font UTTypes.
-  ///
-  /// Returns a list of [PlatformPath] objects representing selected files.
-  /// Returns empty list if user cancels or no files are selected.
-  Future<List<PlatformPath>> pickFontFiles() async {
-    if (Platform.isAndroid) {
-      return await _pickFontFilesAndroid();
-    } else if (Platform.isIOS) {
-      return await _pickFontFilesIOS();
-    } else {
-      throw UnsupportedError('Platform not supported');
-    }
   }
 
   /// Caches a font file from a [PlatformPath] into the import cache directory.
@@ -349,263 +182,33 @@ class UnifiedImportService {
 
   // ==================== Android Implementation ====================
 
-  /// Android: Pick files using native SAF via MethodChannel
-  Future<List<PlatformPath>> _pickFilesAndroid() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFiles',
-      );
-
-      if (result == null) {
-        return [];
-      }
-
-      return result
-          .whereType<String>()
-          .map((uri) => AndroidUriPath(uri))
-          .toList();
-    } on PlatformException catch (e) {
-      appLogger.e('Android file picker error: ${e.message}');
-      return [];
-    }
-  }
-
-  /// Android: Pick folder using native SAF with background traversal
-  Future<List<PlatformPath>> _pickFolderAndroid() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFolder',
-      );
-
-      if (result == null) {
-        return [];
-      }
-
-      return result
-          .whereType<String>()
-          .map((uri) => AndroidUriPath(uri))
-          .toList();
-    } on PlatformException catch (e) {
-      appLogger.e('Android folder picker error: ${e.message}');
-      return [];
-    }
-  }
-
-  Future<BackupPaths?> _pickBackupFolderAndroid() async {
-    final result = await _channel.invokeMethod<List<Object?>>(
-      'pickBackupFolder',
-    );
-    if (result == null || result.isEmpty) return null;
-
-    final entries = result.whereType<String>().map((uriString) {
-      final decoded = Uri.decodeFull(uriString);
-      return (
-        displayPath: decoded,
-        platformPath: AndroidUriPath(uriString) as PlatformPath,
-      );
-    }).toList();
-
-    final classified = _classifyBackupFiles(entries);
-
-    if (classified.shelfFile == null) {
-      throw Exception(
-        'Invalid backup: ${AppStorageConstants.shelfFile} not found',
-      );
-    }
-
-    final bookPaths = _buildBookPaths(classified.tempBookComponents);
-    final shelfUri = Uri.decodeFull(
-      (classified.shelfFile! as AndroidUriPath).uri,
-    );
-
-    return BackupPaths(
-      rootPath: AndroidUriPath(p.dirname(shelfUri)),
-      shelfFile: classified.shelfFile!,
-      bookPaths: bookPaths,
-    );
-  }
-
   // ==================== iOS Implementation ====================
-
-  /// iOS: Pick multiple EPUB files (lazy – security scope retained by Swift).
-  Future<List<PlatformPath>> _pickFilesIOS() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFiles',
-      );
-      if (result == null) return [];
-      return result
-          .whereType<String>()
-          .map((path) => IOSFilePath(path))
-          .toList();
-    } on PlatformException catch (e) {
-      appLogger.e('iOS file picker error: ${e.message}');
-      return [];
-    }
-  }
-
-  /// iOS: Pick EPUB-containing folder (lazy – security scope retained by Swift).
-  Future<List<PlatformPath>> _pickFolderIOS() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFolder',
-      );
-      if (result == null) return [];
-      return result
-          .whereType<String>()
-          .map((path) => IOSFilePath(path))
-          .toList();
-    } on PlatformException catch (e) {
-      appLogger.e('iOS folder picker error: ${e.message}');
-      return [];
-    }
-  }
-
-  /// iOS: Pick backup folder and parse its structure (lazy – scope retained).
-  Future<BackupPaths?> _pickBackupFolderIOS() async {
-    final result = await _channel.invokeMethod<List<Object?>>(
-      'pickBackupFolder',
-    );
-    if (result == null || result.isEmpty) return null;
-
-    final entries = result.whereType<String>().map((pathStr) {
-      return (
-        displayPath: pathStr,
-        platformPath: IOSFilePath(pathStr) as PlatformPath,
-      );
-    }).toList();
-
-    final classified = _classifyBackupFiles(entries);
-
-    if (classified.shelfFile == null) {
-      throw Exception(
-        'Invalid backup: ${AppStorageConstants.shelfFile} not found',
-      );
-    }
-
-    final bookPaths = _buildBookPaths(classified.tempBookComponents);
-    final rootPath = IOSFilePath(
-      p.dirname((classified.shelfFile! as IOSFilePath).path),
-    );
-
-    return BackupPaths(
-      rootPath: rootPath,
-      shelfFile: classified.shelfFile!,
-      bookPaths: bookPaths,
-    );
-  }
 
   // ==================== Font File Picker Implementations ====================
 
-  /// Android: Pick font files (.ttf / .otf) using native SAF via MethodChannel.
-  Future<List<PlatformPath>> _pickFontFilesAndroid() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickFontFiles',
-      );
-      if (result == null) return [];
-      return result
-          .whereType<String>()
-          .map((uri) => AndroidUriPath(uri))
-          .toList();
-    } on PlatformException catch (e) {
-      appLogger.e('Android font picker error: ${e.message}');
-      return [];
-    }
-  }
+  // ==================== 平台选择器（委托 NativeFilePicker） ====================
 
-  /// iOS: Pick font files (.ttf / .otf) (lazy – security scope retained by Swift).
-  Future<List<PlatformPath>> _pickFontFilesIOS() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickFontFiles',
-      );
-      if (result == null) return [];
-      return result
-          .whereType<String>()
-          .map((path) => IOSFilePath(path))
-          .toList();
-    } on PlatformException catch (e) {
-      appLogger.e('iOS font picker error: ${e.message}');
-      return [];
-    }
-  }
+  /// 选择多个 EPUB 文件；取消或不可用时返回空列表。
+  Future<List<PlatformPath>> pickFiles() => _picker.pickFiles();
 
-  // ==================== Shared Backup Helpers ====================
+  /// 选择文件夹并递归扫描 EPUB 文件。
+  Future<List<PlatformPath>> pickFolder() => _picker.pickFolder();
 
-  /// Classifies a flat list of backup file entries into shelf / books / covers
-  /// / manifests buckets.
-  ///
-  /// [entries] contains one record per file: [displayPath] is a decoded
-  /// absolute path used purely for basename/dirname inspection; [platformPath]
-  /// is the opaque handle ([AndroidUriPath] or [IOSFilePath]) stored in the
-  /// result.
-  static ({
-    PlatformPath? shelfFile,
-    Map<String, Map<String, PlatformPath>> tempBookComponents,
-  })
-  _classifyBackupFiles(
-    List<({String displayPath, PlatformPath platformPath})> entries,
-  ) {
-    PlatformPath? shelfFile;
-    final tempBookComponents = <String, Map<String, PlatformPath>>{};
+  /// 选择备份目录并返回其真实文件系统路径。
+  Future<BackupPaths?> pickBackupFolder() => _picker.pickBackupFolder();
 
-    for (final entry in entries) {
-      final fileName = p.basename(entry.displayPath);
-      final parentDirName = p.basename(p.dirname(entry.displayPath));
-      if (fileName.isEmpty) continue;
+  /// 选择单个备份 ZIP 文件。
+  Future<PlatformPath?> pickBackupZipFile() => _picker.pickBackupZipFile();
 
-      if (fileName == AppStorageConstants.shelfFile) {
-        shelfFile = entry.platformPath;
-        continue;
-      }
+  /// 选择字体文件（.ttf / .otf）。
+  Future<List<PlatformPath>> pickFontFiles() => _picker.pickFontFiles();
 
-      if (parentDirName == AppStorageConstants.booksDir &&
-          (fileName.endsWith('.epub') || fileName.endsWith('.txt'))) {
-        final dotIndex = fileName.lastIndexOf('.');
-        final hash = fileName.substring(0, dotIndex);
-        tempBookComponents.putIfAbsent(hash, () => {})['epub'] =
-            entry.platformPath;
-      } else if (parentDirName == AppStorageConstants.manifestsDir &&
-          fileName.endsWith('.json')) {
-        final hash = fileName.replaceAll('.json', '');
-        tempBookComponents.putIfAbsent(hash, () => {})['manifest'] =
-            entry.platformPath;
-      } else if (parentDirName == AppStorageConstants.coversDir) {
-        final extIndex = fileName.lastIndexOf('.');
-        if (extIndex != -1) {
-          final hash = fileName.substring(0, extIndex);
-          tempBookComponents.putIfAbsent(hash, () => {})['cover'] =
-              entry.platformPath;
-        }
-      }
-    }
+  /// 请求 Swift 在安全作用域内把 [originalPath] 复制到临时目录。
+  Future<String> fetchIosFileToTemp(String originalPath) =>
+      _picker.fetchIosFileToTemp(originalPath);
 
-    return (shelfFile: shelfFile, tempBookComponents: tempBookComponents);
-  }
-
-  /// Assembles a [BackupPathsForBook] map from parsed component buckets,
-  /// skipping entries that are missing an epub or manifest file.
-  static Map<String, BackupPathsForBook> _buildBookPaths(
-    Map<String, Map<String, PlatformPath>> components,
-  ) {
-    final result = <String, BackupPathsForBook>{};
-    for (final entry in components.entries) {
-      final c = entry.value;
-      if (c.containsKey('epub') && c.containsKey('manifest')) {
-        result[entry.key] = BackupPathsForBook(
-          epubPath: c['epub']!,
-          manifestPath: c['manifest']!,
-          coverPath: c['cover'],
-        );
-      } else {
-        appLogger.w(
-          'Warning: Missing epub or manifest for hash ${entry.key}, skipping.',
-        );
-      }
-    }
-    return result;
-  }
+  /// 释放原生侧持有的全部安全作用域访问。
+  Future<void> releaseIosAccess() => _picker.releaseIosAccess();
 
   // ==================== Utility Methods ====================
 
