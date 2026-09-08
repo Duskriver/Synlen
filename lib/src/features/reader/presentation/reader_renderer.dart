@@ -11,8 +11,8 @@ import 'package:synlen/src/features/reader/application/reader_settings_notifier.
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 
-import '../data/book_session.dart';
-import '../data/epub_webview_handler.dart';
+import '../application/book_session.dart';
+import '../application/epub_webview_handler.dart';
 import './reader_webview.dart';
 import 'page_turn/page_turn.dart';
 
