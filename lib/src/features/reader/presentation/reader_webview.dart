@@ -9,7 +9,7 @@ import 'package:synlen/src/core/widgets/book_cover.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
 import '../application/book_session.dart';
-import '../application/epub_webview_handler.dart';
+import '../application/book_webview_handler.dart';
 import '../application/reader_scripts.dart';
 import 'package:synlen/src/web/api/webview_bridge.dart';
 import 'package:synlen/src/web/api/synlen_api.dart';
@@ -32,7 +32,7 @@ final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
   disableVerticalScroll: true,
   supportZoom: false,
   useHybridComposition: false,
-  resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+  resourceCustomSchemes: [BookWebViewHandler.virtualScheme],
   verticalScrollBarEnabled: false,
   horizontalScrollBarEnabled: false,
   overScrollMode: OverScrollMode.NEVER,
@@ -41,7 +41,7 @@ final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
 /// WebView widget for reading EPUB content
 class ReaderWebView extends StatefulWidget {
   final BookSession bookSession;
-  final EpubWebViewHandler webViewHandler;
+  final BookWebViewHandler webViewHandler;
   final String fileHash;
   final ReaderWebViewCallbacks callbacks;
   final EpubTheme initializeTheme;
@@ -170,7 +170,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         _currentTheme,
         widget.direction,
       ),
-      baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
+      baseUrl: WebUri(BookWebViewHandler.getBaseUrl()),
     );
   }
 
@@ -204,7 +204,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     if (uri.scheme == 'data') {
       return NavigationActionPolicy.ALLOW;
     }
-    if (EpubWebViewHandler.isEpubRequest(uri)) {
+    if (BookWebViewHandler.isEpubRequest(uri)) {
       return NavigationActionPolicy.ALLOW;
     }
     return NavigationActionPolicy.CANCEL;

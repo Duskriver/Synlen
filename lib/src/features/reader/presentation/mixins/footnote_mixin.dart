@@ -10,7 +10,7 @@ mixin _FootnoteMixin on ConsumerState<ReaderScreen> {
   bool get isClosingFootnote;
   set isClosingFootnote(bool v);
 
-  EpubWebViewHandler get webViewHandler;
+  BookWebViewHandler get webViewHandler;
 
   BookSession get bookSession;
 

@@ -22,7 +22,7 @@ import '../application/volume_key_page_turn.dart';
 import 'reader_nav_feedback.dart';
 import 'reader_toc_state.dart';
 import './reader_renderer.dart';
-import '../application/epub_webview_handler.dart';
+import '../application/book_webview_handler.dart';
 import 'reader_webview.dart';
 import 'widgets/reader_stage.dart';
 import './toc_drawer.dart';
@@ -54,7 +54,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         _ImageViewerMixin,
         _FootnoteMixin {
   @override
-  late final EpubWebViewHandler webViewHandler;
+  late final BookWebViewHandler webViewHandler;
 
   @override
   late final BookSession bookSession;

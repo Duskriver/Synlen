@@ -19,7 +19,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 | `ReaderNavigator` / `ReaderNavState` / `ReaderNavOutcome` | 导航状态机：章节与页面位置、忙态守卫、预载与跳转编排；状态经 `ValueNotifier` 暴露，结果枚举由展示层映射文案 | `lib/src/features/reader/application/reader_navigator.dart` |
 | `ReaderViewport` | 导航编排需要的渲染引擎能力（预载、跳转、恢复滚动位置）；`ReaderRendererController` 是生产实现，测试用 fake | `lib/src/features/reader/application/reader_viewport.dart` |
 | `BookSession` | 一次阅读会话：加载 `ShelfBook` 与 `BookManifest`、过滤 spine、建 TOC 查找表、算进度比例、生成 URL | `lib/src/features/reader/application/book_session.dart` |
-| `EpubWebViewHandler` | `book://` 虚拟域请求处理：内存 LRU 缓存、字体请求、按格式分发到 EPUB 或 TXT | `lib/src/features/reader/application/epub_webview_handler.dart` |
+| `BookWebViewHandler` | `book://` 虚拟域请求处理：内存 LRU 缓存、字体请求、按格式分发到 EPUB 或 TXT | `lib/src/features/reader/application/book_webview_handler.dart` |
 | `EpubStreamService` / `EpubBackend` | EPUB 内容读取：切书关闭旧缓存、取条目、扩展名到 MIME；Rust 调用经 `EpubBackend` 接口，测试用 fake | `lib/src/features/reader/data/services/epub_stream_service.dart` |
 | `TxtContentService` | TXT 章节供给：按 `SpineItem.sourceRange` 随机读取字节并包装为 XHTML | `lib/src/features/reader/data/services/txt_content_service.dart` |
 | `ReadingProgressController` | 进度防抖（默认 1 秒）与串行落库；关闭时 flush，失败保留最新位置 | `lib/src/features/reader/application/reading_progress_controller.dart` |
@@ -38,7 +38,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 ## 流程
 
 1. 打开：`ReaderSessionFactory.createSession(fileHash)` → `BookSession.loadBook()` → 过滤 `linear: false` 的 spine → 建 TOC 查找表。
-2. 供给：WebView 请求 `book://localhost/book/{fileHash}/{path}` → `EpubWebViewHandler` 命中内存缓存或按书格式分发；TXT 由 `TxtContentService` 切片包装 XHTML。
+2. 供给：WebView 请求 `book://localhost/book/{fileHash}/{path}` → `BookWebViewHandler` 命中内存缓存或按书格式分发；TXT 由 `TxtContentService` 切片包装 XHTML。
 3. 导航：`ReaderNavigator` 按 `planChapterPreload` 的窗口经 `ReaderViewport` 预载当前 / 上一章 / 下一章 → `ReaderRenderer` 装载三 iframe；翻页边界由 `resolvePageTurnBoundary` 判定，章内目标页由 `pageTurnTargetIndex` 给出，越界则跨章。
 4. 进度：`ReadingProgressController.record` 校验位置 → 防抖 1 秒 → `BookSession.saveProgress` → `BookQueries.saveProgress`；离开阅读器时 `close()` 提交在途进度。
 5. Web 资源：改 `web_assets/` 的 TypeScript / CSS 后跑 `dart run tool/build_web_assets.dart` 重新生成 `lib/src/web/web_assets.dart`，验证步骤见 [修改阅读器 Web 资源](../cookbook/changing-reader-web-assets.md)。
@@ -47,7 +47,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 
 - `ReaderSettings.themeIndex` 直接索引 `SynlenThemePreset`，索引含义由 core 的主题枚举顺序决定。
 - 分页引擎未就绪（`isReady` 为 false）或位置非法时不采集进度。
-- `EpubWebViewHandler` 的缓存上限为 256 项、24 MiB，单条资源超过 2 MiB 不入缓存。
+- `BookWebViewHandler` 的缓存上限为 256 项、24 MiB，单条资源超过 2 MiB 不入缓存。
 - `TxtContentService` 按 UTF-8 字节范围读取；章节切分不得拆开 UTF-16 代理对。
 - `BookSession.saveProgress` 在书籍未加载或位置非法时抛错，由调用方处理。
 - `EpubStreamService` 记录当前书籍路径：切换书籍时先关闭上一本，`dispose` 关闭当前书；Rust 侧缓存不随阅读累积。
@@ -57,7 +57,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 
 - `reader/presentation` 仍是最大的 UI 层，剩余 5 个 part mixin（进度显示、主题刷新、外链、图片、脚注）的逻辑继续下沉 `reader/application`。
 - 这 5 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test（[测试现状](../testing.md#现状)）。
-- `EpubWebViewHandler` 同时服务 EPUB 与 TXT；虚拟域已格式中立（`book://`），类型名待改为 `BookWebViewHandler`。
+- `BookWebViewHandler` 同时服务 EPUB 与 TXT；虚拟域已格式中立（`book://`），类型名待改为 `BookWebViewHandler`。
 - 超 400 行文件：`reader_screen.dart`。复现：
 
 ```sh

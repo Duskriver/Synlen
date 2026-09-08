@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:synlen/src/core/theme/app_theme.dart';
-import 'package:synlen/src/features/reader/application/epub_webview_handler.dart';
+import 'package:synlen/src/features/reader/application/book_webview_handler.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
 import '../image_viewer.dart';
@@ -26,7 +26,7 @@ class ReaderImageOverlay extends StatelessWidget {
   final bool visible;
   final String? imageUrl;
   final Rect? sourceRect;
-  final EpubWebViewHandler webViewHandler;
+  final BookWebViewHandler webViewHandler;
   final String epubPath;
   final String fileHash;
   final EpubTheme epubTheme;
