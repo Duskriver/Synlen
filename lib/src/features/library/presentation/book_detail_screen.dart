@@ -7,6 +7,7 @@ import '../application/bookshelf_notifier.dart';
 import '../application/book_actions.dart';
 import '../application/book_view_mapper.dart';
 import 'widgets/book_detail_edit_body.dart';
+import 'widgets/book_detail_error_view.dart';
 import 'widgets/book_detail_view_body.dart';
 import '../../../core/database/app_database.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -368,36 +369,6 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   }
 
   Widget _buildErrorBody(BuildContext context, String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.error,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w400,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
+    return BookDetailErrorView(message: message);
   }
 }
