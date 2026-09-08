@@ -1,15 +1,17 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
-import 'package:synlen/src/core/services/app_logger.dart';
-import 'package:synlen/src/core/storage/app_storage.dart';
-import 'package:synlen/src/core/storage/app_storage_constants.dart';
-import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
-import 'package:synlen/src/rust/api/epub.dart' as rust_epub;
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import '../shelf_book_repository.dart';
+import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
+import 'package:synlen/src/features/library/domain/book_format.dart';
+
 import '../book_manifest_repository.dart';
+import '../shelf_book_repository.dart';
+import 'book_file_probe.dart';
+import 'book_file_store.dart';
+import 'cover_extractor.dart';
 
 /// Service for importing book files using "stream-from-zip" strategy
 /// - EPUB: Copies to AppDocDir/books/{fileHash}.epub (keeps compressed),
@@ -20,6 +22,10 @@ import '../book_manifest_repository.dart';
 class EpubImportService {
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
+
+  static const _probe = BookFileProbe();
+  static const _fileStore = BookFileStore();
+  static const _coverExtractor = CoverExtractor();
 
   EpubImportService({
     required ShelfBookRepository shelfBookRepo,
@@ -38,14 +44,16 @@ class EpubImportService {
     bool moveSourceFile = false,
   }) async {
     try {
-      final format = await _detectFormat(file, originalFileName);
+      final format = await _probe.detectFormat(file, originalFileName);
 
       // Pipeline: Hash → Check → Store → Parse → Extract → Create → Save
       final String fileHash =
           precomputedHash ??
-          await _calculateHash(file).then(
-            (result) => result.getOrElse((error) => throw Exception(error)),
-          );
+          await _probe
+              .calculateHash(file)
+              .then(
+                (result) => result.getOrElse((error) => throw Exception(error)),
+              );
 
       final bookExists = await _checkBookExistence(fileHash);
       if (bookExists.isLeft()) {
@@ -67,17 +75,18 @@ class EpubImportService {
           ),
         ).then((result) => result.getOrElse((error) => throw Exception(error)));
         parseData = outcome.parseResult;
-        bookPath = await _writeNormalizedTxt(
-          outcome.normalizedBytes,
-          fileHash,
-        ).then((result) => result.getOrElse((error) => throw Exception(error)));
+        bookPath = await _fileStore
+            .writeNormalizedTxt(outcome.normalizedBytes, fileHash)
+            .then(
+              (result) => result.getOrElse((error) => throw Exception(error)),
+            );
         coverPath = null;
       } else {
-        bookPath = await _copyToAppStorage(
-          file,
-          fileHash,
-          moveSourceFile: moveSourceFile,
-        ).then((result) => result.getOrElse((error) => throw Exception(error)));
+        bookPath = await _fileStore
+            .copyBook(file, fileHash, moveSourceFile: moveSourceFile)
+            .then(
+              (result) => result.getOrElse((error) => throw Exception(error)),
+            );
 
         parseData =
             await _parseAndExtract(
@@ -93,11 +102,11 @@ class EpubImportService {
               return result.getRight().toNullable()!;
             });
 
-        coverPath = await _extractCover(
-          bookPath,
-          fileHash,
-          parseData.coverHref,
-          parseData.opfRootPath,
+        coverPath = await _coverExtractor.extract(
+          epubPath: bookPath,
+          fileHash: fileHash,
+          coverHref: parseData.coverHref,
+          opfRootPath: parseData.opfRootPath,
         );
       }
 
@@ -129,38 +138,6 @@ class EpubImportService {
     } catch (e) {
       return left('Import failed: $e');
     }
-  }
-
-  /// 识别书籍格式。
-  ///
-  /// 优先按扩展名；扩展名为 .epub 时用 ZIP 魔数嗅探纠偏——
-  /// Android 系统分享进来的 content:// URI 可能取不到真实文件名
-  /// （[AndroidUriPath.name] 兜底为 unknown.epub），TXT 若被误判为
-  /// EPUB 会直接解析失败，而 EPUB 本质是 ZIP 容器，嗅探可靠。
-  Future<BookFormat> _detectFormat(File file, String? originalFileName) async {
-    final byName = BookFormat.fromFileName(originalFileName ?? file.path);
-    if (byName == BookFormat.txt) return BookFormat.txt;
-    if (await _looksLikeZip(file)) return BookFormat.epub;
-    return BookFormat.txt;
-  }
-
-  /// ZIP 容器魔数检查（"PK"）
-  Future<bool> _looksLikeZip(File file) async {
-    RandomAccessFile? raf;
-    try {
-      raf = await file.open();
-      final bytes = await raf.read(2);
-      return bytes.length == 2 && bytes[0] == 0x50 && bytes[1] == 0x4B;
-    } catch (_) {
-      return false;
-    } finally {
-      await raf?.close();
-    }
-  }
-
-  /// Calculate file hash using isolate
-  Future<Either<String, String>> _calculateHash(File file) async {
-    return compute(ImportWorkers.calculateFileHash, file.path);
   }
 
   /// Check if book already exists
@@ -272,152 +249,6 @@ class EpubImportService {
 
     // 更新 book 的数据库 ID
     return right(shelfBook.copyWith(id: bookId));
-  }
-
-  /// Copy EPUB file to books directory
-  /// Returns absolute path to the copied file
-  Future<Either<String, String>> _copyToAppStorage(
-    File sourceFile,
-    String fileHash, {
-    bool moveSourceFile = false,
-  }) async {
-    try {
-      final booksDir = Directory(
-        '${AppStorage.documentsPath}${AppStorageConstants.booksDir}',
-      );
-      if (!await booksDir.exists()) {
-        await booksDir.create(recursive: true);
-      }
-
-      final targetPath = '${booksDir.path}/$fileHash.epub';
-      final targetFile = File(targetPath);
-
-      // Check if file already exists (edge case)
-      if (await targetFile.exists()) {
-        return right(targetPath);
-      }
-
-      if (moveSourceFile) {
-        try {
-          await sourceFile.rename(targetPath);
-        } on FileSystemException {
-          await sourceFile.copy(targetPath);
-        }
-      } else {
-        await sourceFile.copy(targetPath);
-      }
-      return right(targetPath);
-    } catch (e) {
-      return left('File copy failed: $e');
-    }
-  }
-
-  /// Write normalized UTF-8 TXT content to books directory
-  ///
-  /// 与 EPUB 的直接拷贝不同：TXT 在解析时已归一化为 UTF-8，
-  /// 此处落盘的是归一化结果而非源文件，阅读时无需关心原始编码。
-  /// Returns absolute path to the written file
-  Future<Either<String, String>> _writeNormalizedTxt(
-    Uint8List normalizedBytes,
-    String fileHash,
-  ) async {
-    try {
-      final booksDir = Directory(
-        '${AppStorage.documentsPath}${AppStorageConstants.booksDir}',
-      );
-      if (!await booksDir.exists()) {
-        await booksDir.create(recursive: true);
-      }
-
-      final targetPath =
-          '${booksDir.path}/$fileHash${BookFormat.txt.fileExtension}';
-      await File(targetPath).writeAsBytes(normalizedBytes, flush: true);
-      return right(targetPath);
-    } catch (e) {
-      return left('File write failed: $e');
-    }
-  }
-
-  /// Extract cover image from EPUB and save to covers directory
-  /// Returns relative path to the cover image, or null if no cover found
-  Future<String?> _extractCover(
-    String epubPath,
-    String fileHash,
-    String? coverHref,
-    String opfRootPath,
-  ) async {
-    if (coverHref == null || coverHref.isEmpty) {
-      return null;
-    }
-
-    try {
-      final coversDir = Directory(
-        '${AppStorage.documentsPath}${AppStorageConstants.coversDir}',
-      );
-      if (!await coversDir.exists()) {
-        await coversDir.create(recursive: true);
-      }
-
-      // Resolve cover path relative to the OPF root, then read only that entry
-      // through the Rust EPUB backend instead of scanning the whole ZIP in Dart.
-      final opfDir = opfRootPath.contains('/')
-          ? opfRootPath.substring(0, opfRootPath.lastIndexOf('/'))
-          : '';
-      final coverPath = opfDir.isEmpty ? coverHref : '$opfDir/$coverHref';
-
-      // Determine file extension from MIME type or filename
-      var extension = _getImageExtension(coverPath);
-
-      await rust_epub.loadEpub(epubPath: epubPath);
-      final rawCoverData = await rust_epub.readEpubFile(
-        epubPath: epubPath,
-        filePath: coverPath,
-      );
-      if (rawCoverData == null || rawCoverData.isEmpty) {
-        return null;
-      }
-
-      // Compress image using worker
-      var coverData = await ImportWorkers.compressImage(rawCoverData);
-      if (coverData != null) {
-        extension = '.jpg';
-      } else {
-        coverData = rawCoverData;
-      }
-
-      final outputPath = '${coversDir.path}/$fileHash$extension';
-      await File(outputPath).writeAsBytes(coverData as List<int>);
-
-      return '${AppStorageConstants.coversDir}/$fileHash$extension';
-    } catch (e) {
-      // 封面提取失败不影响主流程，仅记录日志
-      appLogger.w('Cover extraction failed: $e');
-      return null;
-    } finally {
-      rust_epub.closeEpub(epubPath: epubPath).ignore();
-    }
-  }
-
-  /// Get image extension from filename
-  String _getImageExtension(String filename) {
-    final lower = filename.toLowerCase();
-    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
-      return '.jpg';
-    } else if (lower.endsWith('.png')) {
-      return '.png';
-    } else if (lower.endsWith('.gif')) {
-      return '.gif';
-    } else if (lower.endsWith('.webp')) {
-      return '.webp';
-    } else if (lower.endsWith('.bmp')) {
-      return '.bmp';
-    } else if (lower.endsWith('.svg')) {
-      return '.svg';
-    }
-    final specifiedExtension = filename.contains('.')
-        ? filename.substring(filename.lastIndexOf('.'))
-        : null;
-    return specifiedExtension ?? '.jpg'; // Default
   }
 
   /// Delete a file (helper for cleanup)
