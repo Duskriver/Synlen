@@ -51,7 +51,15 @@ class LibraryItemsGrid extends ConsumerWidget {
           (context, index) {
             final book = books[index];
             return BookGridItem(
-              book: book,
+              book: (
+                id: book.id,
+                title: book.title,
+                author: book.author,
+                coverPath: book.coverPath,
+                readingProgress: book.readingProgress,
+                isFinished: book.isFinished,
+                isDeleted: book.isDeleted,
+              ),
               isSelected: state.selectedBookIds.contains(book.id),
               isSelectionMode: state.isSelectionMode,
               viewMode: state.viewMode,
