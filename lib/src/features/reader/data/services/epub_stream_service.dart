@@ -8,8 +8,6 @@ class EpubStreamService {
   String? _pendingBookPath;
   Future<void>? _openBookFuture;
 
-  Future<void> warmUp() async {}
-
   Future<void> openBook(String epubPath) {
     if (_currentBookPath == epubPath) {
       return Future.value();
