@@ -53,7 +53,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 
 ## 已知限制与待办
 
-- 设置模块的测试集中在 AI 密钥与连通性（`test/features/settings/`）；主题、字体、音色、缓存清理、备份导出与更新检查缺少覆盖（[测试分层](../testing.md#分层)）。
+- 设置模块的测试覆盖 AI 密钥、连通性与 TTS 音色（`test/features/settings/`）；主题、字体、缓存清理、备份导出与更新检查仍缺覆盖（[测试分层](../testing.md#分层)）。
 
 ## Dev Note
 
