@@ -69,8 +69,7 @@ void main() {
     );
   }
 
-  (BookSession, MockBookQueries, MockBookQueries)
-  buildSession() {
+  (BookSession, MockBookQueries, MockBookQueries) buildSession() {
     final queries = MockBookQueries();
     final session = BookSession(fileHash: 'hash1', queries: queries);
     return (session, queries, queries);
@@ -106,12 +105,8 @@ void main() {
 
     test('should return false when the manifest is missing', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(
-        shelfRepo.findBook('hash1'),
-      ).thenAnswer((_) async => buildBook());
-      when(
-        manifestRepo.findManifest('hash1'),
-      ).thenAnswer((_) async => null);
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
+      when(manifestRepo.findManifest('hash1')).thenAnswer((_) async => null);
 
       expect(await session.loadBook(), isFalse);
     });
@@ -120,9 +115,7 @@ void main() {
   group('BookSession TOC 查找', () {
     test('should build anchor lookup maps from nested TOC', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(
-        shelfRepo.findBook('hash1'),
-      ).thenAnswer((_) async => buildBook());
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
       when(manifestRepo.findManifest('hash1')).thenAnswer(
         (_) async => buildManifest(
           toc: [
@@ -185,9 +178,7 @@ void main() {
   group('BookSession URL 与索引', () {
     test('getSpineItemUrl should build a URL for a valid index', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(
-        shelfRepo.findBook('hash1'),
-      ).thenAnswer((_) async => buildBook());
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
       when(
         manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
@@ -201,9 +192,7 @@ void main() {
 
     test('findSpineIndexByUrl should resolve full and relative URLs', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(
-        shelfRepo.findBook('hash1'),
-      ).thenAnswer((_) async => buildBook());
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
       when(
         manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
@@ -221,9 +210,7 @@ void main() {
   group('BookSession 激活目录', () {
     test('resolveActiveItems should map active anchors to TOC items', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(
-        shelfRepo.findBook('hash1'),
-      ).thenAnswer((_) async => buildBook());
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
       when(
         manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
@@ -239,9 +226,7 @@ void main() {
       'resolveActiveItems should fall back when no anchor matches',
       () async {
         final (session, shelfRepo, manifestRepo) = buildSession();
-        when(
-          shelfRepo.findBook('hash1'),
-        ).thenAnswer((_) async => buildBook());
+        when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
         when(
           manifestRepo.findManifest('hash1'),
         ).thenAnswer((_) async => buildManifest());
@@ -256,9 +241,7 @@ void main() {
       'generateActivatedHrefKeys should build hrefs for active anchors',
       () async {
         final (session, shelfRepo, manifestRepo) = buildSession();
-        when(
-          shelfRepo.findBook('hash1'),
-        ).thenAnswer((_) async => buildBook());
+        when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
         when(
           manifestRepo.findManifest('hash1'),
         ).thenAnswer((_) async => buildManifest());
