@@ -23,7 +23,7 @@ description: 在 Synlen 分支上推送、强推、标记 ready for review 或�
 | l10n ARB | `flutter analyze`（重新生成 localizations）+ 受影响页面的测试 |
 | `pubspec.yaml` / `analysis_options.yaml` / `build.yaml` / `l10n.yaml` | `flutter analyze` + **全量** `flutter test`（配置影响全局，证据必须宽） |
 | `rust/` 或 FFI 绑定 | `cargo test`（在 `rust/` 内）→ 绑定重新生成 → analyze + 冒烟测试 |
-| 用户可见 UI 行为 | 对应 widget / 单元测试 + `syn-record-ui-demo` 演示 GIF |
+| 用户可见 UI 行为 | 对应 widget / 单元测试；必要时附模拟器录屏 |
 
 - 测试文件过滤 ≠ 覆盖率豁免：新增源文件必须有对应测试；不许用"恰好没跑到"糊弄。
 - **全量本地演练**（`flutter test` 全跑）仅在：用户明确要求、排查 CI 失败、或变更横跨全仓库时执行。

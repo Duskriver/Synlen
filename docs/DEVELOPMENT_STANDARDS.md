@@ -123,7 +123,7 @@ presentation → application → domain
 
 ### 决策护栏笔记（Agent Notes）
 
-- 简化提案与决策护栏记录在 `.agents/notes/`，生命周期（提案 → 实现 / 拒绝 → 密封归档）见其 README 与技能 `syn-archive-agent-notes`。
+- 简化提案与决策护栏记录在 `.agents/notes/`，生命周期（提案 → 实现 / 拒绝 → 密封归档）见其 README。
 - 三者分工：ADR 记难逆转架构决策；`docs/TECH_DEBT.md` 记欠账清单；Agent Notes 记约束未来变更的提案与护栏。
 
 ## 7. 测试要求
@@ -149,7 +149,7 @@ presentation → application → domain
 
 - **`flutter analyze` 必须零 error、零 warning** 才能提交。
 - 提交前跑 `dart format` 与按 `.agents/skills/syn-pre-push-checks` 选择的最小测试证据；推送与合并前全量 `flutter test` 必须全绿。
-- 日志用 `logger` 包，**禁止 `print` / `debugPrint`**（现状 55 处待清理）。
+- 日志用 `logger` 包（`core/services/app_logger.dart`），**禁止 `print` / `debugPrint`**。
 - 文案一律走 `l10n`（`app_localizations_zh.dart` / `app_localizations_en.dart`），禁止 UI 硬编码字符串。
 - 自用 lint 规则逐步在 `analysis_options.yaml` 增加（如 `avoid_print`、`prefer_single_quotes`），改动需评审。
 - codegen 命令：`dart run build_runner build --delete-conflicting-outputs`。
