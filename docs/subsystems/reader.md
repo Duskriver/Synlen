@@ -59,7 +59,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 - 这 5 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test（[测试现状](../testing.md#现状)）。
 - `EpubWebViewHandler` 与 `epub://` 虚拟域同时服务 EPUB 与 TXT；修复方向是格式中立命名（如 `BookWebViewHandler`、`book://`），改名牵连 URL 拦截与 JS 侧资源引用，需独立评估。
 - 切换书籍不关闭上一本的 Rust 缓存条目：`EpubStreamService` 为 keepAlive，`closeEpub` 只在它被销毁时调用，同一会话内连续打开多本书会累积缓存条目（见 [rust.md](rust.md)）。
-- 超 400 行文件：`reader_screen.dart`、`reader_renderer.dart`。复现：
+- 超 400 行文件：`reader_screen.dart`。复现：
 
 ```sh
 find lib/src/features/reader -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
