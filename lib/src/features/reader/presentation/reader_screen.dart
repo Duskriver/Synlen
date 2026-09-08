@@ -24,6 +24,7 @@ import 'reader_toc_state.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
 import '../application/epub_webview_handler.dart';
+import 'reader_webview.dart';
 import './toc_drawer.dart';
 import './widgets/reader_image_overlay.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -483,29 +484,32 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       canPerformPageTurn: canPerformPageTurn,
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
-                      onInitialized: () async {
-                        final ratio = bookSession.initialScrollPosition;
-                        await navigator.load(restoreScrollRatio: ratio);
-                        if (!mounted) return;
-                        updateProgressDebounced();
-                        saveProgressDebounced();
-                      },
-                      onPageCountReady: (totalPages) async {
-                        navigator.reportPageCount(totalPages);
-                        updateProgressDebounced();
-                      },
-                      onPageChanged: (pageIndex) {
-                        navigator.reportPageIndex(pageIndex);
-                        updateProgressDebounced();
-                        saveProgressDebounced();
-                      },
-                      onScrollAnchors: handleScrollAnchors,
-                      onImageLongPress: handleImageLongPress,
-                      onFootnoteTap: handleFootnoteTap,
-                      onLinkTap: handleLinkTap,
-                      shouldHandleLinkTap: shouldHandleLinkTap,
-                      onWordTap: handleWordTap,
-                      onSentenceSelected: handleSentenceSelected,
+                      callbacks: ReaderWebViewCallbacks(
+                        onInitialized: () async {
+                          final ratio = bookSession.initialScrollPosition;
+                          await navigator.load(restoreScrollRatio: ratio);
+                          if (!mounted) return;
+                          updateProgressDebounced();
+                          saveProgressDebounced();
+                        },
+                        onPageCountReady: (totalPages) async {
+                          navigator.reportPageCount(totalPages);
+                          updateProgressDebounced();
+                        },
+                        onPageChanged: (pageIndex) {
+                          navigator.reportPageIndex(pageIndex);
+                          updateProgressDebounced();
+                          saveProgressDebounced();
+                        },
+                        onScrollAnchors: handleScrollAnchors,
+                        onImageLongPress: handleImageLongPress,
+                        onTap: (x, y) {},
+                        onFootnoteTap: handleFootnoteTap,
+                        onLinkTap: handleLinkTap,
+                        shouldHandleLinkTap: shouldHandleLinkTap,
+                        onWordTap: handleWordTap,
+                        onSentenceSelected: handleSentenceSelected,
+                      ),
                       shouldShowWebView: shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
                       statusBarLeftContent: tocState.activeTitle,
