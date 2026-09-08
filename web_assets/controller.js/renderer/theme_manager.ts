@@ -54,7 +54,7 @@ export class ThemeManager {
     const isV = this.frameMgr.isVertical();
 
     const fontFaceBlock = t.fontFileName
-      ? `@font-face { font-family: 'SynlenCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
+      ? `@font-face { font-family: 'SynlenCustomFont'; src: url('book://localhost/fonts/${t.fontFileName}'); }`
       : '';
     const fontFamilyItem = t.fontFileName ? `--synlen-font-family: 'SynlenCustomFont';` : '';
 

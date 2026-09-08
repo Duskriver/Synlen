@@ -13,7 +13,7 @@ import 'txt_spine_source.dart';
 ///
 /// TXT 书籍以归一化 UTF-8 单文件存盘，阅读时按 manifest spine 中记录的
 /// 字节范围（[SpineItem.sourceRange]）随机读取，包装为 XHTML 后经
-/// `epub://` 虚拟域交给渲染引擎——对前端分页引擎而言与 EPUB 章节无异。
+/// `book://` 虚拟域交给渲染引擎——对前端分页引擎而言与 EPUB 章节无异。
 class TxtContentService {
   final TxtSpineSource _spineSource;
 

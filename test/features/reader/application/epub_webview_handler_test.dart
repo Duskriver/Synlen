@@ -8,7 +8,7 @@ void main() {
     test('getBaseUrl should point at the virtual book index', () {
       expect(
         EpubWebViewHandler.getBaseUrl(),
-        'epub://localhost/book/index.html',
+        'book://localhost/book/index.html',
       );
     });
 
@@ -35,20 +35,20 @@ void main() {
     test('getFontUrl should point at the virtual fonts path', () {
       expect(
         EpubWebViewHandler.getFontUrl('song.ttf'),
-        'epub://localhost/fonts/song.ttf',
+        'book://localhost/fonts/song.ttf',
       );
     });
 
     test('isEpubRequest should only match book paths on the virtual host', () {
       expect(
         EpubWebViewHandler.isEpubRequest(
-          WebUri('epub://localhost/book/abc123/ch.xhtml'),
+          WebUri('book://localhost/book/abc123/ch.xhtml'),
         ),
         isTrue,
       );
       expect(
         EpubWebViewHandler.isEpubRequest(
-          WebUri('epub://localhost/fonts/song.ttf'),
+          WebUri('book://localhost/fonts/song.ttf'),
         ),
         isFalse,
       );
@@ -61,13 +61,13 @@ void main() {
     test('isFontRequest should only match font paths on the virtual host', () {
       expect(
         EpubWebViewHandler.isFontRequest(
-          WebUri('epub://localhost/fonts/song.ttf'),
+          WebUri('book://localhost/fonts/song.ttf'),
         ),
         isTrue,
       );
       expect(
         EpubWebViewHandler.isFontRequest(
-          WebUri('epub://localhost/book/abc123/ch.xhtml'),
+          WebUri('book://localhost/book/abc123/ch.xhtml'),
         ),
         isFalse,
       );

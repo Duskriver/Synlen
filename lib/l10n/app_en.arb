@@ -810,7 +810,7 @@
   },
   "readerHandleIntraLink": "Follow in-book links",
   "@readerHandleIntraLink": {
-    "description": "Switch label to enable/disable following intra-book (epub://) links"
+    "description": "Switch label to enable/disable following intra-book (book://) links"
   },
   "readerPageAnimationSection": "Pagination",
   "@readerPageAnimationSection": {

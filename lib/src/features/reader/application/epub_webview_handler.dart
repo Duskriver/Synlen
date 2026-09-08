@@ -34,9 +34,9 @@ class EpubWebViewHandler {
   int _cachedBytes = 0;
 
   /// Virtual domain for EPUB content
-  /// Format: epub://localhost/book/{fileHash}/{filePath}
+  /// Format: book://localhost/book/{fileHash}/{filePath}
   static const String virtualDomain = 'localhost';
-  static const String virtualScheme = 'epub';
+  static const String virtualScheme = 'book';
   static const _headers = {'Cache-Control': 'public, max-age=31536000'};
 
   EpubWebViewHandler({
@@ -276,7 +276,7 @@ class EpubWebViewHandler {
   }
 
   /// Reads a font file from the app's fonts directory.
-  /// URL format: epub://localhost/fonts/{fileName}
+  /// URL format: book://localhost/fonts/{fileName}
   Future<Either<String, (Uint8List, String)>> _readFontFile(
     WebUri requestUrl,
   ) async {
@@ -337,7 +337,7 @@ class EpubWebViewHandler {
   }
 
   /// Generate URL for a user-imported font file.
-  /// Format: epub://localhost/fonts/{fileName}
+  /// Format: book://localhost/fonts/{fileName}
   static String getFontUrl(String fileName) {
     return '$virtualScheme://$virtualDomain/fonts/$fileName';
   }

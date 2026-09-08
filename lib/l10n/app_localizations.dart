@@ -1142,7 +1142,7 @@ abstract class AppLocalizations {
   /// **'Never open'**
   String get readerLinkHandlingNever;
 
-  /// Switch label to enable/disable following intra-book (epub://) links
+  /// Switch label to enable/disable following intra-book (book://) links
   ///
   /// In en, this message translates to:
   /// **'Follow in-book links'**
