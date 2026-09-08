@@ -27,6 +27,10 @@ presentation 直接依赖 drift 生成的 `ShelfBook`：9 个文件引 `core/dat
 
 **不动，接受 UI 依赖 drift 行** —— 放弃：每次改 schema 都要回看 UI，且 widget test 的 fixture 成本会随表增长。
 
+## 进度（2026-09-09）
+
+存量从 10 个文件降到 5 个：`TocDrawer`、`GroupSelectionDialog`、`BookGridItem`、`BookDetailEditBody`、`BookDetailViewBody` 已改为只接收展示字段（各带一篇实现笔记）。剩下 5 个是同一簇，必须同批：`library_items_grid`（路由 `extra` 契约）、`book_detail_screen`、`library_app_bar`、`library_tab_view`、`library_actions_mixin`——核心是把 `BookshelfState.books` 与 `availableGroups` 换成视图类型，并同步 `/book/:id` 的 `extra`。
+
 ## Acceptance criteria
 
 - `dart run tool/layer_gates.dart` 打印的存量从 10 个文件降到 ≤2（该名单只减不增，门禁会拒绝过期条目）；允许保留仅用 `TocItem` 等值类型的文件。
