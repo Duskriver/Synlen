@@ -42,7 +42,7 @@
 ## 已知限制与待办
 
 - `rust/src/` 没有 `#[test]`，`cargo test` 只能证明可编译；解析与解压的正确性由 Dart 侧导入与阅读测试间接覆盖。
-- 缓存无容量上限：`EpubStreamService` 为 keepAlive，只在自身销毁时关闭当前书，同一会话内连续打开多本书会累积缓存条目。
+- 缓存无容量上限：`EpubStreamService` 为 keepAlive，切换书籍时关闭上一本、自身销毁时关闭当前书；同一会话内不会累积多本缓存条目。
 - 该后端只服务 EPUB；TXT 内容不经 Rust（见 [reader.md](reader.md)）。
 
 ## Dev Note

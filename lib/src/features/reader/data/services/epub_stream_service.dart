@@ -1,9 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:synlen/src/rust/api/epub.dart' as rust_epub;
 import 'package:path/path.dart' as p;
 
+import 'epub_backend.dart';
+
+/// EPUB 内容读取：切换书籍时关闭上一本的 Rust 缓存条目。
 class EpubStreamService {
+  EpubStreamService({EpubBackend backend = const RustEpubBackend()})
+    : _backend = backend;
+
+  final EpubBackend _backend;
+
   String? _currentBookPath;
   String? _pendingBookPath;
   Future<void>? _openBookFuture;
@@ -23,8 +30,13 @@ class EpubStreamService {
   }
 
   Future<void> _doOpenBook(String epubPath) async {
+    final previous = _currentBookPath;
     try {
-      await rust_epub.loadEpub(epubPath: epubPath);
+      // 切书时关闭上一本的缓存条目：Rust 侧按书路径缓存，不关会随阅读累积。
+      if (previous != null && previous != epubPath) {
+        await _backend.close(previous);
+      }
+      await _backend.load(epubPath);
       _currentBookPath = epubPath;
     } catch (e) {
       _currentBookPath = null;
@@ -54,7 +66,7 @@ class EpubStreamService {
     }
 
     try {
-      final data = await rust_epub.readEpubFile(
+      final data = await _backend.readFile(
         epubPath: _currentBookPath!,
         filePath: targetFilePath,
       );
@@ -69,7 +81,7 @@ class EpubStreamService {
 
   void dispose() {
     if (_currentBookPath != null) {
-      rust_epub.closeEpub(epubPath: _currentBookPath!).ignore();
+      _backend.close(_currentBookPath!).ignore();
       _currentBookPath = null;
       _pendingBookPath = null;
       _openBookFuture = null;
