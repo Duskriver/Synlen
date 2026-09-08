@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
-import 'package:synlen/src/features/learning/data/services/learning_cache_cleanup_service_provider.dart';
-import 'package:synlen/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../application/cache_cleanup.dart';
 
 /// List tile that cleans cached and orphaned files when tapped.
 /// Manages its own [_isCleaning] busy state so the parent screen stays lean.
@@ -21,23 +20,13 @@ class _CleanCacheTileState extends ConsumerState<CleanCacheTile> {
     final l10n = AppLocalizations.of(context)!;
     setState(() => _isCleaning = true);
 
-    final service = ref.read(storageCleanupServiceProvider);
-    await service.cleanCacheFiles();
-    final deletedBookCount = await service.cleanOrphanFiles();
-    await service.cleanShareFiles();
-    final deletedFontCount = await service.cleanOrphanFontFiles();
-    final deletedAudioCount = await ref
-        .read(learningCacheCleanupServiceProvider)
+    final deletedCount = await ref
+        .read(cacheCleanupProvider.notifier)
         .cleanAll();
 
-    final deletedCount =
-        deletedBookCount + deletedFontCount + deletedAudioCount;
-
     await Future.delayed(const Duration(milliseconds: 200));
-
+    if (!mounted) return;
     setState(() => _isCleaning = false);
-
-    if (!context.mounted) return;
 
     final message = deletedCount == 0
         ? l10n.cleanCacheSuccess
