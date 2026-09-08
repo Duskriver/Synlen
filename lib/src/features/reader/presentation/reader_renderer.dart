@@ -12,11 +12,13 @@ import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 
 import '../application/book_session.dart';
+import '../application/chapter_navigation.dart';
 import '../application/epub_webview_handler.dart';
+import '../application/reader_viewport.dart';
 import './reader_webview.dart';
 import 'page_turn/page_turn.dart';
 
-class ReaderRendererController {
+class ReaderRendererController implements ReaderViewport {
   _ReaderRendererState? _rendererState;
 
   bool get isAttached => _rendererState != null;
@@ -40,14 +42,17 @@ class ReaderRendererController {
     await _rendererState?._performPageTurn(true);
   }
 
+  @override
   Future<void> jumpToPage(int pageIndex) async {
     await webViewController?.jumpToPage(pageIndex);
   }
 
+  @override
   Future<void> restoreScrollPosition(double ratio) async {
     await webViewController?.restoreScrollPosition(ratio);
   }
 
+  @override
   Future<void> jumpToPreviousChapterLastPage() async {
     final token1 = await webViewController?.jumpToLastPageOfFrame('prev');
     final token2 = await webViewController?.cycleFrames('prev');
@@ -55,6 +60,7 @@ class ReaderRendererController {
     await webViewController?.waitForEvents(tokens);
   }
 
+  @override
   Future<void> jumpToPreviousChapterFirstPage() async {
     final token1 = await webViewController?.jumpToPageFor('prev', 0);
     final token2 = await webViewController?.cycleFrames('prev');
@@ -62,11 +68,34 @@ class ReaderRendererController {
     await webViewController?.waitForEvents(tokens);
   }
 
+  @override
   Future<void> jumpToNextChapter() async {
     final token1 = await webViewController?.jumpToPageFor('next', 0);
     final token2 = await webViewController?.cycleFrames('next');
     final tokens = [token1, token2].whereType<int>().toList();
     await webViewController?.waitForEvents(tokens);
+  }
+
+  /// 按预载请求的槽位调用对应的章节预载。
+  @override
+  Future<int?> preloadChapter(ChapterPreloadRequest request) {
+    return switch (request.slot) {
+      ChapterSlot.current => preloadCurrentChapter(
+        request.url,
+        request.anchors,
+        request.properties,
+      ),
+      ChapterSlot.previous => preloadPreviousChapter(
+        request.url,
+        request.anchors,
+        request.properties,
+      ),
+      ChapterSlot.next => preloadNextChapter(
+        request.url,
+        request.anchors,
+        request.properties,
+      ),
+    };
   }
 
   Future<int?> preloadCurrentChapter(
@@ -136,6 +165,7 @@ class ReaderRendererController {
     await _rendererState?._updateTheme(theme);
   }
 
+  @override
   Future<void> waitForEvents(List<int> tokens) async {
     await webViewController?.waitForEvents(tokens);
   }

@@ -7,8 +7,7 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
   ThemeData? get currentTheme;
   set currentTheme(ThemeData? v);
 
-  bool get updatingTheme;
-  set updatingTheme(bool v);
+  ReaderNavigator get navigator;
 
   Timer? get themeUpdateDebouncer;
   set themeUpdateDebouncer(Timer? v);
@@ -39,9 +38,7 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
       return;
     }
 
-    setState(() {
-      updatingTheme = true;
-    });
+    navigator.beginThemeRefresh();
 
     await rendererController.updateTheme(getEpubTheme());
 
@@ -49,9 +46,7 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
       return;
     }
 
-    setState(() {
-      updatingTheme = false;
-    });
+    navigator.endThemeRefresh();
     saveProgressDebounced();
   }
 }
