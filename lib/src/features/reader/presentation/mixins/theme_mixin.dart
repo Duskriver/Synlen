@@ -19,6 +19,17 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
     return settings.toEpubTheme(context);
   }
 
+  /// 依赖变化时跟踪系统主题：首次记录，之后变化则防抖刷新 WebView 主题。
+  void handleSystemThemeChanged() {
+    final systemTheme = Theme.of(context);
+    if (currentTheme == null) {
+      currentTheme = systemTheme;
+    } else if (currentTheme?.colorScheme != systemTheme.colorScheme) {
+      currentTheme = systemTheme;
+      updateWebViewThemeWithDebounce();
+    }
+  }
+
   void updateWebViewThemeWithDebounce() {
     themeUpdateDebouncer?.cancel();
     // 增加防抖时间，减少 WebView 主线程压力

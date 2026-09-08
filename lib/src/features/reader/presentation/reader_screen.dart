@@ -329,14 +329,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _progressSaveFailedMessage = AppLocalizations.of(
       context,
     )!.readingProgressSaveFailed;
-
-    // Update WebView theme when system theme changes
-    if (currentTheme == null) {
-      currentTheme = Theme.of(context);
-    } else if (currentTheme?.colorScheme != Theme.of(context).colorScheme) {
-      currentTheme = Theme.of(context);
-      updateWebViewThemeWithDebounce();
-    }
+    handleSystemThemeChanged();
   }
 
   void handleRouteAnimationStatus(AnimationStatus status) {
