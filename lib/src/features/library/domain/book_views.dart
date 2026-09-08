@@ -1,5 +1,16 @@
 import 'book_format.dart';
 
+/// 书架网格卡片需要的书目字段；不持有持久化行类型。
+typedef GridBookView = ({
+  int id,
+  String title,
+  String author,
+  String? coverPath,
+  double readingProgress,
+  bool isFinished,
+  bool isDeleted,
+});
+
 /// 详情只读视图需要的书目字段；不持有持久化行类型。
 typedef DetailBookView = ({
   int id,

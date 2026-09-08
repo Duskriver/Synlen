@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
+import '../../../library/application/book_view_mapper.dart';
 import '../../../library/application/bookshelf_notifier.dart';
 import '../widgets/book_grid_item.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -51,15 +52,7 @@ class LibraryItemsGrid extends ConsumerWidget {
           (context, index) {
             final book = books[index];
             return BookGridItem(
-              book: (
-                id: book.id,
-                title: book.title,
-                author: book.author,
-                coverPath: book.coverPath,
-                readingProgress: book.readingProgress,
-                isFinished: book.isFinished,
-                isDeleted: book.isDeleted,
-              ),
+              book: gridBookView(book),
               isSelected: state.selectedBookIds.contains(book.id),
               isSelectionMode: state.isSelectionMode,
               viewMode: state.viewMode,
