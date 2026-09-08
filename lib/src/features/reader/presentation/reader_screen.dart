@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/url_launcher/url_launcher.dart';
 import 'package:synlen/src/features/reader/application/volume_control_service.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
@@ -17,15 +15,16 @@ import '../application/reading_progress_controller.dart';
 import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
-import './image_viewer.dart';
 import '../application/book_session.dart';
 import '../../learning/application/learning_entry.dart';
 import '../application/reader_session_factory.dart';
 import '../application/volume_key_page_turn.dart';
+import 'reader_toc_state.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
 import '../application/epub_webview_handler.dart';
 import './toc_drawer.dart';
+import './widgets/reader_image_overlay.dart';
 import '../../../../l10n/app_localizations.dart';
 
 part 'mixins/progress_mixin.dart';
@@ -67,10 +66,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   late final ReaderNavigator navigator;
 
   // 覆盖层状态：TOC 高亮与页码显示，跟随导航状态由宿主更新。
-  final ValueNotifier<Set<TocItem>> activeTocItemsNotifier = ValueNotifier(
-    <TocItem>{},
-  );
-  final ValueNotifier<String> activeTocTitleNotifier = ValueNotifier('');
+  final tocState = ReaderTocState();
   final ValueNotifier<String> displayProgressNotifier = ValueNotifier('');
 
   // 供剩余 mixin 读取的导航状态视图（唯一来源是 navigator.state）。
@@ -221,8 +217,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _readerSettingsSubscription?.close();
     _volumeKeyTurnsPageSubscription?.close();
     navigator.dispose();
-    activeTocItemsNotifier.dispose();
-    activeTocTitleNotifier.dispose();
+    tocState.dispose();
     displayProgressNotifier.dispose();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
@@ -267,26 +262,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   @override
   void refreshActiveTocState() {
-    final activeItems = resolveActiveItems();
-    if (!setEquals(activeTocItemsNotifier.value, activeItems)) {
-      activeTocItemsNotifier.value = activeItems;
-    }
-
-    final title = activeItems.isNotEmpty
-        ? activeItems.last.label
-        : bookSession.book?.title ?? '';
-    if (activeTocTitleNotifier.value != title) {
-      activeTocTitleNotifier.value = title;
-    }
-  }
-
-  Set<TocItem> resolveActiveItems() {
-    return bookSession.resolveActiveItems(navigator.state.value.spineIndex);
+    tocState.refresh(bookSession, navigator.state.value.spineIndex);
   }
 
   void handleScrollAnchors(List<String> anchorIds) {
-    bookSession.updateActiveAnchors(anchorIds);
-    refreshActiveTocState();
+    tocState.updateAnchors(
+      bookSession,
+      navigator.state.value.spineIndex,
+      anchorIds,
+    );
   }
 
   /// 导航结果 → l10n 提示；成功与忽略不出提示。
@@ -474,7 +458,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               key: scaffoldKey,
               backgroundColor: epubTheme.colorScheme.surfaceContainer,
               drawer: ValueListenableBuilder<Set<TocItem>>(
-                valueListenable: activeTocItemsNotifier,
+                valueListenable: tocState.activeItems,
                 builder: (context, activeItems, child) {
                   return TocDrawer(
                     book: bookSession.book!,
@@ -531,14 +515,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onSentenceSelected: handleSentenceSelected,
                       shouldShowWebView: shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
-                      statusBarLeftContent: activeTocTitleNotifier,
+                      statusBarLeftContent: tocState.activeTitle,
                       statusBarRightContent: displayProgressNotifier,
                     ),
 
                     ListenableBuilder(
                       listenable: Listenable.merge([
                         navigator.state,
-                        activeTocTitleNotifier,
+                        tocState.activeTitle,
                       ]),
                       builder: (context, child) {
                         final nav = navigator.state.value;
@@ -546,7 +530,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           showControls: showControls,
                           title: bookSession.spine.isEmpty
                               ? bookSession.book!.title
-                              : activeTocTitleNotifier.value,
+                              : tocState.activeTitle.value,
                           currentSpineItemIndex: nav.spineIndex,
                           totalSpineItems: bookSession.spine.length,
                           currentPageInChapter: nav.pageInChapter,
@@ -580,28 +564,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               ),
             ),
 
-            Positioned.fill(
-              child: IgnorePointer(
-                ignoring: !isImageViewerVisible,
-                child: AnimatedOpacity(
-                  duration: const Duration(
-                    milliseconds: AppTheme.defaultAnimationDurationMs,
-                  ),
-                  curve: Curves.easeOut,
-                  opacity: isImageViewerVisible ? 1.0 : 0.0,
-                  child: (currentImageUrl != null && currentImageRect != null)
-                      ? ImageViewer(
-                          imageUrl: currentImageUrl!,
-                          webViewHandler: webViewHandler,
-                          epubPath: bookSession.book!.filePath!,
-                          fileHash: widget.fileHash,
-                          onClose: closeImageViewer,
-                          sourceRect: currentImageRect!,
-                          epubTheme: getEpubTheme(),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ),
+            ReaderImageOverlay(
+              visible: isImageViewerVisible,
+              imageUrl: currentImageUrl,
+              sourceRect: currentImageRect,
+              webViewHandler: webViewHandler,
+              epubPath: bookSession.book!.filePath!,
+              fileHash: widget.fileHash,
+              epubTheme: getEpubTheme(),
+              onClose: closeImageViewer,
             ),
           ],
         ),
