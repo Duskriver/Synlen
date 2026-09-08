@@ -55,7 +55,12 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 
 ## 已知限制与待办
 
-- `BookImportService` 与原生 `pickEpubFiles` / `isEpubFile` 实际同时处理 EPUB 与 TXT；修复方向是格式中立命名（如 `BookImportService`）。
+- 超 400 行文件：`book_detail_screen.dart`——窄视图映射目前内联在屏幕里，迁移收尾时应随映射函数移入 application。复现：
+
+```sh
+find lib/src/features/library -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
+```
+
 ## Dev Note
 
 None.
