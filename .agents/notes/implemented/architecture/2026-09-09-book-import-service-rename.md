@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`EpubImportService` 按 `BookFormat` 分发解析与落盘，TXT 走的是它的分支，名字却写着 Epub——新格式接入时容易把 TXT 逻辑放到别处。这是[格式中立命名提案](../../proposed/architecture/2026-09-09-format-neutral-book-naming.md)的第一步。
+`EpubImportService` 按 `BookFormat` 分发解析与落盘，TXT 走的是它的分支，名字却写着 Epub——新格式接入时容易把 TXT 逻辑放到别处。这是[格式中立命名提案](2026-09-09-format-neutral-book-naming.md)的第一步。
 
 ## Decision
 
