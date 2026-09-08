@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:synlen/src/core/database/app_database.dart';
+
 import '../../../../../l10n/app_localizations.dart';
+
+/// 分组选项：对话框只需要 id 与名称，不持有持久化行类型。
+typedef GroupOption = ({int id, String name});
 
 /// Dialog for selecting a group to move books to
 /// Includes options to create a new group or move to uncategorized
 class GroupSelectionDialog extends StatelessWidget {
-  final List<ShelfGroup> groups;
+  final List<GroupOption> groups;
   final int createGroupResult;
 
   const GroupSelectionDialog({

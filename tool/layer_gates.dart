@@ -29,7 +29,6 @@ const _presentationDriftAllowlist = <String>{
   'lib/src/features/library/presentation/widgets/book_detail_edit_body.dart',
   'lib/src/features/library/presentation/widgets/book_detail_view_body.dart',
   'lib/src/features/library/presentation/widgets/book_grid_item.dart',
-  'lib/src/features/library/presentation/widgets/group_selection_dialog.dart',
   'lib/src/features/library/presentation/widgets/library_app_bar.dart',
   'lib/src/features/library/presentation/widgets/library_items_grid.dart',
   'lib/src/features/library/presentation/widgets/library_tab_view.dart',

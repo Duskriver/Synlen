@@ -171,7 +171,10 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     var result = await showDialog<int?>(
       context: context,
       builder: (context) => GroupSelectionDialog(
-        groups: state.availableGroups,
+        groups: [
+          for (final group in state.availableGroups)
+            (id: group.id, name: group.name),
+        ],
         createGroupResult: createGroupResult,
       ),
     );
