@@ -1,5 +1,6 @@
 {
   "AGENTS.md": 60,
+  "README.md": 60,
   "docs/AGENTS.md": 80,
   "docs/architecture.md": 110,
   "docs/design.md": 60,
@@ -14,6 +15,16 @@
   "docs/subsystems/settings.md": 100,
   "docs/subsystems/rust.md": 100,
   "docs/cookbook/README.md": 45,
+  "docs/cookbook/adding-a-feature.md": 60,
+  "docs/cookbook/adding-an-l10n-string.md": 70,
+  "docs/cookbook/changing-reader-web-assets.md": 75,
+  "docs/cookbook/changing-the-database-schema.md": 55,
+  "docs/cookbook/publishing-a-release.md": 65,
   "docs/postmortem/README.md": 35,
+  "docs/user/index.md": 45,
+  "docs/user/guide/quickstart.md": 65,
+  "docs/user/guide/import-and-backup.md": 65,
+  "docs/user/guide/ai-service-keys.md": 60,
+  "docs/user/guide/in-app-update.md": 50,
   ".agents/notes/README.md": 130
 }

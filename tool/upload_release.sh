@@ -41,7 +41,8 @@ UPDATE_LOG="$(
   ' "$ROOT/docs/user/release-notes.md"
 )"
 if [ -z "$UPDATE_LOG" ]; then
-  echo "!! docs/user/release-notes.md 中未找到 v$VERSION 段，updateLog 将为空" >&2
+  echo "!! docs/user/release-notes.md 中未找到 v$VERSION 段：发版前先把「未发布」段改名为 ## v$VERSION（见 docs/cookbook/publishing-a-release.md），中止发布" >&2
+  exit 1
 fi
 
 # 组装 version.json（客户端协议见 check_update_tile.dart）
