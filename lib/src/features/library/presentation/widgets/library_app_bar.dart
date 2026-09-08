@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
-import 'package:synlen/src/core/database/app_database.dart';
+import '../../domain/book_views.dart';
 
 /// AppBar widget for the Library screen with tabs and action buttons.
 class LibraryAppBar extends StatefulWidget {
@@ -24,7 +24,7 @@ class LibraryAppBar extends StatefulWidget {
   final VoidCallback onSelectionToggle;
   final VoidCallback onSelectAll;
   final VoidCallback onClearSelection;
-  final void Function(ShelfGroup group, AppLocalizations l10n) onEditGroup;
+  final void Function(GroupOption group, AppLocalizations l10n) onEditGroup;
 
   @override
   State<LibraryAppBar> createState() => _LibraryAppBarState();

@@ -96,7 +96,9 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       viewMode: actualViewMode,
       currentGroupId: actualGroupId,
       filterGroupId: actualFilterGroupId,
-      availableGroups: allGroups,
+      availableGroups: [
+        for (final group in allGroups) (id: group.id, name: group.name),
+      ],
       selectedBookIds: currentState.selectedBookIds,
       selectedGroupIds: currentState.selectedGroupIds,
       isSelectionMode: currentState.isSelectionMode,

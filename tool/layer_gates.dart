@@ -25,10 +25,7 @@ const _crossFeatureAllowedTargetLayers = <String>{'application', 'domain'};
 /// 替代 `ShelfBook`）。这份名单只减不增：迁走一个就从这里删一行，门禁会拒绝过期条目。
 const _presentationDriftAllowlist = <String>{
   'lib/src/features/library/presentation/book_detail_screen.dart',
-  'lib/src/features/library/presentation/mixins/library_actions_mixin.dart',
-  'lib/src/features/library/presentation/widgets/library_app_bar.dart',
   'lib/src/features/library/presentation/widgets/library_items_grid.dart',
-  'lib/src/features/library/presentation/widgets/library_tab_view.dart',
 };
 
 const _driftDatabasePath = 'lib/src/core/database/app_database.dart';

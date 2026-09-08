@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
+import '../../../library/domain/book_views.dart';
 
 import '../../../library/application/bookshelf_notifier.dart';
 import '../widgets/library_app_bar.dart';
@@ -26,7 +26,7 @@ class LibraryTabView extends ConsumerWidget {
 
   final BookshelfState state;
   final TabController tabController;
-  final void Function(ShelfGroup group, AppLocalizations l10n) onEditGroup;
+  final void Function(GroupOption group, AppLocalizations l10n) onEditGroup;
   final VoidCallback onMoveToGroup;
   final VoidCallback onDeleteSelected;
 

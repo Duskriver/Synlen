@@ -29,7 +29,7 @@ presentation 直接依赖 drift 生成的 `ShelfBook`：9 个文件引 `core/dat
 
 ## 进度（2026-09-09）
 
-存量从 10 个文件降到 5 个：`TocDrawer`、`GroupSelectionDialog`、`BookGridItem`、`BookDetailEditBody`、`BookDetailViewBody` 已改为只接收展示字段（各带一篇实现笔记）。剩下 5 个是同一簇，必须同批：`library_items_grid`（路由 `extra` 契约）、`book_detail_screen`、`library_app_bar`、`library_tab_view`、`library_actions_mixin`——核心是把 `BookshelfState.books` 与 `availableGroups` 换成视图类型，并同步 `/book/:id` 的 `extra`。
+存量从 10 个文件降到 2 个（分组链路已迁移：`availableGroups` 改为 `GroupOption`）：`TocDrawer`、`GroupSelectionDialog`、`BookGridItem`、`BookDetailEditBody`、`BookDetailViewBody` 已改为只接收展示字段（各带一篇实现笔记）。剩下 5 个是同一簇，必须同批：`library_items_grid`（路由 `extra` 契约）、`book_detail_screen`、`library_app_bar`、`library_tab_view`、`library_actions_mixin`——核心是把 `BookshelfState.books` 与 `availableGroups` 换成视图类型，并同步 `/book/:id` 的 `extra`。
 
 ## Acceptance criteria
 

@@ -1,5 +1,8 @@
 import 'book_format.dart';
 
+/// 分组选项：标签页与对话框只需要 id 与名称，不持有持久化行类型。
+typedef GroupOption = ({int id, String name});
+
 /// 书架网格卡片需要的书目字段；不持有持久化行类型。
 typedef GridBookView = ({
   int id,

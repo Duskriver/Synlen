@@ -12,7 +12,6 @@ import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
 import '../../../../core/providers/unified_import_service_provider.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import '../widgets/delete_books_confirm_dialog.dart';
 import '../widgets/group_name_prompt_dialog.dart';
 import '../widgets/group_selection_dialog.dart';
@@ -243,7 +242,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
   Future<void> showEditGroupDialog(
     BuildContext context,
     WidgetRef ref,
-    ShelfGroup group,
+    GroupOption group,
     AppLocalizations l10n,
   ) async {
     var draftName = group.name;
