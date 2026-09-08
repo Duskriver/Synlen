@@ -13,7 +13,7 @@
 | `ShelfGroup` | 书架分组，用户自定义的书目分类。 | 分类夹、书架分类 |
 | `ShelfBookSortBy` | 书架排序依据。 | 排序方式、SortBy |
 | `ReadingProgress` | 完成分页后的阅读位置：章节序号、章内页码、章内总页数（record typedef）。 | 阅读进度对象、Progress |
-| `UnifiedImportService` | 把书籍文件加入藏书的统一编排。EPUB 用 stream-from-zip 策略：以压缩形式存盘，不整包解压；TXT 导入时解码（BOM → UTF-8 → GBK）并归一化为 UTF-8 单文件存盘，阅读时不再关心原始编码。 | 导入流程、Ingest、ImportService |
+| `UnifiedImportService` | 把书籍文件加入藏书的统一编排入口：平台选择、导入缓存与哈希。 | 导入流程、Ingest、ImportService |
 | `ProgressLog` / `BackupImportProgress` / `ImportResult` | 导入与恢复的进度事件与结果值对象。data 发事件、application 编排、presentation 渲染三方都要用，因此落在 domain，避免 data → application 的逆向依赖。 | 进度回调、导入状态 |
 | Cover（封面） | 书的封面图片，导入时从 EPUB 提取生成，独立于书籍文件存储。TXT 无封面。 | 缩略图、书封 |
 
@@ -46,7 +46,7 @@
 |---|---|---|
 | `ImportedFont` | 用户导入的自定义字体（文件 + 元数据），供阅读器选用。 | 自定义字体对象、FontFile |
 | `FontManagerNotifier` | 字体导入 / 删除 / 可用字体列表的管理者。 | FontManager、字体服务、FontService |
-| `AppThemeSettings` | 应用全局主题设置（明暗模式、配色），与 `EpubTheme` 解耦。 | 全局主题配置、AppTheme |
+| `AppThemeSettings` | 应用全局主题设置（明暗模式、配色），与 `EpubTheme` 解耦。 | 全局主题配置、AppThemeConfig |
 
 ## 跨模块接口
 
@@ -54,6 +54,7 @@
 |---|---|---|
 | `BookQueries` | library 暴露给其他 feature 的书目查询接口；宿主经它读书目，不依赖 library 仓库。 | 书目服务、LibraryService |
 | 组合面（composition surface） | 允许依赖其他 feature `application` 层的特殊模块，当前仅 `settings`。新增组合面必须先改决策记录。 | 聚合层、facade |
+| 宿主（host） | 调用其他 feature 能力的模块，当前是 `reader` 调用 learning 与 settings；只经对方的 `application` 入口。 | 调用方、上层模块 |
 
 ## Dev Note
 

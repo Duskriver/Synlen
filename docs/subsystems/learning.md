@@ -28,7 +28,7 @@ learning 模块负责点词释义、长句分析与 TTS 发音：内容来自 De
 | `LearningCacheCleanupService` | 清空四张学习缓存表与全部音频缓存 | `lib/src/features/learning/data/services/learning_cache_cleanup_service.dart` |
 | `WordLearningCacheStore` / `SentenceLearningCacheStore` / `SentencePronunciationCacheStore` | 文本与发音缓存表读写 | `lib/src/features/learning/data/stores/` |
 | `LearningAudioFileStore` | 音频文件命名（含音色键）与按容量预算清退最旧文件 | `lib/src/features/learning/data/stores/learning_audio_file_store.dart` |
-| `AliyunTtsVoice` | 47 个音色的英文名、中文名与描述；`voiceParam` 供请求，`cacheKey` 供缓存命名 | `lib/src/features/learning/domain/aliyun_tts_voice.dart` |
+| `AliyunTtsVoice` | 49 个音色的英文名、中文名与描述；`voiceParam` 供请求，`cacheKey` 供缓存命名 | `lib/src/features/learning/domain/aliyun_tts_voice.dart` |
 | `AudioStreamResult` / `AudioFormat` | 音频流结果：流 + 格式（mp3 / wav / pcm）+ 采样信息 + `cacheByVoice` | `lib/src/features/learning/domain/audio_stream_result.dart` |
 | `LearningException` / `LearningErrorCode` | 领域异常与 8 个错误码 | `lib/src/features/learning/domain/learning_exception.dart` |
 | `LearningCancellation` | 请求取消令牌，跨 controller、仓储与服务传播 | `lib/src/features/learning/domain/learning_cancellation.dart` |
@@ -54,7 +54,7 @@ learning 模块负责点词释义、长句分析与 TTS 发音：内容来自 De
 
 ## 已知限制与待办
 
-- `aliyun_tts_voice.dart` 的 47 个音色名称与描述是产品目录数据，不迁 ARB；判断标准见 [TTS 音色目录与 LLM 提示词不迁入 ARB](../../.agents/notes/implemented/process/2026-09-08-keep-tts-voice-catalog-out-of-arb.md)。
+- `aliyun_tts_voice.dart` 的 49 个音色名称与描述是产品目录数据，不迁 ARB；判断标准见 [TTS 音色目录与 LLM 提示词不迁入 ARB](../../.agents/notes/implemented/process/2026-09-08-keep-tts-voice-catalog-out-of-arb.md)。
 
 ## Dev Note
 

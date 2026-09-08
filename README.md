@@ -33,7 +33,7 @@ flutter build ios --release
 ## 文档
 
 - 用户指南：[docs/user/index.md](docs/user/index.md) · 版本记录：[docs/user/release-notes.md](docs/user/release-notes.md)
-- 架构：[docs/architecture.md](docs/architecture.md) · 术语：[docs/glossary.md](docs/glossary.md)
+- 架构：[docs/architecture.md](docs/architecture.md) · 模块设计：[docs/design.md](docs/design.md) · 术语：[docs/glossary.md](docs/glossary.md)
 - 贡献者：[docs/development.md](docs/development.md) · Agent 入口：[AGENTS.md](AGENTS.md)
 
 ## 说明
