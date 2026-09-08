@@ -19,6 +19,7 @@ import '../application/book_session.dart';
 import '../../learning/application/learning_entry.dart';
 import '../application/reader_session_factory.dart';
 import '../application/volume_key_page_turn.dart';
+import 'reader_nav_feedback.dart';
 import 'reader_toc_state.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
@@ -276,18 +277,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   /// 导航结果 → l10n 提示；成功与忽略不出提示。
   void _showNavOutcome(ReaderNavOutcome outcome) {
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    final message = switch (outcome) {
-      ReaderNavOutcome.firstChapter => l10n.firstChapterOfBook,
-      ReaderNavOutcome.lastChapter => l10n.lastChapterOfBook,
-      ReaderNavOutcome.firstPageOfBook => l10n.firstPageOfBook,
-      ReaderNavOutcome.lastPageOfBook => l10n.lastPageOfBook,
-      ReaderNavOutcome.tocItemHasNoContent => l10n.chapterHasNoContent,
-      ReaderNavOutcome.tocItemNotInSpine => l10n.chapterNotFoundInSpine,
-      ReaderNavOutcome.moved || ReaderNavOutcome.ignored => null,
-    };
-    if (message == null) return;
-    ToastService.showError(message, theme: getEpubTheme().themeData);
+    ReaderNavFeedback(
+      l10n: AppLocalizations.of(context)!,
+      theme: getEpubTheme().themeData,
+    ).show(outcome);
   }
 
   /// 执行一次导航动作：提示结果，位置变化后刷新 TOC 与进度。
