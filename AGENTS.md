@@ -34,7 +34,7 @@ dart run tool/doc_gates.dart                     # 文档门禁
 
 ## 入口
 
-- 架构与分层：[docs/architecture.md](docs/architecture.md)
+- 架构与分层：[docs/architecture.md](docs/architecture.md) · 模块设计：[docs/design.md](docs/design.md)
 - 每模块参考：[docs/subsystems/](docs/subsystems/README.md)
 - 领域术语：[docs/glossary.md](docs/glossary.md)
 - 贡献者日常：[docs/development.md](docs/development.md) · 测试：[docs/testing.md](docs/testing.md)

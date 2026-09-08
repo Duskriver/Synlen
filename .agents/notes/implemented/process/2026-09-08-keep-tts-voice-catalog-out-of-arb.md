@@ -4,13 +4,13 @@ Status: implemented
 
 ## Problem
 
-清理 UI 硬编码中文时，`lib/src/features/learning/domain/aliyun_tts_voice.dart` 有 51 行中文（47 个音色的中文名与音色描述），`deep_seek_service.dart` 有 6 行中文（发给模型的提示词）。如果按"用户可见文案一律走 l10n"机械处理，它们都要进 ARB。
+清理 UI 硬编码中文时，`lib/src/features/learning/domain/aliyun_tts_voice.dart` 有 51 行中文（49 个音色的中文名与音色描述），`deep_seek_service.dart` 有 6 行中文（发给模型的提示词）。如果按"用户可见文案一律走 l10n"机械处理，它们都要进 ARB。
 
 ## Decision
 
 这两类文本**留在代码里**：
 
-- `AliyunTtsVoice` 的名称与描述是**产品目录数据**（人名、方言地名、人设描述），随服务商音色表变化，不是界面文案；全部迁 ARB 需要 94 个键，成本远大于收益。
+- `AliyunTtsVoice` 的名称与描述是**产品目录数据**（人名、方言地名、人设描述），随服务商音色表变化，不是界面文案；全部迁 ARB 需要 98 个键，成本远大于收益。
 - `deep_seek_service.dart` 的提示词是**机器消费**的输入，不面向用户。
 
 界面文案本身（设置页、学习弹窗、错误提示）仍一律走 ARB，错误码到文案的映射在展示层统一做。

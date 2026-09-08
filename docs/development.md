@@ -28,7 +28,7 @@ flutter run -d <device-id>
 ```sh
 dart format lib test
 flutter analyze                                  # 零 error 零 warning
-dart run tool/doc_gates.dart                     # 动了文档时
+dart run tool/doc_gates.dart                     # 动了文档时（CI 在 PR 与发版前置门禁都跑）
 ```
 
 推送或合并前：**全量 `flutter test` 必须全绿**。内环只跑覆盖改动的最小证据（见 [testing.md](testing.md)），CI 拥有全量矩阵。
@@ -80,6 +80,7 @@ dart run tool/doc_gates.dart                     # 动了文档时
 | 评审改动 | [syn-code-review](../.agents/skills/syn-code-review/SKILL.md) |
 | 文档结构与审计 | [syn-doc](../.agents/skills/syn-doc/SKILL.md) |
 | 文字精简与会话泄漏清理 | [syn-prose-standard](../.agents/skills/syn-prose-standard/SKILL.md) / [syn-trim-cot-leakage](../.agents/skills/syn-trim-cot-leakage/SKILL.md) |
+| 发版 | [发布一个版本](cookbook/publishing-a-release.md) |
 
 ## Dev Note
 

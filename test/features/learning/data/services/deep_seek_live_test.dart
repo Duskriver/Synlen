@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 
-/// 真实 DeepSeek 接口的受控端到端验收（审计 F01）。
+/// 真实 DeepSeek 接口的受控端到端验收。
 ///
 /// 仅在设置 `SYNLEN_DEEPSEEK_KEY` 环境变量时运行，密钥不入库；
 /// CI 与日常 `flutter test` 因变量缺失自动跳过。

@@ -16,7 +16,7 @@ import 'package:synlen/src/features/learning/presentation/widgets/word_definitio
 import 'package:synlen/src/features/reader/presentation/reader_screen.dart'
     as reader;
 
-/// 学习链路真机端到端验收（审计 F01/F04）：在模拟器上以真实 WebView 渲染
+/// 学习链路真机端到端验收：在模拟器上以真实 WebView 渲染
 /// TXT 书籍，点击单词与长按句子走真实 DeepSeek 接口。
 ///
 /// 运行方式（密钥经 --dart-define 传入，不入库）：

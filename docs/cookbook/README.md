@@ -10,6 +10,7 @@
 | [adding-an-l10n-string](adding-an-l10n-string.md) | 用户可见文案：ARB 同批更新、占位符、重新生成、错误码到文案的映射 |
 | [changing-reader-web-assets](changing-reader-web-assets.md) | 阅读器 TypeScript/CSS：源与生成物、学习文本提取规则、浏览器回归测试 |
 | [changing-the-database-schema](changing-the-database-schema.md) | drift schema：加表、加列、改列、`schemaVersion` 与迁移测试 |
+| [publishing-a-release](publishing-a-release.md) | 发版：版本号与 versionCode 派生、release notes 段改名、tag 构建、OSS 上传与验证 |
 
 每篇正文都以编号的 `## 验证` 步骤收束，按顺序执行即可确认改动生效；`## Dev Note` 是作者的非权威补充。
 

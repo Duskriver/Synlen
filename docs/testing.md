@@ -36,14 +36,23 @@
 
 ## 现状
 
-- 40 个测试文件 / 246 个用例，另有 2 个条件跳过（真实 DeepSeek 接口验收）。查当前数字：
+- `test/` 有 40 个测试文件；`flutter test` 报告 273 个用例通过、2 个按环境变量跳过（真实 DeepSeek 接口验收）。查当前数字：
 
   ```sh
-  find test -name '*_test.dart' | wc -l; grep -rho 'test(' test --include='*.dart' | wc -l
+  find test -name '*_test.dart' | wc -l
+  flutter test                                     # 末行 +N ~M 即用例数与跳过数
+  ```
+
+  用例数只认 `flutter test` 的输出：用 `grep 'test('` 数会漏掉循环生成的用例。
+
+- `integration_test/learning_e2e_test.dart` 是唯一的端到端验收：真机或模拟器上以真实 WebView 渲染 TXT 书籍，点词与长按句子走真实 DeepSeek 接口，未设密钥时跳过。
+
+  ```sh
+  flutter test integration_test/learning_e2e_test.dart -d <device> --dart-define=SYNLEN_DEEPSEEK_KEY=<key>
   ```
 
 - `reader/presentation` 的 7 个 mixin 是 `part` 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；这部分覆盖缺口记在 [reader 子系统](subsystems/reader.md#已知限制与待办)。
-- 无端到端测试；实机触摸坐标、长按时序、WebView 版本与分页体验仍靠人工验收。
+- 端到端验收只覆盖学习链路；实机触摸坐标、长按时序、WebView 版本与分页体验仍靠人工验收。
 
 ## Dev Note
 

@@ -10,4 +10,8 @@
 
 | # | 标题 |
 |---|---|
-| — | 暂无 |
+| 1 | [TXT 支持批次暴露的四类导入与渲染缺口](2026-08-29-txt-import-batch-defects.md) |
+
+## Dev Note
+
+None.
