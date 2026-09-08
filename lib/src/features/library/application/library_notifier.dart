@@ -7,7 +7,7 @@ import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import '../data/services/epub_import_service_provider.dart';
+import '../data/services/book_import_service_provider.dart';
 
 part 'library_notifier.g.dart';
 
@@ -110,7 +110,7 @@ class LibraryNotifier extends _$LibraryNotifier {
     if (totalCount == 0) return;
 
     final unifiedImportService = ref.read(unifiedImportServiceProvider);
-    final epubImportService = ref.read(epubImportServiceProvider);
+    final bookImportService = ref.read(bookImportServiceProvider);
 
     int currentCount = 0;
 
@@ -138,7 +138,7 @@ class LibraryNotifier extends _$LibraryNotifier {
         );
 
         // 3. Import the book and wait for the Either result
-        final result = await epubImportService.importBook(
+        final result = await bookImportService.importBook(
           importable.cacheFile,
           precomputedHash: importable.hash,
           originalFileName: importable.originalName,

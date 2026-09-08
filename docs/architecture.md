@@ -50,7 +50,7 @@ lib/src/
 
 ```
 文件选择（原生 SAF / 分享）→ UnifiedImportService
-  → EPUB：EpubZipParser + EpubImportService（压缩存盘）
+  → EPUB：EpubZipParser + BookImportService（压缩存盘）
   → TXT ：解码（BOM → UTF-8 → GBK）→ 归一化为 UTF-8 → 虚拟章节
   → ShelfBook + BookManifest 落库（drift）
 阅读：ReaderScreen → ReaderSessionFactory → BookSession / ReaderNavigator → 内容供给（epub:// 虚拟域 / TXT 章节）

@@ -16,7 +16,7 @@ import 'package:synlen/src/core/file_handling/importable_epub.dart' as _i2;
 import 'package:synlen/src/core/file_handling/platform_path.dart' as _i7;
 import 'package:synlen/src/core/file_handling/unified_import_service.dart'
     as _i5;
-import 'package:synlen/src/features/library/data/services/epub_import_service.dart'
+import 'package:synlen/src/features/library/data/services/book_import_service.dart'
     as _i10;
 
 // ignore_for_file: type=lint
@@ -60,26 +60,6 @@ class MockUnifiedImportService extends _i1.Mock
   }
 
   @override
-  _i6.Future<List<_i7.PlatformPath>> pickFiles() =>
-      (super.noSuchMethod(
-            Invocation.method(#pickFiles, []),
-            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
-              <_i7.PlatformPath>[],
-            ),
-          )
-          as _i6.Future<List<_i7.PlatformPath>>);
-
-  @override
-  _i6.Future<List<_i7.PlatformPath>> pickFolder() =>
-      (super.noSuchMethod(
-            Invocation.method(#pickFolder, []),
-            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
-              <_i7.PlatformPath>[],
-            ),
-          )
-          as _i6.Future<List<_i7.PlatformPath>>);
-
-  @override
   _i6.Future<_i2.ImportableEpub> processEpub(_i7.PlatformPath? path) =>
       (super.noSuchMethod(
             Invocation.method(#processEpub, [path]),
@@ -114,44 +94,6 @@ class MockUnifiedImportService extends _i1.Mock
           as _i6.Future<_i9.Uint8List>);
 
   @override
-  _i6.Future<String> fetchIosFileToTemp(String? originalPath) =>
-      (super.noSuchMethod(
-            Invocation.method(#fetchIosFileToTemp, [originalPath]),
-            returnValue: _i6.Future<String>.value(
-              _i8.dummyValue<String>(
-                this,
-                Invocation.method(#fetchIosFileToTemp, [originalPath]),
-              ),
-            ),
-          )
-          as _i6.Future<String>);
-
-  @override
-  _i6.Future<void> releaseIosAccess() =>
-      (super.noSuchMethod(
-            Invocation.method(#releaseIosAccess, []),
-            returnValue: _i6.Future<void>.value(),
-            returnValueForMissingStub: _i6.Future<void>.value(),
-          )
-          as _i6.Future<void>);
-
-  @override
-  _i6.Future<_i3.BackupPaths?> pickBackupFolder() =>
-      (super.noSuchMethod(
-            Invocation.method(#pickBackupFolder, []),
-            returnValue: _i6.Future<_i3.BackupPaths?>.value(),
-          )
-          as _i6.Future<_i3.BackupPaths?>);
-
-  @override
-  _i6.Future<_i7.PlatformPath?> pickBackupZipFile() =>
-      (super.noSuchMethod(
-            Invocation.method(#pickBackupZipFile, []),
-            returnValue: _i6.Future<_i7.PlatformPath?>.value(),
-          )
-          as _i6.Future<_i7.PlatformPath?>);
-
-  @override
   _i6.Future<_i3.BackupPaths> processBackupZip(_i7.PlatformPath? zipPath) =>
       (super.noSuchMethod(
             Invocation.method(#processBackupZip, [zipPath]),
@@ -174,6 +116,52 @@ class MockUnifiedImportService extends _i1.Mock
           as _i6.Future<void>);
 
   @override
+  _i6.Future<_i4.File> processFontFile(_i7.PlatformPath? path) =>
+      (super.noSuchMethod(
+            Invocation.method(#processFontFile, [path]),
+            returnValue: _i6.Future<_i4.File>.value(
+              _FakeFile_2(this, Invocation.method(#processFontFile, [path])),
+            ),
+          )
+          as _i6.Future<_i4.File>);
+
+  @override
+  _i6.Future<List<_i7.PlatformPath>> pickFiles() =>
+      (super.noSuchMethod(
+            Invocation.method(#pickFiles, []),
+            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
+              <_i7.PlatformPath>[],
+            ),
+          )
+          as _i6.Future<List<_i7.PlatformPath>>);
+
+  @override
+  _i6.Future<List<_i7.PlatformPath>> pickFolder() =>
+      (super.noSuchMethod(
+            Invocation.method(#pickFolder, []),
+            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
+              <_i7.PlatformPath>[],
+            ),
+          )
+          as _i6.Future<List<_i7.PlatformPath>>);
+
+  @override
+  _i6.Future<_i3.BackupPaths?> pickBackupFolder() =>
+      (super.noSuchMethod(
+            Invocation.method(#pickBackupFolder, []),
+            returnValue: _i6.Future<_i3.BackupPaths?>.value(),
+          )
+          as _i6.Future<_i3.BackupPaths?>);
+
+  @override
+  _i6.Future<_i7.PlatformPath?> pickBackupZipFile() =>
+      (super.noSuchMethod(
+            Invocation.method(#pickBackupZipFile, []),
+            returnValue: _i6.Future<_i7.PlatformPath?>.value(),
+          )
+          as _i6.Future<_i7.PlatformPath?>);
+
+  @override
   _i6.Future<List<_i7.PlatformPath>> pickFontFiles() =>
       (super.noSuchMethod(
             Invocation.method(#pickFontFiles, []),
@@ -184,14 +172,26 @@ class MockUnifiedImportService extends _i1.Mock
           as _i6.Future<List<_i7.PlatformPath>>);
 
   @override
-  _i6.Future<_i4.File> processFontFile(_i7.PlatformPath? path) =>
+  _i6.Future<String> fetchIosFileToTemp(String? originalPath) =>
       (super.noSuchMethod(
-            Invocation.method(#processFontFile, [path]),
-            returnValue: _i6.Future<_i4.File>.value(
-              _FakeFile_2(this, Invocation.method(#processFontFile, [path])),
+            Invocation.method(#fetchIosFileToTemp, [originalPath]),
+            returnValue: _i6.Future<String>.value(
+              _i8.dummyValue<String>(
+                this,
+                Invocation.method(#fetchIosFileToTemp, [originalPath]),
+              ),
             ),
           )
-          as _i6.Future<_i4.File>);
+          as _i6.Future<String>);
+
+  @override
+  _i6.Future<void> releaseIosAccess() =>
+      (super.noSuchMethod(
+            Invocation.method(#releaseIosAccess, []),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
 
   @override
   _i6.Future<void> clearAllCache() =>
@@ -203,11 +203,11 @@ class MockUnifiedImportService extends _i1.Mock
           as _i6.Future<void>);
 }
 
-/// A class which mocks [EpubImportService].
+/// A class which mocks [BookImportService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockEpubImportService extends _i1.Mock implements _i10.EpubImportService {
-  MockEpubImportService() {
+class MockBookImportService extends _i1.Mock implements _i10.BookImportService {
+  MockBookImportService() {
     _i1.throwOnMissingStub(this);
   }
 

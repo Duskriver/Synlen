@@ -8,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
-import 'package:synlen/src/features/library/data/services/epub_import_service.dart';
-import 'package:synlen/src/features/library/data/services/epub_import_service_provider.dart';
+import 'package:synlen/src/features/library/data/services/book_import_service.dart';
+import 'package:synlen/src/features/library/data/services/book_import_service_provider.dart';
 import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 
@@ -24,10 +24,10 @@ import 'library_notifier_test.mocks.dart';
 /// 期间 autoDispose 调度器销毁了无监听者的 libraryProvider，流开始执行时
 /// 方法体内的 `ref.read` 抛出 "Cannot use the Ref ... after it has been
 /// disposed"，导入一本书也没写入却以流错误告终。
-@GenerateMocks([UnifiedImportService, EpubImportService])
+@GenerateMocks([UnifiedImportService, BookImportService])
 void main() {
   late MockUnifiedImportService unifiedImportService;
-  late MockEpubImportService epubImportService;
+  late MockBookImportService bookImportService;
   late ProviderContainer container;
 
   ShelfBook buildBook() {
@@ -53,7 +53,7 @@ void main() {
 
   setUp(() {
     unifiedImportService = MockUnifiedImportService();
-    epubImportService = MockEpubImportService();
+    bookImportService = MockBookImportService();
 
     // mockito 无法为 fpdart 的 Either 自动造 dummy，需显式提供
     provideDummy<Either<String, ShelfBook>>(right(buildBook()));
@@ -67,7 +67,7 @@ void main() {
     );
     when(unifiedImportService.cleanCache(any)).thenAnswer((_) async {});
     when(
-      epubImportService.importBook(
+      bookImportService.importBook(
         any,
         precomputedHash: anyNamed('precomputedHash'),
         originalFileName: anyNamed('originalFileName'),
@@ -78,7 +78,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         unifiedImportServiceProvider.overrideWithValue(unifiedImportService),
-        epubImportServiceProvider.overrideWithValue(epubImportService),
+        bookImportServiceProvider.overrideWithValue(bookImportService),
       ],
     );
     addTearDown(container.dispose);
@@ -102,7 +102,7 @@ void main() {
     expect(progress.last.status, ImportStatus.success);
     verify(unifiedImportService.processEpub(any)).called(1);
     verify(
-      epubImportService.importBook(
+      bookImportService.importBook(
         any,
         precomputedHash: anyNamed('precomputedHash'),
         originalFileName: anyNamed('originalFileName'),
@@ -120,7 +120,7 @@ void main() {
     expect(events.whereType<ImportProgress>(), isEmpty);
     verifyNever(unifiedImportService.processEpub(any));
     verifyNever(
-      epubImportService.importBook(
+      bookImportService.importBook(
         any,
         precomputedHash: anyNamed('precomputedHash'),
         originalFileName: anyNamed('originalFileName'),

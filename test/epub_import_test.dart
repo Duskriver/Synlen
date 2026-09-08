@@ -20,7 +20,7 @@ void main() {
     provideDummy<Either<String, bool>>(left('dummy'));
   });
 
-  group('EpubImportService - Unit Tests', () {
+  group('BookImportService - Unit Tests', () {
     late MockShelfBookRepository mockShelfBookRepo;
     late MockBookManifestRepository mockManifestRepo;
 

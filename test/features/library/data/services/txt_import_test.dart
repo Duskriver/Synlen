@@ -11,7 +11,7 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
-import 'package:synlen/src/features/library/data/services/epub_import_service.dart';
+import 'package:synlen/src/features/library/data/services/book_import_service.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 
@@ -23,7 +23,7 @@ void main() {
 
   late MockShelfBookRepository shelfRepo;
   late MockBookManifestRepository manifestRepo;
-  late EpubImportService service;
+  late BookImportService service;
   late Directory tempDir;
   late Directory booksDir;
 
@@ -33,7 +33,7 @@ void main() {
   setUp(() async {
     shelfRepo = MockShelfBookRepository();
     manifestRepo = MockBookManifestRepository();
-    service = EpubImportService(
+    service = BookImportService(
       shelfBookRepo: shelfRepo,
       manifestRepo: manifestRepo,
     );
