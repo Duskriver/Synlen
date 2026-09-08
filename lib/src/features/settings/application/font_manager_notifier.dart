@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
-import 'package:synlen/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/features/settings/domain/imported_font.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

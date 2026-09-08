@@ -10,7 +10,7 @@ import 'features/library/presentation/widgets/progress_dialog.dart';
 import '../l10n/app_localizations.dart';
 import 'core/services/toast_service.dart';
 import 'core/file_handling/platform_path.dart';
-import 'features/library/data/services/unified_import_service_provider.dart';
+import 'core/providers/unified_import_service_provider.dart';
 
 /// 待处理文件路径（"用其他应用打开"/分享进入应用后，等待返回书架页处理）
 class PendingRouteFileNotifier extends Notifier<String?> {

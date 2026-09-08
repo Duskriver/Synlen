@@ -10,13 +10,13 @@
 
 ## 1. 分层违规：presentation 直连 data
 
-规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **11 个文件 / 22 处 import** 违规（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
+规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **10 个文件 / 21 处 import** 违规（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
 
 | # | 文件 | 违规性质 |
 |---|------|----------|
 | 1 | `lib/src/features/detail/presentation/book_detail_helpers.dart` | 引 `library/data/services` |
 | 2 | `lib/src/features/detail/presentation/book_detail_screen.dart` | 引 `library/data/repositories` |
-| 3 | `lib/src/features/library/presentation/mixins/library_actions_mixin.dart` | 引 `library/data/services` |
+| 3 | ~~`lib/src/features/library/presentation/mixins/library_actions_mixin.dart`~~ | ✅ 已修复：`UnifiedImportService` 的 provider 移到 `core/providers/`（该服务被 3 个 feature 消费） |
 | 4 | ~~`lib/src/features/library/presentation/widgets/style_bottom_sheet.dart`~~ | ✅ 已修复（issue #7）：`ShelfBookSortBy` 下沉 domain，不再引 data |
 | 5 | ~~`lib/src/features/library/presentation/widgets/restore_progress_dialog.dart`~~ | ✅ 已修复：进度事件类型下沉 `library/domain/import_progress.dart`，顺带消除 `data → application` 逆向依赖 |
 | 6 | `lib/src/features/reader/presentation/reader_webview.dart` | 引 `reader/data` |

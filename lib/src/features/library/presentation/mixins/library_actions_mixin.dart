@@ -11,7 +11,7 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
-import '../../data/services/unified_import_service_provider.dart';
+import '../../../../core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import '../widgets/group_selection_dialog.dart';
 
