@@ -767,4 +767,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get originalSentence => 'Original sentence';
+
+  @override
+  String get aiServicePrivacyNote =>
+      'Tapping a word or long-pressing a sentence sends that text to third-party services (dictionary, DeepSeek, Aliyun TTS) to fetch learning content. No network requests are made until you configure keys.';
+
+  @override
+  String get deepSeekCheckConnectivity => 'Check DeepSeek connectivity';
+
+  @override
+  String get deepSeekCheckOk => 'DeepSeek connected successfully';
+
+  @override
+  String get deepSeekCheckBadKey => 'DeepSeek key is invalid or expired';
+
+  @override
+  String get deepSeekCheckFailed => 'Cannot reach DeepSeek. Check your network';
 }

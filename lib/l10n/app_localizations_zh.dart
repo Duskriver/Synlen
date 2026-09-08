@@ -744,4 +744,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get originalSentence => '原句';
+
+  @override
+  String get aiServicePrivacyNote =>
+      '点击单词、长按句子会把对应文本发送给第三方服务（词典、DeepSeek、阿里云 TTS）以获取学习内容；未配置密钥时不发起网络请求。';
+
+  @override
+  String get deepSeekCheckConnectivity => '检查 DeepSeek 连通性';
+
+  @override
+  String get deepSeekCheckOk => 'DeepSeek 连接成功';
+
+  @override
+  String get deepSeekCheckBadKey => 'DeepSeek 密钥无效或已过期';
+
+  @override
+  String get deepSeekCheckFailed => '无法连接 DeepSeek，请检查网络';
 }

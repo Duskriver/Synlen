@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/l10n/app_localizations.dart';
+import 'package:synlen/src/core/services/toast_service.dart';
+import 'package:synlen/src/features/learning/data/repositories/learning_repository_provider.dart';
 import 'api_key_dialog.dart';
 import 'package:synlen/src/features/settings/application/api_key_notifier.dart';
 import 'settings_info_section.dart';
@@ -80,6 +83,16 @@ class SettingsAiServiceSection extends ConsumerWidget {
                 ref.read(apiKeyProvider.notifier).setAliyunTtsKey(value),
           ),
         ),
+        const _DeepSeekConnectivityCheckTile(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+          child: Text(
+            l10n.aiServicePrivacyNote,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -99,4 +112,63 @@ class SettingsAiServiceSection extends ConsumerWidget {
       onSave: onSave,
     ),
   );
+}
+
+/// DeepSeek 连通性检查：GET /models 不消耗 tokens，验证密钥与网络。
+class _DeepSeekConnectivityCheckTile extends ConsumerStatefulWidget {
+  const _DeepSeekConnectivityCheckTile();
+
+  @override
+  ConsumerState<_DeepSeekConnectivityCheckTile> createState() =>
+      _DeepSeekConnectivityCheckTileState();
+}
+
+class _DeepSeekConnectivityCheckTileState
+    extends ConsumerState<_DeepSeekConnectivityCheckTile> {
+  bool _checking = false;
+
+  Future<void> _check() async {
+    final l10n = AppLocalizations.of(context)!;
+    final key = (await ref.read(apiKeyProvider.future)).deepSeekKey;
+    if (key.isEmpty) {
+      if (mounted) ToastService.showError(l10n.apiKeyNotConfigured);
+      return;
+    }
+
+    setState(() => _checking = true);
+    try {
+      await ref.read(deepSeekServiceProvider).verifyApiKey(key);
+      if (mounted) ToastService.showSuccess(l10n.deepSeekCheckOk);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final message = e.response?.statusCode == 401
+          ? l10n.deepSeekCheckBadKey
+          : l10n.deepSeekCheckFailed;
+      ToastService.showError(message);
+    } catch (_) {
+      if (mounted) ToastService.showError(l10n.deepSeekCheckFailed);
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+      leading: _checking
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(
+              Icons.network_check_outlined,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+      title: Text(l10n.deepSeekCheckConnectivity),
+      onTap: _checking ? null : _check,
+    );
+  }
 }
