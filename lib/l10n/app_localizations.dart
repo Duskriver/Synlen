@@ -1453,6 +1453,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Original sentence'**
   String get originalSentence;
+
+  /// No description provided for @aiServicePrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tapping a word or long-pressing a sentence sends that text to third-party services (dictionary, DeepSeek, Aliyun TTS) to fetch learning content. No network requests are made until you configure keys.'**
+  String get aiServicePrivacyNote;
+
+  /// No description provided for @deepSeekCheckConnectivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Check DeepSeek connectivity'**
+  String get deepSeekCheckConnectivity;
+
+  /// No description provided for @deepSeekCheckOk.
+  ///
+  /// In en, this message translates to:
+  /// **'DeepSeek connected successfully'**
+  String get deepSeekCheckOk;
+
+  /// No description provided for @deepSeekCheckBadKey.
+  ///
+  /// In en, this message translates to:
+  /// **'DeepSeek key is invalid or expired'**
+  String get deepSeekCheckBadKey;
+
+  /// No description provided for @deepSeekCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach DeepSeek. Check your network'**
+  String get deepSeekCheckFailed;
 }
 
 class _AppLocalizationsDelegate

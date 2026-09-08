@@ -1040,5 +1040,10 @@
   "originalSentence": "Original sentence",
   "@originalSentence": {
     "description": "句子分析弹窗中的原句标签"
-  }
+  },
+  "aiServicePrivacyNote": "Tapping a word or long-pressing a sentence sends that text to third-party services (dictionary, DeepSeek, Aliyun TTS) to fetch learning content. No network requests are made until you configure keys.",
+  "deepSeekCheckConnectivity": "Check DeepSeek connectivity",
+  "deepSeekCheckOk": "DeepSeek connected successfully",
+  "deepSeekCheckBadKey": "DeepSeek key is invalid or expired",
+  "deepSeekCheckFailed": "Cannot reach DeepSeek. Check your network"
 }

@@ -60,6 +60,23 @@ class DeepSeekService {
     LearningCancellation? cancellation,
   }) => _complete(_sentencePrompt(sentence), cancellation);
 
+  /// 校验密钥连通性：GET /models 不消耗 tokens，只验证密钥有效与网络可达。
+  /// 401 表示密钥无效，其余异常由调用方归类为网络/服务问题。
+  Future<void> verifyApiKey(String apiKey) async {
+    final key = apiKey.trim();
+    if (key.isEmpty) {
+      throw const LearningException(LearningErrorCode.noDeepSeekApiKey);
+    }
+    await _dio.get<void>(
+      'https://api.deepseek.com/models',
+      options: Options(
+        headers: {'Authorization': 'Bearer $key'},
+        sendTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 15),
+      ),
+    );
+  }
+
   Stream<String> _complete(String prompt, LearningCancellation? cancellation) {
     final cancelToken = CancelToken();
     StreamIterator<String>? lines;
