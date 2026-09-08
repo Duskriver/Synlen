@@ -2,20 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../application/book_actions.dart';
-import '../../../../core/database/app_database.dart';
 import '../../domain/book_format.dart';
 import '../../domain/book_meta.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/widgets/expandable_text.dart';
 import '../../../../../l10n/app_localizations.dart';
 
-/// Read-only detail view for a single [ShelfBook].
+/// 详情只读视图需要的书目字段；不持有持久化行类型。
+typedef DetailBookView = ({
+  int id,
+  String fileHash,
+  String title,
+  List<String> authors,
+  String? description,
+  String? coverPath,
+  int totalChapters,
+  String epubVersion,
+  BookFormat format,
+  int direction,
+  double readingProgress,
+});
+
+/// Read-only detail view for a single book.
 ///
 /// Displays cover, title, authors, description, reading progress, metadata
 /// chips, and a read/continue button. Tapping the cover or the button
 /// navigates to the reader and then invalidates [bookDetailProvider].
 class BookDetailViewBody extends ConsumerWidget {
-  final ShelfBook book;
+  final DetailBookView book;
   final String bookId;
 
   const BookDetailViewBody({

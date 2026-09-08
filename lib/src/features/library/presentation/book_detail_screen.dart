@@ -360,7 +360,22 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         onTitleChanged: _checkTitleError,
       );
     }
-    return BookDetailViewBody(book: book, bookId: widget.bookId);
+    return BookDetailViewBody(
+      book: (
+        id: book.id,
+        fileHash: book.fileHash,
+        title: book.title,
+        authors: book.authors,
+        description: book.description,
+        coverPath: book.coverPath,
+        totalChapters: book.totalChapters,
+        epubVersion: book.epubVersion,
+        format: book.format,
+        direction: book.direction,
+        readingProgress: book.readingProgress,
+      ),
+      bookId: widget.bookId,
+    );
   }
 
   Widget _buildErrorBody(BuildContext context, String message) {
