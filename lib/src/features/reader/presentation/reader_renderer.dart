@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -16,164 +17,9 @@ import '../application/chapter_navigation.dart';
 import '../application/epub_webview_handler.dart';
 import '../application/reader_viewport.dart';
 import './reader_webview.dart';
+import './widgets/reader_status_bar_overlay.dart';
 import 'page_turn/page_turn.dart';
-
-class ReaderRendererController implements ReaderViewport {
-  _ReaderRendererState? _rendererState;
-
-  bool get isAttached => _rendererState != null;
-
-  EpubTheme? get currentTheme => _rendererState?._currentTheme;
-
-  ReaderWebViewController? get webViewController =>
-      _rendererState?._webViewController;
-
-  void _attachState(_ReaderRendererState? state) {
-    _rendererState = state;
-  }
-
-  Future<void> performPreviousPageTurn() async {
-    await webViewController?.waitForRender();
-    await _rendererState?._performPageTurn(false);
-  }
-
-  Future<void> performNextPageTurn() async {
-    await webViewController?.waitForRender();
-    await _rendererState?._performPageTurn(true);
-  }
-
-  @override
-  Future<void> jumpToPage(int pageIndex) async {
-    await webViewController?.jumpToPage(pageIndex);
-  }
-
-  @override
-  Future<void> restoreScrollPosition(double ratio) async {
-    await webViewController?.restoreScrollPosition(ratio);
-  }
-
-  @override
-  Future<void> jumpToPreviousChapterLastPage() async {
-    final token1 = await webViewController?.jumpToLastPageOfFrame('prev');
-    final token2 = await webViewController?.cycleFrames('prev');
-    final tokens = [token1, token2].whereType<int>().toList();
-    await webViewController?.waitForEvents(tokens);
-  }
-
-  @override
-  Future<void> jumpToPreviousChapterFirstPage() async {
-    final token1 = await webViewController?.jumpToPageFor('prev', 0);
-    final token2 = await webViewController?.cycleFrames('prev');
-    final tokens = [token1, token2].whereType<int>().toList();
-    await webViewController?.waitForEvents(tokens);
-  }
-
-  @override
-  Future<void> jumpToNextChapter() async {
-    final token1 = await webViewController?.jumpToPageFor('next', 0);
-    final token2 = await webViewController?.cycleFrames('next');
-    final tokens = [token1, token2].whereType<int>().toList();
-    await webViewController?.waitForEvents(tokens);
-  }
-
-  /// 按预载请求的槽位调用对应的章节预载。
-  @override
-  Future<int?> preloadChapter(ChapterPreloadRequest request) {
-    return switch (request.slot) {
-      ChapterSlot.current => preloadCurrentChapter(
-        request.url,
-        request.anchors,
-        request.properties,
-      ),
-      ChapterSlot.previous => preloadPreviousChapter(
-        request.url,
-        request.anchors,
-        request.properties,
-      ),
-      ChapterSlot.next => preloadNextChapter(
-        request.url,
-        request.anchors,
-        request.properties,
-      ),
-    };
-  }
-
-  Future<int?> preloadCurrentChapter(
-    String url,
-    List<String> anchors,
-    String? properties,
-  ) async {
-    final anchorsParam = anchors.map((a) => '"$a"').join(',');
-    final anchorsJson = '[$anchorsParam]';
-    final propertiesList = List<String>.from(properties?.split(' ') ?? []);
-    final encodedPropertiesList = propertiesList
-        .map((p) => p.replaceAll(':', '-COLON-'))
-        .toList();
-    final propertiesParam = encodedPropertiesList.map((p) => '"$p"').join(',');
-    final propertiesJson = '[$propertiesParam]';
-    return await webViewController?.loadFrame(
-      'curr',
-      url,
-      anchorsJson,
-      propertiesJson,
-    );
-  }
-
-  Future<int?> preloadNextChapter(
-    String url,
-    List<String> anchors,
-    String? properties,
-  ) async {
-    final anchorsParam = anchors.map((a) => '"$a"').join(',');
-    final anchorsJson = '[$anchorsParam]';
-    final propertiesList = List<String>.from(properties?.split(' ') ?? []);
-    final encodedPropertiesList = propertiesList
-        .map((p) => p.replaceAll(':', '-COLON-'))
-        .toList();
-    final propertiesParam = encodedPropertiesList.map((p) => '"$p"').join(',');
-    final propertiesJson = '[$propertiesParam]';
-    return await webViewController?.loadFrame(
-      'next',
-      url,
-      anchorsJson,
-      propertiesJson,
-    );
-  }
-
-  Future<int?> preloadPreviousChapter(
-    String url,
-    List<String> anchors,
-    String? properties,
-  ) async {
-    final anchorsParam = anchors.map((a) => '"$a"').join(',');
-    final anchorsJson = '[$anchorsParam]';
-    final propertiesList = List<String>.from(properties?.split(' ') ?? []);
-    final encodedPropertiesList = propertiesList
-        .map((p) => p.replaceAll(':', '-COLON-'))
-        .toList();
-    final propertiesParam = encodedPropertiesList.map((p) => '"$p"').join(',');
-    final propertiesJson = '[$propertiesParam]';
-    return await webViewController?.loadFrame(
-      'prev',
-      url,
-      anchorsJson,
-      propertiesJson,
-    );
-  }
-
-  Future<void> updateTheme(EpubTheme theme) async {
-    await _rendererState?._updateTheme(theme);
-  }
-
-  @override
-  Future<void> waitForEvents(List<int> tokens) async {
-    await webViewController?.waitForEvents(tokens);
-  }
-
-  Future<void> waitForEvent(int token) async {
-    await webViewController?.waitForEvent(token);
-  }
-}
+part 'reader_renderer_controller.dart';
 
 class ReaderRenderer extends ConsumerStatefulWidget {
   final ReaderRendererController controller;
@@ -430,80 +276,15 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
             : null,
         child: Stack(
           fit: StackFit.expand,
-          children: [_buildBody(), _buildBottomStatusBarOverlay()],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomStatusBarOverlay() {
-    Widget buildBadge(
-      String content,
-      bool tabular, {
-      TextOverflow overflow = TextOverflow.clip,
-    }) {
-      return Text(
-        content,
-        overflow: overflow,
-        style: TextStyle(
-          color: Theme.of(
-            context,
-          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
-          shadows: [
-            Shadow(
-              color: Theme.of(
-                context,
-              ).colorScheme.surface.withValues(alpha: 0.5),
-              blurRadius: 1.0,
-              offset: Offset.zero,
+          children: [
+            _buildBody(),
+            ReaderStatusBarOverlay(
+              leftContent: widget.statusBarLeftContent,
+              rightContent: widget.statusBarRightContent,
+              isLoading: widget.isLoading,
+              shouldShowWebView: widget.shouldShowWebView,
             ),
           ],
-        ),
-      );
-    }
-
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Container(
-        padding: const EdgeInsets.only(left: 32, right: 32, bottom: 8),
-        constraints: const BoxConstraints(minHeight: 32, maxHeight: 32),
-        child: AnimatedOpacity(
-          duration: (widget.isLoading || !widget.shouldShowWebView)
-              ? Duration.zero
-              : const Duration(
-                  milliseconds: AppTheme.defaultAnimationDurationMs,
-                ),
-          curve: Curves.easeOut,
-          opacity: (widget.isLoading || !widget.shouldShowWebView) ? 0.0 : 1.0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ValueListenableBuilder<String>(
-                valueListenable: widget.statusBarLeftContent,
-                builder: (context, content, child) {
-                  return Flexible(
-                    child: buildBadge(
-                      content,
-                      false,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-              ValueListenableBuilder<String>(
-                valueListenable: widget.statusBarRightContent,
-                builder: (context, content, child) {
-                  return buildBadge(content, true);
-                },
-              ),
-            ],
-          ),
         ),
       ),
     );
