@@ -28,6 +28,7 @@ flutter run -d <device-id>
 ```sh
 dart format lib test
 flutter analyze                                  # 零 error 零 warning
+dart run tool/layer_gates.dart                   # 动了 lib/ 时（分层与跨 feature 边）
 dart run tool/doc_gates.dart                     # 动了文档时（CI 在 PR 与发版前置门禁都跑）
 ```
 

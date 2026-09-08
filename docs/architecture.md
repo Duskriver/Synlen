@@ -63,12 +63,13 @@ lib/src/
 
 允许的形态只有三种：**组合面**（`settings`）经其他 feature 的 `application` 编排；**宿主调能力模块**（`reader` 经 `LearningEntry`）；**值类型与配置读取**（`domain` 类型、`settings/application` 的配置）。
 
-不允许的形态：任何 feature 的 `presentation` 直接依赖其他 feature 的 `data`；`application` 直连其他 feature 的 `data`。
+不允许的形态：任何 feature 的 `presentation` 直接依赖其他 feature 的 `data`；`application` 直连其他 feature 的 `data`。`core/` 只能依赖 feature 的 `domain` 值类型（drift 表的类型转换器），不得依赖 feature 的其余层。
 
-新增跨 feature 边之前先读 [组合面决策](../.agents/notes/implemented/architecture/2026-09-08-composition-surface-cross-feature.md)，并在同一次改动里更新本表。查当前边：
+新增跨 feature 边之前先读 [组合面决策](../.agents/notes/implemented/architecture/2026-09-08-composition-surface-cross-feature.md)。边与违规由门禁核对，不靠人眼：
 
 ```sh
-rg -n "^import 'package:synlen/src/features/(?!reader)" lib/src/features --pcre2
+dart run tool/layer_gates.dart --list   # 当前跨 feature 边与 core -> feature 边
+dart run tool/layer_gates.dart          # 违规检查；CI 与提交前都跑
 ```
 
 ## 新行为放哪
