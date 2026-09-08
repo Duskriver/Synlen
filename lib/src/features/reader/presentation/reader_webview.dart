@@ -14,74 +14,8 @@ import '../application/reader_scripts.dart';
 import 'package:synlen/src/web/api/webview_bridge.dart';
 import 'package:synlen/src/web/api/synlen_api.dart';
 
-/// Controller for ReaderWebView that provides methods to control the WebView
-class ReaderWebViewController {
-  _ReaderWebViewState? _webViewState;
-
-  bool get isAttached => _webViewState != null;
-
-  void _attachState(_ReaderWebViewState? state) {
-    _webViewState = state;
-  }
-
-  // JavaScript wrapper methods
-  Future<int?> jumpToLastPageOfFrame(String frame) async {
-    return await _webViewState?._jumpToLastPageOfFrame(frame);
-  }
-
-  Future<int?> cycleFrames(String direction) async {
-    return await _webViewState?._cycleFrames(direction);
-  }
-
-  Future<int?> jumpToPageFor(String frame, int pageIndex) async {
-    return await _webViewState?._jumpToPageFor(frame, pageIndex);
-  }
-
-  Future<int?> loadFrame(
-    String frame,
-    String url,
-    String anchors,
-    String properties,
-  ) async {
-    return await _webViewState?._loadFrame(frame, url, anchors, properties);
-  }
-
-  Future<void> jumpToPage(int pageIndex) async {
-    await _webViewState?._jumpToPage(pageIndex);
-  }
-
-  Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewState?._restoreScrollPosition(ratio);
-  }
-
-  Future<void> checkLongPressElementAt(double x, double y) async {
-    await _webViewState?._checkLongPressElementAt(x, y);
-  }
-
-  Future<void> checkTapElementAt(double x, double y) async {
-    await _webViewState?._checkTapElementAt(x, y);
-  }
-
-  Future<ui.Image?> takeScreenshot() async {
-    return await _webViewState?._takeScreenshot();
-  }
-
-  Future<void> waitForRender() async {
-    await _webViewState?._waitForRender();
-  }
-
-  Future<void> updateTheme(EpubTheme theme) async {
-    await _webViewState?._updateTheme(theme);
-  }
-
-  Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
-    await _webViewState?._bridge.waitForEvent(token, timeoutMs);
-  }
-
-  Future<void> waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
-    await _webViewState?._bridge.waitForEvents(tokens, timeoutMs);
-  }
-}
+part 'reader_webview_controller.dart';
+part 'reader_webview_js_handlers.dart';
 
 final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
   disableContextMenu: true,
@@ -103,35 +37,6 @@ final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
   horizontalScrollBarEnabled: false,
   overScrollMode: OverScrollMode.NEVER,
 );
-
-/// Callbacks for WebView events
-class ReaderWebViewCallbacks {
-  final Function() onInitialized;
-  final Function(int totalPages) onPageCountReady;
-  final Function(int pageIndex) onPageChanged;
-  final Function(List<String> anchors) onScrollAnchors;
-  final Function(String imageUrl, Rect rect) onImageLongPress;
-  final Function(double x, double y) onTap;
-  final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
-  final Function(String url) onLinkTap;
-  final bool Function(String url) shouldHandleLinkTap;
-  final Function(String word, String context) onWordTap;
-  final Function(String sentence) onSentenceSelected;
-
-  const ReaderWebViewCallbacks({
-    required this.onInitialized,
-    required this.onPageCountReady,
-    required this.onPageChanged,
-    required this.onScrollAnchors,
-    required this.onImageLongPress,
-    required this.onTap,
-    required this.onFootnoteTap,
-    required this.onLinkTap,
-    required this.shouldHandleLinkTap,
-    required this.onWordTap,
-    required this.onSentenceSelected,
-  });
-}
 
 /// WebView widget for reading EPUB content
 class ReaderWebView extends StatefulWidget {
@@ -308,7 +213,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   void _onWebViewCreated(InAppWebViewController controller) {
     _controller = controller;
     _bridge.attach(controller);
-    _setupJavaScriptHandlers(controller);
+    _registerJavaScriptHandlers(this, controller);
     widget.onWebViewCreated?.call();
   }
 
@@ -384,131 +289,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             ),
           ],
         );
-      },
-    );
-  }
-
-  void _setupJavaScriptHandlers(InAppWebViewController controller) {
-    controller.addJavaScriptHandler(
-      handlerName: 'onPageCountReady',
-      callback: (args) async {
-        if (args.isNotEmpty && args[0] is int) {
-          widget.callbacks.onPageCountReady(args[0] as int);
-        }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onPageChanged',
-      callback: (args) {
-        if (args.isNotEmpty && args[0] is int) {
-          widget.callbacks.onPageChanged(args[0] as int);
-        }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onScrollAnchors',
-      callback: (args) {
-        if (args.isEmpty) return;
-        final List<String> anchors = List<String>.from(args[0] as List);
-        widget.callbacks.onScrollAnchors(anchors);
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onTap',
-      callback: (args) {
-        if (args.isEmpty) return;
-        final x = (args[0] as num).toDouble();
-        final y = (args[1] as num).toDouble();
-        widget.callbacks.onTap(x, y);
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onFootnoteTap',
-      callback: (args) {
-        if (args.isEmpty) return;
-        final innerHtml = args[0] as String;
-        final rect = Rect.fromLTWH(
-          (args[1] as num).toDouble(),
-          (args[2] as num).toDouble(),
-          (args[3] as num).toDouble(),
-          (args[4] as num).toDouble(),
-        );
-        final baseUrl = args.length > 5 && args[5] is String
-            ? args[5] as String
-            : '';
-        widget.callbacks.onFootnoteTap(innerHtml, rect, baseUrl);
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onLinkTap',
-      callback: (args) {
-        if (args.isEmpty) return;
-        final url = args[0] as String;
-        final x = (args[1] as num).toDouble();
-        final y = (args[2] as num).toDouble();
-        if (widget.callbacks.shouldHandleLinkTap(url)) {
-          widget.callbacks.onLinkTap(url);
-        } else {
-          widget.callbacks.onTap(x, y);
-        }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onWordTap',
-      callback: (args) {
-        if (args.length >= 2) {
-          final word = args[0] as String;
-          final context = args[1] as String;
-          widget.callbacks.onWordTap(word, context);
-        }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onSentenceSelected',
-      callback: (args) {
-        if (args.isNotEmpty) {
-          final sentence = args[0] as String;
-          widget.callbacks.onSentenceSelected(sentence);
-        }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onImageLongPress',
-      callback: (args) {
-        if (args.length >= 5 && args[0] is String) {
-          final imageUrl = args[0] as String;
-          final rect = Rect.fromLTWH(
-            (args[1] as num).toDouble(),
-            (args[2] as num).toDouble(),
-            (args[3] as num).toDouble(),
-            (args[4] as num).toDouble(),
-          );
-          widget.callbacks.onImageLongPress(imageUrl, rect);
-        }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onViewportResize',
-      callback: (args) {
-        _updateTheme(_currentTheme);
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onEventFinished',
-      callback: (args) {
-        if (args.isNotEmpty) {
-          _bridge.resolveToken(args[0] as int);
-        }
       },
     );
   }
