@@ -20,7 +20,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 | `ReaderViewport` | 导航编排需要的渲染引擎能力（预载、跳转、恢复滚动位置）；`ReaderRendererController` 是生产实现，测试用 fake | `lib/src/features/reader/application/reader_viewport.dart` |
 | `BookSession` | 一次阅读会话：加载 `ShelfBook` 与 `BookManifest`、过滤 spine、建 TOC 查找表、算进度比例、生成 URL | `lib/src/features/reader/application/book_session.dart` |
 | `EpubWebViewHandler` | `epub://` 虚拟域请求处理：内存 LRU 缓存、字体请求、按格式分发到 EPUB 或 TXT | `lib/src/features/reader/application/epub_webview_handler.dart` |
-| `EpubStreamService` | EPUB 内容读取：打开 / 关闭 Rust 侧缓存、取条目、扩展名到 MIME | `lib/src/features/reader/data/services/epub_stream_service.dart` |
+| `EpubStreamService` / `EpubBackend` | EPUB 内容读取：切书关闭旧缓存、取条目、扩展名到 MIME；Rust 调用经 `EpubBackend` 接口，测试用 fake | `lib/src/features/reader/data/services/epub_stream_service.dart` |
 | `TxtContentService` | TXT 章节供给：按 `SpineItem.sourceRange` 随机读取字节并包装为 XHTML | `lib/src/features/reader/data/services/txt_content_service.dart` |
 | `ReadingProgressController` | 进度防抖（默认 1 秒）与串行落库；关闭时 flush，失败保留最新位置 | `lib/src/features/reader/application/reading_progress_controller.dart` |
 | `ChapterPreloadRequest` / `ChapterSlot` / `planChapterPreload` / `planNeighbourPreload` / `shouldIgnoreChapterNavigation` | 章节预载窗口与翻章忙态守卫 | `lib/src/features/reader/application/chapter_navigation.dart` |
@@ -50,7 +50,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 - `EpubWebViewHandler` 的缓存上限为 256 项、24 MiB，单条资源超过 2 MiB 不入缓存。
 - `TxtContentService` 按 UTF-8 字节范围读取；章节切分不得拆开 UTF-16 代理对。
 - `BookSession.saveProgress` 在书籍未加载或位置非法时抛错，由调用方处理。
-- `EpubStreamService` 记录当前书籍路径，`dispose` 关闭该书在 Rust 侧的缓存条目。
+- `EpubStreamService` 记录当前书籍路径：切换书籍时先关闭上一本，`dispose` 关闭当前书；Rust 侧缓存不随阅读累积。
 - 翻章期间（加载中、主题刷新中、正在翻章）忽略新的章节导航请求。
 
 ## 已知限制与待办
@@ -58,7 +58,6 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 - `reader/presentation` 仍是最大的 UI 层，剩余 5 个 part mixin（进度显示、主题刷新、外链、图片、脚注）的逻辑继续下沉 `reader/application`。
 - 这 5 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test（[测试现状](../testing.md#现状)）。
 - `EpubWebViewHandler` 与 `epub://` 虚拟域同时服务 EPUB 与 TXT；修复方向是格式中立命名（如 `BookWebViewHandler`、`book://`），改名牵连 URL 拦截与 JS 侧资源引用，需独立评估。
-- 切换书籍不关闭上一本的 Rust 缓存条目：`EpubStreamService` 为 keepAlive，`closeEpub` 只在它被销毁时调用，同一会话内连续打开多本书会累积缓存条目（见 [rust.md](rust.md)）。
 - 超 400 行文件：`reader_screen.dart`。复现：
 
 ```sh
