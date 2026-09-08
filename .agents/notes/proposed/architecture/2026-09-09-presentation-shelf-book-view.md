@@ -29,7 +29,13 @@ presentation 直接依赖 drift 生成的 `ShelfBook`：9 个文件引 `core/dat
 
 ## 进度（2026-09-09）
 
-存量从 10 个文件降到 2 个（分组链路已迁移：`availableGroups` 改为 `GroupOption`）：`TocDrawer`、`GroupSelectionDialog`、`BookGridItem`、`BookDetailEditBody`、`BookDetailViewBody` 已改为只接收展示字段（各带一篇实现笔记）。剩下 5 个是同一簇，必须同批：`library_items_grid`（路由 `extra` 契约）、`book_detail_screen`、`library_app_bar`、`library_tab_view`、`library_actions_mixin`——核心是把 `BookshelfState.books` 与 `availableGroups` 换成视图类型，并同步 `/book/:id` 的 `extra`。
+存量从 10 个文件降到 2 个（达到验收阈值）：`TocDrawer`、`GroupSelectionDialog`、`BookGridItem`、`BookDetailEditBody`、`BookDetailViewBody` 改为只接收展示字段；分组链路已迁移（`availableGroups` 改为 `GroupOption`，标签页、应用栏与动作 mixin 随之去掉 drift 依赖）。视图类型与映射分别在 `domain/book_views.dart` 与 `application/book_view_mapper.dart`。
+
+剩下 2 个文件是同一簇，必须同批，第一步如下：
+
+1. `bookDetailProvider` 改为返回视图类型（或新增一个返回视图的 provider），`book_detail_screen` 的展示路径只吃视图；保存 / 分享改为经 `BookActions` 按 id 取完整行。
+2. `library_items_grid` 的路由 `extra` 从 `ShelfBook` 改为视图类型（或干脆只传 `fileHash`，由详情页自取），`BookshelfState.books` 随之改为 `List<GridBookView>`。
+3. 删掉闸门名单的最后两行——门禁会要求同步删除，否则报过期条目。
 
 ## Acceptance criteria
 
