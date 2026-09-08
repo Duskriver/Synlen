@@ -7,7 +7,7 @@ import 'package:synlen/src/core/config/app_info.dart';
 import 'package:synlen/src/core/theme/app_theme_notifier.dart';
 import 'package:synlen/src/global_share_handler.dart';
 import '../l10n/app_localizations.dart';
-import 'core/router/app_router.dart';
+import 'app_router.dart';
 
 /// 系统语言 Provider，确保只在初始化或真正变化时触发更新
 final localeProvider = Provider<Locale>((ref) {

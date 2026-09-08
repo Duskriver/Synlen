@@ -21,7 +21,7 @@
 6. `presentation`：只 `ref.watch` provider，不构造 repository 或 service。`AsyncValue` 三态齐全，禁止裸 `.value`，写法参考 `lib/src/features/library/presentation/library_screen.dart` 里的 `bookshelfState.when(...)`。
 7. 错误落点：错误码枚举放 `domain`（参考 `lib/src/features/learning/domain/learning_exception.dart`）；`application` 捕获异常后转成状态字段，presentation 只渲染状态。用户可读文案在展示层映射，参考 `lib/src/features/learning/presentation/widgets/learning_detail_dialog_view.dart` 的 `resolveLearningErrorText`；内部细节只进 `appLogger`（`lib/src/core/services/app_logger.dart`）。
 8. l10n：新增的用户可见文案走 ARB，流程见 [adding-an-l10n-string](adding-an-l10n-string.md)。
-9. 入口：页面在 `lib/src/core/router/app_router.dart` 注册 `GoRoute`；跨 feature 复用的 provider 放 `lib/src/core/providers/`。
+9. 入口：页面在 `lib/src/app_router.dart` 注册 `GoRoute`；跨 feature 复用的 provider 放 `lib/src/core/providers/`。
 10. 测试：与源码镜像同目录，`lib/src/features/<feature>/<layer>/xxx.dart` 对应 `test/features/<feature>/<layer>/xxx_test.dart`。`domain` 写纯单元测试，`application` 在 seam 处注入 fake，`data` 的 Drift 仓库用真实临时库；按 [testing.md](../testing.md) 选覆盖改动的最小证据。
 11. codegen：模型或 provider 注解变更后跑 `dart run build_runner build --delete-conflicting-outputs`；`.g.dart` 提交入库、不手改。
 12. 文档同步：在 `docs/subsystems/{module}.md` 新增一页（类型、语义、边界、已知限制），并在 [architecture.md](../architecture.md) 的模块表加一行；非平凡改动同时写一篇 [Agent Note](../../.agents/notes/README.md)。

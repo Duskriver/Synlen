@@ -21,7 +21,6 @@
 | `ShelfGroups` / `ShelfBooks` / `BookManifests` | 藏书与阅读清单表；`ShelfBooks` 与 `BookManifests` 的 `format` 列默认 `epub`，v1 存量数据经迁移补列 | 同上 |
 | `WordExplanations` / `WordPronunciations` / `SentenceAnalyses` / `SentencePronunciations` | 学习缓存表，主键为 FNV-1a 64 位确定性哈希 | 同上 |
 | `kLearningTextPromptVersion` | 学习文本缓存的 prompt 版本；改 LLM 输出契约时递增，使旧缓存自然失效 | 同上 |
-| `appRouterProvider` | go_router 配置：`/`、`/book/:id`、`/read/:id`、`/settings`；`content://` 与 `file://` 位置转交 `pendingRouteFileProvider` | `lib/src/core/router/app_router.dart` |
 | `AppTheme` | `ThemeData` 构建（Material 3、无阴影、无 splash）与动画时长常量 | `lib/src/core/theme/app_theme.dart` |
 | `AppThemeSettings` | 全局主题值对象：`AppThemeMode` + `AppThemeVariant`，派生明暗 `ColorScheme` 与 `ThemeData` | `lib/src/core/theme/app_theme_settings.dart` |
 | `SynlenThemePreset` | 16 个主题预设（8 变体 × 明暗）；枚举声明顺序即持久化索引，不得重排或删除 | 同上 |

@@ -20,7 +20,8 @@ lib/src/
       application/   ← Controller、Coordinator、装配入口
       domain/        ← 实体、枚举、异常、纯逻辑
       data/          ← Repository、Service、Parser
-  core/              ← 跨模块共享：database、theme、router、storage、services、providers、widgets、file_handling、config、url_launcher
+  core/              ← 跨模块共享：database、theme、storage、services、providers、widgets、file_handling、config、url_launcher
+  app_router.dart    ← 路由表（应用外壳，唯一允许依赖各 feature presentation 的位置）
   rust/              ← 性能敏感逻辑（FFI，经 core 暴露）
 ```
 
