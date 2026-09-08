@@ -78,12 +78,16 @@ class DeepSeekService {
 
     void fail(Object error, [StackTrace? stackTrace]) {
       if (cancelled || output.isClosed) return;
-      output.addError(
-        error is LearningException || error is LearningCancelled
-            ? error
-            : LearningException(LearningErrorCode.requestFailed, error),
-        stackTrace,
-      );
+      // 弹窗销毁触发的取消发生时流已无监听者，此时再投递错误会成为
+      // 无人处理的孤儿错误；仅在仍有监听时投递。
+      if (output.hasListener) {
+        output.addError(
+          error is LearningException || error is LearningCancelled
+              ? error
+              : LearningException(LearningErrorCode.requestFailed, error),
+          stackTrace,
+        );
+      }
       unawaited(output.close());
       unawaited(cancel());
     }
