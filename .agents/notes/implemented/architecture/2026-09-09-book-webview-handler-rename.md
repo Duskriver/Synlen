@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`EpubWebViewHandler` 按 `BookFormat` 分发 EPUB 与 TXT 的内容供给（TXT 章节经 `book://` 虚拟域交给同一渲染引擎），名字却写着 Epub。这是[格式中立命名提案](../../proposed/architecture/2026-09-09-format-neutral-book-naming.md)第一步的第二半。
+`EpubWebViewHandler` 按 `BookFormat` 分发 EPUB 与 TXT 的内容供给（TXT 章节经 `book://` 虚拟域交给同一渲染引擎），名字却写着 Epub。这是[格式中立命名提案](2026-09-09-format-neutral-book-naming.md)第一步的第二半。
 
 ## Decision
 

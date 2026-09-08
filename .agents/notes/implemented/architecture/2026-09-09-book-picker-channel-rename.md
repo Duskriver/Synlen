@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-通道方法 `pickEpubFiles` / `pickEpubFolder` / `isEpubFile` 早已按 `BookFormat` 放开 TXT，名字却仍写着 Epub。这是[格式中立命名提案](../../proposed/architecture/2026-09-09-format-neutral-book-naming.md)的第二步。
+通道方法 `pickEpubFiles` / `pickEpubFolder` / `isEpubFile` 早已按 `BookFormat` 放开 TXT，名字却仍写着 Epub。这是[格式中立命名提案](2026-09-09-format-neutral-book-naming.md)的第二步。
 
 ## Decision
 

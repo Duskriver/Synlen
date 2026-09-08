@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`EpubWebViewHandler.virtualScheme` 是 `'epub'`，但该虚拟域同时供给 EPUB 与 TXT 章节（TXT 被包装成 XHTML 后经同一虚拟域交给渲染引擎）。这是[格式中立命名提案](../../proposed/architecture/2026-09-09-format-neutral-book-naming.md)的第三步。
+`EpubWebViewHandler.virtualScheme` 是 `'epub'`，但该虚拟域同时供给 EPUB 与 TXT 章节（TXT 被包装成 XHTML 后经同一虚拟域交给渲染引擎）。这是[格式中立命名提案](2026-09-09-format-neutral-book-naming.md)的第三步。
 
 ## Decision
 
