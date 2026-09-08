@@ -24,7 +24,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 | `TxtDecoder` / `TxtEncoding` / `TxtDecodeResult` | TXT 编码识别：BOM → UTF-8 严格 → GBK 兜底，并用控制字符占比拦二进制内容 | `lib/src/features/library/data/parsers/txt_decoder.dart` |
 | `TxtChapterSplitter` / `TxtChapter` | 章节切分：标题行正则、引导块、无标题时按体积分割 | `lib/src/features/library/data/parsers/txt_chapter_splitter.dart` |
 | `TxtBookParser` / `TxtBookParseResult` | TXT 解析：产出 spine（`txt/chapter_N.xhtml` + 字节范围）、TOC 与归一化 UTF-8 | `lib/src/features/library/data/parsers/txt_book_parser.dart` |
-| `ImportBackupService` | 恢复：读 `shelf.json`、逐本 upsert，物理文件用 `File.copy` 不载入内存 | `lib/src/features/library/data/services/import_backup_service.dart` |
+| `ImportBackupService` / `BackupMerger` | 恢复：读 `shelf.json`、逐本 upsert，物理文件用 `File.copy` 不载入内存；合并策略（元数据与进度分别取较新）在 `BackupMerger` | `lib/src/features/library/data/services/import_backup_service.dart` |
 | `ExportBackupService` / `ExportResult` | 导出：临时目录拼装备份文件夹 → `ZipFileEncoder` 流式压缩 → 分享面板 | `lib/src/features/library/data/services/export_backup_service.dart` |
 | `StorageCleanupService` | 清理孤儿书籍 / 封面 / 字体、缓存与分享临时文件 | `lib/src/features/library/data/services/storage_cleanup_service.dart` |
 | `ShelfBookRepository` | 书与分组读写、软删除、进度更新、排序查询 | `lib/src/features/library/data/shelf_book_repository.dart` |
@@ -56,7 +56,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 ## 已知限制与待办
 
 - `EpubImportService` 与原生 `pickEpubFiles` / `isEpubFile` 实际同时处理 EPUB 与 TXT；修复方向是格式中立命名（如 `BookImportService`）。
-- 超 400 行文件：`epub_import_service.dart`、`import_backup_service.dart`、`library_screen.dart`、`library_actions_mixin.dart`、`bookshelf_notifier.dart`、`book_detail_screen.dart`。复现：
+- 超 400 行文件：`epub_import_service.dart`、`library_screen.dart`、`library_actions_mixin.dart`、`bookshelf_notifier.dart`、`book_detail_screen.dart`。复现：
 
 ```sh
 find lib/src/features/library -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
