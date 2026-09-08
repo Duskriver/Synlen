@@ -185,7 +185,7 @@ void main() {
       await session.loadBook();
 
       final url = session.getSpineItemUrl(0, 'sec2');
-      expect(url, contains('epub://localhost/book/hash1/ch1.xhtml'));
+      expect(url, contains('book://localhost/book/hash1/ch1.xhtml'));
       expect(url, endsWith('#sec2'));
       expect(session.getSpineItemUrl(99), isEmpty);
     });
@@ -199,7 +199,7 @@ void main() {
       await session.loadBook();
 
       expect(
-        session.findSpineIndexByUrl('epub://localhost/book/hash1/ch1.xhtml'),
+        session.findSpineIndexByUrl('book://localhost/book/hash1/ch1.xhtml'),
         0,
       );
       expect(session.findSpineIndexByUrl('ch1.xhtml#sec2'), 0);

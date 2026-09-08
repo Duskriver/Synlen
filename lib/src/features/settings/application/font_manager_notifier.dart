@@ -13,7 +13,7 @@ part 'font_manager_notifier.g.dart';
 // ── Font Manager Notifier ────────────────────────────────────────────────────
 // Manages the list of user-imported fonts persisted in SharedPreferences.
 // Font files are stored at <documentsPath>/fonts/<fileName>.
-// They are served to the WebView via epub://localhost/fonts/<fileName>.
+// They are served to the WebView via book://localhost/fonts/<fileName>.
 @riverpod
 class FontManagerNotifier extends _$FontManagerNotifier {
   static const _kImportedFonts = 'imported_fonts';

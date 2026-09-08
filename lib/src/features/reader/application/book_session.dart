@@ -234,7 +234,7 @@ class BookSession {
   int? findSpineIndexByUrl(String url) {
     if (_manifest == null) return null;
 
-    // Check if URL is full url with epub://localhost/book/{fileHash}/path(#anchor)
+    // Check if URL is full url with book://localhost/book/{fileHash}/path(#anchor)
     // If so, extract the path, no need to extract anchor because spine only cares about path
     String path;
     if (url.startsWith(EpubWebViewHandler.virtualScheme)) {

@@ -16,7 +16,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
 
   bool shouldHandleLinkTap(String url) {
     final settings = ref.read(readerSettingsProvider);
-    if (url.startsWith('epub://')) {
+    if (url.startsWith('book://')) {
       if (!settings.handleIntraLink) return false;
       final index = bookSession.findSpineIndexByUrl(url);
       return index != null;
@@ -26,7 +26,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> handleLinkTap(String url) async {
-    if (url.startsWith('epub://')) {
+    if (url.startsWith('book://')) {
       final index = bookSession.findSpineIndexByUrl(url);
       if (index != null) {
         String anchor = 'top';
