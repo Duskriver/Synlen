@@ -44,6 +44,9 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Run documentation gates
+        run: dart run tool/doc_gates.dart
+
       - name: Install web toolchain
         working-directory: web_assets/controller.js
         run: npm ci

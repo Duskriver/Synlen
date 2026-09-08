@@ -42,9 +42,11 @@ void main(List<String> args) {
   _verifyRepoPaths(repo, files);
   _verifyHygiene(files);
   _verifyGlossary(repo);
+  _verifyBannedAliases(repo);
   _verifyAgentNotes(repo);
   _verifySkills(repo);
   _verifyBudgets(repo);
+  _verifyDevNotes(files);
   if (args.contains('--list')) {
     for (final f in files) {
       print('${f.path}  ${_lineCount(f)} 行');
@@ -479,4 +481,67 @@ void _verifyBudgets(Directory repo) {
     }
   }
   _notes.add('预算：${data.length} 份常驻文档');
+}
+
+// ---------- 禁用别称 ----------
+
+/// 术语表的"禁用别称"列里，标识符形式的别称不得在 lib/ 里被声明为类型。
+/// 中文别称与短语不参与机器校验，仍靠评审。
+void _verifyBannedAliases(Directory repo) {
+  final file = File('${repo.path}/docs/glossary.md');
+  if (!file.existsSync()) return;
+  final sources = <String>[];
+  for (final f in Directory(
+    '${repo.path}/lib',
+  ).listSync(recursive: true).whereType<File>()) {
+    if (!f.path.endsWith('.dart')) continue;
+    sources.add(f.readAsStringSync());
+  }
+  final haystack = sources.join('\n');
+  var checked = 0;
+  for (final line in file.readAsLinesSync()) {
+    final t = line.trim();
+    if (!t.startsWith('|')) continue;
+    final cells = t.split('|');
+    if (cells.length < 4) continue;
+    for (final alias in cells[3].split(RegExp(r'[、,，]'))) {
+      final name = alias.trim();
+      if (!RegExp(r'^[A-Za-z][A-Za-z0-9_]*$').hasMatch(name)) continue;
+      checked++;
+      final decl = RegExp(
+        r'\b(class|enum|typedef|mixin|extension)\s+' +
+            RegExp.escape(name) +
+            r'\b',
+      );
+      if (decl.hasMatch(haystack)) {
+        _errors.add('docs/glossary.md: 禁用别称 $name 在 lib/ 里被声明为类型');
+      }
+    }
+  }
+  _notes.add('禁用别称核对：$checked 个标识符');
+}
+
+// ---------- docs/ 页面以 Dev Note 收尾 ----------
+
+void _verifyDevNotes(List<File> files) {
+  var count = 0;
+  for (final f in files) {
+    final rel = _display(f);
+    if (!rel.startsWith('docs/')) continue;
+    count++;
+    var lastSection = '';
+    var inFence = false;
+    for (final line in f.readAsLinesSync()) {
+      if (line.trimLeft().startsWith('```')) {
+        inFence = !inFence;
+        continue;
+      }
+      if (inFence) continue;
+      if (line.startsWith('## ')) lastSection = line.trim();
+    }
+    if (lastSection != '## Dev Note') {
+      _errors.add('$rel: 最后一节必须是 ## Dev Note（当前 $lastSection）');
+    }
+  }
+  _notes.add('Dev Note 收尾：$count 份 docs 页面');
 }
