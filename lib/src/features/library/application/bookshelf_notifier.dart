@@ -7,85 +7,21 @@ import '../data/shelf_book_repository.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
 import '../data/services/epub_import_service.dart';
+import 'bookshelf_selection.dart';
+import 'bookshelf_state.dart';
+import 'bookshelf_tab_cache.dart';
+
+export 'bookshelf_state.dart';
 
 part 'bookshelf_notifier.g.dart';
-
-/// How densely books are shown in the grid.
-enum ViewMode { compact, relaxed }
-
-/// State for bookshelf view (sorting, grouping, selection)
-class BookshelfState {
-  final List<ShelfBook> books;
-  final ShelfBookSortBy sortBy;
-  final ViewMode viewMode;
-  final int? currentGroupId; // Navigation: which folder we're inside
-  final int?
-  filterGroupId; // Filter: show books from specific group (null = all)
-  final Set<int> selectedBookIds;
-  final Set<int> selectedGroupIds;
-  final bool isSelectionMode;
-  final List<ShelfGroup> availableGroups;
-  final Map<int?, List<ShelfBook>> cachedBooks;
-  // Note: cacheOrder (LRU eviction order) is managed internally by
-  // BookshelfNotifier._cacheOrder and is *not* part of the UI state.
-
-  BookshelfState.bookshelfState({
-    required this.books,
-    this.sortBy = ShelfBookSortBy.recentlyAdded,
-    this.viewMode = ViewMode.relaxed,
-    this.currentGroupId,
-    this.filterGroupId,
-    this.selectedBookIds = const {},
-    this.selectedGroupIds = const {},
-    this.isSelectionMode = false,
-    this.availableGroups = const [],
-    this.cachedBooks = const {},
-  });
-
-  BookshelfState copyWith({
-    List<ShelfBook>? books,
-    ShelfBookSortBy? sortBy,
-    ViewMode? viewMode,
-    int? currentGroupId,
-    int? filterGroupId,
-    Set<int>? selectedBookIds,
-    Set<int>? selectedGroupIds,
-    bool? isSelectionMode,
-    List<ShelfGroup>? availableGroups,
-    Map<int?, List<ShelfBook>>? cachedBooks,
-    bool clearGroup = false,
-    bool clearFilter = false,
-  }) {
-    return BookshelfState.bookshelfState(
-      books: books ?? this.books,
-      sortBy: sortBy ?? this.sortBy,
-      viewMode: viewMode ?? this.viewMode,
-      currentGroupId: clearGroup
-          ? null
-          : (currentGroupId ?? this.currentGroupId),
-      filterGroupId: clearFilter ? null : (filterGroupId ?? this.filterGroupId),
-      selectedBookIds: selectedBookIds ?? this.selectedBookIds,
-      selectedGroupIds: selectedGroupIds ?? this.selectedGroupIds,
-      isSelectionMode: isSelectionMode ?? this.isSelectionMode,
-      availableGroups: availableGroups ?? this.availableGroups,
-      cachedBooks: cachedBooks ?? this.cachedBooks,
-    );
-  }
-
-  int get selectedCount => selectedBookIds.length + selectedGroupIds.length;
-  bool get hasSelection => selectedCount > 0;
-}
 
 /// Notifier for managing bookshelf operations with dependency injection
 @riverpod
 class BookshelfNotifier extends _$BookshelfNotifier {
-  static const int _maxCachedTabs = 8;
   static const String _sortOrderKey = 'bookshelf_sort_order';
   static const String _viewModeKey = 'bookshelf_view_mode';
 
-  // LRU cache eviction order — stored here, not in BookshelfState, because it
-  // is an internal optimization detail that widgets never need to read.
-  final List<int?> _cacheOrder = [];
+  final _tabCache = BookshelfTabCache();
 
   // Cached SharedPreferences instance, set during build.
   SharedPreferences? _prefs;
@@ -151,13 +87,8 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       includeAll: !shouldFilterByGroup,
     );
     final allGroups = await _repository.getGroups();
-    final updatedCache = Map<int?, List<ShelfBook>>.from(
-      currentState.cachedBooks,
-    );
     final cacheKey = shouldFilterByGroup ? actualFilterGroupId : null;
-    updatedCache[cacheKey] = books;
-    _touchCacheKey(cacheKey);
-    _trimCache(updatedCache);
+    final updatedCache = _tabCache.put(cacheKey, books);
 
     return BookshelfState.bookshelfState(
       books: books,
@@ -213,65 +144,28 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   void toggleSelectionMode() {
     final currentState = state.value;
     if (currentState == null) return;
-
-    if (currentState.isSelectionMode) {
-      // Exit selection mode and clear selections
-      state = AsyncValue.data(
-        currentState.copyWith(
-          isSelectionMode: false,
-          selectedBookIds: {},
-          selectedGroupIds: {},
-        ),
-      );
-    } else {
-      // Enter selection mode
-      state = AsyncValue.data(currentState.copyWith(isSelectionMode: true));
-    }
+    state = AsyncValue.data(withSelectionModeToggled(currentState));
   }
 
   /// Toggle item selection
   void toggleItemSelection(ShelfBook book) {
     final currentState = state.value;
-    if (currentState == null || !currentState.isSelectionMode) return;
-
-    final newSelection = Set<int>.from(currentState.selectedBookIds);
-    if (newSelection.contains(book.id)) {
-      newSelection.remove(book.id);
-    } else {
-      newSelection.add(book.id);
-    }
-    state = AsyncValue.data(
-      currentState.copyWith(selectedBookIds: newSelection),
-    );
+    if (currentState == null) return;
+    state = AsyncValue.data(withBookSelectionToggled(currentState, book.id));
   }
 
   /// Select all books
   void selectAll() {
     final currentState = state.value;
     if (currentState == null) return;
-
-    final bookIds = <int>{};
-    final groupIds = <int>{};
-    for (final book in currentState.books) {
-      bookIds.add(book.id);
-    }
-    state = AsyncValue.data(
-      currentState.copyWith(
-        selectedBookIds: bookIds,
-        selectedGroupIds: groupIds,
-        isSelectionMode: true,
-      ),
-    );
+    state = AsyncValue.data(withAllBooksSelected(currentState));
   }
 
   /// Clear selection
   void clearSelection() {
     final currentState = state.value;
     if (currentState == null) return;
-
-    state = AsyncValue.data(
-      currentState.copyWith(selectedBookIds: {}, selectedGroupIds: {}),
-    );
+    state = AsyncValue.data(withSelectionCleared(currentState));
   }
 
   /// Move selected items to a target group (null = root)
@@ -399,25 +293,12 @@ class BookshelfNotifier extends _$BookshelfNotifier {
         clearGroup: clearGroup,
       );
       // Remove the deleted group from the LRU cache.
-      _cacheOrder.remove(groupId);
-      final updatedCache = Map<int?, List<ShelfBook>>.from(newState.cachedBooks)
-        ..remove(groupId);
-      state = AsyncValue.data(newState.copyWith(cachedBooks: updatedCache));
+      state = AsyncValue.data(
+        newState.copyWith(cachedBooks: _tabCache.remove(groupId)),
+      );
       return true;
     } catch (e) {
       return false;
-    }
-  }
-
-  void _touchCacheKey(int? key) {
-    _cacheOrder.remove(key);
-    _cacheOrder.add(key);
-  }
-
-  void _trimCache(Map<int?, List<ShelfBook>> cache) {
-    while (_cacheOrder.length > _maxCachedTabs) {
-      final removedKey = _cacheOrder.removeAt(0);
-      cache.remove(removedKey);
     }
   }
 }
