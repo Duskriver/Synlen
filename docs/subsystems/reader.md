@@ -31,7 +31,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 | `EpubTheme` / `colorToHex` | 阅读器配色，与全局 `AppThemeSettings` 解耦 | `lib/src/features/reader/domain/epub_theme.dart` |
 | `ReadingProgress` | 完成分页后的位置：章节序号、章内页码、章内总页数 | `lib/src/features/reader/domain/reading_progress.dart` |
 | `VolumeControlService` | 音量键翻页 | `lib/src/features/reader/application/volume_control_service.dart` |
-| `ReaderScreen` / `ReaderRenderer` / `ReaderWebView` / `ControlPanel` / `TocDrawer` | 屏幕、三 iframe 渲染器、InAppWebView 封装、控制面板与目录抽屉 | `lib/src/features/reader/presentation/` |
+| `ReaderScreen` / `ReaderRenderer` / `ReaderWebView` / `ControlPanel` / `ReaderBottomBar` / `TocDrawer` | 屏幕、三 iframe 渲染器、InAppWebView 封装、控制面板与底部控制条、目录抽屉 | `lib/src/features/reader/presentation/` |
 | `AndroidPageTurnSession` / `IOSPageTurnSession` | 平台翻页动画 | `lib/src/features/reader/presentation/page_turn/` |
 | 5 个 part mixin | `progress` / `theme` / `link_handling` / `image_viewer` / `footnote` | `lib/src/features/reader/presentation/mixins/` |
 
@@ -59,7 +59,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 - 这 5 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test（[测试现状](../testing.md#现状)）。
 - `EpubWebViewHandler` 与 `epub://` 虚拟域同时服务 EPUB 与 TXT；修复方向是格式中立命名（如 `BookWebViewHandler`、`book://`），改名牵连 URL 拦截与 JS 侧资源引用，需独立评估。
 - 切换书籍不关闭上一本的 Rust 缓存条目：`EpubStreamService` 为 keepAlive，`closeEpub` 只在它被销毁时调用，同一会话内连续打开多本书会累积缓存条目（见 [rust.md](rust.md)）。
-- 超 400 行文件：`reader_screen.dart`、`reader_renderer.dart`、`reader_webview.dart`、`control_panel.dart`。复现：
+- 超 400 行文件：`reader_screen.dart`、`reader_renderer.dart`、`reader_webview.dart`。复现：
 
 ```sh
 find lib/src/features/reader -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
