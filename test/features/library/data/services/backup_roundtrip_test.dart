@@ -11,7 +11,7 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
-import 'package:synlen/src/features/library/application/progress_log.dart';
+import 'package:synlen/src/features/library/domain/import_progress.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/services/export_backup_service.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service.dart';

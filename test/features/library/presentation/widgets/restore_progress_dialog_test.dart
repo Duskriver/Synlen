@@ -5,8 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/core/widgets/toast_bubble.dart';
-import 'package:synlen/src/features/library/application/progress_log.dart';
-import 'package:synlen/src/features/library/data/services/import_backup_service.dart';
+import 'package:synlen/src/features/library/domain/import_progress.dart';
 import 'package:synlen/src/features/library/presentation/widgets/progress_dialog.dart';
 import 'package:synlen/src/features/library/presentation/widgets/restore_progress_dialog.dart';
 

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/library/application/library_notifier.dart';
 import 'features/library/application/bookshelf_notifier.dart';
-import 'features/library/application/progress_log.dart';
+import 'features/library/domain/import_progress.dart';
 import 'features/library/presentation/widgets/progress_dialog.dart';
 import '../l10n/app_localizations.dart';
 import 'core/services/toast_service.dart';
