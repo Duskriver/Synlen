@@ -14,10 +14,10 @@ presentation 直接依赖 drift 生成的 `ShelfBook`：9 个文件引 `core/dat
 
 给"书架列表项"定义一个 presentation 需要的窄视图类型 `ShelfBookView`（`features/library/domain/`），只含 UI 实际读取的字段（id、fileHash、title、author、coverPath、format、direction、currentChapterIndex、readingProgress、isFinished、groupName、updatedAt 等，按实际读取点收敛）。映射函数放在 `library/application`，由 provider 在把书交给 UI 前完成映射；presentation 只吃 `ShelfBookView`。
 
-分两批落地，每批一个可验证切片：
+分两批落地，每批一个可验证切片（切法经调用点核实后调整过一次）：
 
-1. 书架列表链路（`LibraryItemsGrid`、`BookGridItem`、`LibrarySelectionBar`、`BookshelfState.books`）。
-2. 详情与目录链路（`book_detail_screen`、`toc_drawer`、`library_actions_mixin`）。
+1. **展示链路**：`ShelfBookView` + 映射 + `BookshelfState.books` + `LibraryItemsGrid` + `BookGridItem` + `LibrarySelectionBar`，并同步路由 `extra` 契约——网格点击目前把 `ShelfBook` 作为 `extra` 传给 `/book/:id`，详情页的 `initialBook` 也是 `ShelfBook`，所以两屏必须同一批改。
+2. **详情内部**：`book_detail_screen` 的编辑 / 分享 / 保存与 `toc_drawer`、`library_actions_mixin`——这些动作需要完整行（保存要走仓库），改为经 application 用例按需取完整 `ShelfBook`，视图只传 id。
 
 ## Alternatives considered
 
