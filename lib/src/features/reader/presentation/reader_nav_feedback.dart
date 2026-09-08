@@ -14,16 +14,19 @@ class ReaderNavFeedback {
   final AppLocalizations l10n;
   final ThemeData theme;
 
+  /// 结果到文案的映射；不需要提示的结果返回 null。
+  String? messageFor(ReaderNavOutcome outcome) => switch (outcome) {
+    ReaderNavOutcome.firstChapter => l10n.firstChapterOfBook,
+    ReaderNavOutcome.lastChapter => l10n.lastChapterOfBook,
+    ReaderNavOutcome.firstPageOfBook => l10n.firstPageOfBook,
+    ReaderNavOutcome.lastPageOfBook => l10n.lastPageOfBook,
+    ReaderNavOutcome.tocItemHasNoContent => l10n.chapterHasNoContent,
+    ReaderNavOutcome.tocItemNotInSpine => l10n.chapterNotFoundInSpine,
+    ReaderNavOutcome.moved || ReaderNavOutcome.ignored => null,
+  };
+
   void show(ReaderNavOutcome outcome) {
-    final message = switch (outcome) {
-      ReaderNavOutcome.firstChapter => l10n.firstChapterOfBook,
-      ReaderNavOutcome.lastChapter => l10n.lastChapterOfBook,
-      ReaderNavOutcome.firstPageOfBook => l10n.firstPageOfBook,
-      ReaderNavOutcome.lastPageOfBook => l10n.lastPageOfBook,
-      ReaderNavOutcome.tocItemHasNoContent => l10n.chapterHasNoContent,
-      ReaderNavOutcome.tocItemNotInSpine => l10n.chapterNotFoundInSpine,
-      ReaderNavOutcome.moved || ReaderNavOutcome.ignored => null,
-    };
+    final message = messageFor(outcome);
     if (message == null) return;
     ToastService.showError(message, theme: theme);
   }
