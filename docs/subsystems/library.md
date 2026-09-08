@@ -16,7 +16,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 |---|---|---|
 | `BookQueries` / `RepositoryBookQueries` | 跨 feature 书目接口：`findBook`、`findManifest`、`saveProgress`；宿主只依赖它 | `lib/src/features/library/application/book_queries.dart` |
 | `BookActions` / `bookDetailProvider` | 详情页用例：取书、保存元数据、分享文件 | `lib/src/features/library/application/book_actions.dart` |
-| `BookshelfNotifier` / `BookshelfState` / `ViewMode` | 书架状态：排序、分组过滤、多选、8 个标签页的 LRU 缓存 | `lib/src/features/library/application/bookshelf_notifier.dart` |
+| `BookshelfNotifier` / `BookshelfState` / `ViewMode` | 书架状态：排序、分组过滤、多选；状态值对象在 `bookshelf_state.dart`，多选纯函数在 `bookshelf_selection.dart`，标签页 LRU 缓存在 `bookshelf_tab_cache.dart` | `lib/src/features/library/application/bookshelf_notifier.dart` |
 | `LibraryNotifier` / `ImportProgress` / `ImportStatus` | 导入编排：`importPipelineStream`（逐文件缓存 → 导入 → 清理）与 `importLibraryFromFolder` | `lib/src/features/library/application/library_notifier.dart` |
 | `EpubImportService` | 导入流水线编排：去重 → 落盘 → 解析 → 封面 → 落库；格式探测、文件落盘与封面提取分别在 `BookFileProbe` / `BookFileStore` / `CoverExtractor` | `lib/src/features/library/data/services/epub_import_service.dart` |
 | `ImportWorkers` / `ParseParams` / `ParseResult` | 在 isolate 中运行的哈希、EPUB 解析、TXT 解析与图片压缩 | `lib/src/features/library/data/services/epub_import_workers.dart` |
@@ -56,12 +56,6 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 ## 已知限制与待办
 
 - `EpubImportService` 与原生 `pickEpubFiles` / `isEpubFile` 实际同时处理 EPUB 与 TXT；修复方向是格式中立命名（如 `BookImportService`）。
-- 超 400 行文件：`bookshelf_notifier.dart`、`book_detail_screen.dart`。复现：
-
-```sh
-find lib/src/features/library -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
-```
-
 ## Dev Note
 
 None.
