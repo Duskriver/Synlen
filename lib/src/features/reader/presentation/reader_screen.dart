@@ -22,9 +22,9 @@ import '../application/volume_key_page_turn.dart';
 import 'reader_nav_feedback.dart';
 import 'reader_toc_state.dart';
 import './reader_renderer.dart';
-import './control_panel.dart';
 import '../application/epub_webview_handler.dart';
 import 'reader_webview.dart';
+import 'widgets/reader_stage.dart';
 import './toc_drawer.dart';
 import './widgets/reader_image_overlay.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -468,96 +468,65 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 tocDrawerOpen = isOpened;
                 setupVolumeControl();
               },
-              body: Container(
-                color: epubTheme.surfaceColor,
-                child: Stack(
-                  children: [
-                    ReaderRenderer(
-                      controller: rendererController,
-                      bookSession: bookSession,
-                      webViewHandler: webViewHandler,
-                      fileHash: widget.fileHash,
-                      showControls: showControls,
-                      isLoading:
-                          navigator.state.value.isLoading ||
-                          navigator.state.value.isRefreshingTheme,
-                      canPerformPageTurn: canPerformPageTurn,
-                      onPerformPageTurn: handlePageTurn,
-                      onToggleControls: toggleControls,
-                      callbacks: ReaderWebViewCallbacks(
-                        onInitialized: () async {
-                          final ratio = bookSession.initialScrollPosition;
-                          await navigator.load(restoreScrollRatio: ratio);
-                          if (!mounted) return;
-                          updateProgressDebounced();
-                          saveProgressDebounced();
-                        },
-                        onPageCountReady: (totalPages) async {
-                          navigator.reportPageCount(totalPages);
-                          updateProgressDebounced();
-                        },
-                        onPageChanged: (pageIndex) {
-                          navigator.reportPageIndex(pageIndex);
-                          updateProgressDebounced();
-                          saveProgressDebounced();
-                        },
-                        onScrollAnchors: handleScrollAnchors,
-                        onImageLongPress: handleImageLongPress,
-                        onTap: (x, y) {},
-                        onFootnoteTap: handleFootnoteTap,
-                        onLinkTap: handleLinkTap,
-                        shouldHandleLinkTap: shouldHandleLinkTap,
-                        onWordTap: handleWordTap,
-                        onSentenceSelected: handleSentenceSelected,
-                      ),
-                      shouldShowWebView: shouldShowWebView,
-                      initializeTheme: settings.toEpubTheme(context),
-                      statusBarLeftContent: tocState.activeTitle,
-                      statusBarRightContent: displayProgressNotifier,
-                    ),
-
-                    ListenableBuilder(
-                      listenable: Listenable.merge([
-                        navigator.state,
-                        tocState.activeTitle,
-                      ]),
-                      builder: (context, child) {
-                        final nav = navigator.state.value;
-                        return ControlPanel(
-                          showControls: showControls,
-                          title: bookSession.spine.isEmpty
-                              ? bookSession.book!.title
-                              : tocState.activeTitle.value,
-                          currentSpineItemIndex: nav.spineIndex,
-                          totalSpineItems: bookSession.spine.length,
-                          currentPageInChapter: nav.pageInChapter,
-                          totalPagesInChapter: nav.totalPagesInChapter,
-                          direction: bookSession.book!.direction,
-                          onBack: _leaveReader,
-                          onOpenDrawer: openDrawer,
-                          onPreviousPage: () =>
-                              rendererController.performPreviousPageTurn(),
-                          onFirstPage: () =>
-                              _navigate(() => navigator.goToPage(0)),
-                          onNextPage: () =>
-                              rendererController.performNextPageTurn(),
-                          onLastPage: () => _navigate(
-                            () => navigator.goToPage(
-                              navigator.state.value.totalPagesInChapter - 1,
-                            ),
-                          ),
-                          onPreviousChapter: () =>
-                              _navigate(navigator.previousChapterFirstPage),
-                          onNextChapter: () => _navigate(navigator.nextChapter),
-                          onToggleStyleDrawer: (show) {
-                            styleDrawerOpen = show;
-                            setupVolumeControl();
-                          },
-                        );
-                      },
-                    ),
-                  ],
+              body: ReaderStage(
+                bookSession: bookSession,
+                navigator: navigator,
+                rendererController: rendererController,
+                webViewHandler: webViewHandler,
+                fileHash: widget.fileHash,
+                showControls: showControls,
+                shouldShowWebView: shouldShowWebView,
+                initializeTheme: settings.toEpubTheme(context),
+                activeTocTitle: tocState.activeTitle,
+                progressLabel: displayProgressNotifier,
+                canPerformPageTurn: canPerformPageTurn,
+                onPerformPageTurn: handlePageTurn,
+                onToggleControls: toggleControls,
+                callbacks: ReaderWebViewCallbacks(
+                  onInitialized: () async {
+                    final ratio = bookSession.initialScrollPosition;
+                    await navigator.load(restoreScrollRatio: ratio);
+                    if (!mounted) return;
+                    updateProgressDebounced();
+                    saveProgressDebounced();
+                  },
+                  onPageCountReady: (totalPages) async {
+                    navigator.reportPageCount(totalPages);
+                    updateProgressDebounced();
+                  },
+                  onPageChanged: (pageIndex) {
+                    navigator.reportPageIndex(pageIndex);
+                    updateProgressDebounced();
+                    saveProgressDebounced();
+                  },
+                  onScrollAnchors: handleScrollAnchors,
+                  onImageLongPress: handleImageLongPress,
+                  onTap: (x, y) {},
+                  onFootnoteTap: handleFootnoteTap,
+                  onLinkTap: handleLinkTap,
+                  shouldHandleLinkTap: shouldHandleLinkTap,
+                  onWordTap: handleWordTap,
+                  onSentenceSelected: handleSentenceSelected,
                 ),
+                actions: ReaderPanelActions(
+                  onPreviousPage: rendererController.performPreviousPageTurn,
+                  onFirstPage: () => _navigate(() => navigator.goToPage(0)),
+                  onNextPage: rendererController.performNextPageTurn,
+                  onLastPage: () => _navigate(
+                    () => navigator.goToPage(
+                      navigator.state.value.totalPagesInChapter - 1,
+                    ),
+                  ),
+                  onPreviousChapter: () =>
+                      _navigate(navigator.previousChapterFirstPage),
+                  onNextChapter: () => _navigate(navigator.nextChapter),
+                ),
+                onBack: _leaveReader,
+                onOpenDrawer: openDrawer,
+                onToggleStyleDrawer: (show) {
+                  styleDrawerOpen = show;
+                  setupVolumeControl();
+                },
               ),
             ),
 
