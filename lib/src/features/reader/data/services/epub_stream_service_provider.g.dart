@@ -61,4 +61,4 @@ final class EpubStreamServiceProvider
   }
 }
 
-String _$epubStreamServiceHash() => r'2f90b6721b0eb99f2be9b13b012cf1ee4f898865';
+String _$epubStreamServiceHash() => r'd67e354e5a3673a358403f043287eb20304bbcf9';
