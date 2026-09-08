@@ -13,10 +13,10 @@ import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
 import '../../../../core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/core/database/app_database.dart';
+import '../widgets/delete_books_confirm_dialog.dart';
+import '../widgets/group_name_prompt_dialog.dart';
 import '../widgets/group_selection_dialog.dart';
-
-/// 恢复备份的来源：标准 ZIP 备份文件，或旧版本导出的文件夹。
-enum RestoreBackupSource { zipFile, folder }
+import '../widgets/restore_source_dialog.dart';
 
 /// Mixin that provides action methods for LibraryScreen.
 /// Handles imports, deletions, group management, and file operations.
@@ -142,20 +142,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
   Future<void> confirmDelete(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.deleteBooks),
-        content: Text(AppLocalizations.of(context)!.deleteBooksConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(AppLocalizations.of(context)!.delete),
-          ),
-        ],
-      ),
+      builder: (context) => const DeleteBooksConfirmDialog(),
     );
 
     if (confirmed == true) {
@@ -314,21 +301,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     final l10n = AppLocalizations.of(context)!;
     final source = await showDialog<RestoreBackupSource>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.restoreFromBackup),
-        content: Text(l10n.restoreSourceHint),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, RestoreBackupSource.folder),
-            child: Text(l10n.restoreSourceFolder),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, RestoreBackupSource.zipFile),
-            child: Text(l10n.restoreSourceFile),
-          ),
-        ],
-      ),
+      builder: (context) => const RestoreSourceDialog(),
     );
 
     // User cancelled the source chooser — exit silently.
@@ -389,34 +362,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
   }
 
   Future<String?> promptForGroupName(BuildContext context) async {
-    var draftName = '';
     final result = await showDialog<String?>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.newCategory),
-        content: TextField(
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.categoryName,
-          ),
-          onChanged: (value) => draftName = value,
-          onSubmitted: (value) => Navigator.pop(context, value.trim()),
-          inputFormatters: [
-            FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, draftName.trim()),
-            child: Text(AppLocalizations.of(context)!.create),
-          ),
-        ],
-      ),
+      builder: (context) => const GroupNamePromptDialog(),
     );
     return (result?.trim().isNotEmpty ?? false) ? result : null;
   }
