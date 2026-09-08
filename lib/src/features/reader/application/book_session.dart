@@ -1,7 +1,7 @@
 import '../../../core/database/app_database.dart';
 import '../../library/domain/book_manifest.dart';
 import '../../library/application/book_queries.dart';
-import 'epub_webview_handler.dart';
+import 'book_webview_handler.dart';
 import '../domain/reading_progress.dart';
 
 /// Manages the current reading session including book data, manifest, and TOC state
@@ -217,7 +217,7 @@ class BookSession {
     final href = Href()
       ..path = _spine[index].href
       ..anchor = anchor;
-    return EpubWebViewHandler.getFileUrl(fileHash, href);
+    return BookWebViewHandler.getFileUrl(fileHash, href);
   }
 
   /// Find spine index for a TOC item
@@ -237,7 +237,7 @@ class BookSession {
     // Check if URL is full url with book://localhost/book/{fileHash}/path(#anchor)
     // If so, extract the path, no need to extract anchor because spine only cares about path
     String path;
-    if (url.startsWith(EpubWebViewHandler.virtualScheme)) {
+    if (url.startsWith(BookWebViewHandler.virtualScheme)) {
       final uri = Uri.parse(url);
       path = uri.pathSegments.skip(2).join('/'); // Skip 'book' and '{fileHash}'
     } else {

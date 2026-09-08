@@ -16,7 +16,7 @@ Status: proposed
 
 按"改动面从窄到宽"分三步，每步一次提交、独立验证：
 
-1. **Dart 类型名**：`EpubImportService` → `BookImportService`（已交付，见 [导入服务改名](../../implemented/architecture/2026-09-09-book-import-service-rename.md)）、`EpubWebViewHandler` → `BookWebViewHandler`（含 provider、文件与测试重命名）。纯 Dart，无跨语言契约变化。
+1. **Dart 类型名**：`EpubImportService` → `BookImportService`、`EpubWebViewHandler` → `BookWebViewHandler`（含 provider、文件与测试重命名）——已交付。纯 Dart，无跨语言契约变化。
 2. **原生通道方法名**：`pickEpubFiles` / `pickEpubFolder` / `isEpubFile` → `pickBookFiles` / `pickBookFolder` / `isBookFile`（已交付，Kotlin、Swift 与 Dart 三处同批改齐）。
 3. **虚拟域**：`epub://` → `book://`，同批改 `EpubWebViewHandler.virtualScheme`、`book_session`、`txt_content_service`、`link_handling_mixin`、`font_manager_notifier` 与 `web_assets/controller.js/renderer/theme_manager.ts`，并重跑 `dart run tool/build_web_assets.dart` 生成 `lib/src/web/web_assets.dart`。
 

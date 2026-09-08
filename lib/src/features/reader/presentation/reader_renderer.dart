@@ -14,7 +14,7 @@ import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 
 import '../application/book_session.dart';
 import '../application/chapter_navigation.dart';
-import '../application/epub_webview_handler.dart';
+import '../application/book_webview_handler.dart';
 import '../application/reader_viewport.dart';
 import './reader_webview.dart';
 import './widgets/reader_status_bar_overlay.dart';
@@ -24,7 +24,7 @@ part 'reader_renderer_controller.dart';
 class ReaderRenderer extends ConsumerStatefulWidget {
   final ReaderRendererController controller;
   final BookSession bookSession;
-  final EpubWebViewHandler webViewHandler;
+  final BookWebViewHandler webViewHandler;
   final String fileHash;
   final bool showControls;
   final bool isLoading;

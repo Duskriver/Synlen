@@ -20,4 +20,4 @@ Status: implemented
 
 - `rg 'epub://' lib web_assets/controller.js docs` 为空（生成物已重建）。
 - 测试里断言 URL 的用例同步改为 `book://`；全量测试绿。
-- 提案只剩第一步的 `EpubWebViewHandler` → `BookWebViewHandler` 改名未做。
+- 提案三步骤已全部交付（Dart 类型名、原生通道方法名、虚拟域）；剩余验证只有真机冒烟。

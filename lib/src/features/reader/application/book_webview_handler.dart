@@ -21,7 +21,7 @@ class _CachedResource {
 /// WebView request handler for streaming book content
 /// Intercepts requests to virtual domain and serves files from compressed EPUB,
 /// 或从 TXT 单文件按字节范围切片包装为 XHTML。
-class EpubWebViewHandler {
+class BookWebViewHandler {
   final EpubStreamService _streamService;
   final TxtContentService _txtContentService;
 
@@ -39,7 +39,7 @@ class EpubWebViewHandler {
   static const String virtualScheme = 'book';
   static const _headers = {'Cache-Control': 'public, max-age=31536000'};
 
-  EpubWebViewHandler({
+  BookWebViewHandler({
     required EpubStreamService streamService,
     required TxtContentService txtContentService,
   }) : _streamService = streamService,

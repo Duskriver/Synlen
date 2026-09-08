@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/book_session.dart';
-import '../../application/epub_webview_handler.dart';
+import '../../application/book_webview_handler.dart';
 import '../../application/reader_navigator.dart';
 import '../../domain/epub_theme.dart';
 import '../control_panel.dart';
@@ -58,7 +58,7 @@ class ReaderStage extends StatelessWidget {
   final BookSession bookSession;
   final ReaderNavigator navigator;
   final ReaderRendererController rendererController;
-  final EpubWebViewHandler webViewHandler;
+  final BookWebViewHandler webViewHandler;
   final String fileHash;
   final bool showControls;
   final bool shouldShowWebView;

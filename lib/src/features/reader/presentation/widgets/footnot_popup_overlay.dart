@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
-import 'package:synlen/src/features/reader/application/epub_webview_handler.dart';
+import 'package:synlen/src/features/reader/application/book_webview_handler.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
 class FootnotePopupOverlay extends StatefulWidget {
@@ -17,7 +17,7 @@ class FootnotePopupOverlay extends StatefulWidget {
   final Uri? baseUrl;
   final String epubPath;
   final String fileHash;
-  final EpubWebViewHandler webViewHandler;
+  final BookWebViewHandler webViewHandler;
 
   const FootnotePopupOverlay({
     super.key,

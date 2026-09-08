@@ -3,7 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../library/application/book_queries.dart';
 import '../data/services/epub_stream_service_provider.dart';
 import 'book_session.dart';
-import 'epub_webview_handler.dart';
+import 'book_webview_handler.dart';
 import 'txt_content_service_provider.dart';
 
 part 'reader_session_factory.g.dart';
@@ -20,7 +20,7 @@ class ReaderSessionFactory extends _$ReaderSessionFactory {
       BookSession(fileHash: fileHash, queries: ref.read(bookQueriesProvider));
 
   /// 创建阅读内容供给处理器（虚拟域拦截 + LRU 缓存）。
-  EpubWebViewHandler createWebViewHandler() => EpubWebViewHandler(
+  BookWebViewHandler createWebViewHandler() => BookWebViewHandler(
     streamService: ref.read(epubStreamServiceProvider),
     txtContentService: ref.read(txtContentServiceProvider),
   );
