@@ -35,6 +35,15 @@ Future<void> _registerBundledLicenses() async {
       AppInfo.originalAuthor,
     ], licenseText);
   });
+
+  // flutter_sound 为 MPL-2.0，其许可与声明需随第三方许可一并展示；
+  // 资产文件已含包名、版权与来源说明。
+  final flutterSoundLicense = await rootBundle.loadString(
+    AppInfo.flutterSoundLicenseAsset,
+  );
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(['flutter_sound'], flutterSoundLicense);
+  });
 }
 
 void main() async {

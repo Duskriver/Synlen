@@ -110,6 +110,7 @@ flutter:
 
   assets:
     - assets/licenses/lumina_mit.txt
+    - assets/licenses/flutter_sound_mpl2.txt
     - assets/icons/icon.svg
     - assets/logos/logo.svg
 

@@ -20,4 +20,8 @@ class AppInfo {
   static const applicationLegalese =
       'Synlen is based on Lumina by MilkFeng. Original project licensed under MIT.';
   static const bundledLicenseAsset = 'assets/licenses/lumina_mit.txt';
+
+  /// flutter_sound 以 MPL-2.0 发布，其许可文本需随应用分发。
+  static const flutterSoundLicenseAsset =
+      'assets/licenses/flutter_sound_mpl2.txt';
 }
