@@ -29,7 +29,7 @@ presentation 直接依赖 drift 生成的 `ShelfBook`：9 个文件引 `core/dat
 
 ## Acceptance criteria
 
-- `rg -l 'core/database/app_database.dart' lib/src/features/*/presentation` 的输出从 9 个文件降到 ≤2（允许保留仅用 `TocItem` 等值类型的文件）。
+- `dart run tool/layer_gates.dart` 打印的存量从 10 个文件降到 ≤2（该名单只减不增，门禁会拒绝过期条目）；允许保留仅用 `TocItem` 等值类型的文件。
 - `BookshelfState.books` 与 `LibraryItemsGrid` 只吃 `ShelfBookView`。
 - 新增 `ShelfBookView` 映射的单测；书架相关 widget test 的 fixture 不再构造 `ShelfBook`。
 - `flutter analyze` 零 issue、全量测试绿、`dart run tool/layer_gates.dart` 通过。

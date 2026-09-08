@@ -21,6 +21,23 @@ const _layers = <String>['presentation', 'application', 'domain', 'data'];
 /// 跨 feature 允许依赖的目标层：application 是能力入口，domain 是值类型与纯逻辑。
 const _crossFeatureAllowedTargetLayers = <String>{'application', 'domain'};
 
+/// presentation 直接依赖 drift 行类型的已知存量（[ADR 提案]：presentation 用窄视图类型
+/// 替代 `ShelfBook`）。这份名单只减不增：迁走一个就从这里删一行，门禁会拒绝过期条目。
+const _presentationDriftAllowlist = <String>{
+  'lib/src/features/library/presentation/book_detail_screen.dart',
+  'lib/src/features/library/presentation/mixins/library_actions_mixin.dart',
+  'lib/src/features/library/presentation/widgets/book_detail_edit_body.dart',
+  'lib/src/features/library/presentation/widgets/book_detail_view_body.dart',
+  'lib/src/features/library/presentation/widgets/book_grid_item.dart',
+  'lib/src/features/library/presentation/widgets/group_selection_dialog.dart',
+  'lib/src/features/library/presentation/widgets/library_app_bar.dart',
+  'lib/src/features/library/presentation/widgets/library_items_grid.dart',
+  'lib/src/features/library/presentation/widgets/library_tab_view.dart',
+  'lib/src/features/reader/presentation/toc_drawer.dart',
+};
+
+const _driftDatabasePath = 'lib/src/core/database/app_database.dart';
+
 final List<String> _errors = <String>[];
 final List<String> _notes = <String>[];
 
@@ -37,6 +54,7 @@ void main(List<String> args) {
       _checkEdge(importer, source, target);
     }
   }
+  _verifyAllowlistFreshness(repo, files);
   if (args.contains('--list')) {
     _printEdges(repo, files);
   }
@@ -124,6 +142,24 @@ String _normalize(String path) {
   return parts.join('/');
 }
 
+/// 名单里的文件若已不再依赖 drift 行类型，条目必须删掉——名单只减不增。
+void _verifyAllowlistFreshness(Directory repo, List<File> files) {
+  final importers = <String>{
+    for (final file in files)
+      if (_targets(repo, file).contains(_driftDatabasePath))
+        _rel(repo, file.path),
+  };
+  for (final path in _presentationDriftAllowlist) {
+    if (!importers.contains(path)) {
+      _errors.add('存量名单已过期，请删除：$path');
+    }
+  }
+  _notes.add(
+    'presentation 依赖 drift 行类型的存量：'
+    '${importers.where(_presentationDriftAllowlist.contains).length} 个文件',
+  );
+}
+
 void _checkEdge(
   String importer,
   ({String module, String layer}) source,
@@ -143,6 +179,14 @@ void _checkEdge(
   if (source.layer == 'domain' &&
       const {'application', 'presentation', 'data'}.contains(dep.layer)) {
     _errors.add('domain 不得依赖 ${dep.layer}：$label');
+    return;
+  }
+
+  // 规则 5：presentation 不得新引 drift 行类型；存量在名单里，只减不增。
+  if (source.layer == 'presentation' &&
+      target == _driftDatabasePath &&
+      !_presentationDriftAllowlist.contains(importer)) {
+    _errors.add('presentation 不得依赖 drift 行类型（新增）：$label');
     return;
   }
 
