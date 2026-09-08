@@ -30,11 +30,12 @@
 | `AppStorageConstants` | 磁盘布局常量：`books`、`covers`、`manifests`、`fonts`、`shelf.json` | `lib/src/core/storage/app_storage_constants.dart` |
 | `appLogger` | 全局 `Logger` 实例，日志唯一出口 | `lib/src/core/services/app_logger.dart` |
 | `ToastService` | 基于 overlay 的提示，并持有 `navigatorKey` 供跨页面弹窗使用 | `lib/src/core/services/toast_service.dart` |
-| `UnifiedImportService` | 选文件 / 选文件夹 / 备份 ZIP / 字体选择的跨平台编排与缓存 | `lib/src/core/file_handling/unified_import_service.dart` |
+| `UnifiedImportService` | 导入门面：缓存与哈希、备份 ZIP 解压、字体缓存；选择器调用委托 `NativeFilePicker` | `lib/src/core/file_handling/unified_import_service.dart` |
+| `NativeFilePicker` | 平台选择器适配：MethodChannel 调用与 Android SAF / iOS UIDocumentPicker 分支 | `lib/src/core/file_handling/native_file_picker.dart` |
 | `ImportCacheManager` | 导入缓存目录与 SHA-256 哈希（`createCacheAndHash` / `createRawCacheFile` / `clearAll`） | `lib/src/core/file_handling/import_cache_manager.dart` |
 | `PlatformPath` / `AndroidUriPath` / `IOSFilePath` | 平台路径抽象：Android 用 SAF `content://`，iOS 用文件系统路径 | `lib/src/core/file_handling/platform_path.dart` |
 | `ImportableEpub` | 缓存文件 + 哈希 + 原始文件名 | `lib/src/core/file_handling/importable_epub.dart` |
-| `BackupPaths` / `BackupPathsForBook` | 备份根目录、`shelf.json` 与按哈希索引的书 / 清单 / 封面路径 | `lib/src/core/file_handling/unified_import_service.dart` |
+| `BackupPaths` / `BackupPathsForBook` / `classifyBackupEntries` / `buildBackupBookPaths` | 备份根目录、`shelf.json` 与按哈希索引的书 / 清单 / 封面路径；分桶与装配是纯函数 | `lib/src/core/file_handling/backup_paths.dart` |
 | `UrlLauncher` | 用系统外部应用打开 URL | `lib/src/core/url_launcher/url_launcher.dart` |
 | `AppInfo` | 应用名、作者、版本检查端点与许可资源路径 | `lib/src/core/config/app_info.dart` |
 
@@ -57,9 +58,9 @@
 ## 已知限制与待办
 
 - `avoid_print` 只拦 `print`，不覆盖 `debugPrint`；要让 CI 拦住 `debugPrint`，需引入 `custom_lint` 自定义规则。
-- 打开方式与分享进入的注册和接收不对称：`android/app/src/main/AndroidManifest.xml` 的 `ACTION_VIEW` / `ACTION_SEND` 与 `ios/Runner/Info.plist` 的 `CFBundleDocumentTypes` 都已注册，Dart 侧只有 `lib/src/global_share_handler.dart` 的 `GolbalShareHandler` 经路由重定向把 `content://` / `file://` 转入导入；`MainActivity` 没有 `onNewIntent`，也不读取 `Intent.EXTRA_STREAM`，分享进入没有接收路径。
+- 打开方式与分享进入的注册和接收不对称：`android/app/src/main/AndroidManifest.xml` 的 `ACTION_VIEW` / `ACTION_SEND` 与 `ios/Runner/Info.plist` 的 `CFBundleDocumentTypes` 都已注册，Dart 侧只有 `lib/src/global_share_handler.dart` 的 `GlobalShareHandler` 经路由重定向把 `content://` / `file://` 转入导入；`MainActivity` 没有 `onNewIntent`，也不读取 `Intent.EXTRA_STREAM`，分享进入没有接收路径。
 - 修复方向：接入 intent 接收（如 `receive_sharing_intent` / `app_links`），把 content URI 交给 `importPipelineStream`，并在真机验证 SAF 权限与时序。
-- 超 400 行的 core 文件：`unified_import_service.dart`、`color_schemes.dart`。复现：
+- 超 400 行的 core 文件：`color_schemes.dart`。复现：
 
 ```sh
 find lib/src/core -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head

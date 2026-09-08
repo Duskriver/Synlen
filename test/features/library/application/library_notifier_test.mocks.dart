@@ -3,20 +3,21 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i5;
+import 'dart:async' as _i6;
 import 'dart:io' as _i4;
-import 'dart:typed_data' as _i8;
+import 'dart:typed_data' as _i9;
 
-import 'package:fpdart/fpdart.dart' as _i10;
+import 'package:fpdart/fpdart.dart' as _i11;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i7;
-import 'package:synlen/src/core/database/app_database.dart' as _i11;
+import 'package:mockito/src/dummies.dart' as _i8;
+import 'package:synlen/src/core/database/app_database.dart' as _i12;
+import 'package:synlen/src/core/file_handling/backup_paths.dart' as _i3;
 import 'package:synlen/src/core/file_handling/importable_epub.dart' as _i2;
-import 'package:synlen/src/core/file_handling/platform_path.dart' as _i6;
+import 'package:synlen/src/core/file_handling/platform_path.dart' as _i7;
 import 'package:synlen/src/core/file_handling/unified_import_service.dart'
-    as _i3;
+    as _i5;
 import 'package:synlen/src/features/library/data/services/epub_import_service.dart'
-    as _i9;
+    as _i10;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -53,165 +54,165 @@ class _FakeFile_2 extends _i1.SmartFake implements _i4.File {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockUnifiedImportService extends _i1.Mock
-    implements _i3.UnifiedImportService {
+    implements _i5.UnifiedImportService {
   MockUnifiedImportService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<List<_i6.PlatformPath>> pickFiles() =>
+  _i6.Future<List<_i7.PlatformPath>> pickFiles() =>
       (super.noSuchMethod(
             Invocation.method(#pickFiles, []),
-            returnValue: _i5.Future<List<_i6.PlatformPath>>.value(
-              <_i6.PlatformPath>[],
+            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
+              <_i7.PlatformPath>[],
             ),
           )
-          as _i5.Future<List<_i6.PlatformPath>>);
+          as _i6.Future<List<_i7.PlatformPath>>);
 
   @override
-  _i5.Future<List<_i6.PlatformPath>> pickFolder() =>
+  _i6.Future<List<_i7.PlatformPath>> pickFolder() =>
       (super.noSuchMethod(
             Invocation.method(#pickFolder, []),
-            returnValue: _i5.Future<List<_i6.PlatformPath>>.value(
-              <_i6.PlatformPath>[],
+            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
+              <_i7.PlatformPath>[],
             ),
           )
-          as _i5.Future<List<_i6.PlatformPath>>);
+          as _i6.Future<List<_i7.PlatformPath>>);
 
   @override
-  _i5.Future<_i2.ImportableEpub> processEpub(_i6.PlatformPath? path) =>
+  _i6.Future<_i2.ImportableEpub> processEpub(_i7.PlatformPath? path) =>
       (super.noSuchMethod(
             Invocation.method(#processEpub, [path]),
-            returnValue: _i5.Future<_i2.ImportableEpub>.value(
+            returnValue: _i6.Future<_i2.ImportableEpub>.value(
               _FakeImportableEpub_0(
                 this,
                 Invocation.method(#processEpub, [path]),
               ),
             ),
           )
-          as _i5.Future<_i2.ImportableEpub>);
+          as _i6.Future<_i2.ImportableEpub>);
 
   @override
-  _i5.Future<String> processPlainFile(_i6.PlatformPath? path) =>
+  _i6.Future<String> processPlainFile(_i7.PlatformPath? path) =>
       (super.noSuchMethod(
             Invocation.method(#processPlainFile, [path]),
-            returnValue: _i5.Future<String>.value(
-              _i7.dummyValue<String>(
+            returnValue: _i6.Future<String>.value(
+              _i8.dummyValue<String>(
                 this,
                 Invocation.method(#processPlainFile, [path]),
               ),
             ),
           )
-          as _i5.Future<String>);
+          as _i6.Future<String>);
 
   @override
-  _i5.Future<_i8.Uint8List> processBinaryFile(_i6.PlatformPath? path) =>
+  _i6.Future<_i9.Uint8List> processBinaryFile(_i7.PlatformPath? path) =>
       (super.noSuchMethod(
             Invocation.method(#processBinaryFile, [path]),
-            returnValue: _i5.Future<_i8.Uint8List>.value(_i8.Uint8List(0)),
+            returnValue: _i6.Future<_i9.Uint8List>.value(_i9.Uint8List(0)),
           )
-          as _i5.Future<_i8.Uint8List>);
+          as _i6.Future<_i9.Uint8List>);
 
   @override
-  _i5.Future<String> fetchIosFileToTemp(String? originalPath) =>
+  _i6.Future<String> fetchIosFileToTemp(String? originalPath) =>
       (super.noSuchMethod(
             Invocation.method(#fetchIosFileToTemp, [originalPath]),
-            returnValue: _i5.Future<String>.value(
-              _i7.dummyValue<String>(
+            returnValue: _i6.Future<String>.value(
+              _i8.dummyValue<String>(
                 this,
                 Invocation.method(#fetchIosFileToTemp, [originalPath]),
               ),
             ),
           )
-          as _i5.Future<String>);
+          as _i6.Future<String>);
 
   @override
-  _i5.Future<void> releaseIosAccess() =>
+  _i6.Future<void> releaseIosAccess() =>
       (super.noSuchMethod(
             Invocation.method(#releaseIosAccess, []),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i6.Future<void>);
 
   @override
-  _i5.Future<_i3.BackupPaths?> pickBackupFolder() =>
+  _i6.Future<_i3.BackupPaths?> pickBackupFolder() =>
       (super.noSuchMethod(
             Invocation.method(#pickBackupFolder, []),
-            returnValue: _i5.Future<_i3.BackupPaths?>.value(),
+            returnValue: _i6.Future<_i3.BackupPaths?>.value(),
           )
-          as _i5.Future<_i3.BackupPaths?>);
+          as _i6.Future<_i3.BackupPaths?>);
 
   @override
-  _i5.Future<_i6.PlatformPath?> pickBackupZipFile() =>
+  _i6.Future<_i7.PlatformPath?> pickBackupZipFile() =>
       (super.noSuchMethod(
             Invocation.method(#pickBackupZipFile, []),
-            returnValue: _i5.Future<_i6.PlatformPath?>.value(),
+            returnValue: _i6.Future<_i7.PlatformPath?>.value(),
           )
-          as _i5.Future<_i6.PlatformPath?>);
+          as _i6.Future<_i7.PlatformPath?>);
 
   @override
-  _i5.Future<_i3.BackupPaths> processBackupZip(_i6.PlatformPath? zipPath) =>
+  _i6.Future<_i3.BackupPaths> processBackupZip(_i7.PlatformPath? zipPath) =>
       (super.noSuchMethod(
             Invocation.method(#processBackupZip, [zipPath]),
-            returnValue: _i5.Future<_i3.BackupPaths>.value(
+            returnValue: _i6.Future<_i3.BackupPaths>.value(
               _FakeBackupPaths_1(
                 this,
                 Invocation.method(#processBackupZip, [zipPath]),
               ),
             ),
           )
-          as _i5.Future<_i3.BackupPaths>);
+          as _i6.Future<_i3.BackupPaths>);
 
   @override
-  _i5.Future<void> cleanCache(_i4.File? cacheFile) =>
+  _i6.Future<void> cleanCache(_i4.File? cacheFile) =>
       (super.noSuchMethod(
             Invocation.method(#cleanCache, [cacheFile]),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i6.Future<void>);
 
   @override
-  _i5.Future<List<_i6.PlatformPath>> pickFontFiles() =>
+  _i6.Future<List<_i7.PlatformPath>> pickFontFiles() =>
       (super.noSuchMethod(
             Invocation.method(#pickFontFiles, []),
-            returnValue: _i5.Future<List<_i6.PlatformPath>>.value(
-              <_i6.PlatformPath>[],
+            returnValue: _i6.Future<List<_i7.PlatformPath>>.value(
+              <_i7.PlatformPath>[],
             ),
           )
-          as _i5.Future<List<_i6.PlatformPath>>);
+          as _i6.Future<List<_i7.PlatformPath>>);
 
   @override
-  _i5.Future<_i4.File> processFontFile(_i6.PlatformPath? path) =>
+  _i6.Future<_i4.File> processFontFile(_i7.PlatformPath? path) =>
       (super.noSuchMethod(
             Invocation.method(#processFontFile, [path]),
-            returnValue: _i5.Future<_i4.File>.value(
+            returnValue: _i6.Future<_i4.File>.value(
               _FakeFile_2(this, Invocation.method(#processFontFile, [path])),
             ),
           )
-          as _i5.Future<_i4.File>);
+          as _i6.Future<_i4.File>);
 
   @override
-  _i5.Future<void> clearAllCache() =>
+  _i6.Future<void> clearAllCache() =>
       (super.noSuchMethod(
             Invocation.method(#clearAllCache, []),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i6.Future<void>);
 }
 
 /// A class which mocks [EpubImportService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockEpubImportService extends _i1.Mock implements _i9.EpubImportService {
+class MockEpubImportService extends _i1.Mock implements _i10.EpubImportService {
   MockEpubImportService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<_i10.Either<String, _i11.ShelfBook>> importBook(
+  _i6.Future<_i11.Either<String, _i12.ShelfBook>> importBook(
     _i4.File? file, {
     String? precomputedHash,
     String? originalFileName,
@@ -227,8 +228,8 @@ class MockEpubImportService extends _i1.Mock implements _i9.EpubImportService {
                 #moveSourceFile: moveSourceFile,
               },
             ),
-            returnValue: _i5.Future<_i10.Either<String, _i11.ShelfBook>>.value(
-              _i7.dummyValue<_i10.Either<String, _i11.ShelfBook>>(
+            returnValue: _i6.Future<_i11.Either<String, _i12.ShelfBook>>.value(
+              _i8.dummyValue<_i11.Either<String, _i12.ShelfBook>>(
                 this,
                 Invocation.method(
                   #importBook,
@@ -242,18 +243,18 @@ class MockEpubImportService extends _i1.Mock implements _i9.EpubImportService {
               ),
             ),
           )
-          as _i5.Future<_i10.Either<String, _i11.ShelfBook>>);
+          as _i6.Future<_i11.Either<String, _i12.ShelfBook>>);
 
   @override
-  _i5.Future<_i10.Either<String, bool>> deleteBook(_i11.ShelfBook? book) =>
+  _i6.Future<_i11.Either<String, bool>> deleteBook(_i12.ShelfBook? book) =>
       (super.noSuchMethod(
             Invocation.method(#deleteBook, [book]),
-            returnValue: _i5.Future<_i10.Either<String, bool>>.value(
-              _i7.dummyValue<_i10.Either<String, bool>>(
+            returnValue: _i6.Future<_i11.Either<String, bool>>.value(
+              _i8.dummyValue<_i11.Either<String, bool>>(
                 this,
                 Invocation.method(#deleteBook, [book]),
               ),
             ),
           )
-          as _i5.Future<_i10.Either<String, bool>>);
+          as _i6.Future<_i11.Either<String, bool>>);
 }
