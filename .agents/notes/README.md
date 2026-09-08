@@ -1,35 +1,102 @@
-# Agent Notes：决策护栏语料
+# Agent Notes
 
-> 借鉴 deepseek-harness 的 Agent Notes 机制，适配为本仓库的单语中文版。
-> 定位：记录**约束未来变更的决策护栏**——简化提案、已实现决策的边界规则、被拒但诱人的方案护栏。
+Agent Note 是 agent 写的 RFC：记录影响代码库的决策——**为什么**做、放弃了**什么**，这些是代码和文档承载不了的部分。本文件定义它们放在哪、什么时候写、以及文件格式。
 
-## 与既有记录的分工
+## 布局与命名
 
-| 载体 | 记什么 | 生命周期 |
-|---|---|---|
-| `docs/adr/` | 难逆转的架构决策（三条件缺一不写，规范 §6） | 追加，可被新 ADR 取代 |
-| `docs/TECH_DEBT.md` | 已知欠账清单（违规、待清理项） | 修复即删条 |
-| `.agents/notes/`（本目录） | 简化提案与决策护栏 | 提案 → 实现 / 拒绝 → 归档密封 |
+每篇笔记的两个维度都编码在**路径**里：`{lifecycle}/{class}/yyyy-mm-dd-topic-title.md`。
 
-## 目录与状态
+**生命周期**（顶层目录）就是状态，状态变化时文件随之移动：
 
+- `proposed/` — 实现前评审过的提案，尚未建成或只建了一部分。
+- `implemented/` — 决策已交付。文件描述 shipped 现实，并**跟着现实走**：代码后来改了路径、改了名字、改了默认值，同一次改动里更新笔记里的事实（只改事实，不改决策）。
+- `rejected/` — 提案被考虑后否决。只在它的理由还能阻止一个真实错误时保留，否则删掉。
+- `archived/` — 冻结历史。见[归档](#归档与删除)。
+
+**类别**（二级目录）是决策的种类，取值是闭集：
+
+| 类别 | 覆盖什么 |
+|---|---|
+| `feature` | 新的用户可见或模型可见能力 |
+| `bug-fix` | 修缺陷，或补上一个复盘暴露的缺口 |
+| `simplification` | 删代码、删行为、删接口面，不新增能力 |
+| `architecture` | 关于 shipped 源码的结构决策：模块如何关联、运行时词汇是什么 |
+| `process` | 代码**周边**的工具、政策与流程：门禁、依赖、发布 |
+| `testing` | 测试基础设施与策略 |
+
+`architecture` 与 `process` 的分界：前者关乎我们发布的源码，后者关乎外围工具与流程。故意没有 `refactor`——它与 `simplification` 重叠，判别标准"可观察行为是否改变"已经覆盖。
+
+文件名里的日期是话题**首次提出**的日期（以 git 历史为准）。笔记之间用相对 Markdown 链接互相引用，不用裸文件名或编号。
+
+**不要建集中索引**：活跃树本身就是清单，靠目录和全文搜索检索。
+
+## 归档与删除
+
+已交付的决策完成、且其理由不太可能再指导未来工作时，归档它。它的备选方案、所有权边界、负面保证、持久化或线上语义、安全规则、重新引入条件仍然有用时，保持活跃。**永远不要归档 proposed 笔记**——过期的提案应当改判 rejected。rejected 笔记只在还能阻止一个可预见的错误时保留，否则连同中文文件一起删除。
+
+归档路径是 `archived/{class}/yyyy-mm-dd-topic-title.md`；没有 `implemented/` 这一层，因为只有 implemented 笔记能进归档。归档时：移动文件、在 `Status: implemented` 下一行插入 `Archived: YYYY-MM-DD`、修复或删除所有入站链接。这是归档期唯一允许的内容改动。
+
+一旦封存，归档笔记永久冻结：不编辑、不重排、不移动、不删除，也不作为当前行为的权威。文档门禁跳过归档目录。
+
+## 何时写一篇
+
+**每个非平凡改动必须在同一次改动里新增或更新至少一篇 Agent Note。** 非平凡指：改变行为、架构、跨文件或跨模块的契约、流程与工具、测试策略、磁盘 / 线上 / 配置格式，或任何维护者日后可能重新考虑的决定。为将来的大工作做提案，从 `proposed/` 开始；已经做出的决定，从 `implemented/` 开始。
+
+更新已经拥有该决策的笔记即可满足要求，不要新建重复的。只有纯机械或局部编辑、且不改变行为、契约、结构、流程与理由时才豁免。一篇笔记不能被编辑成**另一个决策**：用新笔记取代它，两者交叉链接，除非旧笔记被完全并入新笔记。
+
+新增笔记时先做**取代检查**：搜索活跃树里是否已有覆盖同一决策或机制的旧笔记；完全或部分取代的，在同一次改动里按[归档规则](#归档与删除)处理。
+
+## 文件格式
+
+前三行固定：
+
+```markdown
+# Agent Note: <标题>
+
+Status: <status>
 ```
-.agents/notes/
-  proposed/     # 提案（Status: proposed）
-  implemented/  # 已实现且仍约束未来变更的护栏（Status: implemented）
-  rejected/     # 被拒但仍是"诱人错误"的护栏（Status: rejected）
-  archived/     # 密封历史（Status + Archived: 日期）
+
+后接空行。`Status` 有三种形式，且必须与所在目录一致：`Status: proposed`、`Status: implemented`、`Status: rejected — <一句话理由>`。状态行不带日期与括号；日期在文件名里，其余在 git 里。
+
+正文以 `## Problem` 开头——动机要能脱离方案独立成立。之后按生命周期：
+
+**proposed**
+
+```markdown
+## Problem
+## Proposal
+…按需的技术小节…
+## Alternatives considered
+## Acceptance criteria
+## Risks
 ```
 
-- 文件名：`kebab-case-slug.md`，一个主题一个文件，中文正文。
-- 标题下第一行必须是 `Status: <proposed|implemented|rejected>`。
-- 提案模板见技能 `syn-find-simplifications`。
+`## Proposal` 可以合法地使用将来时；`## Acceptance criteria` 说明什么可观察状态算完成；`## Risks` 覆盖可能出问题的地方与这次改动主动放弃的东西。
 
-## 生命周期规则
+**implemented**
 
-1. **新增查取代**：新笔记若取代同主题活跃笔记，被取代者在同一 PR 归档。
-2. **proposed 永不归档**：不值得推进就改判 rejected 并写明理由。
-3. **implemented 归档判据**：理由 / 边界规则不再约束未来变更（决策彻底完成、约束已固化进代码与规范）→ 归档；仍约束 → 保留。
-4. **rejected 删除判据**：失败提案不再是"诱人且有意义的错误"（没人会再犯）→ 删除；否则保留作护栏。
-5. **归档即密封**：移入 `archived/`、`Status:` 下加 `Archived: YYYY-MM-DD`、不改正文；此后永不编辑、移动、删除。
-6. 归档前先查取代关系：同主题旧提案被新方案覆盖时，两者在同一 PR 内一起归档。
+```markdown
+## Problem
+## Decision
+…按需的技术小节…
+## Alternatives considered
+## Consequences
+```
+
+`## Decision` 用现在时描述 shipped 现实。proposal 时代的标题在这里是 spec 语言，门禁会拒绝：`## Proposal`、`## Plan`、`## Migration plan`、`## Acceptance criteria` 不得出现在 implemented 笔记里。`## Testing`、`## Deferred`、`## Related` 陈述现在时事实时可以保留。
+
+**rejected**
+
+rejected 笔记是冻结的提案：保留它提案期的所有小节（包括 `## Acceptance criteria`），判决写在 `Status:` 行上。只有头部、`## Problem` 开头、`## Proposal` 小节和下面的备选方案要求仍然适用。
+
+### Alternatives considered 是强制的
+
+每篇笔记都要有 `## Alternatives considered`：每个真实备选以及它为何落败，一个备选一段或一个 `### 为什么不选 X？` 小节。**决策不记录它击败了什么，就会招来重新争论**——这正是 Agent Notes 存在的理由。备选只记录，不发明。
+
+### 生命周期之间的移动
+
+移动文件意味着在同一次改动里更新 `Status:` 行并满足目标目录的骨架，否则门禁失败。`proposed/` → `implemented/` 把 `## Proposal` 改写成现在时的 `## Decision`，把 `## Acceptance criteria` 与 `## Risks` 折进 `## Consequences`，删掉计划、只留交付了什么。`proposed/` → `rejected/` 只在 `Status:` 行上加理由并冻结文件。
+
+## Dev Note
+
+None.

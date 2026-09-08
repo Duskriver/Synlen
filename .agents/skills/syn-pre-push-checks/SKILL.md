@@ -1,50 +1,58 @@
 ---
 name: syn-pre-push-checks
-description: 在 Synlen 分支上推送、强推、标记 ready for review 或声称"检查通过"之前使用。按变更类型选择覆盖改动的最小测试集，而不是习惯性跑全量套件；含强推与历史重写保护。当用户要求"推送 / push / 提 PR"或推送前验证时触发。
+description: 在 Synlen 推送、强推、标记 ready for review 或声称"检查通过"之前使用——按变更类型选择覆盖改动的最小证据，并走推送与合并门禁、历史重写保护。当用户说"推送 / push / 提 PR"或推送前验证时触发。
 ---
 
-# Synlen 推送前检查（最小证据）
+# 推送前检查：最小证据
 
-> 核心理念：**选择覆盖变更的最小证据**。内环快，全量门禁放在推送 / 合并前与 CI。
-> 硬性底线不变：`flutter analyze` 零 error 零 warning、`dart format` 每次提交必跑（规范 §8/§9）。
+**这是判断框架，不是清单**：证据的宽度跟着改动的风险面走；最小证据用于内环迭代，全量门禁在推送与合并前。
 
-## 1. 确认变更范围
+## 真相来源
 
-- 确认分支与 base（`gh pr view` / stack 父 ref）。
-- `git diff <base>...HEAD --stat` 看全量范围；base 变更后重新执行。
+- [docs/testing.md](../../../docs/testing.md) — 按文件类型的最小证据表、测试分层、命名与位置。
+- [docs/development.md](../../../docs/development.md) — 提交门禁、提交信息格式、增量重构纪律。
+- [AGENTS.md](../../../AGENTS.md) — 命令清单与强推约束。
+- [.agents/notes/README.md](../../../.agents/notes/README.md) — 非平凡改动必须带笔记。
 
-## 2. 按变更类型选最窄证据
+## 最小证据选择
 
-| 变更 | 最小证据 |
-|---|---|
-| `lib/` 行为改动 | `flutter analyze` + 对应测试（`flutter test test/<对应路径>_test.dart`） |
-| 仅注释 / 文档 | 无测试；`dart format`（仅涉 .dart 时）；核对相对链接 |
-| 模型 / provider 注解 | `dart run build_runner build --delete-conflicting-outputs` → analyze + 相关测试 |
-| l10n ARB | `flutter analyze`（重新生成 localizations）+ 受影响页面的测试 |
-| `pubspec.yaml` / `analysis_options.yaml` / `build.yaml` / `l10n.yaml` | `flutter analyze` + **全量** `flutter test`（配置影响全局，证据必须宽） |
-| `rust/` 或 FFI 绑定 | `cargo test`（在 `rust/` 内）→ 绑定重新生成 → analyze + 冒烟测试 |
-| 用户可见 UI 行为 | 对应 widget / 单元测试；必要时附模拟器录屏 |
+先确定变更范围：`git diff <base>...HEAD --stat`；base 变更后重算。再问改动碰到哪一面，取覆盖它的最窄证据。
 
-- 测试文件过滤 ≠ 覆盖率豁免：新增源文件必须有对应测试；不许用"恰好没跑到"糊弄。
-- **全量本地演练**（`flutter test` 全跑）仅在：用户明确要求、排查 CI 失败、或变更横跨全仓库时执行。
+| 改动碰到 | 证据宽度 | 为什么够 |
+|---|---|---|
+| 只碰注释、文档 | 无测试；动了 .dart 跑 `dart format` + `dart run tool/doc_gates.dart` | 无运行时行为 |
+| 单个 feature 内部行为 | `flutter analyze` + 该路径的测试 | 契约面局限在本 feature |
+| 跨层契约、数据模型、共享 `core/` | 相关 feature 的测试 + 受影响门禁 | 影响面超出单模块 |
+| 模型 / provider 注解 | 重新生成 codegen → analyze + 相关测试 | 生成物是契约的一部分 |
+| 配置与依赖（`pubspec.yaml`、`analysis_options.yaml`、`build.yaml`、`l10n.yaml`） | analyze + 全量 `flutter test` | 影响全局，证据必须宽 |
+| `rust/` 或 FFI 绑定 | `cargo test` → 绑定重生成 → analyze + 冒烟 | 跨语言边界 |
+| reader Web 资源 | typecheck + 前端测试 → 重新生成资源 | 生成物会漂移 |
 
-## 3. 推送 / 合并门禁
+按文件类型的精确映射见 [docs/testing.md](../../../docs/testing.md)；本表只定宽度。测试过滤不等于覆盖率豁免：新增源文件必须有对应测试。全量本地演练只在用户明确要求、排查 CI 失败或改动横跨全仓库时执行。
 
-- 推送或 PR 标记 ready for review 前：**全量 `flutter test` 必须全绿**——这是规范 §9 的硬性底线；最小证据只用于内环快速迭代。
-- codegen 产物（`.g.dart` 等）与源注解一致后再推送。
+## 阻断要求
 
-## 4. 历史重写保护
+1. **推送或标记 ready for review 前全量 `flutter test` 全绿**；最小证据只用于内环。
+2. **强推只用 `git push --force-with-lease`**，禁止裸 `--force`；重写分支后重查分支头、重跑证据，验证通过前不得合并。
+3. **codegen 产物与源注解一致**再推送。
+4. **推送前失败就停下修复**，不推送后指望 CI 结果不同；疑似环境问题要贴证据，不默默绕过。
+5. **不绕过 hook 与检查**，除非用户明确同意。
 
-- 强推一律 `git push --force-with-lease`（带记录的 OID），**永远禁止**裸 `--force`。
-- rebase / 重写分支并推送后**必须事后验证**：重查分支头、检查重写范围、重跑相关证据；验证通过前该 PR 不得合并。
+## 手动检查
 
-## 5. 失败处理
+- `gh pr checks` 看 CI；显示"无检查运行"时先用 `git merge-tree` 判断是不是冲突（DIRTY / CONFLICTING）而不是基础设施问题。
+- 推送后核对远端 ref 与本地 `HEAD` 一致。
+- 提交信息 `type(scope): 中文描述`，说明"为什么"；一个逻辑改动一个 commit，重构与功能分开。
 
-- 推送前失败就停下修复；**不要推送然后指望 CI 结果不同**。
-- 疑似环境问题（SDK 版本、模拟器、网络）需举证（贴错误输出），不许默默绕过。
-- 绕过任何 hook / 检查仅在用户明确同意时进行。
+## 推送程序
 
-## 6. 推送程序
+1. 跑选定证据 → 2. 提交 → 3. 推送 → 4. 核对远端 ref 与 `HEAD` → 5. 看 CI。
 
-1. 跑选定证据 → 2. 提交（`type(scope): 中文描述`，规范 §9）→ 3. 推送 → 4. 核对远端 ref 与 `HEAD` 一致 → 5. `gh pr checks` 看 CI。
-- CI 显示"无检查运行"时，先用 `git merge-tree` 判断是否为冲突（DIRTY / CONFLICTING）而非基础设施问题。
+## 报告发现
+
+- 变更范围、选了哪档证据、每条命令的结果。
+- 全量测试结论、codegen 与门禁状态、强推后的验证结果。
+
+## Dev Note
+
+None.
