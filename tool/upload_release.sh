@@ -31,17 +31,17 @@ BUILD_NUMBER=$((MAJOR * 10000 + MINOR * 100 + PATCH))
 
 echo "==> 版本: $VERSION (build $BUILD_NUMBER)"
 
-# 从 CHANGELOG.md 提取最新版本段的更新日志（第一个 "## [vx.y.z]" 到下一个 "## " 之间）。
+# 从 docs/user/release-notes.md 提取该版本段的更新日志（第一个 "## vx.y.z" 到下一个 "## " 之间）。
 # 注：用 index() 字符串匹配而非正则，避免 BSD/GNU awk 对 \ 转义的行为差异。
 UPDATE_LOG="$(
   awk -v ver="$VERSION" '
-    index($0, "## [v" ver "]") == 1 {in_section=1; next}
+    index($0, "## v" ver) == 1 {in_section=1; next}
     in_section && index($0, "## ") == 1 {exit}
     in_section {print}
-  ' "$ROOT/CHANGELOG.md"
+  ' "$ROOT/docs/user/release-notes.md"
 )"
 if [ -z "$UPDATE_LOG" ]; then
-  echo "!! CHANGELOG.md 中未找到 [$VERSION] 段，updateLog 将为空" >&2
+  echo "!! docs/user/release-notes.md 中未找到 v$VERSION 段，updateLog 将为空" >&2
 fi
 
 # 组装 version.json（客户端协议见 check_update_tile.dart）

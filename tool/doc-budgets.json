@@ -1,0 +1,19 @@
+{
+  "AGENTS.md": 60,
+  "docs/AGENTS.md": 80,
+  "docs/architecture.md": 110,
+  "docs/design.md": 60,
+  "docs/glossary.md": 90,
+  "docs/development.md": 110,
+  "docs/testing.md": 70,
+  "docs/subsystems/README.md": 45,
+  "docs/subsystems/core.md": 100,
+  "docs/subsystems/library.md": 100,
+  "docs/subsystems/reader.md": 100,
+  "docs/subsystems/learning.md": 100,
+  "docs/subsystems/settings.md": 100,
+  "docs/subsystems/rust.md": 100,
+  "docs/cookbook/README.md": 45,
+  "docs/postmortem/README.md": 35,
+  ".agents/notes/README.md": 130
+}

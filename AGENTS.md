@@ -1,48 +1,44 @@
 # AGENTS
 
-## 必读（开发前先读）
+词镜（Synlen）是一个 Flutter 本地阅读器（Android / iOS）：导入 EPUB / TXT 建立藏书，阅读并记录进度，点词与长按句子做学习，TTS 发音。改 `lib/` 前先读 [docs/architecture.md](docs/architecture.md)；写文档前读 [docs/AGENTS.md](docs/AGENTS.md)。
 
-- `docs/DEVELOPMENT_STANDARDS.md` — 项目唯一开发规范：架构分层、模块设计、Riverpod / 错误处理 / 测试约定。所有代码改动必须遵守。
-- `docs/DEVELOPMENT_WORKFLOW.md` — 开发流程：按规模选择步骤、评审与提交门禁。
-- `CONTEXT.md` — 领域统一语言词汇表。写作前先查术语；发现模糊 / 冲突术语立即更新。
-- `docs/adr/` — 架构决策记录。满足难逆转 + 无上下文会困惑 + 真实权衡三条才新增。
-- `docs/TECH_DEBT.md` — 技术债清单（分层违规、待清理项）。
-- `.agents/notes/README.md` — Agent Notes 契约：简化提案与决策护栏（含与 ADR / TECH_DEBT 的分工）。
+## 常驻指令
 
-## Agent skills（`.agents/skills/`）
+- **分层单向**：`presentation → application → domain`、`data → domain`。禁止 `presentation → data` 与 `domain → 上层`（[分层](docs/architecture.md#分层)）。
+- **feature 之间不互相 import**；跨 feature 只经对方 `application` 的接口。共享能力下沉 `core/`，且必须被 ≥2 个 feature 使用（[模块地图](docs/architecture.md#模块)）。
+- **依赖经 provider 注入**，不在内部 `new`；`@riverpod` 的 `build()` 只做初始化与订阅，`ref.onDispose` 必须与资源创建成对（[资源生命周期](docs/development.md#资源生命周期)）。
+- **`AsyncValue` 三态齐全**，禁止裸 `.value`（[Riverpod 约定](docs/development.md#riverpod)）。
+- **错误只在 application 捕获**并转成状态字段；用户可读消息走 l10n，内部细节只入日志（[错误处理](docs/development.md#错误处理)）。
+- **用户可见文案一律走 l10n**，`app_en.arb` 与 `app_zh.arb` 同批更新（[l10n 流程](docs/cookbook/adding-an-l10n-string.md)）。
+- **日志用 `appLogger`**，禁止 `print` / `debugPrint`（[日志](docs/development.md#日志)）。
+- **测试是硬性要求**：domain、application、parser、import 的改动必须带测试；按 [docs/testing.md](docs/testing.md) 选覆盖改动的最小证据，不默认跑全量。
+- **每个非平凡改动必须带一篇 Agent Note**（[契约](.agents/notes/README.md#何时写一篇)）；纯机械或局部编辑豁免。
+- **注释与文档一律中文**；类名、变量名、命令、路径保持英文（[文字标准](.agents/skills/syn-prose-standard/SKILL.md)）。
+- **增量重构**：不做 big-bang；新代码按规范，旧代码路过即修；重构与功能分开提交（[决策](.agents/notes/implemented/architecture/2026-08-10-incremental-refactor-over-big-bang.md)）。
+- **codegen 产物提交入库、不手改**：模型或 provider 注解变更后跑 `dart run build_runner build --delete-conflicting-outputs`。
+- **强推只用 `--force-with-lease`**，禁止裸 `--force`（[推送前检查](.agents/skills/syn-pre-push-checks/SKILL.md)）。
 
-| 技能 | 用途 |
-|---|---|
-| `syn-code-review` | 评审改动：六项阻断要求 + Flutter 分层 / Riverpod 检查面 |
-| `syn-pre-push-checks` | 推送前按变更类型选最小测试证据 |
-| `syn-find-simplifications` | 简化机会挖掘 → Agent Note 提案 |
-| `syn-doc-standards` / `syn-prose-standard` / `syn-trim-cot-leakage` | 文档结构 / 契约保留式文字 / 会话泄漏清理 |
+## 命令
 
-技能本体即流程说明：宿主未自动加载时，直接读对应 `SKILL.md` 执行。
+```sh
+flutter pub get
+flutter run
+dart format lib test
+flutter analyze                                  # 零 error 零 warning
+flutter test                                     # 推送 / 合并前全量
+dart run build_runner build --delete-conflicting-outputs
+dart run tool/doc_gates.dart                     # 文档门禁
+```
 
-## Issue tracker
+需要 Flutter SDK ≥ 3.38.0、Dart SDK ≥ 3.10.8。
 
-issues 与 PRD 存为 GitHub issues，用 `gh` CLI 操作（`gh issue create / view / list / edit`）。
+## 入口
 
-## Workflows
-
-### Setup / Run
-- 安装依赖：`flutter pub get`
-- 启动应用：`flutter run`（指定设备：`flutter run -d <device-id>`）
-
-### 提交前必过（规范 §8/§9）
-- 每次提交：`flutter analyze`（零 error 零 warning）+ `dart format` + 按最小证据选择的测试（`.agents/skills/syn-pre-push-checks`）
-- 推送 / 合并前：全量 `flutter test` 必须全绿
-- codegen（模型 / provider 变更后）：`dart run build_runner build --delete-conflicting-outputs`
-
-### Build (Release)
-- Android APK：`flutter build apk --release`
-- iOS：`flutter build ios --release`
-
-## Notes
-- 需要 Flutter SDK >= 3.38.0、Dart SDK >= 3.10.8。
-- 注释与 Markdown 文档一律用中文；类名 / 变量名 / 命令等保持英文（规范 §8.1）。
-- 增量重构纪律见 ADR-0001：不做 big-bang 重构，新代码按规范，旧代码路过即修；重构与功能分开提交。
-- 技术债记录在 `docs/TECH_DEBT.md`，不散落在代码注释。
-- Agent Notes 按 `.agents/notes/README.md` 契约管理：提案 → 实现 / 拒绝 → 密封归档。
-- 强推只用 `--force-with-lease`，禁止裸 `--force`。
+- 架构与分层：[docs/architecture.md](docs/architecture.md)
+- 每模块参考：[docs/subsystems/](docs/subsystems/README.md)
+- 领域术语：[docs/glossary.md](docs/glossary.md)
+- 贡献者日常：[docs/development.md](docs/development.md) · 测试：[docs/testing.md](docs/testing.md)
+- 决策记录：[.agents/notes/](.agents/notes/README.md) · 事故复盘：[docs/postmortem/](docs/postmortem/README.md)
+- 操作手册：[docs/cookbook/](docs/cookbook/README.md) · 用户指南：[docs/user/](docs/user/index.md)
+- 技能：[.agents/skills/](.agents/skills/)（宿主未自动加载时直接读对应 `SKILL.md`）
+- issue 与 PRD 存在 GitHub issues，用 `gh` CLI 操作（`gh issue create / view / list / edit`）。
