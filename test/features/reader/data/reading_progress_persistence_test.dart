@@ -9,7 +9,7 @@ import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/application/reading_progress_controller.dart';
-import 'package:synlen/src/features/reader/data/book_session.dart';
+import 'package:synlen/src/features/reader/application/book_session.dart';
 
 void main() {
   test('防抖期间关闭阅读，重开数据库后恢复最后有效位置', () async {

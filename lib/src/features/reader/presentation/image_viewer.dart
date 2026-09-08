@@ -6,7 +6,7 @@ import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
-import '../data/epub_webview_handler.dart';
+import '../application/epub_webview_handler.dart';
 import '../../../core/services/toast_service.dart';
 
 class ImageViewer extends StatefulWidget {

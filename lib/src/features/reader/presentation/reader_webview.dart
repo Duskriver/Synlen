@@ -8,9 +8,9 @@ import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/widgets/book_cover.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 
-import '../data/book_session.dart';
-import '../data/epub_webview_handler.dart';
-import '../data/reader_scripts.dart';
+import '../application/book_session.dart';
+import '../application/epub_webview_handler.dart';
+import '../application/reader_scripts.dart';
 import 'package:synlen/src/web/api/webview_bridge.dart';
 import 'package:synlen/src/web/api/synlen_api.dart';
 

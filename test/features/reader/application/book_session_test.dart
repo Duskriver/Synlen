@@ -8,7 +8,7 @@ import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
-import 'package:synlen/src/features/reader/data/book_session.dart';
+import 'package:synlen/src/features/reader/application/book_session.dart';
 
 import 'book_session_test.mocks.dart';
 

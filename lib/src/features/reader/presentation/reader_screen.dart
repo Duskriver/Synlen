@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/url_launcher/url_launcher.dart';
-import 'package:synlen/src/features/reader/data/services/volume_control_service.dart';
+import 'package:synlen/src/features/reader/application/volume_control_service.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -18,14 +18,11 @@ import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
-import '../data/book_session.dart';
+import '../application/book_session.dart';
+import '../application/reader_session_factory.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
-import '../data/services/epub_stream_service_provider.dart';
-import '../data/services/txt_content_service_provider.dart';
-import '../../library/data/repositories/shelf_book_repository_provider.dart';
-import '../../library/data/repositories/book_manifest_repository_provider.dart';
-import '../data/epub_webview_handler.dart';
+import '../application/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -223,15 +220,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    webViewHandler = EpubWebViewHandler(
-      streamService: ref.read(epubStreamServiceProvider),
-      txtContentService: ref.read(txtContentServiceProvider),
-    );
-    bookSession = BookSession(
-      fileHash: widget.fileHash,
-      shelfBookRepository: ref.read(shelfBookRepositoryProvider),
-      manifestRepository: ref.read(bookManifestRepositoryProvider),
-    );
+    final sessionFactory = ref.read(readerSessionFactoryProvider.notifier);
+    webViewHandler = sessionFactory.createWebViewHandler();
+    bookSession = sessionFactory.createSession(widget.fileHash);
     progressController = ReadingProgressController(
       save: bookSession.saveProgress,
       onSaveFailed: () {

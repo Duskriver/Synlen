@@ -1,7 +1,7 @@
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
-import 'package:synlen/src/features/reader/data/epub_webview_handler.dart';
+import 'package:synlen/src/features/reader/application/epub_webview_handler.dart';
 
 void main() {
   group('EpubWebViewHandler URL 工具', () {
