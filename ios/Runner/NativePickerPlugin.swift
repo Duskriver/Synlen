@@ -60,11 +60,11 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
 
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
-    case "pickEpubFiles":
-      pickEpubFiles(result: result)
+    case "pickBookFiles":
+      pickBookFiles(result: result)
 
-    case "pickEpubFolder":
-      pickEpubFolder(result: result)
+    case "pickBookFolder":
+      pickBookFolder(result: result)
 
     case "pickBackupFolder":
       pickBackupFolder(result: result)
@@ -96,10 +96,10 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
   }
 
   // -------------------------------------------------------------------------
-  // MARK: - pickEpubFiles  (lazy – files remain security-scoped)
+  // MARK: - pickBookFiles  (lazy – files remain security-scoped)
   // -------------------------------------------------------------------------
 
-  private func pickEpubFiles(result: @escaping FlutterResult) {
+  private func pickBookFiles(result: @escaping FlutterResult) {
     // Release any previously held file scopes before starting a new pick.
     releaseActiveFileUrls()
 
@@ -132,10 +132,10 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
   }
 
   // -------------------------------------------------------------------------
-  // MARK: - pickEpubFolder  (lazy – folder remains security-scoped)
+  // MARK: - pickBookFolder  (lazy – folder remains security-scoped)
   // -------------------------------------------------------------------------
 
-  private func pickEpubFolder(result: @escaping FlutterResult) {
+  private func pickBookFolder(result: @escaping FlutterResult) {
     releaseActiveDirectoryUrl()
 
     pendingPickerResult = result
@@ -269,7 +269,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
   /// `NSTemporaryDirectory()` and returns the new absolute path to Dart.
   ///
   /// The security scope for the source file (or its parent folder) must
-  /// already be open via a prior `pickEpubFiles` / `pickEpubFolder` /
+  /// already be open via a prior `pickBookFiles` / `pickBookFolder` /
   /// `pickBackupFolder` call.
   private func fetchIosFile(originalPath: String, result: @escaping FlutterResult) {
     let sourceUrl = URL(fileURLWithPath: originalPath)
