@@ -30,7 +30,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 | `ReaderSettingsNotifier` | 阅读设置持久化与修改（`SharedPreferences`） | `lib/src/features/reader/application/reader_settings_notifier.dart` |
 | `EpubTheme` / `colorToHex` | 阅读器配色，与全局 `AppThemeSettings` 解耦 | `lib/src/features/reader/domain/epub_theme.dart` |
 | `ReadingProgress` | 完成分页后的位置：章节序号、章内页码、章内总页数 | `lib/src/features/reader/domain/reading_progress.dart` |
-| `VolumeControlService` | 音量键翻页 | `lib/src/features/reader/application/volume_control_service.dart` |
+| `VolumeControlService` / `VolumeKeyPageTurnController` | 音量键翻页：前者封装平台拦截与事件流，后者按启用条件订阅并把事件映射为翻页动作 | `lib/src/features/reader/application/volume_control_service.dart` |
 | `ReaderScreen` / `ReaderRenderer` / `ReaderWebView` / `ControlPanel` / `ReaderBottomBar` / `TocDrawer` | 屏幕、三 iframe 渲染器、InAppWebView 封装、控制面板与底部控制条、目录抽屉 | `lib/src/features/reader/presentation/` |
 | `AndroidPageTurnSession` / `IOSPageTurnSession` | 平台翻页动画 | `lib/src/features/reader/presentation/page_turn/` |
 | 5 个 part mixin | `progress` / `theme` / `link_handling` / `image_viewer` / `footnote` | `lib/src/features/reader/presentation/mixins/` |

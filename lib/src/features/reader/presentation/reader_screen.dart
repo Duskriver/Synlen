@@ -21,6 +21,7 @@ import './image_viewer.dart';
 import '../application/book_session.dart';
 import '../../learning/application/learning_entry.dart';
 import '../application/reader_session_factory.dart';
+import '../application/volume_key_page_turn.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
 import '../application/epub_webview_handler.dart';
@@ -129,7 +130,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  StreamSubscription<String>? volumeSubscription;
+  /// 音量键翻页：拦截开关与事件分发（application）。
+  late final VolumeKeyPageTurnController volumeKeyPageTurn;
+
   ProviderSubscription<ReaderSettings>? _readerSettingsSubscription;
   ProviderSubscription<bool>? _volumeKeyTurnsPageSubscription;
   bool tocDrawerOpen = false;
@@ -152,6 +155,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         final message = _progressSaveFailedMessage;
         if (message != null) ToastService.showError(message);
       },
+    );
+    volumeKeyPageTurn = VolumeKeyPageTurnController(
+      events: VolumeControlService.volumeKeyEvents,
+      enableInterception: VolumeControlService.enableInterception,
+      disableInterception: VolumeControlService.disableInterception,
+      onPreviousPage: () => rendererController.performPreviousPageTurn(),
+      onNextPage: () => rendererController.performNextPageTurn(),
+      isEnabled: () => ref.read(readerSettingsProvider).volumeKeyTurnsPage,
     );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -215,8 +226,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     displayProgressNotifier.dispose();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
-    volumeSubscription?.cancel();
-    VolumeControlService.disableInterception();
+    volumeKeyPageTurn.dispose();
     WakelockPlus.disable();
     webViewHandler.clearCache();
     super.dispose();
@@ -244,32 +254,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (ModalRoute.of(context)?.isCurrent == true) context.pop();
   }
 
+  /// 设置项、抽屉开合与前后台状态共同决定是否拦截音量键。
   void setupVolumeControl() {
-    final resume =
-        ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
-        !tocDrawerOpen &&
-        !styleDrawerOpen &&
-        lastLifecycleState == AppLifecycleState.resumed;
-
-    if (resume) {
-      VolumeControlService.enableInterception();
-      volumeSubscription ??= VolumeControlService.volumeKeyEvents.listen((
-        event,
-      ) {
-        final isVolumeTurnEnabled = ref
-            .read(readerSettingsProvider)
-            .volumeKeyTurnsPage;
-        if (isVolumeTurnEnabled) {
-          if (event == 'up') {
-            rendererController.performPreviousPageTurn();
-          } else if (event == 'down') {
-            rendererController.performNextPageTurn();
-          }
-        }
-      });
-    } else {
-      VolumeControlService.disableInterception();
-    }
+    volumeKeyPageTurn.sync(
+      enabled:
+          ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
+          !tocDrawerOpen &&
+          !styleDrawerOpen &&
+          lastLifecycleState == AppLifecycleState.resumed,
+    );
   }
 
   @override
