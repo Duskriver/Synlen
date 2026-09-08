@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/database/app_database.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../../l10n/app_localizations.dart';
 
-/// Inline-editing form for a [ShelfBook].
+/// 编辑态表单只需要书目主键与封面路径，不持有持久化行类型。
+typedef EditableBookView = ({int id, String? coverPath});
+
+/// Inline-editing form for a book.
 ///
 /// Displays the cover (read-only) followed by editable fields for title,
 /// authors, and description. All [TextEditingController]s are owned by the
 /// parent state; this widget is purely presentational.
 class BookDetailEditBody extends StatelessWidget {
-  final ShelfBook book;
+  final EditableBookView book;
   final TextEditingController titleController;
   final TextEditingController authorsController;
   final TextEditingController descriptionController;

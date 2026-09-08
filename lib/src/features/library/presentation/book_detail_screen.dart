@@ -352,7 +352,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   Widget _bodyForBook(BuildContext context, ShelfBook book) {
     if (_isEditing) {
       return BookDetailEditBody(
-        book: book,
+        book: (id: book.id, coverPath: book.coverPath),
         titleController: _titleController,
         authorsController: _authorsController,
         descriptionController: _descriptionController,
