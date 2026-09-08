@@ -19,6 +19,7 @@ import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
 import '../application/book_session.dart';
+import '../application/chapter_navigation.dart';
 import '../application/reader_session_factory.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';

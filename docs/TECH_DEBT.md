@@ -59,9 +59,10 @@
 
 ## 4. reader 模块分层失衡
 
-- `reader/presentation`：**4843 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 680 行）。
-- `reader/application`：**7 文件 / 999 行**（2026-09-08 起 `book_session` / `epub_webview_handler` / `reader_scripts` / `volume_control_service` / `reader_session_factory` 迁入；装配与内容供给已不在 UI 层）。
-- 比例从 21:1 收敛到约 4.8:1，下一步是把 7 个 part mixin 拆成可测单元。
+- `reader/presentation`：**4841 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 680 行）。
+- `reader/application`：**8 文件 / 1076 行**（2026-09-08 起 `book_session` / `epub_webview_handler` / `reader_scripts` / `volume_control_service` / `reader_session_factory` / `chapter_navigation` 迁入；装配、内容供给与章节导航逻辑已不在 UI 层）。
+- 第二批：章节预载窗口与忙态守卫抽到 `reader/application/chapter_navigation.dart`（8 个用例），`spine_navigation_mixin` 顺手删掉 3 个零调用转发。
+- 比例从 21:1 收敛到约 4.5:1，下一步是把剩余 part mixin 的逻辑逐块抽出。
 
 这是规范 §3「深模块 = 小接口大实现」的反例（浅模块），也印证 ADR-0001「reader 层逻辑集中在 UI」的判断。reader 已有单测安全网（见 §6），可开始增量重构（见 ADR-0001）。
 
