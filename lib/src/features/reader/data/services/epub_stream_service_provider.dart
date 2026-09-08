@@ -8,7 +8,6 @@ part 'epub_stream_service_provider.g.dart';
 @Riverpod(keepAlive: true)
 EpubStreamService epubStreamService(Ref ref) {
   final service = EpubStreamService();
-  service.warmUp();
 
   // Dispose the service and its isolate when the provider is disposed
   ref.onDispose(() {
