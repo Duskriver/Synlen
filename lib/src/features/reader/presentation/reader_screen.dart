@@ -20,6 +20,7 @@ import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
 import '../application/book_session.dart';
 import '../application/chapter_navigation.dart';
+import '../application/page_navigation.dart';
 import '../application/reader_session_factory.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
@@ -217,6 +218,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   bool tocDrawerOpen = false;
   bool styleDrawerOpen = false;
   AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
+
+  /// 加载中 / 主题刷新中 / 正在翻章时忽略新的导航请求。
+  @override
+  bool get isNavigationBusy => shouldIgnoreChapterNavigation(
+    isWebViewLoading: isWebViewLoading,
+    updatingTheme: updatingTheme,
+    isChangingChapter: isChangingChapter,
+  );
 
   @override
   void initState() {

@@ -19,6 +19,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   void updateProgressDebounced();
   void saveProgressDebounced();
 
+  /// 由宿主 State 组合出的导航忙态（加载中 / 主题刷新中 / 正在翻章）。
+  bool get isNavigationBusy;
+
   bool get updatingTheme;
   bool get isChangingChapter;
   set isChangingChapter(bool value);
@@ -128,12 +131,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> navigateToSpineItem(int index, [String anchor = 'top']) async {
-    if (!mounted ||
-        shouldIgnoreChapterNavigation(
-          isWebViewLoading: isWebViewLoading,
-          updatingTheme: updatingTheme,
-          isChangingChapter: isChangingChapter,
-        )) {
+    if (!mounted || isNavigationBusy) {
       return;
     }
     if (index < 0 || index >= bookSession.spine.length) return;
@@ -147,12 +145,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> previousSpineItem() async {
-    if (!mounted ||
-        shouldIgnoreChapterNavigation(
-          isWebViewLoading: isWebViewLoading,
-          updatingTheme: updatingTheme,
-          isChangingChapter: isChangingChapter,
-        )) {
+    if (!mounted || isNavigationBusy) {
       return;
     }
     if (currentSpineItemIndex <= 0) {
@@ -177,12 +170,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> previousSpineItemFirstPage() async {
-    if (!mounted ||
-        shouldIgnoreChapterNavigation(
-          isWebViewLoading: isWebViewLoading,
-          updatingTheme: updatingTheme,
-          isChangingChapter: isChangingChapter,
-        )) {
+    if (!mounted || isNavigationBusy) {
       return;
     }
     if (currentSpineItemIndex <= 0) {
@@ -209,12 +197,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> nextSpineItem() async {
-    if (!mounted ||
-        shouldIgnoreChapterNavigation(
-          isWebViewLoading: isWebViewLoading,
-          updatingTheme: updatingTheme,
-          isChangingChapter: isChangingChapter,
-        )) {
+    if (!mounted || isNavigationBusy) {
       return;
     }
     if (currentSpineItemIndex >= bookSession.spine.length - 1) {
