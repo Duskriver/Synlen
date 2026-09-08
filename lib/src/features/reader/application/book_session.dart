@@ -1,7 +1,6 @@
 import '../../../core/database/app_database.dart';
 import '../../library/domain/book_manifest.dart';
-import '../../library/data/shelf_book_repository.dart';
-import '../../library/data/book_manifest_repository.dart';
+import '../../library/application/book_queries.dart';
 import 'epub_webview_handler.dart';
 import '../domain/reading_progress.dart';
 
@@ -18,17 +17,12 @@ class BookSession {
   Set<String> _activeAnchors = {};
 
   final String fileHash;
-  final ShelfBookRepository _shelfBookRepo;
-  final BookManifestRepository _manifestRepo;
+  final BookQueries _queries;
   final List<SpineItem> _spine = [];
   final List<SpineItem> _noLinearSpine = [];
 
-  BookSession({
-    required this.fileHash,
-    required ShelfBookRepository shelfBookRepository,
-    required BookManifestRepository manifestRepository,
-  }) : _shelfBookRepo = shelfBookRepository,
-       _manifestRepo = manifestRepository;
+  BookSession({required this.fileHash, required BookQueries queries})
+    : _queries = queries;
 
   // Getters
   ShelfBook? get book => _book;
@@ -43,13 +37,13 @@ class BookSession {
   /// Load ShelfBook and BookManifest from database
   Future<bool> loadBook() async {
     // Load ShelfBook
-    final book = await _shelfBookRepo.getBookByHash(fileHash);
+    final book = await _queries.findBook(fileHash);
     if (book == null) {
       return false;
     }
 
     // Load BookManifest
-    final manifest = await _manifestRepo.getManifestByHash(fileHash);
+    final manifest = await _queries.findManifest(fileHash);
     if (manifest == null) {
       return false;
     }
@@ -131,18 +125,15 @@ class BookSession {
         position.pageIndex >= position.pageCount) {
       throw ArgumentError.value(position, 'position', '无效的阅读位置');
     }
-    final result = await _shelfBookRepo.updateProgress(
+    await _queries.saveProgress(
       bookId: _book!.id,
-      currentChapterIndex: position.chapterIndex,
+      chapterIndex: position.chapterIndex,
       progress:
           (position.chapterIndex +
               (position.pageIndex + 1) / position.pageCount) /
           _spine.length,
       scrollPosition: position.pageIndex / position.pageCount,
     );
-    result.fold((error) => throw StateError(error), (updated) {
-      if (!updated) throw StateError('保存进度时书籍已不存在');
-    });
   }
 
   /// Get anchors for a spine path as JSON array string

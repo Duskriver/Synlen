@@ -19,6 +19,7 @@ import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
 import '../application/book_session.dart';
+import '../../learning/application/learning_entry.dart';
 import '../application/chapter_navigation.dart';
 import '../application/page_navigation.dart';
 import '../application/reader_session_factory.dart';
@@ -27,9 +28,6 @@ import './control_panel.dart';
 import '../application/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
-
-import '../../learning/presentation/widgets/word_definition_dialog.dart';
-import '../../learning/presentation/widgets/sentence_analysis_dialog.dart';
 
 part 'mixins/spine_navigation_mixin.dart';
 part 'mixins/page_navigation_mixin.dart';
@@ -453,60 +451,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   void handleWordTap(String word, String wordContext) {
-    appLogger.d('Word Tapped: $word');
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (_, controller) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
-            ),
-            child: WordDefinitionDialog(
-              word: word,
-              context: wordContext,
-              scrollController: controller,
-            ),
-          );
-        },
-      ),
-    );
+    ref
+        .read(learningEntryProvider.notifier)
+        .showWord(word: word, context: wordContext);
   }
 
   void handleSentenceSelected(String sentence) {
-    appLogger.d('Sentence Selected: $sentence');
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (_, controller) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
-            ),
-            child: SentenceAnalysisDialog(
-              sentence: sentence,
-              scrollController: controller,
-            ),
-          );
-        },
-      ),
-    );
+    ref.read(learningEntryProvider.notifier).showSentence(sentence: sentence);
   }
 
   @override

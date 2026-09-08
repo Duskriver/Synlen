@@ -30,3 +30,13 @@ accepted
 - `settings/application/` 承担跨 feature 编排：`cache_cleanup` 编排 library 与 learning 的清理、`backup_export` 编排 library 的导出、`deep_seek_connectivity` 把 data 层异常翻译成可展示结果。
 - `detail` 不属于组合面：它的业务是「一本书的详情」，归属 library，按 `TECH_DEBT §1` 的修复方向并入 library，不适用本例外。
 - 各 feature 内部的 `presentation → data`（reader、library 自身）仍按规范逐条修复，不受本 ADR 影响。
+
+## 2026-09-08 追加：宿主对能力模块的入口例外
+
+阅读器（宿主）调用学习（能力模块）的「点词释义 + 发音」「长按句子分析 + 朗读」是产品设计本身，不是可消除的耦合；读者真正要防的是**耦合面过大**。规则补充：
+
+- 宿主页面只依赖能力模块的 **application 入口**（`learning/application/learning_entry.dart`），不依赖其弹窗 widget；
+- 宿主 application 只依赖能力模块的 **application 查询接口**（`library/application/book_queries.dart`），不依赖其仓库；
+- 能力模块要读配置时只依赖配置模块的 application（`reader → settings/application`）。
+
+这样能力模块内部怎么改（弹窗形状、仓库实现、参数）都不再波及宿主；接口的稳定面收窄成一个方法签名。

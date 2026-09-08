@@ -3,8 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
-import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
+import 'package:synlen/src/features/library/application/book_queries.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
@@ -13,7 +12,7 @@ import 'package:synlen/src/features/reader/application/chapter_navigation.dart';
 import 'chapter_navigation_test.mocks.dart';
 
 /// 从 spine_navigation_mixin 抽出的纯逻辑：预载窗口与导航守卫。
-@GenerateMocks([ShelfBookRepository, BookManifestRepository])
+@GenerateMocks([BookQueries])
 void main() {
   provideDummy<Either<String, bool>>(const Right(true));
   provideDummy<Either<String, int>>(const Right(1));
@@ -53,17 +52,12 @@ void main() {
   );
 
   Future<BookSession> loadedSession({int chapters = 3}) async {
-    final shelfRepo = MockShelfBookRepository();
-    final manifestRepo = MockBookManifestRepository();
-    when(shelfRepo.getBookByHash('hash1')).thenAnswer((_) async => buildBook());
+    final queries = MockBookQueries();
+    when(queries.findBook('hash1')).thenAnswer((_) async => buildBook());
     when(
-      manifestRepo.getManifestByHash('hash1'),
+      queries.findManifest('hash1'),
     ).thenAnswer((_) async => buildManifest(chapters));
-    final session = BookSession(
-      fileHash: 'hash1',
-      shelfBookRepository: shelfRepo,
-      manifestRepository: manifestRepo,
-    );
+    final session = BookSession(fileHash: 'hash1', queries: queries);
     await session.loadBook();
     return session;
   }
