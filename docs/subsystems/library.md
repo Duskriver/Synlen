@@ -18,7 +18,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 | `BookActions` / `bookDetailProvider` | 详情页用例：取书、保存元数据、分享文件 | `lib/src/features/library/application/book_actions.dart` |
 | `BookshelfNotifier` / `BookshelfState` / `ViewMode` | 书架状态：排序、分组过滤、多选、8 个标签页的 LRU 缓存 | `lib/src/features/library/application/bookshelf_notifier.dart` |
 | `LibraryNotifier` / `ImportProgress` / `ImportStatus` | 导入编排：`importPipelineStream`（逐文件缓存 → 导入 → 清理）与 `importLibraryFromFolder` | `lib/src/features/library/application/library_notifier.dart` |
-| `EpubImportService` | 导入实现：格式识别 → 哈希 → 去重 → 落盘 → 解析 → 封面 → 落库 | `lib/src/features/library/data/services/epub_import_service.dart` |
+| `EpubImportService` | 导入流水线编排：去重 → 落盘 → 解析 → 封面 → 落库；格式探测、文件落盘与封面提取分别在 `BookFileProbe` / `BookFileStore` / `CoverExtractor` | `lib/src/features/library/data/services/epub_import_service.dart` |
 | `ImportWorkers` / `ParseParams` / `ParseResult` | 在 isolate 中运行的哈希、EPUB 解析、TXT 解析与图片压缩 | `lib/src/features/library/data/services/epub_import_workers.dart` |
 | `EpubZipParser` / `EpubZipParseResult` | 直接从 ZIP 读 OPF、spine、TOC 与 manifest，不整包解压；OPF 元数据、TOC 与路径解析按 part 文件分组 | `lib/src/features/library/data/parsers/epub_zip_parser.dart` |
 | `TxtDecoder` / `TxtEncoding` / `TxtDecodeResult` | TXT 编码识别：BOM → UTF-8 严格 → GBK 兜底，并用控制字符占比拦二进制内容 | `lib/src/features/library/data/parsers/txt_decoder.dart` |
@@ -56,7 +56,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 ## 已知限制与待办
 
 - `EpubImportService` 与原生 `pickEpubFiles` / `isEpubFile` 实际同时处理 EPUB 与 TXT；修复方向是格式中立命名（如 `BookImportService`）。
-- 超 400 行文件：`epub_import_service.dart`、`library_screen.dart`、`library_actions_mixin.dart`、`bookshelf_notifier.dart`、`book_detail_screen.dart`。复现：
+- 超 400 行文件：`library_screen.dart`、`library_actions_mixin.dart`、`bookshelf_notifier.dart`、`book_detail_screen.dart`。复现：
 
 ```sh
 find lib/src/features/library -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
