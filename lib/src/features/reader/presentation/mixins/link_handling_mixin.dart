@@ -4,12 +4,12 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
   // === Borrowed state (provided by _ReaderScreenState fields) ===
   BookSession get bookSession;
 
-  // === Cross-mixin: _SpineNavigationMixin ===
-  Future<void> loadCarousel({
-    String anchor = 'top',
-    int? overrideSpineIndex,
-    double? restoreScrollRatio,
-  });
+  ReaderNavigator get navigator;
+
+  // === Cross-mixin: 位置变化后刷新宿主状态 ===
+  void refreshActiveTocState();
+  void updateProgressDebounced();
+  void saveProgressDebounced();
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
@@ -33,7 +33,11 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
         if (url.contains('#')) {
           anchor = url.split('#').last;
         }
-        await loadCarousel(anchor: anchor, overrideSpineIndex: index);
+        await navigator.load(anchor: anchor, overrideSpineIndex: index);
+        if (!mounted) return;
+        refreshActiveTocState();
+        updateProgressDebounced();
+        saveProgressDebounced();
       }
     } else {
       final linkHandling = ref.read(readerSettingsProvider).linkHandling;

@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/url_launcher/url_launcher.dart';
 import 'package:synlen/src/features/reader/application/volume_control_service.dart';
 import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import '../application/reader_navigator.dart';
 import '../application/reader_settings_notifier.dart';
 import '../application/reading_progress_controller.dart';
 import '../domain/reader_settings.dart';
@@ -20,8 +20,6 @@ import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
 import '../application/book_session.dart';
 import '../../learning/application/learning_entry.dart';
-import '../application/chapter_navigation.dart';
-import '../application/page_navigation.dart';
 import '../application/reader_session_factory.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
@@ -29,80 +27,11 @@ import '../application/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
-part 'mixins/spine_navigation_mixin.dart';
-part 'mixins/page_navigation_mixin.dart';
 part 'mixins/progress_mixin.dart';
 part 'mixins/theme_mixin.dart';
 part 'mixins/link_handling_mixin.dart';
 part 'mixins/image_viewer_mixin.dart';
 part 'mixins/footnote_mixin.dart';
-
-class ReaderViewState {
-  bool isWebViewLoading = true;
-  bool updatingTheme = false;
-
-  int _currentSpineItemIndex = 0;
-  final ValueNotifier<int> currentSpineItemNotifier = ValueNotifier(0);
-
-  int get currentSpineItemIndex => _currentSpineItemIndex;
-  set currentSpineItemIndex(int value) {
-    if (_currentSpineItemIndex == value) {
-      return;
-    }
-    _currentSpineItemIndex = value;
-    currentSpineItemNotifier.value = value;
-  }
-
-  int _currentPageInChapter = 0;
-  final ValueNotifier<int> currentPageNotifier = ValueNotifier(0);
-
-  int get currentPageInChapter => _currentPageInChapter;
-  set currentPageInChapter(int value) {
-    if (_currentPageInChapter == value) {
-      return;
-    }
-    _currentPageInChapter = value;
-    currentPageNotifier.value = value;
-  }
-
-  int _totalPagesInChapter = 0;
-  final ValueNotifier<int> totalPagesNotifier = ValueNotifier(0);
-
-  int get totalPagesInChapter => _totalPagesInChapter;
-  set totalPagesInChapter(int value) {
-    if (_totalPagesInChapter == value) {
-      return;
-    }
-    _totalPagesInChapter = value;
-    totalPagesNotifier.value = value;
-  }
-
-  String _displayProgress = '';
-  final ValueNotifier<String> displayProgressNotifier = ValueNotifier('');
-
-  String get displayProgress => _displayProgress;
-  set displayProgress(String value) {
-    if (_displayProgress == value) {
-      return;
-    }
-    _displayProgress = value;
-    displayProgressNotifier.value = value;
-  }
-
-  final ValueNotifier<Set<TocItem>> activeTocItemsNotifier = ValueNotifier(
-    <TocItem>{},
-  );
-  final ValueNotifier<String> activeTocTitleNotifier = ValueNotifier('');
-
-  void dispose() {
-    currentSpineItemNotifier.dispose();
-    currentPageNotifier.dispose();
-    totalPagesNotifier.dispose();
-    displayProgressNotifier.dispose();
-    activeTocItemsNotifier.dispose();
-    activeTocTitleNotifier.dispose();
-  }
-}
 
 /// Reads EPUB directly from compressed file without extraction
 class ReaderScreen extends ConsumerStatefulWidget {
@@ -117,8 +46,6 @@ class ReaderScreen extends ConsumerStatefulWidget {
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
     with
         WidgetsBindingObserver,
-        _SpineNavigationMixin,
-        _PageNavigationMixin,
         _ProgressMixin,
         _ThemeMixin,
         _LinkHandlingMixin,
@@ -133,13 +60,35 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   final ReaderRendererController rendererController =
       ReaderRendererController();
-  final ReaderViewState viewState = ReaderViewState();
 
-  // Core UI state
+  /// 导航状态机：位置与忙态的唯一拥有者。
   @override
-  bool get isWebViewLoading => viewState.isWebViewLoading;
+  late final ReaderNavigator navigator;
+
+  // 覆盖层状态：TOC 高亮与页码显示，跟随导航状态由宿主更新。
+  final ValueNotifier<Set<TocItem>> activeTocItemsNotifier = ValueNotifier(
+    <TocItem>{},
+  );
+  final ValueNotifier<String> activeTocTitleNotifier = ValueNotifier('');
+  final ValueNotifier<String> displayProgressNotifier = ValueNotifier('');
+
+  // 供剩余 mixin 读取的导航状态视图（唯一来源是 navigator.state）。
   @override
-  set isWebViewLoading(bool value) => viewState.isWebViewLoading = value;
+  bool get isWebViewLoading => navigator.state.value.isLoading;
+  @override
+  int get currentSpineItemIndex => navigator.state.value.spineIndex;
+  @override
+  int get currentPageInChapter => navigator.state.value.pageInChapter;
+  @override
+  int get totalPagesInChapter => navigator.state.value.totalPagesInChapter;
+  @override
+  bool get updatingTheme => navigator.state.value.isRefreshingTheme;
+  @override
+  bool get isChangingChapter => navigator.state.value.isChangingChapter;
+  @override
+  String get displayProgress => displayProgressNotifier.value;
+  @override
+  set displayProgress(String value) => displayProgressNotifier.value = value;
 
   @override
   bool showControls = false;
@@ -148,46 +97,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Animation<double>? routeAnimation;
   bool shouldShowWebView = false;
 
-  // Spine navigation state (used by _SpineNavigationMixin)
-  @override
-  int get currentSpineItemIndex => viewState.currentSpineItemIndex;
-  @override
-  set currentSpineItemIndex(int value) =>
-      viewState.currentSpineItemIndex = value;
-
-  // Pagination state (used by _PageNavigationMixin)
-  @override
-  int get currentPageInChapter => viewState.currentPageInChapter;
-  @override
-  set currentPageInChapter(int value) => viewState.currentPageInChapter = value;
-
-  @override
-  int get totalPagesInChapter => viewState.totalPagesInChapter;
-  @override
-  set totalPagesInChapter(int value) => viewState.totalPagesInChapter = value;
-
-  // Progress state (used by _ProgressMixin)
-  @override
-  String get displayProgress => viewState.displayProgress;
-  @override
-  set displayProgress(String value) => viewState.displayProgress = value;
-
   @override
   Timer? progressDebouncer;
   @override
   late final ReadingProgressController progressController;
-  @override
-  bool isChangingChapter = false;
   bool _exitInProgress = false;
   String? _progressSaveFailedMessage;
 
   // Theme state (used by _ThemeMixin)
   @override
   ThemeData? currentTheme;
-  @override
-  bool get updatingTheme => viewState.updatingTheme;
-  @override
-  set updatingTheme(bool value) => viewState.updatingTheme = value;
   @override
   Timer? themeUpdateDebouncer;
 
@@ -217,20 +136,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   bool styleDrawerOpen = false;
   AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
 
-  /// 加载中 / 主题刷新中 / 正在翻章时忽略新的导航请求。
-  @override
-  bool get isNavigationBusy => shouldIgnoreChapterNavigation(
-    isWebViewLoading: isWebViewLoading,
-    updatingTheme: updatingTheme,
-    isChangingChapter: isChangingChapter,
-  );
-
   @override
   void initState() {
     super.initState();
     final sessionFactory = ref.read(readerSessionFactoryProvider.notifier);
     webViewHandler = sessionFactory.createWebViewHandler();
     bookSession = sessionFactory.createSession(widget.fileHash);
+    navigator = ReaderNavigator(
+      session: bookSession,
+      viewport: rendererController,
+    );
     progressController = ReadingProgressController(
       save: bookSession.saveProgress,
       onSaveFailed: () {
@@ -294,7 +209,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     unawaited(progressController.close());
     _readerSettingsSubscription?.close();
     _volumeKeyTurnsPageSubscription?.close();
-    viewState.dispose();
+    navigator.dispose();
+    activeTocItemsNotifier.dispose();
+    activeTocTitleNotifier.dispose();
+    displayProgressNotifier.dispose();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
     volumeSubscription?.cancel();
@@ -357,17 +275,71 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void refreshActiveTocState() {
     final activeItems = resolveActiveItems();
-    if (!setEquals(viewState.activeTocItemsNotifier.value, activeItems)) {
-      viewState.activeTocItemsNotifier.value = activeItems;
+    if (!setEquals(activeTocItemsNotifier.value, activeItems)) {
+      activeTocItemsNotifier.value = activeItems;
     }
 
     final title = activeItems.isNotEmpty
         ? activeItems.last.label
         : bookSession.book?.title ?? '';
-    if (viewState.activeTocTitleNotifier.value != title) {
-      viewState.activeTocTitleNotifier.value = title;
+    if (activeTocTitleNotifier.value != title) {
+      activeTocTitleNotifier.value = title;
     }
   }
+
+  Set<TocItem> resolveActiveItems() {
+    return bookSession.resolveActiveItems(navigator.state.value.spineIndex);
+  }
+
+  void handleScrollAnchors(List<String> anchorIds) {
+    bookSession.updateActiveAnchors(anchorIds);
+    refreshActiveTocState();
+  }
+
+  /// 导航结果 → l10n 提示；成功与忽略不出提示。
+  void _showNavOutcome(ReaderNavOutcome outcome) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    final message = switch (outcome) {
+      ReaderNavOutcome.firstChapter => l10n.firstChapterOfBook,
+      ReaderNavOutcome.lastChapter => l10n.lastChapterOfBook,
+      ReaderNavOutcome.firstPageOfBook => l10n.firstPageOfBook,
+      ReaderNavOutcome.lastPageOfBook => l10n.lastPageOfBook,
+      ReaderNavOutcome.tocItemHasNoContent => l10n.chapterHasNoContent,
+      ReaderNavOutcome.tocItemNotInSpine => l10n.chapterNotFoundInSpine,
+      ReaderNavOutcome.moved || ReaderNavOutcome.ignored => null,
+    };
+    if (message == null) return;
+    ToastService.showError(message, theme: getEpubTheme().themeData);
+  }
+
+  /// 执行一次导航动作：提示结果，位置变化后刷新 TOC 与进度。
+  Future<void> _navigate(Future<ReaderNavOutcome> Function() action) async {
+    final outcome = await action();
+    if (!mounted) return;
+    _showNavOutcome(outcome);
+    if (outcome == ReaderNavOutcome.moved) {
+      refreshActiveTocState();
+      updateProgressDebounced();
+      saveProgressDebounced();
+    }
+  }
+
+  /// 翻页前的边界判定：越界时提示并阻止本次翻页。
+  bool canPerformPageTurn(bool isNext) {
+    final outcome = navigator.canTurnPage(isNext);
+    if (outcome != ReaderNavOutcome.moved) _showNavOutcome(outcome);
+    return outcome == ReaderNavOutcome.moved;
+  }
+
+  Future<void> handlePageTurn(bool isNext) =>
+      _navigate(() => navigator.turnPage(isNext));
+
+  Future<void> navigateToTocItem(TocItem item) =>
+      _navigate(() => navigator.goToTocItem(item));
+
+  Future<void> navigateToFirstTocItemFirstPage() =>
+      _navigate(() => navigator.goToChapter(0));
 
   void hideBottomNavigationBar() {
     SystemChrome.setEnabledSystemUIMode(
@@ -419,7 +391,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         return;
       }
 
-      currentSpineItemIndex = bookSession.initialChapterIndex;
+      await navigator.load(
+        anchor: 'top',
+        overrideSpineIndex: bookSession.initialChapterIndex,
+      );
       refreshActiveTocState();
       if (mounted) {
         setState(() {});
@@ -506,7 +481,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               key: scaffoldKey,
               backgroundColor: epubTheme.colorScheme.surfaceContainer,
               drawer: ValueListenableBuilder<Set<TocItem>>(
-                valueListenable: viewState.activeTocItemsNotifier,
+                valueListenable: activeTocItemsNotifier,
                 builder: (context, activeItems, child) {
                   return TocDrawer(
                     book: bookSession.book!,
@@ -532,25 +507,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       webViewHandler: webViewHandler,
                       fileHash: widget.fileHash,
                       showControls: showControls,
-                      isLoading: isWebViewLoading || updatingTheme,
+                      isLoading:
+                          navigator.state.value.isLoading ||
+                          navigator.state.value.isRefreshingTheme,
                       canPerformPageTurn: canPerformPageTurn,
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
                       onInitialized: () async {
                         final ratio = bookSession.initialScrollPosition;
-                        await loadCarousel(restoreScrollRatio: ratio);
+                        await navigator.load(restoreScrollRatio: ratio);
+                        if (!mounted) return;
+                        updateProgressDebounced();
+                        saveProgressDebounced();
                       },
                       onPageCountReady: (totalPages) async {
-                        totalPagesInChapter = totalPages;
-                        if (currentPageInChapter >= totalPagesInChapter) {
-                          currentPageInChapter = totalPagesInChapter > 0
-                              ? totalPagesInChapter - 1
-                              : 0;
-                        }
+                        navigator.reportPageCount(totalPages);
                         updateProgressDebounced();
                       },
                       onPageChanged: (pageIndex) {
-                        currentPageInChapter = pageIndex;
+                        navigator.reportPageIndex(pageIndex);
                         updateProgressDebounced();
                         saveProgressDebounced();
                       },
@@ -563,41 +538,43 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onSentenceSelected: handleSentenceSelected,
                       shouldShowWebView: shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
-                      statusBarLeftContent: viewState.activeTocTitleNotifier,
-                      statusBarRightContent: viewState.displayProgressNotifier,
+                      statusBarLeftContent: activeTocTitleNotifier,
+                      statusBarRightContent: displayProgressNotifier,
                     ),
 
                     ListenableBuilder(
                       listenable: Listenable.merge([
-                        viewState.activeTocTitleNotifier,
-                        viewState.currentSpineItemNotifier,
-                        viewState.currentPageNotifier,
-                        viewState.totalPagesNotifier,
+                        navigator.state,
+                        activeTocTitleNotifier,
                       ]),
                       builder: (context, child) {
+                        final nav = navigator.state.value;
                         return ControlPanel(
                           showControls: showControls,
                           title: bookSession.spine.isEmpty
                               ? bookSession.book!.title
-                              : viewState.activeTocTitleNotifier.value,
-                          currentSpineItemIndex:
-                              viewState.currentSpineItemNotifier.value,
+                              : activeTocTitleNotifier.value,
+                          currentSpineItemIndex: nav.spineIndex,
                           totalSpineItems: bookSession.spine.length,
-                          currentPageInChapter:
-                              viewState.currentPageNotifier.value,
-                          totalPagesInChapter:
-                              viewState.totalPagesNotifier.value,
+                          currentPageInChapter: nav.pageInChapter,
+                          totalPagesInChapter: nav.totalPagesInChapter,
                           direction: bookSession.book!.direction,
                           onBack: _leaveReader,
                           onOpenDrawer: openDrawer,
                           onPreviousPage: () =>
                               rendererController.performPreviousPageTurn(),
-                          onFirstPage: () => goToPage(0),
+                          onFirstPage: () =>
+                              _navigate(() => navigator.goToPage(0)),
                           onNextPage: () =>
                               rendererController.performNextPageTurn(),
-                          onLastPage: () => goToPage(totalPagesInChapter - 1),
-                          onPreviousChapter: previousSpineItemFirstPage,
-                          onNextChapter: nextSpineItem,
+                          onLastPage: () => _navigate(
+                            () => navigator.goToPage(
+                              navigator.state.value.totalPagesInChapter - 1,
+                            ),
+                          ),
+                          onPreviousChapter: () =>
+                              _navigate(navigator.previousChapterFirstPage),
+                          onNextChapter: () => _navigate(navigator.nextChapter),
                           onToggleStyleDrawer: (show) {
                             styleDrawerOpen = show;
                             setupVolumeControl();
