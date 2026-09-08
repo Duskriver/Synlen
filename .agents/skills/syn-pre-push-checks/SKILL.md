@@ -22,7 +22,7 @@ description: 在 Synlen 推送、强推、标记 ready for review 或声称"检�
 |---|---|---|
 | 只碰注释、文档 | 无测试；动了 .dart 跑 `dart format` + `dart run tool/doc_gates.dart` | 无运行时行为 |
 | 单个 feature 内部行为 | `flutter analyze` + 该路径的测试 | 契约面局限在本 feature |
-| 跨层契约、数据模型、共享 `core/` | 相关 feature 的测试 + 受影响门禁 | 影响面超出单模块 |
+| 跨层契约、数据模型、共享 `core/` | 相关 feature 的测试 + `dart run tool/layer_gates.dart` | 影响面超出单模块，分层门禁覆盖边 |
 | 模型 / provider 注解 | 重新生成 codegen → analyze + 相关测试 | 生成物是契约的一部分 |
 | 配置与依赖（`pubspec.yaml`、`analysis_options.yaml`、`build.yaml`、`l10n.yaml`） | analyze + 全量 `flutter test` | 影响全局，证据必须宽 |
 | `rust/` 或 FFI 绑定 | `cargo test` → 绑定重生成 → analyze + 冒烟 | 跨语言边界 |

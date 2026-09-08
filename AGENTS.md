@@ -27,6 +27,7 @@ dart format lib test
 flutter analyze                                  # 零 error 零 warning
 flutter test                                     # 推送 / 合并前全量
 dart run build_runner build --delete-conflicting-outputs
+dart run tool/layer_gates.dart                   # 分层门禁（动了 lib/ 时）
 dart run tool/doc_gates.dart                     # 文档门禁
 ```
 

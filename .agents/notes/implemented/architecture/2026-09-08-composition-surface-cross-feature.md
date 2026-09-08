@@ -33,4 +33,4 @@ Status: implemented
 ## Consequences
 
 - 各 feature 内部的 `presentation → data` 仍按规范逐条修复，不受本例外影响。
-- 新增跨 feature 边之前先读本笔记，并在 [architecture.md 的跨 feature 依赖表](../../../../docs/architecture.md#跨-feature-依赖)里同步登记。
+- 新增跨 feature 边之前先读本笔记，并让 `dart run tool/layer_gates.dart` 通过（当前边表由该脚本 `--list` 输出）。

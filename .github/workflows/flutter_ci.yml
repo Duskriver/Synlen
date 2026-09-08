@@ -34,6 +34,9 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Run layer gates
+        run: dart run tool/layer_gates.dart
+
   docs:
     name: Documentation gates
     runs-on: ubuntu-latest
