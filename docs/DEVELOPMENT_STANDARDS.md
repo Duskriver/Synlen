@@ -32,7 +32,7 @@ presentation → application → domain
 **规则：**
 
 - **依赖方向**：`presentation → application → domain`；`data → domain`；`data` 可以被 `application` 依赖。**禁止** `presentation → data`（现状存在的分层违规见 `docs/TECH_DEBT.md` 清单，逐步修复）。**禁止** `domain → application/data/presentation`。
-- **feature 之间**不互相 import。跨 feature 的共享能力必须下沉到 `core/`。
+- **feature 之间**不互相 import。跨 feature 的共享能力必须下沉到 `core/`。**唯一例外**是组合面（composition surface，当前仅 `settings`）：其 `presentation` 可依赖其他 feature 的 `application`，其 `application` 可编排其他 feature 的 `data`；任何 feature 的 `presentation` 都不得直接依赖其他 feature 的 `data`（见 ADR-0003）。
 - **core 是共享工具箱**，不是杂物间：放进去的东西必须被 ≥2 个 feature 使用，否则留在所属 feature。
 
 ## 2. 分层职责
