@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
-import 'package:synlen/src/features/library/application/progress_log.dart';
+import 'package:synlen/src/features/library/domain/import_progress.dart';
 import 'package:synlen/src/features/library/presentation/widgets/progress_dialog.dart';
 
 /// Hosts the import-pipeline progress dialog.
