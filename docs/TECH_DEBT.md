@@ -4,13 +4,13 @@
 > 规则：新代码一律按 `DEVELOPMENT_STANDARDS.md` 书写；旧代码遵循 Boy Scout Rule——路过即修。
 > 每清理一条，删除对应条目并注明清理 commit；发现新债时追加，不散落在代码注释里。
 
-建立时间：2026-08-12（架构诊断后首建）。
+建立时间：2026-08-12（架构诊断后首建）；最近校准：2026-09-08。
 
 ---
 
 ## 1. 分层违规：presentation 直连 data
 
-规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **11 处**违规（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
+规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **11 个文件 / 22 处 import** 违规（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
 
 | # | 文件 | 违规性质 |
 |---|------|----------|
@@ -58,8 +58,8 @@
 
 ## 4. reader 模块分层失衡
 
-- `reader/presentation`：**4788 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 661 行）。
-- `reader/application`：**1 文件 / 147 行**（`reader_settings_notifier.dart`，通篇 SharedPreferences 的 get/set 透传）。
+- `reader/presentation`：**4852 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 689 行）。
+- `reader/application`：**2 文件 / 232 行**（`reader_settings_notifier.dart` 146 行，通篇 SharedPreferences 的 get/set 透传；`reading_progress_controller.dart` 86 行，已具备可注入的落库 seam）。
 
 这是规范 §3「深模块 = 小接口大实现」的反例（浅模块），也印证 ADR-0001「reader 层逻辑集中在 UI」的判断。reader 已有单测安全网（见 §6），可开始增量重构（见 ADR-0001）。
 
@@ -72,23 +72,24 @@
 | 文件 | 行数 |
 |------|------|
 | `library/data/parsers/epub_zip_parser.dart` | 880 |
-| `reader/presentation/reader_screen.dart` | 661 |
-| `reader/presentation/reader_renderer.dart` | 551 |
-| `reader/presentation/reader_webview.dart` | 545 |
+| `reader/presentation/reader_screen.dart` | 689 |
+| `core/file_handling/unified_import_service.dart` | 618 |
+| `library/data/services/epub_import_service.dart` | 568 |
+| `reader/presentation/reader_renderer.dart` | 550 |
 | `core/theme/color_schemes.dart` | 545 |
-| `core/file_handling/unified_import_service.dart` | 493 |
-| `library/data/services/import_backup_service.dart` | 491 |
-| `library/data/services/epub_import_service.dart` | 479 |
-| `reader/presentation/control_panel.dart` | 478 |
-| `library/presentation/library_screen.dart` | 461 |
-| `library/application/bookshelf_notifier.dart` | 445 |
+| `reader/presentation/reader_webview.dart` | 544 |
+| `library/data/services/import_backup_service.dart` | 518 |
+| `reader/presentation/control_panel.dart` | 477 |
+| `library/presentation/library_screen.dart` | 454 |
+| `library/presentation/mixins/library_actions_mixin.dart` | 423 |
+| `library/application/bookshelf_notifier.dart` | 423 |
 | `detail/presentation/book_detail_screen.dart` | 403 |
 
 ---
 
 ## 6. 测试覆盖缺口（reader 已补两批，2026-08-13）
 
-- 2026-09-06 更新：**33 个测试文件 / 160 个源文件（约 21%）**，**246 个用例**全绿。
+- 2026-09-08 更新：**35 个测试文件 / 157 个自有源文件（约 22%）**，**246 个用例**全绿（另有 2 个条件跳过：真实 DeepSeek 接口验收）。
 - ✅ reader 首批 27 用例（issue #5）：`ReaderSettings` / `EpubTheme` / `ReaderSettingsNotifier` / `EpubWebViewHandler`。
 - ✅ reader 第二批 12 用例：`BookSession`（spine 过滤、TOC 查找映射、URL/索引解析、激活目录解析、进度防抖落库、初始位置）。
 - ✅ TXT 支持批次（2026-08-26）：TXT 解码/章节切分/内容供给/DB v1→v2 迁移，新增 4 个测试文件 45 用例。
@@ -131,11 +132,29 @@ TXT 支持落地后，以下以 `Epub` 命名的组件实际已同时处理 EPUB
 
 ---
 
+## 10. 注释语言与规范 §8.1 不符（2026-09-08 新增）
+
+规范 §8.1 要求注释与文档字符串一律中文，但实测 `lib/src` 的 1646 行注释中 **1071 行（65.1%）为纯英文**，集中在 ADR-0001 之前写就的旧模块：
+
+| 文件 | 英文注释 / 总注释行 |
+|------|------|
+| `core/file_handling/unified_import_service.dart` | 92 / 124 |
+| `core/theme/app_theme_settings.dart` | 63 / 70 |
+| `library/data/parsers/epub_zip_parser.dart` | 63 / 63 |
+| `core/file_handling/import_cache_manager.dart` | 51 / 68 |
+| `library/data/services/import_backup_service.dart` | 50 / 82 |
+| `library/data/services/epub_import_service.dart` | 37 / 54 |
+
+修复方向：随 Boy Scout Rule 路过即译，不做一次性批量翻译（翻译不改行为却淹没 diff）；`lib/src/rust/**` 与 `frb_generated*` 是生成物，不计入。
+
+---
+
 ## 优先修复顺序（建议）
 
-> 2026-09-06 校准：原列表中「reader 补测试」「learning 硬编码中文」「style_bottom_sheet」均已完成销账。
+> 2026-09-08 校准：§4/§5/§6 的数字已按当前代码重测；原列表中「reader 补测试」「learning 硬编码中文」「style_bottom_sheet」均已销账。
 
-1. **P1**：增量修 `presentation → data` 违规（§1 表中 11 处，reader 侧与跨 feature 引用为主）。
+1. **P1**：增量修 `presentation → data` 违规（§1 表中 11 个文件，reader 侧与跨 feature 引用为主）。
 2. **P1**：reader 分层重构（§4），按 ADR-0001 增量推进。
 3. **P2**：引入 `custom_lint` 拦截 `debugPrint`（§2 的可选加固）。
 4. **P2**：`Epub` 命名多格式化（§8）、intent 接收（§9）。
+5. **P3**：注释语言按路过即译推进（§10）。
