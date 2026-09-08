@@ -204,6 +204,9 @@ const _repoPathPrefixes = <String>[
   'scripts/',
 ];
 
+/// 生成或依赖目录：只在装好工具链后存在，干净检出里不该被要求存在。
+const _generatedPathSegments = <String>['node_modules', 'build', '.dart_tool'];
+
 void _verifyRepoPaths(Directory repo, List<File> files) {
   for (final f in files) {
     final rel = _rel(repo, f.path);
@@ -222,6 +225,7 @@ void _verifyRepoPaths(Directory repo, List<File> files) {
       ).hasMatch(token)) {
         continue;
       }
+      if (token.split('/').any(_generatedPathSegments.contains)) continue;
       if (FileSystemEntity.typeSync('${repo.path}/$token') ==
           FileSystemEntityType.notFound) {
         _errors.add('$rel: 引用的仓库路径不存在 -> $token');
