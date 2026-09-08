@@ -59,10 +59,11 @@
 
 ## 4. reader 模块分层失衡
 
-- `reader/presentation`：**4841 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 680 行）。
-- `reader/application`：**8 文件 / 1076 行**（2026-09-08 起 `book_session` / `epub_webview_handler` / `reader_scripts` / `volume_control_service` / `reader_session_factory` / `chapter_navigation` 迁入；装配、内容供给与章节导航逻辑已不在 UI 层）。
-- 第二批：章节预载窗口与忙态守卫抽到 `reader/application/chapter_navigation.dart`（8 个用例），`spine_navigation_mixin` 顺手删掉 3 个零调用转发。
-- 比例从 21:1 收敛到约 4.5:1，下一步是把剩余 part mixin 的逻辑逐块抽出。
+- `reader/presentation`：**4853 行 / 22 文件**（7 个 mixin + `reader_screen.dart` 690 行）。
+- `reader/application`：**9 文件 / 1111 行**（2026-09-08 起 `book_session` / `epub_webview_handler` / `reader_scripts` / `volume_control_service` / `reader_session_factory` / `chapter_navigation` / `page_navigation` 迁入；装配、内容供给、章节与翻页判定已不在 UI 层）。
+- 第二批：章节预载窗口与忙态守卫抽到 `chapter_navigation.dart`（8 个用例），`spine_navigation_mixin` 顺手删掉 3 个零调用转发（279 → 259 行）。
+- 第三批：翻页边界与目标页判定抽到 `page_navigation.dart`（8 个用例），忙态守卫由宿主 State 组合成 `isNavigationBusy`，两处 mixin 不再各自拼条件。
+- 比例从 21:1 收敛到约 4.4:1，下一步是把剩余 part mixin（theme / footnote / link / image）的逻辑逐块抽出。
 
 这是规范 §3「深模块 = 小接口大实现」的反例（浅模块），也印证 ADR-0001「reader 层逻辑集中在 UI」的判断。reader 已有单测安全网（见 §6），可开始增量重构（见 ADR-0001）。
 
@@ -75,7 +76,7 @@
 | 文件 | 行数 |
 |------|------|
 | `library/data/parsers/epub_zip_parser.dart` | 880 |
-| `reader/presentation/reader_screen.dart` | 680 |
+| `reader/presentation/reader_screen.dart` | 690 |
 | `core/file_handling/unified_import_service.dart` | 618 |
 | `library/data/services/epub_import_service.dart` | 568 |
 | `reader/presentation/reader_renderer.dart` | 550 |
