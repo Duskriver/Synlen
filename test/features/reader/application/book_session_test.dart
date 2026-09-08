@@ -4,15 +4,14 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
-import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
+import 'package:synlen/src/features/library/application/book_queries.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
 
 import 'book_session_test.mocks.dart';
 
-@GenerateMocks([ShelfBookRepository, BookManifestRepository])
+@GenerateMocks([BookQueries])
 void main() {
   provideDummy<Either<String, bool>>(const Right(true));
 
@@ -70,26 +69,21 @@ void main() {
     );
   }
 
-  (BookSession, MockShelfBookRepository, MockBookManifestRepository)
+  (BookSession, MockBookQueries, MockBookQueries)
   buildSession() {
-    final shelfRepo = MockShelfBookRepository();
-    final manifestRepo = MockBookManifestRepository();
-    final session = BookSession(
-      fileHash: 'hash1',
-      shelfBookRepository: shelfRepo,
-      manifestRepository: manifestRepo,
-    );
-    return (session, shelfRepo, manifestRepo);
+    final queries = MockBookQueries();
+    final session = BookSession(fileHash: 'hash1', queries: queries);
+    return (session, queries, queries);
   }
 
   group('BookSession.loadBook', () {
     test('should load book and manifest and filter non-linear spine', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
       when(
-        shelfRepo.getBookByHash('hash1'),
+        shelfRepo.findBook('hash1'),
       ).thenAnswer((_) async => buildBook(direction: 1));
       when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
 
       final loaded = await session.loadBook();
@@ -104,7 +98,7 @@ void main() {
 
     test('should return false when the book is missing', () async {
       final (session, shelfRepo, _) = buildSession();
-      when(shelfRepo.getBookByHash('hash1')).thenAnswer((_) async => null);
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => null);
 
       expect(await session.loadBook(), isFalse);
       expect(session.isLoaded, isFalse);
@@ -113,10 +107,10 @@ void main() {
     test('should return false when the manifest is missing', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
       when(
-        shelfRepo.getBookByHash('hash1'),
+        shelfRepo.findBook('hash1'),
       ).thenAnswer((_) async => buildBook());
       when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => null);
 
       expect(await session.loadBook(), isFalse);
@@ -127,9 +121,9 @@ void main() {
     test('should build anchor lookup maps from nested TOC', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
       when(
-        shelfRepo.getBookByHash('hash1'),
+        shelfRepo.findBook('hash1'),
       ).thenAnswer((_) async => buildBook());
-      when(manifestRepo.getManifestByHash('hash1')).thenAnswer(
+      when(manifestRepo.findManifest('hash1')).thenAnswer(
         (_) async => buildManifest(
           toc: [
             TocItem(
@@ -192,10 +186,10 @@ void main() {
     test('getSpineItemUrl should build a URL for a valid index', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
       when(
-        shelfRepo.getBookByHash('hash1'),
+        shelfRepo.findBook('hash1'),
       ).thenAnswer((_) async => buildBook());
       when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
       await session.loadBook();
 
@@ -208,10 +202,10 @@ void main() {
     test('findSpineIndexByUrl should resolve full and relative URLs', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
       when(
-        shelfRepo.getBookByHash('hash1'),
+        shelfRepo.findBook('hash1'),
       ).thenAnswer((_) async => buildBook());
       when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
       await session.loadBook();
 
@@ -228,10 +222,10 @@ void main() {
     test('resolveActiveItems should map active anchors to TOC items', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
       when(
-        shelfRepo.getBookByHash('hash1'),
+        shelfRepo.findBook('hash1'),
       ).thenAnswer((_) async => buildBook());
       when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
       await session.loadBook();
 
@@ -246,10 +240,10 @@ void main() {
       () async {
         final (session, shelfRepo, manifestRepo) = buildSession();
         when(
-          shelfRepo.getBookByHash('hash1'),
+          shelfRepo.findBook('hash1'),
         ).thenAnswer((_) async => buildBook());
         when(
-          manifestRepo.getManifestByHash('hash1'),
+          manifestRepo.findManifest('hash1'),
         ).thenAnswer((_) async => buildManifest());
         await session.loadBook();
 
@@ -263,10 +257,10 @@ void main() {
       () async {
         final (session, shelfRepo, manifestRepo) = buildSession();
         when(
-          shelfRepo.getBookByHash('hash1'),
+          shelfRepo.findBook('hash1'),
         ).thenAnswer((_) async => buildBook());
         when(
-          manifestRepo.getManifestByHash('hash1'),
+          manifestRepo.findManifest('hash1'),
         ).thenAnswer((_) async => buildManifest());
         await session.loadBook();
 
@@ -280,23 +274,21 @@ void main() {
   });
 
   group('BookSession.saveProgress', () {
-    void stubUpdateProgress(MockShelfBookRepository repo) {
+    void stubSaveProgress(MockBookQueries queries) {
       when(
-        repo.updateProgress(
+        queries.saveProgress(
           bookId: anyNamed('bookId'),
-          currentChapterIndex: anyNamed('currentChapterIndex'),
+          chapterIndex: anyNamed('chapterIndex'),
           progress: anyNamed('progress'),
           scrollPosition: anyNamed('scrollPosition'),
         ),
-      ).thenAnswer((_) async => const Right(true));
+      ).thenAnswer((_) async {});
     }
 
     test('等待真实写入完成并按线性章节计算进度', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(
-        shelfRepo.getBookByHash('hash1'),
-      ).thenAnswer((_) async => buildBook());
-      when(manifestRepo.getManifestByHash('hash1')).thenAnswer(
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
+      when(manifestRepo.findManifest('hash1')).thenAnswer(
         (_) async => buildManifest(
           spine: [
             SpineItem(index: 0, href: 'a.xhtml'),
@@ -305,11 +297,11 @@ void main() {
           ],
         ),
       );
-      final write = Completer<Either<String, bool>>();
+      final write = Completer<void>();
       when(
-        shelfRepo.updateProgress(
+        shelfRepo.saveProgress(
           bookId: 1,
-          currentChapterIndex: 1,
+          chapterIndex: 1,
           progress: 0.8,
           scrollPosition: 0.5,
         ),
@@ -321,59 +313,50 @@ void main() {
           .then((_) => completed = true);
       await Future<void>.delayed(Duration.zero);
       expect(completed, isFalse);
-      write.complete(const Right(true));
+      write.complete();
       await saving;
       expect(completed, isTrue);
       verify(
-        shelfRepo.updateProgress(
+        shelfRepo.saveProgress(
           bookId: 1,
-          currentChapterIndex: 1,
+          chapterIndex: 1,
           progress: 0.8,
           scrollPosition: 0.5,
         ),
       ).called(1);
     });
 
-    for (final result in <Either<String, bool>>[
-      const Left('磁盘不可写'),
-      const Right(false),
-    ]) {
-      test('仓库返回 $result 时必须报告失败', () async {
-        final (session, shelfRepo, manifestRepo) = buildSession();
-        when(
-          shelfRepo.getBookByHash('hash1'),
-        ).thenAnswer((_) async => buildBook());
-        when(
-          manifestRepo.getManifestByHash('hash1'),
-        ).thenAnswer((_) async => buildManifest());
-        when(
-          shelfRepo.updateProgress(
-            bookId: anyNamed('bookId'),
-            currentChapterIndex: anyNamed('currentChapterIndex'),
-            progress: anyNamed('progress'),
-            scrollPosition: anyNamed('scrollPosition'),
-          ),
-        ).thenAnswer((_) async => result);
-        await session.loadBook();
-        await expectLater(
-          session.saveProgress((chapterIndex: 0, pageIndex: 0, pageCount: 10)),
-          throwsStateError,
-        );
-      });
-    }
-
-    test('无效位置与未加载会话不得写入数据库', () async {
+    test('仓库写入失败时必须报告失败', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      stubUpdateProgress(shelfRepo);
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
+      when(
+        manifestRepo.findManifest('hash1'),
+      ).thenAnswer((_) async => buildManifest());
+      when(
+        shelfRepo.saveProgress(
+          bookId: anyNamed('bookId'),
+          chapterIndex: anyNamed('chapterIndex'),
+          progress: anyNamed('progress'),
+          scrollPosition: anyNamed('scrollPosition'),
+        ),
+      ).thenThrow(StateError('磁盘不可写'));
+      await session.loadBook();
       await expectLater(
         session.saveProgress((chapterIndex: 0, pageIndex: 0, pageCount: 10)),
         throwsStateError,
       );
+    });
+
+    test('无效位置与未加载会话不得写入数据库', () async {
+      final (session, shelfRepo, manifestRepo) = buildSession();
+      stubSaveProgress(shelfRepo);
+      await expectLater(
+        session.saveProgress((chapterIndex: 0, pageIndex: 0, pageCount: 10)),
+        throwsStateError,
+      );
+      when(shelfRepo.findBook('hash1')).thenAnswer((_) async => buildBook());
       when(
-        shelfRepo.getBookByHash('hash1'),
-      ).thenAnswer((_) async => buildBook());
-      when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
       await session.loadBook();
       for (final position in [
@@ -386,9 +369,9 @@ void main() {
         await expectLater(session.saveProgress(position), throwsArgumentError);
       }
       verifyNever(
-        shelfRepo.updateProgress(
+        shelfRepo.saveProgress(
           bookId: anyNamed('bookId'),
-          currentChapterIndex: anyNamed('currentChapterIndex'),
+          chapterIndex: anyNamed('chapterIndex'),
           progress: anyNamed('progress'),
           scrollPosition: anyNamed('scrollPosition'),
         ),
@@ -399,12 +382,12 @@ void main() {
   group('BookSession 初始位置', () {
     test('should expose the persisted reading position', () async {
       final (session, shelfRepo, manifestRepo) = buildSession();
-      when(shelfRepo.getBookByHash('hash1')).thenAnswer(
+      when(shelfRepo.findBook('hash1')).thenAnswer(
         (_) async =>
             buildBook(currentChapterIndex: 2, chapterScrollPosition: 0.42),
       );
       when(
-        manifestRepo.getManifestByHash('hash1'),
+        manifestRepo.findManifest('hash1'),
       ).thenAnswer((_) async => buildManifest());
       await session.loadBook();
 

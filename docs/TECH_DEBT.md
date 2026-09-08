@@ -165,17 +165,16 @@ TXT 支持落地后，以下以 `Epub` 命名的组件实际已同时处理 EPUB
 
 ---
 
-## 11. 跨 feature 依赖（2026-09-08 新增）
+## 11. 跨 feature 依赖（2026-09-08 新增，同日收敛一批）
 
-`presentation → data` 清零后，规范 §1 的第二条（feature 互不 import）仍有 15 条边。按 ADR-0003，只有组合面（settings）可以跨 feature 依赖；其余需要收敛：
+`presentation → data` 清零后，规范 §1 的第二条（feature 互不 import）仍有 15 条边，但**性质已不同**：不再有 presentation 互引或 application 直连他模块 data，全部是 application↔application、值类型或 ADR-0003 允许的组合面：
 
-| 边 | 条数 | 性质与方向 |
+| 边 | 条数 | 性质 |
 |---|---|---|
-| `reader/application → library/data` | 2 | 阅读会话需要书目仓库；应改为经 `library/application` 暴露查询用例，或把书目模型下沉 `core/` |
-| `reader/presentation → learning/presentation` | 1 | 阅读器弹窗复用学习弹窗，presentation 互依赖（最重的一条） |
-| `reader/application·presentation → settings/application` | 2 | 阅读设置读 API Key 音色等配置 |
-| `settings/* → learning/domain·data`、`settings/presentation → learning/domain` | 4 | 组合面例外，ADR-0003 允许 |
-| `settings/application → library/data` | 2 | 组合面例外，ADR-0003 允许 |
+| `reader/presentation → learning/application` | 1 | 宿主调能力模块入口（ADR-0003 追加条款），弹窗已不外泄 |
+| `reader/application → library/application` | 2 | 宿主经 `BookQueries` 接口读书目，不再依赖 library 仓库 |
+| `reader/application·presentation → settings/application` | 2 | 阅读设置读配置（宿主读配置模块，ADR-0003 追加条款） |
+| `settings/* → learning·library 的 data/domain` | 6 | 组合面例外，ADR-0003 主条款允许 |
 | `reader/* → library/domain`、`learning → settings/application` 等 | 4 | 值类型与配置读取，风险低 |
 
-修复方向：先处理 `reader → learning/presentation`（把学习弹窗的调用改成 application 用例或事件），再评估 `reader → library` 的书目读取入口。
+修复方向：已无高风险的跨 feature 依赖；后续若要让阅读器可独立复用，再考虑在 `core/` 定义接口、启动时注入实现（依赖倒置）。

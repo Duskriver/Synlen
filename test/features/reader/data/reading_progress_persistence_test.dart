@@ -9,6 +9,7 @@ import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/application/reading_progress_controller.dart';
+import 'package:synlen/src/features/library/application/book_queries.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
 
 void main() {
@@ -67,8 +68,10 @@ void main() {
     );
     final session = BookSession(
       fileHash: 'reading-book',
-      shelfBookRepository: shelfRepo,
-      manifestRepository: manifestRepo,
+      queries: RepositoryBookQueries(
+        shelfBookRepository: shelfRepo,
+        manifestRepository: manifestRepo,
+      ),
     );
     expect(await session.loadBook(), isTrue);
     final controller = ReadingProgressController(
@@ -91,8 +94,10 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase(databaseFile));
     final reopened = BookSession(
       fileHash: 'reading-book',
-      shelfBookRepository: ShelfBookRepository(db: db),
-      manifestRepository: BookManifestRepository(db: db),
+      queries: RepositoryBookQueries(
+        shelfBookRepository: ShelfBookRepository(db: db),
+        manifestRepository: BookManifestRepository(db: db),
+      ),
     );
     expect(await reopened.loadBook(), isTrue);
     expect(reopened.initialChapterIndex, 1);
