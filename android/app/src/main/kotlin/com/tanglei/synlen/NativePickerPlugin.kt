@@ -85,8 +85,8 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
-            "pickEpubFiles" -> pickEpubFiles(result)
-            "pickEpubFolder" -> pickEpubFolder(result)
+            "pickBookFiles" -> pickBookFiles(result)
+            "pickBookFolder" -> pickBookFolder(result)
             "pickBackupFolder" -> pickBackupFolder(result)
             "pickBackupFile" -> pickBackupFile(result)
             "pickFontFiles" -> pickFontFiles(result)
@@ -228,7 +228,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      * Uses ACTION_OPEN_DOCUMENT with EPUB/TXT MIME types.
      * Allows multiple file selection.
      */
-    private fun pickEpubFiles(result: Result) {
+    private fun pickBookFiles(result: Result) {
         if (pendingResult != null) {
             result.error("ALREADY_ACTIVE", "File picker is already active", null)
             return
@@ -265,7 +265,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      * Uses ACTION_OPEN_DOCUMENT_TREE. Folder traversal happens in a background
      * thread using Kotlin Coroutines to avoid blocking the main thread.
      */
-    private fun pickEpubFolder(result: Result) {
+    private fun pickBookFolder(result: Result) {
         if (pendingResult != null) {
             result.error("ALREADY_ACTIVE", "Folder picker is already active", null)
             return
@@ -427,14 +427,14 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     data.clipData?.let { clipData ->
                         for (i in 0 until clipData.itemCount) {
                             val uri = clipData.getItemAt(i).uri
-                            if (isEpubFile(uri)) validUris.add(uri.toString())
+                            if (isBookFile(uri)) validUris.add(uri.toString())
                         }
                     }
 
                     // Single file fallback
                     if (validUris.isEmpty()) {
                         data.data?.let { uri ->
-                            if (isEpubFile(uri)) validUris.add(uri.toString())
+                            if (isBookFile(uri)) validUris.add(uri.toString())
                         }
                     }
 
@@ -643,7 +643,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // File validation helpers  (run on Dispatchers.IO)
     // -------------------------------------------------------------------------
 
-    private fun isEpubFile(uri: Uri): Boolean {
+    private fun isBookFile(uri: Uri): Boolean {
         val activity = this.activity ?: return false
 
         val displayName = try {

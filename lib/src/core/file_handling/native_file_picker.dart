@@ -167,7 +167,7 @@ class NativeFilePicker {
   Future<List<PlatformPath>> _pickFilesAndroid() async {
     try {
       final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFiles',
+        'pickBookFiles',
       );
 
       if (result == null) {
@@ -188,7 +188,7 @@ class NativeFilePicker {
   Future<List<PlatformPath>> _pickFolderAndroid() async {
     try {
       final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFolder',
+        'pickBookFolder',
       );
 
       if (result == null) {
@@ -243,7 +243,7 @@ class NativeFilePicker {
   Future<List<PlatformPath>> _pickFilesIOS() async {
     try {
       final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFiles',
+        'pickBookFiles',
       );
       if (result == null) return [];
       return result
@@ -260,7 +260,7 @@ class NativeFilePicker {
   Future<List<PlatformPath>> _pickFolderIOS() async {
     try {
       final result = await _channel.invokeMethod<List<Object?>>(
-        'pickEpubFolder',
+        'pickBookFolder',
       );
       if (result == null) return [];
       return result
