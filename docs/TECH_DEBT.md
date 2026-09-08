@@ -10,7 +10,7 @@
 
 ## 1. 分层违规：presentation 直连 data
 
-规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **10 个文件 / 21 处 import** 违规（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
+规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **7 个文件 / 16 处 import** 违规（全部集中在 detail 与 reader 内部）（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
 
 | # | 文件 | 违规性质 |
 |---|------|----------|
@@ -24,12 +24,12 @@
 | 8 | `lib/src/features/reader/presentation/image_viewer.dart` | 引 `reader/data` |
 | 9 | `lib/src/features/reader/presentation/reader_screen.dart` | 引 `reader/data` + **跨 feature 引 `library/data`**（6 处 import） |
 | 10 | `lib/src/features/reader/presentation/widgets/footnot_popup_overlay.dart` | 引 `reader/data` |
-| 11 | `lib/src/features/settings/presentation/widgets/clean_cache_tile.dart` | **跨 feature 引 `library/data/services`** |
-| 12 | `lib/src/features/settings/presentation/widgets/backup_tile.dart` | **跨 feature 引 `library/data/services`** |
+| 11 | ~~`lib/src/features/settings/presentation/widgets/clean_cache_tile.dart`~~ | ✅ 已修复：跨 feature 编排移入 `settings/application/cache_cleanup.dart`（ADR-0003 组合面） |
+| 12 | ~~`lib/src/features/settings/presentation/widgets/backup_tile.dart`~~ | ✅ 已修复：导出用例移入 `settings/application/backup_export.dart`（ADR-0003） |
 | 13 | ~~`lib/src/features/reader/domain/epub_theme.dart`~~ | ✅ 已修复（issue #6）：`colorToHex` 下沉 domain，domain→data 清零，顺带消除 epub_theme↔reader_scripts 循环 import |
-| 14 | `lib/src/features/settings/presentation/widgets/settings_ai_service_section.dart` | **跨 feature 引 `learning/data/repositories`**（连通性检查直连服务，待随 §1 批量修复下沉到 settings/application） |
+| 14 | ~~`lib/src/features/settings/presentation/widgets/settings_ai_service_section.dart`~~ | ✅ 已修复：连通性检查移入 `settings/application/deep_seek_connectivity.dart`（ADR-0003） |
 
-修复方向：reader 的 `data`（book_session / epub_webview_handler / reader_scripts / epub_stream_service）要么下沉到 `core/`，要么在 `application` 层提供编排接口；settings/detail 跨 feature 依赖改为经 `library/application` 暴露的 provider。
+修复方向：reader 的 `data`（book_session / epub_webview_handler / reader_scripts / epub_stream_service）要么下沉到 `core/`，要么在 `application` 层提供编排接口；`detail` 业务归属 library，按 ADR-0003 的结论并入 library 后再修其内部 `presentation → data`。
 
 ---
 

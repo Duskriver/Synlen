@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
-import 'package:synlen/src/features/library/data/services/export_backup_service.dart';
-import 'package:synlen/src/features/library/data/services/export_backup_service_provider.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../application/backup_export.dart';
 
 /// List tile that triggers a full library backup export.
 ///
@@ -36,23 +35,19 @@ class _BackupTileState extends ConsumerState<BackupTile> {
     // Capture l10n before the async gap to avoid BuildContext use after await.
     final l10n = AppLocalizations.of(context)!;
 
-    final result = await ref
-        .read(exportBackupServiceProvider)
-        .exportLibraryAsFile(
+    final error = await ref
+        .read(backupExportProvider.notifier)
+        .exportToShareSheet(
           sharePositionOrigin: _tileRect(),
           shareTitle: l10n.backupShareTitle,
         );
 
-    if (!mounted) {
-      _isExporting = false;
-      return;
-    }
+    if (!mounted) return;
 
-    switch (result) {
-      case ExportSuccess():
-        ToastService.showSuccess(l10n.backupShared);
-      case ExportFailure(:final message):
-        ToastService.showError(l10n.exportFailed(message));
+    if (error == null) {
+      ToastService.showSuccess(l10n.backupShared);
+    } else {
+      ToastService.showError(l10n.exportFailed(error));
     }
 
     setState(() => _isExporting = false);

@@ -1,10 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
-import 'package:synlen/src/features/learning/data/repositories/learning_repository_provider.dart';
 import 'api_key_dialog.dart';
+import '../../application/deep_seek_connectivity.dart';
 import 'package:synlen/src/features/settings/application/api_key_notifier.dart';
 import 'settings_info_section.dart';
 
@@ -130,25 +129,24 @@ class _DeepSeekConnectivityCheckTileState
   Future<void> _check() async {
     final l10n = AppLocalizations.of(context)!;
     final key = (await ref.read(apiKeyProvider.future)).deepSeekKey;
-    if (key.isEmpty) {
-      if (mounted) ToastService.showError(l10n.apiKeyNotConfigured);
-      return;
-    }
+    if (!mounted) return;
 
     setState(() => _checking = true);
-    try {
-      await ref.read(deepSeekServiceProvider).verifyApiKey(key);
-      if (mounted) ToastService.showSuccess(l10n.deepSeekCheckOk);
-    } on DioException catch (e) {
-      if (!mounted) return;
-      final message = e.response?.statusCode == 401
-          ? l10n.deepSeekCheckBadKey
-          : l10n.deepSeekCheckFailed;
-      ToastService.showError(message);
-    } catch (_) {
-      if (mounted) ToastService.showError(l10n.deepSeekCheckFailed);
-    } finally {
-      if (mounted) setState(() => _checking = false);
+    final outcome = await ref
+        .read(deepSeekKeyCheckProvider.notifier)
+        .check(key);
+    if (!mounted) return;
+    setState(() => _checking = false);
+
+    switch (outcome) {
+      case DeepSeekConnectivity.ok:
+        ToastService.showSuccess(l10n.deepSeekCheckOk);
+      case DeepSeekConnectivity.notConfigured:
+        ToastService.showError(l10n.apiKeyNotConfigured);
+      case DeepSeekConnectivity.invalidKey:
+        ToastService.showError(l10n.deepSeekCheckBadKey);
+      case DeepSeekConnectivity.unreachable:
+        ToastService.showError(l10n.deepSeekCheckFailed);
     }
   }
 
