@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import '../application/bookshelf_notifier.dart';
 import '../application/book_actions.dart';
+import '../application/book_view_mapper.dart';
 import 'widgets/book_detail_edit_body.dart';
 import 'widgets/book_detail_view_body.dart';
 import '../../../core/database/app_database.dart';
@@ -352,7 +353,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   Widget _bodyForBook(BuildContext context, ShelfBook book) {
     if (_isEditing) {
       return BookDetailEditBody(
-        book: (id: book.id, coverPath: book.coverPath),
+        book: editableBookView(book),
         titleController: _titleController,
         authorsController: _authorsController,
         descriptionController: _descriptionController,
@@ -361,19 +362,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       );
     }
     return BookDetailViewBody(
-      book: (
-        id: book.id,
-        fileHash: book.fileHash,
-        title: book.title,
-        authors: book.authors,
-        description: book.description,
-        coverPath: book.coverPath,
-        totalChapters: book.totalChapters,
-        epubVersion: book.epubVersion,
-        format: book.format,
-        direction: book.direction,
-        readingProgress: book.readingProgress,
-      ),
+      book: detailBookView(book),
       bookId: widget.bookId,
     );
   }

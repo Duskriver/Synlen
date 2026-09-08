@@ -55,7 +55,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 
 ## 已知限制与待办
 
-- 超 400 行文件：`book_detail_screen.dart`——窄视图映射目前内联在屏幕里，迁移收尾时应随映射函数移入 application。复现：
+- 超 400 行文件：`book_detail_screen.dart` 403 行——映射已移入 application，剩余是屏幕自身的动作编排；迁移收尾时可一并拆分。复现：
 
 ```sh
 find lib/src/features/library -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head

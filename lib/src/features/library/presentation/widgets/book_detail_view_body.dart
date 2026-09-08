@@ -4,24 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../application/book_actions.dart';
 import '../../domain/book_format.dart';
 import '../../domain/book_meta.dart';
+import '../../domain/book_views.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/widgets/expandable_text.dart';
 import '../../../../../l10n/app_localizations.dart';
-
-/// 详情只读视图需要的书目字段；不持有持久化行类型。
-typedef DetailBookView = ({
-  int id,
-  String fileHash,
-  String title,
-  List<String> authors,
-  String? description,
-  String? coverPath,
-  int totalChapters,
-  String epubVersion,
-  BookFormat format,
-  int direction,
-  double readingProgress,
-});
 
 /// Read-only detail view for a single book.
 ///
