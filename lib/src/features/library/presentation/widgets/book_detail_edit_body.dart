@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/widgets/book_cover.dart';
+import '../../domain/book_views.dart';
 import '../../../../../l10n/app_localizations.dart';
-
-/// 编辑态表单只需要书目主键与封面路径，不持有持久化行类型。
-typedef EditableBookView = ({int id, String? coverPath});
 
 /// Inline-editing form for a book.
 ///
