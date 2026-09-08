@@ -31,16 +31,7 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final bool Function(bool isNext) canPerformPageTurn;
   final Future<void> Function(bool isNext) onPerformPageTurn;
   final VoidCallback onToggleControls;
-  final Future<void> Function() onInitialized;
-  final Future<void> Function(int totalPages) onPageCountReady;
-  final ValueChanged<int> onPageChanged;
-  final ValueChanged<List<String>> onScrollAnchors;
-  final Function(String imageUrl, Rect rect) onImageLongPress;
-  final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
-  final Function(String url) onLinkTap;
-  final bool Function(String url) shouldHandleLinkTap;
-  final Function(String word, String context) onWordTap;
-  final Function(String sentence) onSentenceSelected;
+  final ReaderWebViewCallbacks callbacks;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
   final ValueListenable<String> statusBarLeftContent;
@@ -57,16 +48,7 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.canPerformPageTurn,
     required this.onPerformPageTurn,
     required this.onToggleControls,
-    required this.onInitialized,
-    required this.onPageCountReady,
-    required this.onPageChanged,
-    required this.onScrollAnchors,
-    required this.onImageLongPress,
-    required this.onFootnoteTap,
-    required this.onLinkTap,
-    required this.shouldHandleLinkTap,
-    required this.onWordTap,
-    required this.onSentenceSelected,
+    required this.callbacks,
     required this.shouldShowWebView,
     required this.initializeTheme,
     required this.statusBarLeftContent,
@@ -328,23 +310,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         initializeTheme: _addSafeAreaToThemePadding(widget.initializeTheme),
         isLoading: widget.isLoading,
         controller: _webViewController,
-        callbacks: ReaderWebViewCallbacks(
-          onInitialized: () async {
-            await widget.onInitialized();
-          },
-          onPageCountReady: (totalPages) async {
-            await widget.onPageCountReady(totalPages);
-          },
-          onPageChanged: widget.onPageChanged,
-          onScrollAnchors: widget.onScrollAnchors,
-          onImageLongPress: widget.onImageLongPress,
-          onTap: _handleTapZone,
-          onFootnoteTap: widget.onFootnoteTap,
-          onLinkTap: widget.onLinkTap,
-          shouldHandleLinkTap: widget.shouldHandleLinkTap,
-          onWordTap: widget.onWordTap,
-          onSentenceSelected: widget.onSentenceSelected,
-        ),
+        callbacks: widget.callbacks.withTap(_handleTapZone),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,
         direction: widget.bookSession.direction,

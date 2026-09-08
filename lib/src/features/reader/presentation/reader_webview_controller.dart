@@ -96,4 +96,22 @@ class ReaderWebViewCallbacks {
     required this.onWordTap,
     required this.onSentenceSelected,
   });
+
+  /// 替换区域点击回调：渲染器要接管点击（翻页 / 呼出控制条），
+  /// 其余回调保持不变。
+  ReaderWebViewCallbacks withTap(Function(double x, double y) onTap) {
+    return ReaderWebViewCallbacks(
+      onInitialized: onInitialized,
+      onPageCountReady: onPageCountReady,
+      onPageChanged: onPageChanged,
+      onScrollAnchors: onScrollAnchors,
+      onImageLongPress: onImageLongPress,
+      onTap: onTap,
+      onFootnoteTap: onFootnoteTap,
+      onLinkTap: onLinkTap,
+      shouldHandleLinkTap: shouldHandleLinkTap,
+      onWordTap: onWordTap,
+      onSentenceSelected: onSentenceSelected,
+    );
+  }
 }
