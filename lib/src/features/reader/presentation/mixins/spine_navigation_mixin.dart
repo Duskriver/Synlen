@@ -28,21 +28,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   EpubTheme getEpubTheme();
   void refreshActiveTocState();
 
-  List<String> getAnchorsForSpine(String spinePath) {
-    return bookSession.getAnchorsForSpine(spinePath);
-  }
-
   void handleScrollAnchors(List<String> anchorIds) {
     bookSession.updateActiveAnchors(anchorIds);
     refreshActiveTocState();
-  }
-
-  String getSpineItemUrl(int index, [String anchor = 'top']) {
-    return bookSession.getSpineItemUrl(index, anchor);
-  }
-
-  String? getSpineProperties(int index) {
-    return bookSession.getSpineProperties(index);
   }
 
   Future<void> loadCarousel({
@@ -64,43 +52,30 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       currentSpineItemIndex = overrideSpineIndex;
       refreshActiveTocState();
     }
-    final currIndex = currentSpineItemIndex;
-    final prevIndex = currIndex > 0 ? currIndex - 1 : null;
-    final nextIndex = currIndex < bookSession.spine.length - 1
-        ? currIndex + 1
-        : null;
-
     final tokensForWait = <int>[];
-
-    final currUrl = getSpineItemUrl(currIndex, anchor);
-    final currentSpinePath = bookSession.spine[currIndex].href;
-    final currToken = await rendererController.preloadCurrentChapter(
-      currUrl,
-      getAnchorsForSpine(currentSpinePath),
-      getSpineProperties(currIndex),
-    );
-    if (currToken != null) tokensForWait.add(currToken);
-
-    if (prevIndex != null) {
-      final prevUrl = getSpineItemUrl(prevIndex);
-      final prevSpinePath = bookSession.spine[prevIndex].href;
-      final prevToken = await rendererController.preloadPreviousChapter(
-        prevUrl,
-        getAnchorsForSpine(prevSpinePath),
-        getSpineProperties(prevIndex),
-      );
-      if (prevToken != null) tokensForWait.add(prevToken);
-    }
-
-    if (nextIndex != null) {
-      final nextUrl = getSpineItemUrl(nextIndex);
-      final nextSpinePath = bookSession.spine[nextIndex].href;
-      final nextToken = await rendererController.preloadNextChapter(
-        nextUrl,
-        getAnchorsForSpine(nextSpinePath),
-        getSpineProperties(nextIndex),
-      );
-      if (nextToken != null) tokensForWait.add(nextToken);
+    for (final request in planChapterPreload(
+      bookSession,
+      index: currentSpineItemIndex,
+      anchor: anchor,
+    )) {
+      final token = switch (request.slot) {
+        ChapterSlot.current => await rendererController.preloadCurrentChapter(
+          request.url,
+          request.anchors,
+          request.properties,
+        ),
+        ChapterSlot.previous => await rendererController.preloadPreviousChapter(
+          request.url,
+          request.anchors,
+          request.properties,
+        ),
+        ChapterSlot.next => await rendererController.preloadNextChapter(
+          request.url,
+          request.anchors,
+          request.properties,
+        ),
+      };
+      if (token != null) tokensForWait.add(token);
     }
 
     await rendererController.waitForEvents(tokensForWait);
@@ -125,33 +100,40 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> preloadNextOf(int currentIndex) async {
-    final nextIndex = currentIndex + 1;
-    if (nextIndex < bookSession.spine.length) {
-      final url = getSpineItemUrl(nextIndex);
-      final nextSpinePath = bookSession.spine[nextIndex].href;
-      await rendererController.preloadNextChapter(
-        url,
-        getAnchorsForSpine(nextSpinePath),
-        getSpineProperties(nextIndex),
-      );
-    }
+    final request = planNeighbourPreload(
+      bookSession,
+      index: currentIndex,
+      forward: true,
+    );
+    if (request == null) return;
+    await rendererController.preloadNextChapter(
+      request.url,
+      request.anchors,
+      request.properties,
+    );
   }
 
   Future<void> preloadPreviousOf(int currentIndex) async {
-    final prevIndex = currentIndex - 1;
-    if (prevIndex >= 0) {
-      final url = getSpineItemUrl(prevIndex);
-      final prevSpinePath = bookSession.spine[prevIndex].href;
-      await rendererController.preloadPreviousChapter(
-        url,
-        getAnchorsForSpine(prevSpinePath),
-        getSpineProperties(prevIndex),
-      );
-    }
+    final request = planNeighbourPreload(
+      bookSession,
+      index: currentIndex,
+      forward: false,
+    );
+    if (request == null) return;
+    await rendererController.preloadPreviousChapter(
+      request.url,
+      request.anchors,
+      request.properties,
+    );
   }
 
   Future<void> navigateToSpineItem(int index, [String anchor = 'top']) async {
-    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+    if (!mounted ||
+        shouldIgnoreChapterNavigation(
+          isWebViewLoading: isWebViewLoading,
+          updatingTheme: updatingTheme,
+          isChangingChapter: isChangingChapter,
+        )) {
       return;
     }
     if (index < 0 || index >= bookSession.spine.length) return;
@@ -165,7 +147,12 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> previousSpineItem() async {
-    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+    if (!mounted ||
+        shouldIgnoreChapterNavigation(
+          isWebViewLoading: isWebViewLoading,
+          updatingTheme: updatingTheme,
+          isChangingChapter: isChangingChapter,
+        )) {
       return;
     }
     if (currentSpineItemIndex <= 0) {
@@ -190,7 +177,12 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> previousSpineItemFirstPage() async {
-    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+    if (!mounted ||
+        shouldIgnoreChapterNavigation(
+          isWebViewLoading: isWebViewLoading,
+          updatingTheme: updatingTheme,
+          isChangingChapter: isChangingChapter,
+        )) {
       return;
     }
     if (currentSpineItemIndex <= 0) {
@@ -217,7 +209,12 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> nextSpineItem() async {
-    if (!mounted || isWebViewLoading || updatingTheme || isChangingChapter) {
+    if (!mounted ||
+        shouldIgnoreChapterNavigation(
+          isWebViewLoading: isWebViewLoading,
+          updatingTheme: updatingTheme,
+          isChangingChapter: isChangingChapter,
+        )) {
       return;
     }
     if (currentSpineItemIndex >= bookSession.spine.length - 1) {
