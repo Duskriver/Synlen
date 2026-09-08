@@ -24,6 +24,6 @@ Status: implemented
 
 ## Consequences
 
-- `reader_renderer.dart` 由 580 行降到 361 行，reader 的超 400 行清单只剩 `reader_screen.dart`。
+- `reader_renderer.dart` 由 580 行降到 361 行（后续收窄回调接口后为 327 行），reader 的超 400 行清单只剩 `reader_screen.dart`。
 - `ReaderRendererController` 的公开面少三个方法，预载路径只有一处实现。
 - 行为不变；`jsonEncode` 只让含特殊字符的锚点从"产出非法 JSON"变为正确转义。

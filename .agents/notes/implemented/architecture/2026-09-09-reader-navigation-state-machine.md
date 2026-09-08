@@ -15,7 +15,7 @@ Status: implemented
 - 渲染引擎经 `ReaderViewport` 接口注入：`preloadChapter` / `waitForEvents` / `restoreScrollPosition` / 三个跨章跳转 / `jumpToPage`。`ReaderRendererController` 是生产实现，测试用 fake。
 - 预载后的 30ms 渲染沉降等待改为构造参数 `settleDelay`，默认值不变。
 
-`spine_navigation_mixin` 与 `page_navigation_mixin` 删除，`ReaderViewState` 删除；TOC 高亮与页码显示留在 presentation 的三个 `ValueNotifier`。
+`spine_navigation_mixin` 与 `page_navigation_mixin` 删除，`ReaderViewState` 删除；TOC 高亮随后收进 `ReaderTocState`，页码显示留在 presentation 的 `ValueNotifier`。
 
 ## Alternatives considered
 

@@ -21,6 +21,6 @@ Status: implemented
 
 ## Consequences
 
-- `reader_screen.dart` 由 611 行降到 582 行；目录高亮逻辑有独立单测（`reader_toc_state_test.dart`，含"重复刷新不重复通知"）。
+- `reader_screen.dart` 由 611 行降到 582 行（后续拆出舞台与导航反馈后为 548 行）；目录高亮逻辑有独立单测（`reader_toc_state_test.dart`，含"重复刷新不重复通知"）。
 - 屏幕少两个 `ValueNotifier` 字段与一段 20 行的覆盖层嵌套。
 - 行为不变：激活条目去重、标题回退与覆盖层动画参数逐字保留。
