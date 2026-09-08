@@ -3,29 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
-import 'package:synlen/src/features/library/application/bookshelf_notifier.dart';
-import 'package:synlen/src/features/library/data/repositories/shelf_book_repository_provider.dart';
-import 'package:synlen/src/features/detail/presentation/book_detail_helpers.dart';
-import 'package:synlen/src/features/detail/presentation/widgets/book_detail_edit_body.dart';
-import 'package:synlen/src/features/detail/presentation/widgets/book_detail_view_body.dart';
+import '../application/bookshelf_notifier.dart';
+import '../application/book_actions.dart';
+import 'widgets/book_detail_edit_body.dart';
+import 'widgets/book_detail_view_body.dart';
 import '../../../core/database/app_database.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Actions available in the unsaved-changes confirmation dialog.
 enum _DiscardAction { save, discard, cancel }
-
-/// Provider to fetch a single book by file hash.
-///
-/// 注：手写 FutureProvider（而非 @riverpod codegen）——riverpod_generator
-/// 4.0.4 无法把 drift DataClass 作为 provider 返回类型生成代码
-/// （InvalidTypeException），待生成器/Flutter SDK 升级后可视情况改回。
-final bookDetailProvider = FutureProvider.family<ShelfBook?, String>((
-  ref,
-  fileHash,
-) async {
-  final repository = ref.watch(shelfBookRepositoryProvider);
-  return repository.getBookByHash(fileHash);
-});
 
 /// Book Detail Screen - Shows detailed information about a book, with support
 /// for inline editing of title, authors, and description.
@@ -98,6 +84,19 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   }
 
   /// Switches back to view mode without saving.
+  /// 分享书籍文件：用例在 application 层，这里只负责错误提示。
+  Future<void> _shareBook(ShelfBook book) async {
+    try {
+      await ref.read(bookActionsProvider.notifier).shareBookFile(book);
+    } catch (e) {
+      if (mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.shareEpubFailed(e.toString()),
+        );
+      }
+    }
+  }
+
   void _exitEditMode() {
     _colorController.reverse();
     setState(() => _isEditing = false);
@@ -141,28 +140,25 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     );
 
     try {
-      final result = await ref
-          .read(shelfBookRepositoryProvider)
-          .saveBook(updated);
+      final error = await ref
+          .read(bookActionsProvider.notifier)
+          .saveMetadata(updated);
 
-      result.fold(
-        (error) {
-          if (mounted) {
-            ToastService.showError(
-              AppLocalizations.of(context)!.bookSaveFailed(error),
-            );
-          }
-        },
-        (_) {
-          ref.invalidate(bookDetailProvider(widget.bookId));
-          ref.read(bookshelfProvider.notifier).refresh();
+      if (error != null) {
+        if (mounted) {
+          ToastService.showError(
+            AppLocalizations.of(context)!.bookSaveFailed(error),
+          );
+        }
+      } else {
+        ref.invalidate(bookDetailProvider(widget.bookId));
+        ref.read(bookshelfProvider.notifier).refresh();
 
-          if (mounted) {
-            ToastService.showSuccess(AppLocalizations.of(context)!.bookSaved);
-            _exitEditMode();
-          }
-        },
-      );
+        if (mounted) {
+          ToastService.showSuccess(AppLocalizations.of(context)!.bookSaved);
+          _exitEditMode();
+        }
+      }
     } catch (e) {
       if (mounted) {
         ToastService.showError(
@@ -306,7 +302,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
                         IconButton(
                           icon: const Icon(Icons.share_outlined),
                           tooltip: AppLocalizations.of(context)!.shareEpub,
-                          onPressed: () => shareEpub(context, book, ref),
+                          onPressed: () => _shareBook(book),
                         ),
                       if (book != null)
                         IconButton(

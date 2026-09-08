@@ -10,12 +10,12 @@
 
 ## 1. 分层违规：presentation 直连 data
 
-规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **7 个文件 / 16 处 import** 违规（全部集中在 detail 与 reader 内部）（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
+规范 §1 禁止 `presentation → data`，且禁止 feature 之间互相 import。当前实测 **5 个文件 / 14 处 import** 违规（全部集中在 reader 内部）（原 ADR-0001 记录「7 处」过时；2026-08-13 曾为 13 处，已修复 2 处）。
 
 | # | 文件 | 违规性质 |
 |---|------|----------|
-| 1 | `lib/src/features/detail/presentation/book_detail_helpers.dart` | 引 `library/data/services` |
-| 2 | `lib/src/features/detail/presentation/book_detail_screen.dart` | 引 `library/data/repositories` |
+| 1 | ~~`lib/src/features/detail/presentation/book_detail_helpers.dart`~~ | ✅ 已修复：分享用例下沉 `library/application/book_actions.dart`，helpers 文件随之删除 |
+| 2 | ~~`lib/src/features/detail/presentation/book_detail_screen.dart`~~ | ✅ 已修复：`detail` 并入 `library`，读取/保存改走 `library/application/book_actions.dart` |
 | 3 | ~~`lib/src/features/library/presentation/mixins/library_actions_mixin.dart`~~ | ✅ 已修复：`UnifiedImportService` 的 provider 移到 `core/providers/`（该服务被 3 个 feature 消费） |
 | 4 | ~~`lib/src/features/library/presentation/widgets/style_bottom_sheet.dart`~~ | ✅ 已修复（issue #7）：`ShelfBookSortBy` 下沉 domain，不再引 data |
 | 5 | ~~`lib/src/features/library/presentation/widgets/restore_progress_dialog.dart`~~ | ✅ 已修复：进度事件类型下沉 `library/domain/import_progress.dart`，顺带消除 `data → application` 逆向依赖 |
@@ -29,7 +29,7 @@
 | 13 | ~~`lib/src/features/reader/domain/epub_theme.dart`~~ | ✅ 已修复（issue #6）：`colorToHex` 下沉 domain，domain→data 清零，顺带消除 epub_theme↔reader_scripts 循环 import |
 | 14 | ~~`lib/src/features/settings/presentation/widgets/settings_ai_service_section.dart`~~ | ✅ 已修复：连通性检查移入 `settings/application/deep_seek_connectivity.dart`（ADR-0003） |
 
-修复方向：reader 的 `data`（book_session / epub_webview_handler / reader_scripts / epub_stream_service）要么下沉到 `core/`，要么在 `application` 层提供编排接口；`detail` 业务归属 library，按 ADR-0003 的结论并入 library 后再修其内部 `presentation → data`。
+修复方向：reader 的 `data`（book_session / epub_webview_handler / reader_scripts / epub_stream_service）要么下沉到 `core/`，要么在 `application` 层提供编排接口。`detail` 已按 ADR-0003 的结论并入 library（2026-09-08）。
 
 ---
 
@@ -84,7 +84,7 @@
 | `library/presentation/library_screen.dart` | 454 |
 | `library/presentation/mixins/library_actions_mixin.dart` | 423 |
 | `library/application/bookshelf_notifier.dart` | 423 |
-| `detail/presentation/book_detail_screen.dart` | 403 |
+| `library/presentation/book_detail_screen.dart` | 399 |
 
 ---
 
