@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/features/library/data/parsers/txt_book_parser.dart';
 import 'package:synlen/src/features/library/data/parsers/txt_chapter_splitter.dart';
+import 'package:synlen/src/features/library/domain/txt_chapter_path.dart';
 
 void main() {
   const parser = TxtBookParser();
@@ -16,33 +17,6 @@ void main() {
     expect(result.isRight(), isTrue);
     return result.getOrElse((l) => throw StateError('unexpected left: $l'));
   }
-
-  group('TxtChapterSplitter.isHeadingLine', () {
-    test('识别中文章节标题', () {
-      expect(splitter.isHeadingLine('第一章 开始'), isTrue);
-      expect(splitter.isHeadingLine('第1章'), isTrue);
-      expect(splitter.isHeadingLine('第十二章：转折'), isTrue);
-      expect(splitter.isHeadingLine('  第三回   '), isTrue);
-      expect(splitter.isHeadingLine('第１２章 全角数字'), isTrue);
-    });
-
-    test('识别卷 / 英文 / 特殊 / 纯数字标题', () {
-      expect(splitter.isHeadingLine('第一卷 风起'), isTrue);
-      expect(splitter.isHeadingLine('chapter 3'), isTrue);
-      expect(splitter.isHeadingLine('Chapter 12: The End'), isTrue);
-      expect(splitter.isHeadingLine('楔子'), isTrue);
-      expect(splitter.isHeadingLine('番外：日常'), isTrue);
-      expect(splitter.isHeadingLine('42'), isTrue);
-    });
-
-    test('拒绝正文与非法标题', () {
-      expect(splitter.isHeadingLine('这是一段正文，不是标题。'), isFalse);
-      expect(splitter.isHeadingLine(''), isFalse);
-      expect(splitter.isHeadingLine('12345'), isFalse); // 纯数字限 1~4 位
-      // 超长行不视为标题（防正文误判）
-      expect(splitter.isHeadingLine('第一章 ${'长' * 60}'), isFalse);
-    });
-  });
 
   group('TxtChapterSplitter.split', () {
     test('按章节标题切分且区间连续覆盖全文', () {
@@ -126,26 +100,6 @@ void main() {
     });
   });
 
-  group('TxtBookParser.chapterIndexFromPath', () {
-    test('解析合法虚拟章节路径', () {
-      expect(TxtBookParser.chapterIndexFromPath('txt/chapter_0.xhtml'), 0);
-      expect(TxtBookParser.chapterIndexFromPath('txt/chapter_12.xhtml'), 12);
-    });
-
-    test('拒绝非法路径', () {
-      expect(TxtBookParser.chapterIndexFromPath('txt/chapter_x.xhtml'), isNull);
-      expect(TxtBookParser.chapterIndexFromPath('txt/chapter_1.txt'), isNull);
-      expect(
-        TxtBookParser.chapterIndexFromPath('other/chapter_1.xhtml'),
-        isNull,
-      );
-      expect(
-        TxtBookParser.chapterIndexFromPath('txt/chapter_1.xhtml/extra'),
-        isNull,
-      );
-    });
-  });
-
   group('TxtBookParser.parseFromText', () {
     final roundTrips = <String, String>{
       '前导空行': '\n\nChapter 1\nFirst sentence.\nChapter 2\nFinal sentence.',
@@ -193,7 +147,7 @@ void main() {
       // href 为 txt/chapter_N.xhtml，索引与路径互相对应
       for (var i = 0; i < 3; i++) {
         expect(result.spine[i].href, 'txt/chapter_$i.xhtml');
-        expect(TxtBookParser.chapterIndexFromPath(result.spine[i].href), i);
+        expect(txtChapterIndexFromPath(result.spine[i].href), i);
       }
 
       // 字节范围连续覆盖整个归一化流，且切片解码后与原文一致

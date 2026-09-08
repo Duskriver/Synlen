@@ -8,13 +8,11 @@ part of 'txt_content_service_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provider for TxtContentService
 /// TXT 章节内容供给：按 manifest 中的字节范围随机读取并包装为 XHTML
 
 @ProviderFor(txtContentService)
 final txtContentServiceProvider = TxtContentServiceProvider._();
 
-/// Provider for TxtContentService
 /// TXT 章节内容供给：按 manifest 中的字节范围随机读取并包装为 XHTML
 
 final class TxtContentServiceProvider
@@ -25,7 +23,6 @@ final class TxtContentServiceProvider
           TxtContentService
         >
     with $Provider<TxtContentService> {
-  /// Provider for TxtContentService
   /// TXT 章节内容供给：按 manifest 中的字节范围随机读取并包装为 XHTML
   TxtContentServiceProvider._()
     : super(
@@ -61,4 +58,4 @@ final class TxtContentServiceProvider
   }
 }
 
-String _$txtContentServiceHash() => r'69a3b0c475608ade649ffa1f509ca7469ae4a974';
+String _$txtContentServiceHash() => r'fee7a96c148995b223bc65dc0051db983ed8c747';
