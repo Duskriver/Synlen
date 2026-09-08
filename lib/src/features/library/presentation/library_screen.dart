@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/widgets/expandable_fab.dart';
+
 import '../application/bookshelf_notifier.dart';
-import 'package:synlen/src/core/database/app_database.dart';
-import 'mixins/library_actions_mixin.dart';
-import 'widgets/book_grid_item.dart';
-import 'widgets/library_app_bar.dart';
-import 'widgets/library_selection_bar.dart';
-import 'widgets/style_bottom_sheet.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'mixins/library_actions_mixin.dart';
+import 'widgets/library_tab_view.dart';
 
 /// Library Screen - Displays user's book collection with advanced bookshelf features
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -157,7 +151,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               data: (state) {
                 _initializeTabController(state);
                 _syncTabIndexWithState(state);
-                return _buildTabView(context, ref, state);
+                final tabController = _tabController;
+                if (tabController == null) {
+                  return const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                }
+                return LibraryTabView(
+                  state: state,
+                  tabController: tabController,
+                  onEditGroup: (group, l10n) =>
+                      showEditGroupDialog(context, ref, group, l10n),
+                  onMoveToGroup: () => showMoveToGroup(context, ref, state),
+                  onDeleteSelected: () => confirmDelete(context, ref),
+                );
               },
             ),
             floatingActionButton: _buildFAB(context, ref, state),
@@ -236,219 +243,5 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   // Placeholder method for importing files
   void _importFiles(BuildContext context, WidgetRef ref) {
     handleImportFiles(context, ref);
-  }
-
-  Widget _buildTabView(
-    BuildContext context,
-    WidgetRef ref,
-    BookshelfState state,
-  ) {
-    if (_tabController == null) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-    }
-
-    final bottomStatusBarHeight = MediaQuery.of(context).padding.bottom;
-
-    return Stack(
-      children: [
-        NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              LibraryAppBar(
-                state: state,
-                tabController: _tabController!,
-                onSortPressed: () => _showStyleBottomSheet(context, ref, state),
-                onSelectionToggle: () =>
-                    ref.read(bookshelfProvider.notifier).toggleSelectionMode(),
-                onSelectAll: () =>
-                    ref.read(bookshelfProvider.notifier).selectAll(),
-                onClearSelection: () =>
-                    ref.read(bookshelfProvider.notifier).clearSelection(),
-                onEditGroup: (group, l10n) =>
-                    showEditGroupDialog(context, ref, group, l10n),
-              ),
-            ];
-          },
-          body: TabBarView(
-            controller: _tabController,
-            physics: state.isSelectionMode
-                ? const NeverScrollableScrollPhysics()
-                : null,
-            children: _buildTabViewChildren(context, ref, state),
-          ),
-        ),
-        // Slide the selection bar up from below the screen when entering
-        // selection mode, and back down when leaving it.
-        AnimatedPositioned(
-          duration: const Duration(
-            milliseconds: AppTheme.defaultAnimationDurationMs,
-          ),
-          curve: Curves.easeInOut,
-          bottom: state.isSelectionMode
-              ? 0
-              : -(AppTheme.kBottomAppBarHeight + bottomStatusBarHeight),
-          left: 0,
-          right: 0,
-          child: LibrarySelectionBar(
-            state: state,
-            onMove: () => showMoveToGroup(context, ref, state),
-            onDelete: () => confirmDelete(context, ref),
-          ),
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _buildTabViewChildren(
-    BuildContext context,
-    WidgetRef ref,
-    BookshelfState state,
-  ) {
-    final tabs = <Widget>[];
-
-    // "All" tab
-    tabs.add(_buildTabContent(ref, state, null));
-    tabs.add(_buildTabContent(ref, state, -1));
-
-    // Group tabs
-    for (final group in state.availableGroups) {
-      tabs.add(_buildTabContent(ref, state, group.id));
-    }
-
-    return tabs;
-  }
-
-  Widget _buildTabContent(WidgetRef ref, BookshelfState state, int? groupId) {
-    final isActiveTab = state.filterGroupId == groupId;
-    final booksForTab = isActiveTab ? state.books : state.cachedBooks[groupId];
-    if (booksForTab == null) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-    }
-
-    final bottomStatusBarHeight = MediaQuery.of(context).padding.bottom;
-
-    // Use Builder to get the correct context inside NestedScrollView
-    return Builder(
-      builder: (BuildContext context) {
-        return CustomScrollView(
-          key: PageStorageKey<String>('tab_$groupId'),
-          slivers: [
-            SliverOverlapInjector(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            ),
-            _buildItemsGrid(context, ref, state, booksForTab),
-            if (state.isSelectionMode)
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: AppTheme.kBottomAppBarHeight + bottomStatusBarHeight,
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showStyleBottomSheet(
-    BuildContext context,
-    WidgetRef ref,
-    BookshelfState state,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SizedBox(
-        width: double.infinity,
-        child: StyleBottomSheet(
-          currentSort: state.sortBy,
-          onSortSelected: (sortBy) {
-            ref.read(bookshelfProvider.notifier).changeSortOrder(sortBy);
-            Navigator.pop(context);
-          },
-          currentViewMode: state.viewMode,
-          onViewModeSelected: (mode) {
-            ref.read(bookshelfProvider.notifier).changeViewMode(mode);
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      scrollControlDisabledMaxHeightRatio: 0.75,
-      constraints: const BoxConstraints(maxWidth: double.infinity),
-    );
-  }
-
-  Widget _buildItemsGrid(
-    BuildContext context,
-    WidgetRef ref,
-    BookshelfState state,
-    List<ShelfBook> books,
-  ) {
-    if (books.isEmpty) {
-      return SliverFillRemaining(
-        child: Center(
-          child: Text(
-            AppLocalizations.of(context)!.noItemsInCategory,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
-      sliver: SliverGrid(
-        gridDelegate: switch (state.viewMode) {
-          ViewMode.relaxed => const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 180.0,
-            childAspectRatio: 0.55,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          ViewMode.compact => const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 120.0,
-            childAspectRatio: 0.68,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-        },
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final book = books[index];
-            return BookGridItem(
-              book: book,
-              isSelected: state.selectedBookIds.contains(book.id),
-              isSelectionMode: state.isSelectionMode,
-              viewMode: state.viewMode,
-              onTap: () {
-                if (state.isSelectionMode) {
-                  ref
-                      .read(bookshelfProvider.notifier)
-                      .toggleItemSelection(book);
-                  return;
-                }
-
-                final notifier = ref.read(bookshelfProvider.notifier);
-                context.push('/book/${book.fileHash}', extra: book).then((_) {
-                  notifier.reloadQuietly();
-                });
-              },
-              onLongPress: () {
-                if (!state.isSelectionMode) {
-                  HapticFeedback.selectionClick();
-                  ref.read(bookshelfProvider.notifier).toggleSelectionMode();
-                  ref
-                      .read(bookshelfProvider.notifier)
-                      .toggleItemSelection(book);
-                }
-              },
-            );
-          },
-          childCount: books.length,
-          addAutomaticKeepAlives: false,
-        ),
-      ),
-    );
   }
 }
