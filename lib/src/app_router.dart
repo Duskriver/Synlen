@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/database/app_database.dart';
-import 'package:synlen/src/global_share_handler.dart';
-import '../services/toast_service.dart';
-import '../../features/library/presentation/library_screen.dart';
-import '../../features/library/presentation/book_detail_screen.dart';
-import '../../features/reader/presentation/reader_screen.dart';
-import '../../features/settings/presentation/settings_screen.dart';
+import 'core/services/toast_service.dart';
+import 'features/library/presentation/book_detail_screen.dart';
+import 'features/library/presentation/library_screen.dart';
+import 'features/reader/presentation/reader_screen.dart';
+import 'features/settings/presentation/settings_screen.dart';
+import 'global_share_handler.dart';
 
 /// App Router Configuration
 final appRouterProvider = Provider<GoRouter>((ref) {
