@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:synlen/src/features/detail/presentation/book_detail_screen.dart';
+import '../../application/book_actions.dart';
 import '../../../../core/database/app_database.dart';
-import '../../../../features/library/domain/book_format.dart';
-import '../../../../features/library/domain/book_meta.dart';
+import '../../domain/book_format.dart';
+import '../../domain/book_meta.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/widgets/expandable_text.dart';
 import '../../../../../l10n/app_localizations.dart';
