@@ -94,6 +94,8 @@ dev_dependencies:
   drift_dev: ^2.34.0
   
   # Testing
+  integration_test:
+    sdk: flutter
   path_provider_platform_interface: ^2.1.2
   plugin_platform_interface: ^2.1.8
   mockito: ^5.4.4
