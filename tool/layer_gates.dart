@@ -33,7 +33,6 @@ const _presentationDriftAllowlist = <String>{
   'lib/src/features/library/presentation/widgets/library_app_bar.dart',
   'lib/src/features/library/presentation/widgets/library_items_grid.dart',
   'lib/src/features/library/presentation/widgets/library_tab_view.dart',
-  'lib/src/features/reader/presentation/toc_drawer.dart',
 };
 
 const _driftDatabasePath = 'lib/src/core/database/app_database.dart';

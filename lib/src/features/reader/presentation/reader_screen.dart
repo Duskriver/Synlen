@@ -447,8 +447,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             drawer: ValueListenableBuilder<Set<TocItem>>(
               valueListenable: tocState.activeItems,
               builder: (context, activeItems, child) {
+                final book = bookSession.book!;
                 return TocDrawer(
-                  book: bookSession.book!,
+                  title: book.title,
+                  author: book.author,
+                  coverPath: book.coverPath,
+                  totalChapters: book.totalChapters,
                   toc: bookSession.toc,
                   activeTocItems: activeItems,
                   onTocItemSelected: navigateToTocItem,

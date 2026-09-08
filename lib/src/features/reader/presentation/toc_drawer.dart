@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
-import '../../../core/database/app_database.dart';
 import '../../../core/widgets/book_cover.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -20,7 +19,11 @@ class _TocRowItem {
 }
 
 class TocDrawer extends StatefulWidget {
-  final ShelfBook book;
+  /// 只取抽屉需要展示的书目字段，不持有持久化行类型。
+  final String title;
+  final String author;
+  final String? coverPath;
+  final int totalChapters;
   final List<TocItem> toc;
   final Set<TocItem> activeTocItems;
   final Function(TocItem) onTocItemSelected;
@@ -29,7 +32,10 @@ class TocDrawer extends StatefulWidget {
 
   const TocDrawer({
     super.key,
-    required this.book,
+    required this.title,
+    required this.author,
+    required this.coverPath,
+    required this.totalChapters,
     required this.toc,
     required this.activeTocItems,
     required this.onTocItemSelected,
@@ -320,7 +326,7 @@ class _TocDrawerState extends State<TocDrawer> {
               child: Theme(
                 data: widget.themeData,
                 child: BookCover(
-                  relativePath: '${widget.book.coverPath}',
+                  relativePath: '${widget.coverPath}',
                   radius: BorderRadius.circular(4),
                 ),
               ),
@@ -334,17 +340,17 @@ class _TocDrawerState extends State<TocDrawer> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.book.title,
+                    widget.title,
                     style: widget.themeData.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w400,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (widget.book.author.isNotEmpty) ...[
+                  if (widget.author.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      widget.book.author,
+                      widget.author,
                       style: widget.themeData.textTheme.bodySmall?.copyWith(
                         color: widget.themeData.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w400,
@@ -358,7 +364,7 @@ class _TocDrawerState extends State<TocDrawer> {
                   Text(
                     AppLocalizations.of(
                       context,
-                    )!.chaptersCount(widget.book.totalChapters),
+                    )!.chaptersCount(widget.totalChapters),
                     style: widget.themeData.textTheme.bodySmall?.copyWith(
                       color: widget.themeData.colorScheme.onSurfaceVariant,
                       fontSize: 11,
