@@ -9,6 +9,7 @@ Status: implemented
 ## Decision
 
 - 事实按"作者在回答什么问题"归属唯一一层，层级表同时写出"不属于此层"，反向定义防止外溢：根 `AGENTS.md` 只放 1–3 行常驻指令，`architecture.md` 是模块地图，`subsystems/` 是每模块参考，`cookbook/` 是带验证步骤的手册，`user/` 面向使用者，`glossary.md` 是术语唯一来源，`design.md` 管接口形状，`testing.md` 与 `development.md` 管贡献者日常，`postmortem/` 是唯一允许叙事化的层级，理由进 Agent Notes。
+- 技术债与待办不进 `docs/`：工作项的唯一来源是 GitHub issues（有状态、有负责人、可查询），`docs/` 只保留子系统参考页里的运行时已知限制与[技术债去向](2026-09-09-scope-privacy-incident-docs.md)。
 - 决策记录按 `{lifecycle}/{class}/` 分目录，`Alternatives considered` 强制，implemented 笔记不得出现提案语言。
 - 规则由 `tool/doc_gates.dart` 执行：链接与锚点、仓库路径存在性、术语与代码一致、笔记格式、技能元数据、预算与 Markdown 卫生；`tool/doc-budgets.json` 给常驻文档设上限，超限顺序是搬迁 → 精简 → 抬上限。
 - 文档改动与代码改动过同一道 CI 门禁（`.github/workflows/flutter_ci.yml` 的 docs job）。
