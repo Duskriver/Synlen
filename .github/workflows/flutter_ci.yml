@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # Flutter 版本固定为本地验证过的 stable，升级需单独验证后再改
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: '3.44.9'
           channel: 'stable'
@@ -42,10 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: '3.44.9'
           channel: 'stable'
@@ -59,21 +59,21 @@ jobs:
         run: dart run tool/doc_gates.dart
 
   web-assets:
-    name: Reader TS typecheck & generated assets drift
+    name: Reader typecheck · Playwright tests · assets drift
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: '3.44.9'
           channel: 'stable'
           cache: true
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
 
@@ -89,6 +89,15 @@ jobs:
         working-directory: web_assets/controller.js
         run: npm run typecheck
 
+      # 浏览器集与 playwright.config.cjs 的 projects 保持一致：chromium + webkit
+      - name: Install Playwright browsers
+        working-directory: web_assets/controller.js
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run reader Playwright tests
+        working-directory: web_assets/controller.js
+        run: npm test
+
       # 重新生成 web_assets.dart 并检测漂移：TS/CSS 源码改动必须同步生成物
       - name: Detect generated assets drift
         run: |
@@ -100,13 +109,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
+        with:
+          toolchain: 1.97.1
 
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: rust
 
