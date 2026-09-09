@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_manifest.dart';
+import '../../domain/library_exception.dart';
 import '../../domain/txt_chapter_path.dart';
 import 'txt_chapter_splitter.dart';
 import 'txt_decoder.dart';
@@ -43,7 +44,7 @@ class TxtBookParser {
   static const _decoder = TxtDecoder();
   static const _splitter = TxtChapterSplitter();
 
-  Either<String, TxtBookParseResult> parseFromBytes(
+  Either<LibraryException, TxtBookParseResult> parseFromBytes(
     Uint8List bytes, {
     String? fileName,
   }) {
@@ -51,19 +52,21 @@ class TxtBookParser {
       final decoded = _decoder.decode(bytes);
       return parseFromText(decoded.text, fileName: fileName);
     } catch (e) {
-      return left('TXT decode error: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 
   /// 对已解码文本执行切分与 manifest 生成（与字节入口共享逻辑，便于测试）
-  Either<String, TxtBookParseResult> parseFromText(
+  Either<LibraryException, TxtBookParseResult> parseFromText(
     String text, {
     String? fileName,
   }) {
     try {
       final chapters = _splitter.split(text);
       if (chapters.isEmpty) {
-        return left('TXT 文件为空');
+        return left(
+          const LibraryException(LibraryErrorCode.parseFailed, 'TXT 文件为空'),
+        );
       }
 
       // 归一化为 UTF-8，并按章节切片累加字节长度得到各章节的字节范围
@@ -99,7 +102,7 @@ class TxtBookParser {
         ),
       );
     } catch (e) {
-      return left('TXT parse error: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
+import 'package:synlen/src/features/library/presentation/library_error_mapper.dart';
 import 'package:synlen/src/features/library/presentation/widgets/progress_dialog.dart';
 
 /// Hosts the import-pipeline progress dialog.
@@ -66,7 +67,13 @@ class _ImportProgressDialogState extends State<ImportProgressDialog> {
   void _onError(Object error, StackTrace st) {
     if (!mounted) return;
     setState(() => _isCompleted = true);
-    ToastService.showError(widget.l10n.importFailed(error.toString()));
+    ToastService.showError(
+      libraryErrorMessageFor(
+        widget.l10n,
+        error,
+        fallback: widget.l10n.importFailed,
+      ),
+    );
   }
 
   void _onDone() {

@@ -4,6 +4,8 @@
 /// 消费，因此落在 domain：任一层都可以依赖 domain，避免 data → application 的逆向依赖。
 library;
 
+import 'library_exception.dart';
+
 // ---------------------------------------------------------------------------
 // 进度事件基类
 // ---------------------------------------------------------------------------
@@ -14,7 +16,11 @@ class ProgressLog {
   final String message;
   final ProgressLogType type;
 
-  ProgressLog(this.message, this.type);
+  /// 失败事件携带的类型化错误；presentation 按 `error.code` 映射 l10n 文案，
+  /// [message] 只是内部日志文本，不做内容匹配。
+  final LibraryException? error;
+
+  ProgressLog(this.message, this.type, {this.error});
 }
 
 // ---------------------------------------------------------------------------
@@ -32,10 +38,10 @@ final class ImportSuccess extends ImportResult {
   const ImportSuccess({required this.importedBooks});
 }
 
-/// Import failed with [message].
+/// Import failed with a typed [error]；用户文案由 presentation 按错误码映射。
 final class ImportFailure extends ImportResult {
-  final String message;
-  const ImportFailure(this.message);
+  final LibraryException error;
+  const ImportFailure(this.error);
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +54,7 @@ String _importResultToMessage(ImportResult? result, String currentFileName) {
   } else if (result is ImportSuccess) {
     return 'Import "$currentFileName" completed successfully.';
   } else if (result is ImportFailure) {
-    return 'Import "$currentFileName" failed: ${result.message}.';
+    return 'Import "$currentFileName" failed: ${result.error}.';
   } else {
     return 'Unknown import result.';
   }
@@ -76,6 +82,10 @@ class BackupImportProgress extends ProgressLog {
   }) : super(
          _importResultToMessage(result, currentFileName),
          _importResultToLogType(result),
+         error: switch (result) {
+           ImportFailure(:final error) => error,
+           _ => null,
+         },
        );
 
   /// Number of books fully processed so far.

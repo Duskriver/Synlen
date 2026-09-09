@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service_provider.dart';
 import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -18,7 +19,6 @@ class ImportProgress extends ProgressLog {
   final int currentCount;
   final String currentFileName;
   final ImportStatus status;
-  final String? errorMessage;
   final ShelfBook? book;
 
   ImportProgress({
@@ -26,11 +26,11 @@ class ImportProgress extends ProgressLog {
     required this.currentCount,
     required this.currentFileName,
     required this.status,
-    this.errorMessage,
+    LibraryException? error,
     this.book,
   }) : super(
          status == ImportStatus.failed
-             ? errorMessage ?? 'Unknown error'
+             ? (error?.toString() ?? 'Unknown error')
              : (status == ImportStatus.success
                    ? 'Imported: ${book?.title}'
                    : 'Processing: $currentFileName'),
@@ -39,6 +39,7 @@ class ImportProgress extends ProgressLog {
              : (status == ImportStatus.success
                    ? ProgressLogType.success
                    : ProgressLogType.info),
+         error: error,
        );
 }
 
@@ -78,6 +79,9 @@ class LibraryNotifier extends _$LibraryNotifier {
         yield ProgressLog(
           'Failed to import from folder: $e',
           ProgressLogType.error,
+          error: e is LibraryException
+              ? e
+              : LibraryException(LibraryErrorCode.restoreFailed, e),
         );
         appLogger.e('Import from folder error: $e');
       }
@@ -147,12 +151,12 @@ class LibraryNotifier extends _$LibraryNotifier {
 
         // 4. Notify UI of success or failure for this file
         yield result.fold(
-          (errorMessage) => ImportProgress(
+          (error) => ImportProgress(
             totalCount: totalCount,
             currentCount: currentCount,
             currentFileName: currentFileName,
             status: ImportStatus.failed,
-            errorMessage: errorMessage,
+            error: error,
           ),
           (book) => ImportProgress(
             totalCount: totalCount,
@@ -169,7 +173,9 @@ class LibraryNotifier extends _$LibraryNotifier {
           currentCount: currentCount,
           currentFileName: currentFileName,
           status: ImportStatus.failed,
-          errorMessage: 'Pipeline error: $e',
+          error: e is LibraryException
+              ? e
+              : LibraryException(LibraryErrorCode.importFailed, e),
         );
       } finally {
         // 5. CRITICAL: Always clean up the temporary cache file IMMEDIATELY

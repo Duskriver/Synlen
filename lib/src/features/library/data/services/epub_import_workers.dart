@@ -7,6 +7,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_format.dart';
 import '../../domain/book_manifest.dart';
+import '../../domain/library_exception.dart';
 import '../parsers/epub_zip_parser.dart';
 import '../parsers/txt_book_parser.dart';
 
@@ -78,7 +79,9 @@ class TxtParseOutcome {
 /// These methods are designed to be run in isolates via compute()
 class ImportWorkers {
   /// Calculate SHA-256 hash of a file and convert to Base62
-  static Future<Either<String, String>> calculateFileHash(String path) async {
+  static Future<Either<LibraryException, String>> calculateFileHash(
+    String path,
+  ) async {
     try {
       final file = File(path);
       final stream = file.openRead();
@@ -89,12 +92,12 @@ class ImportWorkers {
 
       return right(hash);
     } catch (e) {
-      return left('Hash calculation failed: $e');
+      return left(LibraryException(LibraryErrorCode.fileUnreadable, e));
     }
   }
 
   /// Parse EPUB file in-memory and extract metadata
-  static Future<Either<String, ParseResult>> parseEpub(
+  static Future<Either<LibraryException, ParseResult>> parseEpub(
     ParseParams params,
   ) async {
     try {
@@ -128,12 +131,12 @@ class ImportWorkers {
 
       return right(result);
     } catch (e) {
-      return left('Parse error: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 
   /// Parse TXT file in-memory: decode → split chapters → normalize to UTF-8
-  static Future<Either<String, TxtParseOutcome>> parseTxt(
+  static Future<Either<LibraryException, TxtParseOutcome>> parseTxt(
     ParseParams params,
   ) async {
     try {
@@ -170,7 +173,7 @@ class ImportWorkers {
         ),
       );
     } catch (e) {
-      return left('Parse error: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 

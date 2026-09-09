@@ -54,7 +54,7 @@ void main() {
       final result = await probe.calculateHash(file);
 
       expect(result.isRight(), isTrue);
-      final hash = result.getOrElse((l) => throw StateError(l));
+      final hash = result.getOrElse((l) => throw l);
       expect(hash, hasLength(43));
       expect(RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(hash), isTrue);
     });
@@ -67,10 +67,10 @@ void main() {
 
       final hashA = (await probe.calculateHash(
         first,
-      )).getOrElse((l) => throw StateError(l));
+      )).getOrElse((l) => throw l);
       final hashB = (await probe.calculateHash(
         second,
-      )).getOrElse((l) => throw StateError(l));
+      )).getOrElse((l) => throw l);
 
       expect(hashA, hashB);
     });

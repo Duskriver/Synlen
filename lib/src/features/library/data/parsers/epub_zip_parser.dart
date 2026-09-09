@@ -3,16 +3,18 @@ import 'package:archive/archive_io.dart';
 import 'package:xml/xml.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_manifest.dart';
+import '../../domain/library_exception.dart';
 
 /// Parser that reads EPUB structure directly from ZIP archive
 /// No full extraction required - reads specific files in-memory
 part 'epub_opf_metadata.dart';
 part 'epub_toc_parser.dart';
 part 'epub_path_resolver.dart';
+part 'epub_encryption.dart';
 
 class EpubZipParser {
   /// Parse EPUB from file path
-  Future<Either<String, EpubZipParseResult>> parseFromFile(
+  Future<Either<LibraryException, EpubZipParseResult>> parseFromFile(
     String filePath, {
     String? fileName,
   }) async {
@@ -21,11 +23,11 @@ class EpubZipParser {
       final archive = ZipDecoder().decodeStream(inputStream);
       return parseFromArchive(archive, fileName: fileName);
     } catch (e) {
-      return left('Failed to read file: $e');
+      return left(LibraryException(LibraryErrorCode.fileUnreadable, e));
     }
   }
 
-  Either<String, EpubZipParseResult> parseFromBytes(
+  Either<LibraryException, EpubZipParseResult> parseFromBytes(
     List<int> bytes, {
     String? fileName,
   }) {
@@ -33,22 +35,16 @@ class EpubZipParser {
       final archive = ZipDecoder().decodeBytes(bytes);
       return parseFromArchive(archive, fileName: fileName);
     } catch (e) {
-      return left('Failed to read bytes: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 
   /// Parse EPUB from bytes
-  Either<String, EpubZipParseResult> parseFromArchive(
+  Either<LibraryException, EpubZipParseResult> parseFromArchive(
     Archive archive, {
     String? fileName,
   }) {
     try {
-      // Find META-INF/encryption.xml to check if the EPUB is encrypted
-      final encryptionFile = archive.findFile('META-INF/encryption.xml');
-      if (encryptionFile != null) {
-        return left('Encrypted EPUBs are not supported');
-      }
-
       // Step 1: Find OPF file path
       final opfPathResult = _findOpfPath(archive);
       if (opfPathResult.isLeft()) {
@@ -59,20 +55,39 @@ class EpubZipParser {
       // Step 2: Read OPF file content
       final opfFile = archive.findFile(opfPath);
       if (opfFile == null) {
-        return left('OPF file not found in archive');
+        return left(
+          const LibraryException(
+            LibraryErrorCode.parseFailed,
+            'OPF file not found in archive',
+          ),
+        );
       }
       final opfContent = _decodeString(opfFile.content as List<int>);
 
-      // Step 3: Parse OPF XML
+      // Step 3: encryption.xml 判定——仅字体混淆放行，含 DRM 拒绝。
+      // 放在 OPF 读取之后：判定需要 manifest 的 media-type。
+      final encryptionFile = archive.findFile('META-INF/encryption.xml');
+      if (encryptionFile != null) {
+        final rejection = _validateEncryption(
+          encryptionFile,
+          opfContent,
+          opfPath,
+        );
+        if (rejection != null) {
+          return left(rejection);
+        }
+      }
+
+      // Step 4: Parse OPF XML
       final parseResult = _parseOpf(opfContent, opfPath, archive, fileName);
       return parseResult;
     } catch (e) {
-      return left('Parse error: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 
   /// Find OPF file path in the archive
-  Either<String, String> _findOpfPath(Archive archive) {
+  Either<LibraryException, String> _findOpfPath(Archive archive) {
     try {
       // Strategy 1: Parse container.xml (standard EPUB structure)
       final containerFile = archive.findFile('META-INF/container.xml');
@@ -115,14 +130,19 @@ class EpubZipParser {
         }
       }
 
-      return left('OPF file not found');
+      return left(
+        const LibraryException(
+          LibraryErrorCode.parseFailed,
+          'OPF file not found',
+        ),
+      );
     } catch (e) {
-      return left('Error finding OPF: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 
   /// Parse OPF file content
-  static Either<String, EpubZipParseResult> _parseOpf(
+  static Either<LibraryException, EpubZipParseResult> _parseOpf(
     String content,
     String opfPath,
     Archive archive,
@@ -144,7 +164,12 @@ class EpubZipParser {
           .findElements('metadata')
           .firstOrNull;
       if (metadataElement == null) {
-        return left('Metadata element not found');
+        return left(
+          const LibraryException(
+            LibraryErrorCode.parseFailed,
+            'Metadata element not found',
+          ),
+        );
       }
 
       // Parse spine for chapter order
@@ -161,7 +186,12 @@ class EpubZipParser {
       }
 
       if (spineElement == null || manifestElement == null) {
-        return left('Spine or manifest element not found');
+        return left(
+          const LibraryException(
+            LibraryErrorCode.parseFailed,
+            'Spine or manifest element not found',
+          ),
+        );
       }
 
       // Build manifest map (id -> (href, properties))
@@ -314,7 +344,7 @@ class EpubZipParser {
 
       return right(result);
     } catch (e) {
-      return left('OPF parse error: $e');
+      return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
   }
 }

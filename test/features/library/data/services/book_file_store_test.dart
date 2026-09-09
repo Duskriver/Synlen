@@ -33,7 +33,7 @@ void main() {
       final result = await store.copyBook(source, 'hash1');
 
       expect(result.isRight(), isTrue);
-      final path = result.getOrElse((l) => throw StateError(l));
+      final path = result.getOrElse((l) => throw l);
       expect(path, '${booksDirPath()}/hash1.epub');
       expect(await File(path).readAsBytes(), [1, 2, 3]);
       expect(await source.exists(), isTrue);
@@ -74,7 +74,7 @@ void main() {
       final result = await store.writeNormalizedTxt(bytes, 'hash2');
 
       expect(result.isRight(), isTrue);
-      final path = result.getOrElse((l) => throw StateError(l));
+      final path = result.getOrElse((l) => throw l);
       expect(path, '${booksDirPath()}/hash2.txt');
       expect(await File(path).readAsBytes(), bytes);
     });

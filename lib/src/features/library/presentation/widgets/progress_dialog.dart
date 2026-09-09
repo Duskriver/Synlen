@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
+import 'package:synlen/src/features/library/presentation/library_error_mapper.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 
@@ -144,7 +145,14 @@ class _ProgressDialogState extends State<ProgressDialog> {
                                   color = theme.colorScheme.onSurfaceVariant;
                               }
                               return Text(
-                                item.message,
+                                // 携带类型化错误的日志按错误码映射为 l10n 文案，
+                                // 其余（info/success 等内部日志）维持原文展示。
+                                item.error != null
+                                    ? libraryErrorMessage(
+                                        l10n,
+                                        item.error!.code,
+                                      )
+                                    : item.message,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: color,
                                   fontWeight: FontWeight.w400,
