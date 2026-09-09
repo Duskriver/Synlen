@@ -28,4 +28,5 @@ Status: implemented
 
 - `rg 'EpubImportService|EpubWebViewHandler|pickEpubFiles|pickEpubFolder|isEpubFile' lib android ios web_assets` 与 `rg 'epub://' lib web_assets` 均为空。
 
-- 原生侧改名只能靠真机冒烟验证（导入 EPUB 与 TXT 各一次、翻章、字体、外链），CI 的 Kotlin/Swift 编译覆盖不了通道字符串匹配。
+- 通道字符串匹配由静态核对保证：通道名在 Dart / Kotlin / Swift 三处一致，Dart 调用的 8 个方法名在各自平台都有实现（`getDisplayName` 限 Android、`fetchIosFile` / `releaseIosAccess` 限 iOS，调用处都有平台判断）。
+- 真机冒烟验的是运行时行为：导入 EPUB 与 TXT 各一次、翻章、字体注入、外链跳转。

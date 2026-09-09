@@ -342,8 +342,8 @@ class BookWebViewHandler {
     return '$virtualScheme://$virtualDomain/fonts/$fileName';
   }
 
-  /// Check if a request is for an EPUB file
-  static bool isEpubRequest(WebUri requestUrl) {
+  /// Check if a request is for a book chapter: 两种格式共用 `book://` 虚拟域。
+  static bool isBookRequest(WebUri requestUrl) {
     return requestUrl.scheme == virtualScheme &&
         requestUrl.host == virtualDomain &&
         requestUrl.path.startsWith('/book/');
