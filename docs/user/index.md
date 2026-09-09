@@ -19,6 +19,8 @@
 | [导入与备份](guide/import-and-backup.md) | 两种导入方式、TXT 编码、封面、备份与恢复 |
 | [AI 服务密钥](guide/ai-service-keys.md) | 为什么需要密钥、在哪里填、不填会怎样 |
 | [应用内更新](guide/in-app-update.md) | 检查更新、Android 安装、iOS 跳转 App Store |
+| [支持范围](scope.md) | 支持与不支持的能力、已知边界 |
+| [数据与隐私](privacy.md) | 数据留在哪里、什么内容会联网发往哪里 |
 
 版本记录见 [release-notes.md](release-notes.md)。
 
