@@ -22,4 +22,4 @@ Status: implemented
 
 - `reader_screen.dart` 由 579 行降到 548 行；舞台是纯 `StatelessWidget`，可单独 pump。
 - 控制面板动作收进 `ReaderPanelActions`，面板参数不再逐个穿透。
-- 行为不变：加载态判定、标题回退与六个动作的语义逐字保留。
+- 加载态判定、标题回退与六个动作的语义逐字保留；但 `ReaderRenderer` 对 `navigator.state` 的读取当时是 build 时快照，导致加载遮罩不随状态刷新，已由[阅读器加载遮罩订阅导航状态](../bug-fix/2026-09-10-reader-loading-overlay-stale.md)补上 `ListenableBuilder`。

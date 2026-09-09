@@ -80,23 +80,27 @@ class ReaderStage extends StatelessWidget {
       color: initializeTheme.surfaceColor,
       child: Stack(
         children: [
-          ReaderRenderer(
-            controller: rendererController,
-            bookSession: bookSession,
-            webViewHandler: webViewHandler,
-            fileHash: fileHash,
-            showControls: showControls,
-            isLoading:
-                navigator.state.value.isLoading ||
-                navigator.state.value.isRefreshingTheme,
-            canPerformPageTurn: canPerformPageTurn,
-            onPerformPageTurn: onPerformPageTurn,
-            onToggleControls: onToggleControls,
-            callbacks: callbacks,
-            shouldShowWebView: shouldShowWebView,
-            initializeTheme: initializeTheme,
-            statusBarLeftContent: activeTocTitle,
-            statusBarRightContent: progressLabel,
+          ListenableBuilder(
+            listenable: navigator.state,
+            builder: (context, child) {
+              final nav = navigator.state.value;
+              return ReaderRenderer(
+                controller: rendererController,
+                bookSession: bookSession,
+                webViewHandler: webViewHandler,
+                fileHash: fileHash,
+                showControls: showControls,
+                isLoading: nav.isLoading || nav.isRefreshingTheme,
+                canPerformPageTurn: canPerformPageTurn,
+                onPerformPageTurn: onPerformPageTurn,
+                onToggleControls: onToggleControls,
+                callbacks: callbacks,
+                shouldShowWebView: shouldShowWebView,
+                initializeTheme: initializeTheme,
+                statusBarLeftContent: activeTocTitle,
+                statusBarRightContent: progressLabel,
+              );
+            },
           ),
           ListenableBuilder(
             listenable: Listenable.merge([navigator.state, activeTocTitle]),
