@@ -125,39 +125,39 @@ pub fn parse_encryption_xml(encryption_xml: &str) -> Vec<EncryptedEntry> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => match local_name(e.name().as_ref()) {
-                b"EncryptedData" => current = Some((None, None)),
-                b"EncryptionMethod" => {
+                "EncryptedData" => current = Some((None, None)),
+                "EncryptionMethod" => {
                     if let Some(entry) = current.as_mut() {
-                        entry.0 = attr_value(&e, b"Algorithm", reader.decoder());
+                        entry.0 = attr_value(&e, "Algorithm");
                     }
                 }
-                b"CipherReference" => {
+                "CipherReference" => {
                     if let Some(entry) = current.as_mut() {
-                        entry.1 = attr_value(&e, b"URI", reader.decoder());
+                        entry.1 = attr_value(&e, "URI");
                     }
                 }
                 _ => {}
             },
             Ok(Event::Empty(e)) => match local_name(e.name().as_ref()) {
-                b"EncryptedData" => {
+                "EncryptedData" => {
                     if let Some((algorithm, uri)) = current.take() {
                         push_entry(&mut entries, algorithm, uri);
                     }
                 }
-                b"EncryptionMethod" => {
+                "EncryptionMethod" => {
                     if let Some(entry) = current.as_mut() {
-                        entry.0 = attr_value(&e, b"Algorithm", reader.decoder());
+                        entry.0 = attr_value(&e, "Algorithm");
                     }
                 }
-                b"CipherReference" => {
+                "CipherReference" => {
                     if let Some(entry) = current.as_mut() {
-                        entry.1 = attr_value(&e, b"URI", reader.decoder());
+                        entry.1 = attr_value(&e, "URI");
                     }
                 }
                 _ => {}
             },
             Ok(Event::End(e)) => {
-                if local_name(e.name().as_ref()) == b"EncryptedData" {
+                if local_name(e.name().as_ref()) == "EncryptedData" {
                     if let Some((algorithm, uri)) = current.take() {
                         push_entry(&mut entries, algorithm, uri);
                     }
@@ -184,8 +184,8 @@ pub fn find_rootfile_path(container_xml: &str) -> Option<String> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                if local_name(e.name().as_ref()) == b"rootfile" {
-                    if let Some(path) = attr_value(&e, b"full-path", reader.decoder()) {
+                if local_name(e.name().as_ref()) == "rootfile" {
+                    if let Some(path) = attr_value(&e, "full-path") {
                         return Some(path);
                     }
                 }
@@ -212,20 +212,20 @@ pub fn unique_identifier(opf_xml: &str) -> Option<String> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => match local_name(e.name().as_ref()) {
-                b"package" => wanted_id = attr_value(&e, b"unique-identifier", reader.decoder()),
-                b"identifier" => {
-                    current_identifier_id = Some(attr_value(&e, b"id", reader.decoder()));
+                "package" => wanted_id = attr_value(&e, "unique-identifier"),
+                "identifier" => {
+                    current_identifier_id = Some(attr_value(&e, "id"));
                 }
                 _ => {}
             },
             Ok(Event::Empty(e)) => {
-                if local_name(e.name().as_ref()) == b"package" {
-                    wanted_id = attr_value(&e, b"unique-identifier", reader.decoder());
+                if local_name(e.name().as_ref()) == "package" {
+                    wanted_id = attr_value(&e, "unique-identifier");
                 }
             }
             Ok(Event::Text(t)) => {
                 if let Some(id) = current_identifier_id.take() {
-                    let text = String::from_utf8_lossy(&t).trim().to_owned();
+                    let text = t.trim().to_owned();
                     if !text.is_empty() {
                         if first_identifier.is_none() {
                             first_identifier = Some(text.clone());
@@ -237,7 +237,7 @@ pub fn unique_identifier(opf_xml: &str) -> Option<String> {
                 }
             }
             Ok(Event::End(e)) => {
-                if local_name(e.name().as_ref()) == b"identifier" {
+                if local_name(e.name().as_ref()) == "identifier" {
                     current_identifier_id = None;
                 }
             }
@@ -262,10 +262,10 @@ pub fn manifest_media_types(opf_xml: &str) -> Vec<(String, String)> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                if local_name(e.name().as_ref()) == b"item" {
+                if local_name(e.name().as_ref()) == "item" {
                     if let (Some(href), Some(media_type)) = (
-                        attr_value(&e, b"href", reader.decoder()),
-                        attr_value(&e, b"media-type", reader.decoder()),
+                        attr_value(&e, "href"),
+                        attr_value(&e, "media-type"),
                     ) {
                         items.push((href, media_type));
                     }
@@ -349,21 +349,20 @@ pub fn build_obfuscation_map(
 }
 
 /// 取限定名的本地部分（去掉命名空间前缀）。
-fn local_name(qname: &[u8]) -> &[u8] {
-    match qname.iter().position(|&b| b == b':') {
+fn local_name(qname: &str) -> &str {
+    match qname.find(':') {
         Some(i) => &qname[i + 1..],
         None => qname,
     }
 }
 
 /// 读属性值并反转义 XML 实体；属性缺席或非法返回 None。
-fn attr_value(
-    e: &quick_xml::events::BytesStart,
-    name: &[u8],
-    decoder: quick_xml::encoding::Decoder,
-) -> Option<String> {
+///
+/// quick-xml 0.42 起名字与属性值统一按 UTF-8 处理：`Reader::decoder` 已移除，
+/// `BytesStart::try_get_attribute` 接收 `&str`，属性值按 XML 1.0 规则归一化。
+fn attr_value(e: &quick_xml::events::BytesStart, name: &str) -> Option<String> {
     let attr = e.try_get_attribute(name).ok()??;
-    attr.decode_and_unescape_value(decoder)
+    attr.normalized_value(quick_xml::XmlVersion::Implicit1_0)
         .ok()
         .map(|v| v.into_owned())
 }
