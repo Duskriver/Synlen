@@ -39,21 +39,21 @@ void main() {
       );
     });
 
-    test('isEpubRequest should only match book paths on the virtual host', () {
+    test('isBookRequest should only match book paths on the virtual host', () {
       expect(
-        BookWebViewHandler.isEpubRequest(
+        BookWebViewHandler.isBookRequest(
           WebUri('book://localhost/book/abc123/ch.xhtml'),
         ),
         isTrue,
       );
       expect(
-        BookWebViewHandler.isEpubRequest(
+        BookWebViewHandler.isBookRequest(
           WebUri('book://localhost/fonts/song.ttf'),
         ),
         isFalse,
       );
       expect(
-        BookWebViewHandler.isEpubRequest(WebUri('https://example.com/book/x')),
+        BookWebViewHandler.isBookRequest(WebUri('https://example.com/book/x')),
         isFalse,
       );
     });

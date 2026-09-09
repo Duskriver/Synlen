@@ -204,7 +204,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     if (uri.scheme == 'data') {
       return NavigationActionPolicy.ALLOW;
     }
-    if (BookWebViewHandler.isEpubRequest(uri)) {
+    if (BookWebViewHandler.isBookRequest(uri)) {
       return NavigationActionPolicy.ALLOW;
     }
     return NavigationActionPolicy.CANCEL;
