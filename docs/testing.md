@@ -36,7 +36,7 @@
 
 ## 现状
 
-- `test/` 有 63 个测试文件；`flutter test` 报告 392 个用例通过、2 个按环境变量跳过（真实 DeepSeek 接口验收）。查当前数字：
+- `test/` 有 72 个测试文件；`flutter test` 报告 471 个用例通过、2 个按环境变量跳过（真实 DeepSeek 接口验收）。查当前数字：
 
   ```sh
   find test -name '*_test.dart' | wc -l
