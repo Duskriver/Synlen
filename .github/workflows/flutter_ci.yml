@@ -92,7 +92,12 @@ jobs:
       # 浏览器集与 playwright.config.cjs 的 projects 保持一致：chromium + webkit
       - name: Install Playwright browsers
         working-directory: web_assets/controller.js
-        run: npx playwright install --with-deps chromium webkit
+        run: |
+          # runner 镜像预置的 google-chrome apt 源偶发索引哈希不匹配，会让
+          # --with-deps 里的 apt-get update 直接失败；Playwright 自带浏览器构建，
+          # 不需要系统 Chrome，先移除该源
+          sudo rm -f /etc/apt/sources.list.d/google*.list /etc/apt/sources.list.d/google*.sources
+          npx playwright install --with-deps chromium webkit
 
       - name: Run reader Playwright tests
         working-directory: web_assets/controller.js
