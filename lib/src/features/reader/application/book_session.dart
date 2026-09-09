@@ -1,13 +1,13 @@
-import '../../../core/database/app_database.dart';
 import '../../library/domain/book_manifest.dart';
+import '../../library/domain/book_views.dart';
 import '../../library/application/book_queries.dart';
 import 'book_webview_handler.dart';
 import '../domain/reading_progress.dart';
 
 /// Manages the current reading session including book data, manifest, and TOC state
 class BookSession {
-  ShelfBook? _book;
-  BookManifest? _manifest;
+  ReaderBookView? _book;
+  ReaderManifestView? _manifest;
 
   // TOC Synchronization: Pre-calculated lookup maps
   final Map<String, List<String>> _spineToAnchorsMap = {};
@@ -25,8 +25,8 @@ class BookSession {
     : _queries = queries;
 
   // Getters
-  ShelfBook? get book => _book;
-  BookManifest? get manifest => _manifest;
+  ReaderBookView? get book => _book;
+  ReaderManifestView? get manifest => _manifest;
   List<SpineItem> get spine => _spine;
   List<SpineItem> get noLinearSpine => _noLinearSpine;
   List<TocItem> get toc => _manifest?.toc ?? [];
@@ -34,15 +34,15 @@ class BookSession {
   bool get isLoaded => _book != null && _manifest != null;
   int get direction => _book?.direction ?? 0;
 
-  /// Load ShelfBook and BookManifest from database
+  /// Load book and manifest views from the library seam
   Future<bool> loadBook() async {
-    // Load ShelfBook
+    // Load book view
     final book = await _queries.findBook(fileHash);
     if (book == null) {
       return false;
     }
 
-    // Load BookManifest
+    // Load manifest view
     final manifest = await _queries.findManifest(fileHash);
     if (manifest == null) {
       return false;

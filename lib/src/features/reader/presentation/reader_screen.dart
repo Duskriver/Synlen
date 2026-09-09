@@ -343,7 +343,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
-  /// Load ShelfBook + BookManifest from database
+  /// Load book and manifest views via the library seam
   Future<void> _loadBook() async {
     try {
       final loaded = await bookSession.loadBook();

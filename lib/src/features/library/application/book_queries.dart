@@ -1,10 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 
+import '../domain/book_views.dart';
 import '../data/book_manifest_repository.dart';
 import '../data/repositories/book_manifest_repository_provider.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/shelf_book_repository.dart';
+import 'book_view_mapper.dart';
 
 part 'book_queries.g.dart';
 
@@ -12,11 +13,11 @@ part 'book_queries.g.dart';
 ///
 /// 生产实现 [RepositoryBookQueries] 走仓库；测试可用 fake —— 两种实现，故不是假 seam。
 abstract interface class BookQueries {
-  /// 按文件哈希取书；不存在返回 null。
-  Future<ShelfBook?> findBook(String fileHash);
+  /// 按文件哈希取阅读会话所需的书目视图；不存在返回 null。
+  Future<ReaderBookView?> findBook(String fileHash);
 
-  /// 按文件哈希取阅读清单；不存在返回 null。
-  Future<BookManifest?> findManifest(String fileHash);
+  /// 按文件哈希取阅读会话所需的清单视图；不存在返回 null。
+  Future<ReaderManifestView?> findManifest(String fileHash);
 
   /// 写入阅读进度；书籍已不存在或写入失败时抛 [StateError]。
   Future<void> saveProgress({
@@ -39,12 +40,18 @@ class RepositoryBookQueries implements BookQueries {
   final BookManifestRepository _manifestRepository;
 
   @override
-  Future<ShelfBook?> findBook(String fileHash) =>
-      _shelfBookRepository.getBookByHash(fileHash);
+  Future<ReaderBookView?> findBook(String fileHash) async =>
+      switch (await _shelfBookRepository.getBookByHash(fileHash)) {
+        final book? => readerBookView(book),
+        null => null,
+      };
 
   @override
-  Future<BookManifest?> findManifest(String fileHash) =>
-      _manifestRepository.getManifestByHash(fileHash);
+  Future<ReaderManifestView?> findManifest(String fileHash) async =>
+      switch (await _manifestRepository.getManifestByHash(fileHash)) {
+        final manifest? => readerManifestView(manifest),
+        null => null,
+      };
 
   @override
   Future<void> saveProgress({

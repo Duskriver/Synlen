@@ -1,8 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/book_queries.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
 import 'package:synlen/src/features/reader/application/chapter_navigation.dart';
 import 'package:synlen/src/features/reader/application/reader_navigator.dart';
@@ -46,14 +45,14 @@ class _FakeViewport implements ReaderViewport {
 class _FakeQueries implements BookQueries {
   _FakeQueries({required this.book, required this.manifest});
 
-  final ShelfBook book;
-  final BookManifest manifest;
+  final ReaderBookView book;
+  final ReaderManifestView manifest;
 
   @override
-  Future<ShelfBook?> findBook(String fileHash) async => book;
+  Future<ReaderBookView?> findBook(String fileHash) async => book;
 
   @override
-  Future<BookManifest?> findManifest(String fileHash) async => manifest;
+  Future<ReaderManifestView?> findManifest(String fileHash) async => manifest;
 
   @override
   Future<void> saveProgress({
@@ -64,50 +63,35 @@ class _FakeQueries implements BookQueries {
   }) async {}
 }
 
-ShelfBook _buildBook({int currentChapterIndex = 0}) => ShelfBook(
+ReaderBookView _buildBook({int currentChapterIndex = 0}) => (
   id: 1,
-  fileHash: 'hash1',
   title: '测试书',
   author: '作者',
-  authors: const ['作者'],
-  subjects: const [],
+  coverPath: null,
+  filePath: null,
   totalChapters: 3,
-  epubVersion: '3.0',
-  format: BookFormat.epub,
-  importDate: 0,
   direction: 0,
   currentChapterIndex: currentChapterIndex,
-  readingProgress: 0,
-  isFinished: false,
-  isDeleted: false,
-  updatedAt: 0,
+  chapterScrollPosition: null,
 );
 
-BookManifest _buildManifest({int chapters = 3, List<TocItem>? toc}) =>
-    BookManifest(
-      id: 1,
-      fileHash: 'hash1',
-      opfRootPath: 'OEBPS/',
-      spine: [
-        for (var i = 0; i < chapters; i++)
-          SpineItem(index: i, href: 'ch${i + 1}.xhtml'),
+ReaderManifestView _buildManifest({int chapters = 3, List<TocItem>? toc}) => (
+  spine: [
+    for (var i = 0; i < chapters; i++)
+      SpineItem(index: i, href: 'ch${i + 1}.xhtml'),
+  ],
+  toc:
+      toc ??
+      [
+        TocItem(
+          id: 0,
+          label: '第二章',
+          href: Href(path: 'ch2.xhtml', anchor: 'top'),
+          depth: 0,
+          spineIndex: 1,
+        ),
       ],
-      toc:
-          toc ??
-          [
-            TocItem(
-              id: 0,
-              label: '第二章',
-              href: Href(path: 'ch2.xhtml', anchor: 'top'),
-              depth: 0,
-              spineIndex: 1,
-            ),
-          ],
-      manifest: const [],
-      epubVersion: '3.0',
-      format: BookFormat.epub,
-      lastUpdated: DateTime(2026, 1, 1),
-    );
+);
 
 void main() {
   late _FakeViewport viewport;

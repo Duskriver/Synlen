@@ -9,13 +9,22 @@ part of 'book_actions.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// 单本书的读取、元数据保存与文件分享用例。
+///
+/// 保存与分享都按 fileHash 现取整行：调用方只提供编辑后的字段，
+/// 不持有 drift 行类型。
 
 @ProviderFor(BookActions)
 final bookActionsProvider = BookActionsProvider._();
 
 /// 单本书的读取、元数据保存与文件分享用例。
+///
+/// 保存与分享都按 fileHash 现取整行：调用方只提供编辑后的字段，
+/// 不持有 drift 行类型。
 final class BookActionsProvider extends $NotifierProvider<BookActions, void> {
   /// 单本书的读取、元数据保存与文件分享用例。
+  ///
+  /// 保存与分享都按 fileHash 现取整行：调用方只提供编辑后的字段，
+  /// 不持有 drift 行类型。
   BookActionsProvider._()
     : super(
         from: null,
@@ -43,9 +52,12 @@ final class BookActionsProvider extends $NotifierProvider<BookActions, void> {
   }
 }
 
-String _$bookActionsHash() => r'2a9a74f2da79859a95c737e94ce716c72ed6fa85';
+String _$bookActionsHash() => r'3435153c885d6cba628d2fdb401741a7ad61f8a9';
 
 /// 单本书的读取、元数据保存与文件分享用例。
+///
+/// 保存与分享都按 fileHash 现取整行：调用方只提供编辑后的字段，
+/// 不持有 drift 行类型。
 
 abstract class _$BookActions extends $Notifier<void> {
   void build();
