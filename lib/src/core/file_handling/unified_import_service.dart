@@ -6,6 +6,7 @@ import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
+import 'backup_archive_guard.dart';
 import 'backup_paths.dart';
 import 'native_file_picker.dart';
 import 'platform_path.dart';
@@ -119,6 +120,14 @@ class UnifiedImportService {
     try {
       rawZip = await _cacheManager.createRawCacheFile(zipPath);
       final archive = ZipDecoder().decodeStream(InputFileStream(rawZip.path));
+      // 解压前先静态校验整条 archive：数量/大小上限防 zip bomb，路径校验防越界。
+      final violation = validateBackupArchiveEntries(
+        archive.files.map((f) => (name: f.name, size: f.size)),
+      );
+      if (violation != null) {
+        appLogger.w('备份 ZIP 未通过解压前校验: $violation');
+        throw BackupArchiveViolationException(violation);
+      }
       await extractArchiveToDisk(archive, extractDir.path);
     } catch (_) {
       await _deleteQuietly(extractDir);

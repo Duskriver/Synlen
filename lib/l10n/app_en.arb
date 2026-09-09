@@ -241,14 +241,33 @@
       }
     }
   },
-  "importFailed": "Import failed: {error}",
+  "importFailed": "Import failed. Please try again.",
   "@importFailed": {
-    "description": "Import failed error message",
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
+    "description": "Generic import failure message (typed errors carry no user-facing detail)"
+  },
+  "importFailedDrm": "This book is protected by DRM and cannot be imported.",
+  "@importFailedDrm": {
+    "description": "Import rejected because the EPUB is DRM-encrypted"
+  },
+  "importFileUnreadable": "Cannot read the selected file.",
+  "@importFileUnreadable": {
+    "description": "导入时无法读取所选文件（I/O 或哈希计算失败）的提示"
+  },
+  "importParseFailed": "Cannot parse this book file; it may be corrupted or in an unsupported format.",
+  "@importParseFailed": {
+    "description": "书籍文件解析失败（结构损坏或格式不受支持）的提示"
+  },
+  "importDuplicateBook": "This book is already in your library.",
+  "@importDuplicateBook": {
+    "description": "重复导入同一本书时的提示"
+  },
+  "importFileWriteFailed": "Failed to save the book file to device storage.",
+  "@importFileWriteFailed": {
+    "description": "书籍文件写入设备存储失败的提示"
+  },
+  "importSaveFailed": "Failed to save the book to the library.",
+  "@importSaveFailed": {
+    "description": "书籍元数据写库失败的提示"
   },
   "details": "Details",
   "@details": {
@@ -559,6 +578,26 @@
   "@noUpdateChannel": {
     "description": "No update channel message"
   },
+  "updateInsecureUrl": "The update download link is insecure (HTTPS required); download cancelled",
+  "@updateInsecureUrl": {
+    "description": "非 HTTPS 更新直链被拦截的提示"
+  },
+  "updateChecksumMismatch": "Update package failed integrity check; please try again or download from GitHub",
+  "@updateChecksumMismatch": {
+    "description": "APK 摘要与版本清单不一致的提示"
+  },
+  "backupInvalidArchive": "Backup file is corrupt or too large; restore cancelled",
+  "@backupInvalidArchive": {
+    "description": "备份 ZIP 未通过解压前校验的提示"
+  },
+  "backupDataCorrupted": "Backup data is corrupted or incomplete; restore cancelled.",
+  "@backupDataCorrupted": {
+    "description": "备份数据损坏或结构不一致（JSON 解析失败、书架与清单标识不符）的提示"
+  },
+  "backupVersionTooNew": "This backup was created by a newer version of the app. Please update the app and try again.",
+  "@backupVersionTooNew": {
+    "description": "备份格式版本高于当前应用支持版本时的提示"
+  },
   "languageNameInEnglish": "English",
   "@languageNameInEnglish": {
     "description": "The name of the current language in English, used to select the matching section in update logs"
@@ -633,14 +672,9 @@
   "@restoreCompleted": {
     "description": "Title shown when restore finishes"
   },
-  "restoreFailed": "Failed to restore backup: {message}",
+  "restoreFailed": "Failed to restore the backup. Please try again.",
   "@restoreFailed": {
-    "description": "Restore failure message",
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
+    "description": "Generic restore failure message (typed errors carry no user-facing detail)"
   },
   "restoring": "Restoring",
   "@restoring": {

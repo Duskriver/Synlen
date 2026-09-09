@@ -428,11 +428,47 @@ abstract class AppLocalizations {
   /// **'{success} success, {failed} failed, {remaining} remaining'**
   String importingProgress(int success, int failed, int remaining);
 
-  /// Import failed error message
+  /// Generic import failure message (typed errors carry no user-facing detail)
   ///
   /// In en, this message translates to:
-  /// **'Import failed: {error}'**
-  String importFailed(String error);
+  /// **'Import failed. Please try again.'**
+  String get importFailed;
+
+  /// Import rejected because the EPUB is DRM-encrypted
+  ///
+  /// In en, this message translates to:
+  /// **'This book is protected by DRM and cannot be imported.'**
+  String get importFailedDrm;
+
+  /// 导入时无法读取所选文件（I/O 或哈希计算失败）的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot read the selected file.'**
+  String get importFileUnreadable;
+
+  /// 书籍文件解析失败（结构损坏或格式不受支持）的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot parse this book file; it may be corrupted or in an unsupported format.'**
+  String get importParseFailed;
+
+  /// 重复导入同一本书时的提示
+  ///
+  /// In en, this message translates to:
+  /// **'This book is already in your library.'**
+  String get importDuplicateBook;
+
+  /// 书籍文件写入设备存储失败的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save the book file to device storage.'**
+  String get importFileWriteFailed;
+
+  /// 书籍元数据写库失败的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save the book to the library.'**
+  String get importSaveFailed;
 
   /// Details button label
   ///
@@ -830,6 +866,36 @@ abstract class AppLocalizations {
   /// **'No update channel available for this platform yet, please check GitHub Releases'**
   String get noUpdateChannel;
 
+  /// 非 HTTPS 更新直链被拦截的提示
+  ///
+  /// In en, this message translates to:
+  /// **'The update download link is insecure (HTTPS required); download cancelled'**
+  String get updateInsecureUrl;
+
+  /// APK 摘要与版本清单不一致的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Update package failed integrity check; please try again or download from GitHub'**
+  String get updateChecksumMismatch;
+
+  /// 备份 ZIP 未通过解压前校验的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Backup file is corrupt or too large; restore cancelled'**
+  String get backupInvalidArchive;
+
+  /// 备份数据损坏或结构不一致（JSON 解析失败、书架与清单标识不符）的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Backup data is corrupted or incomplete; restore cancelled.'**
+  String get backupDataCorrupted;
+
+  /// 备份格式版本高于当前应用支持版本时的提示
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was created by a newer version of the app. Please update the app and try again.'**
+  String get backupVersionTooNew;
+
   /// The name of the current language in English, used to select the matching section in update logs
   ///
   /// In en, this message translates to:
@@ -926,11 +992,11 @@ abstract class AppLocalizations {
   /// **'Restore Completed'**
   String get restoreCompleted;
 
-  /// Restore failure message
+  /// Generic restore failure message (typed errors carry no user-facing detail)
   ///
   /// In en, this message translates to:
-  /// **'Failed to restore backup: {message}'**
-  String restoreFailed(String message);
+  /// **'Failed to restore the backup. Please try again.'**
+  String get restoreFailed;
 
   /// Restoring progress message
   ///

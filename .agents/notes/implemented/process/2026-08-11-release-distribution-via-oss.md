@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-- 版本元数据是 OSS 上的 `version.json`：`majorNumber` / `minorNumber` / `patchNumber` / `buildNumber` / `updateLog` / `androidApkUrl` / `iosAppStoreUrl` / `lanzouUrl` / `githubUrl`。客户端只读这一个端点，见 `lib/src/features/settings/presentation/widgets/check_update_tile.dart`。
+- 版本元数据是 OSS 上的 `version.json`：`majorNumber` / `minorNumber` / `patchNumber` / `buildNumber` / `updateLog` / `androidApkUrl` / `androidApkSha256` / `iosAppStoreUrl` / `lanzouUrl` / `githubUrl`。客户端只读这一个端点，见 `lib/src/features/settings/presentation/widgets/check_update_tile.dart`；`androidApkSha256` 的校验策略见[下载链路与备份解压加固](../bug-fix/2026-09-09-update-backup-hardening.md)。
 - `versionCode` 由 tag 派生：`vX.Y.Z` → `X*10000 + Y*100 + Z`，构建与上传两侧同一规则（`.github/workflows/build_release.yml` 与 `tool/upload_release.sh`）。
 - `updateLog` 从 `docs/user/release-notes.md` 的 `## vX.Y.Z` 段提取，步骤见[发布一个版本](../../../../docs/cookbook/publishing-a-release.md)。
 - 打 tag 触发构建；配好 `OSS_*` secrets 时 CI 自动上传，未配置则跳过，开源后 fork 天然无凭据。

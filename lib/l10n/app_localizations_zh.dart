@@ -180,9 +180,25 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String importFailed(String error) {
-    return '导入失败：$error';
-  }
+  String get importFailed => '导入失败，请重试。';
+
+  @override
+  String get importFailedDrm => '该书籍受 DRM 保护，无法导入。';
+
+  @override
+  String get importFileUnreadable => '无法读取所选文件。';
+
+  @override
+  String get importParseFailed => '无法解析书籍文件，文件可能已损坏或格式不受支持。';
+
+  @override
+  String get importDuplicateBook => '这本书已在书架中。';
+
+  @override
+  String get importFileWriteFailed => '书籍文件写入设备存储失败。';
+
+  @override
+  String get importSaveFailed => '书籍保存到书库失败。';
 
   @override
   String get details => '详情';
@@ -401,6 +417,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noUpdateChannel => '当前平台暂无更新渠道，请留意 GitHub Releases';
 
   @override
+  String get updateInsecureUrl => '更新下载链接不安全（要求 HTTPS），已取消下载';
+
+  @override
+  String get updateChecksumMismatch => '安装包校验失败，请重试或前往 GitHub 下载';
+
+  @override
+  String get backupInvalidArchive => '备份文件损坏或超出大小限制，已取消恢复';
+
+  @override
+  String get backupDataCorrupted => '备份数据损坏或不完整，已取消恢复。';
+
+  @override
+  String get backupVersionTooNew => '备份由更新版本的应用创建，请升级后再恢复';
+
+  @override
   String get languageNameInEnglish => 'Chinese';
 
   @override
@@ -453,9 +484,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get restoreCompleted => '恢复完成';
 
   @override
-  String restoreFailed(String message) {
-    return '备份恢复失败：$message';
-  }
+  String get restoreFailed => '备份恢复失败，请重试。';
 
   @override
   String get restoring => '正在恢复';
