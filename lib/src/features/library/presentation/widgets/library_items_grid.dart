@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 
-import '../../../library/application/book_view_mapper.dart';
-import '../../../library/application/bookshelf_notifier.dart';
-import '../widgets/book_grid_item.dart';
+import '../../application/book_actions.dart';
+import '../../application/bookshelf_notifier.dart';
+import '../../domain/book_views.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../widgets/book_grid_item.dart';
 
 /// 书架网格：空态提示、两种视图模式的网格参数与点击 / 长按语义。
 class LibraryItemsGrid extends ConsumerWidget {
   const LibraryItemsGrid({super.key, required this.state, required this.books});
 
   final BookshelfState state;
-  final List<ShelfBook> books;
+  final List<ShelfBookView> books;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,7 +52,7 @@ class LibraryItemsGrid extends ConsumerWidget {
           (context, index) {
             final book = books[index];
             return BookGridItem(
-              book: gridBookView(book),
+              book: book,
               isSelected: state.selectedBookIds.contains(book.id),
               isSelectionMode: state.isSelectionMode,
               viewMode: state.viewMode,
@@ -60,12 +60,14 @@ class LibraryItemsGrid extends ConsumerWidget {
                 if (state.isSelectionMode) {
                   ref
                       .read(bookshelfProvider.notifier)
-                      .toggleItemSelection(book);
+                      .toggleItemSelection(book.id);
                   return;
                 }
 
                 final notifier = ref.read(bookshelfProvider.notifier);
-                context.push('/book/${book.fileHash}', extra: book).then((_) {
+                // 预取详情：路由动画结束时数据已就位，详情页不闪加载态。
+                ref.read(bookDetailProvider(book.fileHash));
+                context.push('/book/${book.fileHash}').then((_) {
                   notifier.reloadQuietly();
                 });
               },
@@ -75,7 +77,7 @@ class LibraryItemsGrid extends ConsumerWidget {
                   ref.read(bookshelfProvider.notifier).toggleSelectionMode();
                   ref
                       .read(bookshelfProvider.notifier)
-                      .toggleItemSelection(book);
+                      .toggleItemSelection(book.id);
                 }
               },
             );

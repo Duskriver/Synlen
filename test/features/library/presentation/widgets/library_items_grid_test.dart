@@ -2,27 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/l10n/app_localizations.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/bookshelf_notifier.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/library/presentation/widgets/book_grid_item.dart';
 import 'package:synlen/src/features/library/presentation/widgets/library_items_grid.dart';
 
-ShelfBook buildBook(int id, String title) => ShelfBook(
+ShelfBookView buildBook(int id, String title) => (
   id: id,
   fileHash: 'hash$id',
   title: title,
   author: '作者',
-  authors: const ['作者'],
-  subjects: const [],
-  totalChapters: 3,
-  epubVersion: '3.0',
-  format: BookFormat.epub,
-  importDate: 0,
-  direction: 0,
-  currentChapterIndex: 0,
+  coverPath: null,
   readingProgress: 0,
-  updatedAt: 0,
   isFinished: false,
   isDeleted: false,
 );
@@ -31,7 +22,7 @@ void main() {
   Future<void> pumpGrid(
     WidgetTester tester,
     BookshelfState state,
-    List<ShelfBook> books,
+    List<ShelfBookView> books,
   ) {
     return tester.pumpWidget(
       ProviderScope(

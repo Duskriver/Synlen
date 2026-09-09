@@ -1,4 +1,3 @@
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart';
 
@@ -7,7 +6,7 @@ enum ViewMode { compact, relaxed }
 
 /// State for bookshelf view (sorting, grouping, selection)
 class BookshelfState {
-  final List<ShelfBook> books;
+  final List<ShelfBookView> books;
   final ShelfBookSortBy sortBy;
   final ViewMode viewMode;
   final int? currentGroupId; // Navigation: which folder we're inside
@@ -17,7 +16,7 @@ class BookshelfState {
   final Set<int> selectedGroupIds;
   final bool isSelectionMode;
   final List<GroupOption> availableGroups;
-  final Map<int?, List<ShelfBook>> cachedBooks;
+  final Map<int?, List<ShelfBookView>> cachedBooks;
   // Note: cacheOrder (LRU eviction order) is managed internally by
   // BookshelfTabCache and is *not* part of the UI state.
 
@@ -35,7 +34,7 @@ class BookshelfState {
   });
 
   BookshelfState copyWith({
-    List<ShelfBook>? books,
+    List<ShelfBookView>? books,
     ShelfBookSortBy? sortBy,
     ViewMode? viewMode,
     int? currentGroupId,
@@ -44,7 +43,7 @@ class BookshelfState {
     Set<int>? selectedGroupIds,
     bool? isSelectionMode,
     List<GroupOption>? availableGroups,
-    Map<int?, List<ShelfBook>>? cachedBooks,
+    Map<int?, List<ShelfBookView>>? cachedBooks,
     bool clearGroup = false,
     bool clearFilter = false,
   }) {

@@ -478,11 +478,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get spliter => '，';
 
   @override
-  String get shareEpub => '分享 EPUB';
+  String get shareBook => '分享书籍';
 
   @override
-  String shareEpubFailed(String error) {
-    return '分享 EPUB 失败：$error';
+  String shareBookFailed(String error) {
+    return '分享书籍失败：$error';
   }
 
   @override

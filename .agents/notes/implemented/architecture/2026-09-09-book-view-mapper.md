@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-上一轮把详情两个组件改为只吃视图记录类型，但映射内联在 `book_detail_screen` 里，屏幕因此涨到 414 行；映射位置也违背[窄视图类型提案](../../proposed/architecture/2026-09-09-presentation-shelf-book-view.md)的约定（映射属于 application）。
+上一轮把详情两个组件改为只吃视图记录类型，但映射内联在 `book_detail_screen` 里，屏幕因此涨到 414 行；映射位置也违背[窄视图类型笔记](2026-09-09-presentation-shelf-book-view.md)的约定（映射属于 application）。
 
 ## Decision
 

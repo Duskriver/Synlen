@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`BookGridItem` 持有整行 `ShelfBook`，实际只读 `id` / `title` / `author` / `coverPath` / `readingProgress` / `isFinished` / `isDeleted`——[窄视图类型提案](../../proposed/architecture/2026-09-09-presentation-shelf-book-view.md)里的第三处可独立迁移的依赖。
+`BookGridItem` 持有整行 `ShelfBook`，实际只读 `id` / `title` / `author` / `coverPath` / `readingProgress` / `isFinished` / `isDeleted`——[窄视图类型笔记](2026-09-09-presentation-shelf-book-view.md)里的第三处可独立迁移的依赖。
 
 ## Decision
 

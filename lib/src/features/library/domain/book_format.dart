@@ -20,4 +20,10 @@ enum BookFormat {
     BookFormat.epub => '.epub',
     BookFormat.txt => '.txt',
   };
+
+  /// 分享给系统面板时使用的 MIME 类型。
+  String get mimeType => switch (this) {
+    BookFormat.epub => 'application/epub+zip',
+    BookFormat.txt => 'text/plain',
+  };
 }

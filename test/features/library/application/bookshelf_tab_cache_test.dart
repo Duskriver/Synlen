@@ -1,23 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/bookshelf_tab_cache.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 
-ShelfBook buildBook(int id) => ShelfBook(
+ShelfBookView buildBook(int id) => (
   id: id,
   fileHash: 'hash$id',
   title: '书$id',
   author: '作者',
-  authors: const ['作者'],
-  subjects: const [],
-  totalChapters: 1,
-  epubVersion: '',
-  format: BookFormat.epub,
-  importDate: 0,
-  direction: 0,
-  currentChapterIndex: 0,
+  coverPath: null,
   readingProgress: 0,
-  updatedAt: 0,
   isFinished: false,
   isDeleted: false,
 );

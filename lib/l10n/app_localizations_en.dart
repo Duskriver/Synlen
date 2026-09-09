@@ -493,11 +493,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spliter => ', ';
 
   @override
-  String get shareEpub => 'Share EPUB';
+  String get shareBook => 'Share book';
 
   @override
-  String shareEpubFailed(String error) {
-    return 'Failed to share EPUB: $error';
+  String shareBookFailed(String error) {
+    return 'Failed to share book: $error';
   }
 
   @override

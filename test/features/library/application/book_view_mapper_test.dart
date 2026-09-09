@@ -23,10 +23,11 @@ ShelfBook buildBook() => ShelfBook(
 );
 
 void main() {
-  test('gridBookView 映射网格卡片需要的字段', () {
-    final view = gridBookView(buildBook());
+  test('shelfBookView 映射网格卡片需要的字段', () {
+    final view = shelfBookView(buildBook());
 
     expect(view.id, 7);
+    expect(view.fileHash, 'hash7');
     expect(view.title, '测试书');
     expect(view.author, '作者');
     expect(view.coverPath, isNull);
@@ -50,8 +51,8 @@ void main() {
     expect(view.coverPath, isNull);
   });
 
-  test('editableBookView 只取主键与封面路径', () {
-    final view = editableBookView(buildBook());
+  test('editableBookView 从详情视图只取主键与封面路径', () {
+    final view = editableBookView(detailBookView(buildBook()));
 
     expect(view.id, 7);
     expect(view.coverPath, isNull);
