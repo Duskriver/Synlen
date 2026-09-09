@@ -5,7 +5,7 @@
 ## 常驻指令
 
 - **分层单向**：`presentation → application → domain`、`data → domain`。禁止 `presentation → data` 与 `domain → 上层`（[分层](docs/architecture.md#分层)）。
-- **feature 之间不互相 import**；跨 feature 只经对方 `application` 的接口。共享能力下沉 `core/`，且必须被 ≥2 个 feature 使用（[模块地图](docs/architecture.md#模块)）。
+- **feature 之间不互相 import**；跨 feature 只经对方 `application` 的接口（唯一例外：组合面 `settings`，见[跨 feature 依赖](docs/architecture.md#跨-feature-依赖)）。共享能力下沉 `core/`，且必须被 ≥2 个 feature 使用（[模块地图](docs/architecture.md#模块)）。
 - **依赖经 provider 注入**，不在内部 `new`；`@riverpod` 的 `build()` 只做初始化与订阅，`ref.onDispose` 必须与资源创建成对（[资源生命周期](docs/development.md#资源生命周期)）。
 - **`AsyncValue` 三态齐全**，禁止裸 `.value`（[Riverpod 约定](docs/development.md#riverpod)）。
 - **错误只在 application 捕获**并转成状态字段；用户可读消息走 l10n，内部细节只入日志（[错误处理](docs/development.md#错误处理)）。
