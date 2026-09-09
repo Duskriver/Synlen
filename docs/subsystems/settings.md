@@ -31,6 +31,9 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 | `CacheCleanup` | 组合 library 与 learning 的清理用例 | `lib/src/features/settings/application/cache_cleanup.dart` |
 | `BackupExport` | 组合 library 的导出用例，只回传错误字符串 | `lib/src/features/settings/application/backup_export.dart` |
 | `DeepSeekKeyCheck` / `DeepSeekConnectivity` | 密钥连通性检查 | `lib/src/features/settings/application/deep_seek_connectivity.dart` |
+| `UpdateCheck` / `UpdateState` | 更新检查与下载的状态流（`AsyncValue`：loading = 检查中，error = `UpdateException`），下载子状态带进度与错误码 | `lib/src/features/settings/application/update_check.dart` |
+| `UpdateService` | 拉取并解析远端 version.json、读本地版本、下载 APK 到缓存并校验 SHA-256；平台依赖全经构造注入 | `lib/src/features/settings/data/services/update_service.dart` |
+| `AppVersion` / `VersionManifest` / `UpdateErrorCode` | 版本值类型（split APK 构建号归一化）、远端清单值类型、更新错误码 | `lib/src/features/settings/domain/` |
 
 ## 流程
 
@@ -40,7 +43,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 4. 音色：`SettingsTtsVoiceSection` → `TtsVoiceNotifier.setVoice` → 持久化 `voiceParam`，学习模块据此取音色与缓存键。
 5. 缓存清理：`CleanCacheTile` → `CacheCleanup.cleanAll` → library 的 `StorageCleanupService`（缓存、孤儿书籍 / 封面、分享文件、孤儿字体）+ learning 的 `LearningCacheCleanupService`。
 6. 备份导出：`BackupTile` → `BackupExport.exportToShareSheet` → `ExportBackupService` 压缩并调系统分享面板。
-7. 更新检查：`CheckUpdateTile` 拉 `AppInfo.versionEndpoint` 的 `version.json`，与 `packageInfo` 的本地版本比较；有新版本时弹更新对话框，Android 有直链时走应用内下载安装，iOS 有商店链接时跳转 App Store，另有网盘链接兜底。
+7. 更新检查：`CheckUpdateTile` → `UpdateCheck.checkForUpdates` → `UpdateService` 拉 `AppInfo.versionEndpoint` 的 `version.json` 并与本地版本比较；有新版本时弹更新对话框，Android 有直链时 `UpdateCheck.downloadAndInstall` 经 `UpdateService.downloadApk` 应用内下载，iOS 有商店链接时跳转 App Store，另有网盘链接兜底。Android 直链仅允许 HTTPS；`version.json` 提供 `androidApkSha256` 时下载完成后比对 SHA-256，不匹配即删除安装包并中止。拉起系统安装器（FileProvider / Intent）是 UI 侧薄壳，安装包路径来自下载状态。
 
 ## 边界与不变量
 
@@ -53,7 +56,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 
 ## 已知限制与待办
 
-- 设置模块的测试覆盖 AI 密钥、连通性与 TTS 音色（`test/features/settings/`）；主题、字体、缓存清理、备份导出与更新检查仍缺覆盖（[测试分层](../testing.md#分层)）。
+- 设置模块的测试覆盖 AI 密钥、连通性、TTS 音色、更新检查与字体导入（`test/features/settings/`）；主题、缓存清理与备份导出仍缺覆盖（[测试分层](../testing.md#分层)）。
 
 ## Dev Note
 

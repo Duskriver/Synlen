@@ -1,190 +1,95 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:synlen/l10n/app_localizations.dart';
-import 'package:synlen/src/core/config/app_info.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/core/url_launcher/url_launcher.dart';
+import 'package:synlen/src/features/settings/application/update_check.dart';
+import 'package:synlen/src/features/settings/domain/update_exception.dart';
+import 'package:synlen/src/features/settings/domain/version_manifest.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_info_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/simple_markdown.dart';
 
-/// Settings tile that checks for application updates from the remote server.
-class CheckUpdateTile extends StatefulWidget {
+/// 按更新错误码映射用户可读文案；内部细节已在 application 层入日志。
+String _updateErrorMessage(AppLocalizations l10n, UpdateErrorCode? code) {
+  return switch (code) {
+    UpdateErrorCode.noUpdateChannel => l10n.noUpdateChannel,
+    UpdateErrorCode.insecureUrl => l10n.updateInsecureUrl,
+    UpdateErrorCode.downloadFailed => l10n.downloadFailed,
+    UpdateErrorCode.checksumMismatch => l10n.updateChecksumMismatch,
+    UpdateErrorCode.checkFailed || null => l10n.updateCheckFailed,
+  };
+}
+
+/// 更新检查入口：只余 UI 与状态订阅，检查 / 下载 / 校验逻辑在
+/// application 与 data 层（[UpdateCheck]）。
+class CheckUpdateTile extends ConsumerWidget {
   const CheckUpdateTile({super.key});
 
   @override
-  State<CheckUpdateTile> createState() => _CheckUpdateTileState();
-}
-
-class _CheckUpdateTileState extends State<CheckUpdateTile> {
-  bool _isChecking = false;
-
-  Future<void> _checkForUpdates() async {
-    if (_isChecking) return;
-    setState(() => _isChecking = true);
-
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-
-    try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      final localVersionStr = packageInfo.version; // e.g. "0.2.2"
-      final localBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
-
-      // Split APKs (arm64, armeabi-v7a, x86_64) have an architecture offset
-      // added to the base build number (e.g. 1001, 1002, 1003 for build 1).
-      // Normalise by taking the remainder of 1000.
-      final normalizedBuildNumber = localBuildNumber % 1000;
-
-      final httpClient = HttpClient();
-      httpClient.connectionTimeout = const Duration(seconds: 10);
-      final request = await httpClient.getUrl(
-        Uri.parse(AppInfo.versionEndpoint),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      httpClient.close();
-
-      final jsonMap = jsonDecode(body) as Map<String, dynamic>;
-      if (jsonMap['code'] != 200) {
-        throw Exception('Server returned code ${jsonMap['code']}');
-      }
-
-      final data = jsonMap['data'] as Map<String, dynamic>;
-      final remoteMajor = (data['majorNumber'] as num).toInt();
-      final remoteMinor = (data['minorNumber'] as num).toInt();
-      final remotePatch = (data['patchNumber'] as num).toInt();
-      final remoteBuild = (data['buildNumber'] as num).toInt();
-      final updateLog = data['updateLog'] as String? ?? '';
-      final lanzouUrl = data['lanzouUrl'] as String? ?? '';
-      final lanzouPassword = data['lanzouPassword'] as String? ?? '';
-      final githubUrl = data['githubUrl'] as String? ?? '';
-      final androidApkUrl = data['androidApkUrl'] as String? ?? '';
-      final iosAppStoreUrl = data['iosAppStoreUrl'] as String? ?? '';
-
-      final remoteVersionStr = '$remoteMajor.$remoteMinor.$remotePatch';
-
-      // Parse local version string
-      final localParts = localVersionStr
-          .split('.')
-          .map((e) => int.tryParse(e) ?? 0)
-          .toList();
-      final localMajor = localParts.isNotEmpty ? localParts[0] : 0;
-      final localMinor = localParts.length > 1 ? localParts[1] : 0;
-      final localPatch = localParts.length > 2 ? localParts[2] : 0;
-
-      final isNewer = _isNewerVersion(
-        remoteMajor,
-        remoteMinor,
-        remotePatch,
-        remoteBuild,
-        localMajor,
-        localMinor,
-        localPatch,
-        normalizedBuildNumber,
-      );
-
-      if (!mounted) return;
-
-      if (!isNewer) {
-        ToastService.showSuccess(l10n.upToDate);
-        return;
-      }
-
-      await showDialog(
-        context: context,
-        builder: (context) => _UpdateDialog(
-          remoteVersion: 'v$remoteVersionStr+$remoteBuild',
-          updateLog: updateLog,
-          lanzouUrl: lanzouUrl,
-          lanzouPassword: lanzouPassword,
-          githubUrl: githubUrl,
-          androidApkUrl: androidApkUrl,
-          iosAppStoreUrl: iosAppStoreUrl,
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      final l10n2 = AppLocalizations.of(context)!;
-      ToastService.showError(l10n2.updateCheckFailed);
-    } finally {
-      if (mounted) {
-        setState(() => _isChecking = false);
-      }
-    }
-  }
-
-  bool _isNewerVersion(
-    int rMaj,
-    int rMin,
-    int rPat,
-    int rBuild,
-    int lMaj,
-    int lMin,
-    int lPat,
-    int lBuild,
-  ) {
-    if (rMaj != lMaj) return rMaj > lMaj;
-    if (rMin != lMin) return rMin > lMin;
-    if (rPat != lPat) return rPat > lPat;
-    return rBuild > lBuild;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final isChecking = ref.watch(updateCheckProvider).isLoading;
     return SettingsInfoTile(
       icon: Icons.system_update_outlined,
       title: l10n.checkForUpdates,
       subtitle: l10n.checkForUpdatesSubtitle,
-      trailing: _isChecking
+      trailing: isChecking
           ? const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : null,
-      onTap: _isChecking ? null : _checkForUpdates,
+      onTap: isChecking ? null : () => _checkForUpdates(context, ref),
     );
+  }
+
+  Future<void> _checkForUpdates(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    await ref.read(updateCheckProvider.notifier).checkForUpdates();
+    if (!context.mounted) return;
+    ref
+        .read(updateCheckProvider)
+        .when(
+          data: (update) {
+            switch (update.checkStatus) {
+              case UpdateCheckStatus.upToDate:
+                ToastService.showSuccess(l10n.upToDate);
+              case UpdateCheckStatus.updateAvailable:
+                final manifest = update.manifest;
+                if (manifest != null) {
+                  showDialog<void>(
+                    context: context,
+                    builder: (context) => _UpdateDialog(manifest: manifest),
+                  );
+                }
+              case UpdateCheckStatus.idle:
+                break;
+            }
+          },
+          error: (error, _) => ToastService.showError(
+            _updateErrorMessage(
+              l10n,
+              error is UpdateException ? error.code : null,
+            ),
+          ),
+          // await 返回后状态必非 loading；列出该分支保持三态齐全
+          loading: () {},
+        );
   }
 }
 
-class _UpdateDialog extends StatefulWidget {
-  const _UpdateDialog({
-    required this.remoteVersion,
-    required this.updateLog,
-    required this.lanzouUrl,
-    required this.lanzouPassword,
-    required this.githubUrl,
-    required this.androidApkUrl,
-    required this.iosAppStoreUrl,
-  });
+class _UpdateDialog extends ConsumerWidget {
+  const _UpdateDialog({required this.manifest});
 
-  final String remoteVersion;
-  final String updateLog;
-  final String lanzouUrl;
-  final String lanzouPassword;
-  final String githubUrl;
-
-  /// Android：APK 直链（国内 OSS 分发）
-  final String androidApkUrl;
-
-  /// iOS：App Store 链接（上架后由服务端下发）
-  final String iosAppStoreUrl;
-
-  @override
-  State<_UpdateDialog> createState() => _UpdateDialogState();
-}
-
-class _UpdateDialogState extends State<_UpdateDialog> {
-  bool _downloading = false;
-  double _downloadProgress = 0;
+  final VersionManifest manifest;
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -195,61 +100,46 @@ class _UpdateDialogState extends State<_UpdateDialog> {
 
   Future<void> _openLanzou(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    if (widget.lanzouPassword.isNotEmpty) {
-      await Clipboard.setData(ClipboardData(text: widget.lanzouPassword));
+    if (manifest.lanzouPassword.isNotEmpty) {
+      await Clipboard.setData(ClipboardData(text: manifest.lanzouPassword));
       ToastService.showSuccess(l10n.passwordCopied);
     }
-    await _launchUrl(widget.lanzouUrl);
+    await _launchUrl(manifest.lanzouUrl);
   }
 
-  /// Android：下载 APK 到应用缓存目录，再用 FileProvider 触发系统安装
-  Future<void> _downloadAndInstall(BuildContext context) async {
+  Future<void> _downloadAndInstall(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    if (widget.androidApkUrl.isEmpty) {
-      ToastService.showInfo(l10n.noUpdateChannel);
-      return;
-    }
-
-    setState(() {
-      _downloading = true;
-      _downloadProgress = 0;
-    });
-
-    try {
-      final cacheDir = await getApplicationCacheDirectory();
-      final apkDir = Directory('${cacheDir.path}/apk');
-      await apkDir.create(recursive: true);
-      final apkPath = '${apkDir.path}/synlen-${widget.remoteVersion}.apk';
-      // 删除可能存在的旧文件，避免覆盖安装校验失败
-      final oldFile = File(apkPath);
-      if (oldFile.existsSync()) {
-        oldFile.deleteSync();
-      }
-
-      await Dio().download(
-        widget.androidApkUrl,
-        apkPath,
-        onReceiveProgress: (received, total) {
-          if (total > 0 && mounted) {
-            setState(() => _downloadProgress = received / total);
-          }
-        },
-      );
-
-      if (!context.mounted) return;
-      ToastService.showSuccess(l10n.downloadCompleted);
-      await _installApk(context, apkPath);
-    } catch (e) {
-      if (!mounted) return;
-      ToastService.showError('${l10n.downloadFailed}: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _downloading = false);
-      }
+    await ref.read(updateCheckProvider.notifier).downloadAndInstall();
+    if (!context.mounted) return;
+    final download = ref
+        .read(updateCheckProvider)
+        .when(
+          data: (update) => update.download,
+          error: (_, _) => const UpdateDownloadState(
+            status: UpdateDownloadStatus.failed,
+            errorCode: UpdateErrorCode.downloadFailed,
+          ),
+          loading: () => const UpdateDownloadState(),
+        );
+    switch (download.status) {
+      case UpdateDownloadStatus.completed:
+        ToastService.showSuccess(l10n.downloadCompleted);
+        final apkPath = download.apkPath;
+        if (apkPath != null && context.mounted) {
+          await _installApk(context, apkPath);
+        }
+      case UpdateDownloadStatus.failed:
+        ToastService.showError(_updateErrorMessage(l10n, download.errorCode));
+      case UpdateDownloadStatus.idle || UpdateDownloadStatus.downloading:
+        break;
     }
   }
 
-  /// 通过 FileProvider 暴露缓存 APK 并拉起系统安装器
+  /// 通过 FileProvider 暴露缓存 APK 并拉起系统安装器。
+  ///
+  /// 薄壳说明：android_intent_plus 的 canResolveActivity / launch 没有可注入
+  /// seam，副作用只是「拉起系统界面」，故与 [UrlLauncher] 同类保留在 UI 侧；
+  /// 安装包路径由 application 层的下载状态给出。
   Future<void> _installApk(BuildContext context, String apkPath) async {
     final l10n = AppLocalizations.of(context)!;
     final packageInfo = await PackageInfo.fromPlatform();
@@ -277,16 +167,25 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       // 若系统拦截（未允许未知来源），Android 11+ 自带引导对话框
       ToastService.showInfo(l10n.installUnknownSourcesRequired);
     } catch (e) {
-      ToastService.showError('${l10n.downloadFailed}: $e');
+      appLogger.e('拉起系统安装器失败', error: e);
+      ToastService.showError(l10n.downloadFailed);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final download = ref
+        .watch(updateCheckProvider)
+        .when(
+          data: (update) => update.download,
+          error: (_, _) => const UpdateDownloadState(),
+          loading: () => const UpdateDownloadState(),
+        );
+    final downloading = download.status == UpdateDownloadStatus.downloading;
     final isAndroid = Platform.isAndroid;
-    final hasDirectLink = isAndroid && widget.androidApkUrl.isNotEmpty;
-    final hasAppStore = !isAndroid && widget.iosAppStoreUrl.isNotEmpty;
+    final hasDirectLink = isAndroid && manifest.androidApkUrl.isNotEmpty;
+    final hasAppStore = !isAndroid && manifest.iosAppStoreUrl.isNotEmpty;
 
     return AlertDialog(
       title: Text(l10n.newVersionAvailable),
@@ -297,16 +196,16 @@ class _UpdateDialogState extends State<_UpdateDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.remoteVersion,
+                manifest.versionLabel,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SimpleMarkdown(text: widget.updateLog),
-              if (_downloading) ...[
+              SimpleMarkdown(text: manifest.updateLog),
+              if (downloading) ...[
                 const SizedBox(height: 16),
-                LinearProgressIndicator(value: _downloadProgress),
+                LinearProgressIndicator(value: download.progress),
                 const SizedBox(height: 8),
                 Text(
-                  '${(_downloadProgress * 100).toStringAsFixed(0)}%',
+                  '${(download.progress * 100).toStringAsFixed(0)}%',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -317,14 +216,16 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       actions: [
         if (hasDirectLink)
           FilledButton(
-            onPressed: _downloading ? null : () => _downloadAndInstall(context),
+            onPressed: downloading
+                ? null
+                : () => _downloadAndInstall(context, ref),
             child: Text(l10n.downloadAndInstall),
           ),
         if (hasAppStore)
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _launchUrl(widget.iosAppStoreUrl);
+              _launchUrl(manifest.iosAppStoreUrl);
             },
             child: Text(l10n.goToAppStore),
           ),
@@ -336,7 +237,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
             },
             child: Text(l10n.goToAppStore),
           ),
-        if (widget.lanzouUrl.isNotEmpty)
+        if (manifest.lanzouUrl.isNotEmpty)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -344,11 +245,11 @@ class _UpdateDialogState extends State<_UpdateDialog> {
             },
             child: Text(l10n.updateViaChinaCloud),
           ),
-        if (widget.githubUrl.isNotEmpty)
+        if (manifest.githubUrl.isNotEmpty)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _launchUrl(widget.githubUrl);
+              _launchUrl(manifest.githubUrl);
             },
             child: Text(l10n.updateViaGithub),
           ),
