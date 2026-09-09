@@ -33,6 +33,8 @@ use positioned_io::ReadAt;
 use rc_zip::fsm::{ArchiveFsm, EntryFsm, FsmResult};
 use rc_zip::parse::{Archive, Entry};
 
+use crate::font_obfuscation::{self, FontObfuscation};
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -50,6 +52,8 @@ struct CachedArchive {
     archive: Archive,
     /// Normalised entry name → index into `archive.entries()`.
     index: HashMap<String, usize>,
+    /// 混淆字体的归一化路径 → 还原参数；仅字体混淆的 EPUB 非空。
+    obfuscated_fonts: HashMap<String, FontObfuscation>,
 }
 
 static EPUB_CACHE: Lazy<RwLock<HashMap<String, Arc<CachedArchive>>>> =
@@ -62,7 +66,7 @@ static EPUB_CACHE: Lazy<RwLock<HashMap<String, Arc<CachedArchive>>>> =
 /// Canonicalise an entry path for lookup:
 ///   - backslashes → forward slashes
 ///   - strip all leading `/` and `./` prefixes
-fn normalize_path(name: &str) -> String {
+pub(crate) fn normalize_path(name: &str) -> String {
     let s = name.replace('\\', "/");
     let mut s: &str = s.as_str();
     loop {
@@ -151,13 +155,54 @@ pub fn load_epub(epub_path: String) -> Result<(), String> {
         index.insert(normalize_path(&entry.name), i);
     }
 
-    let cached = Arc::new(CachedArchive { archive, index });
+    // 仅字体混淆的 EPUB：现场解析 encryption.xml + OPF，派生还原参数。
+    // 任何失败都退化为空映射（字体保持混淆），不阻断打开。
+    let obfuscated_fonts = load_font_obfuscation(&epub_path, &archive, &index).unwrap_or_default();
+
+    let cached = Arc::new(CachedArchive {
+        archive,
+        index,
+        obfuscated_fonts,
+    });
 
     let mut guard = EPUB_CACHE.write();
     // Another thread may have inserted while we were parsing; that is fine.
     guard.entry(epub_path).or_insert(cached);
 
     Ok(())
+}
+
+/// 读 `META-INF/encryption.xml` + container.xml + OPF，构建混淆字体映射。
+///
+/// 导入侧已拒绝含 DRM 的 EPUB，能走到这里的 encryption.xml 至多只剩
+/// 字体混淆条目；任何一步解析失败都返回空映射（字体保持混淆原样供给），
+/// 不让元数据瑕疵阻断阅读。
+fn load_font_obfuscation(
+    epub_path: &str,
+    archive: &Archive,
+    index: &HashMap<String, usize>,
+) -> Option<HashMap<String, FontObfuscation>> {
+    let read_utf8_entry = |name: &str| -> Option<String> {
+        let &i = index.get(name)?;
+        let entry = archive.entries().nth(i)?.clone();
+        let bytes = read_entry_bytes(epub_path, entry).ok()?;
+        String::from_utf8(bytes).ok()
+    };
+
+    let encryption_xml = read_utf8_entry("META-INF/encryption.xml")?;
+    let container_xml = read_utf8_entry("META-INF/container.xml")?;
+    let opf_path = font_obfuscation::find_rootfile_path(&container_xml)?;
+    let opf_xml = read_utf8_entry(&normalize_path(&opf_path))?;
+    let opf_dir = opf_path
+        .rsplit_once('/')
+        .map(|(dir, _)| dir)
+        .unwrap_or_default();
+
+    Some(font_obfuscation::build_obfuscation_map(
+        &encryption_xml,
+        &opf_xml,
+        opf_dir,
+    ))
 }
 
 /// Read and decompress a single file from the EPUB.
@@ -204,18 +249,31 @@ pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec
         .expect("entry index is always valid because it was built from the same archive")
         .clone();
 
-    // 3. Zip-bomb guard: reject entries that exceed the uncompressed-size cap.
+    let mut out = read_entry_bytes(&epub_path, entry)?;
+
+    // 命中混淆字体时还原前缀字节，再交给 WebView。
+    if let Some(obfuscation) = cached.obfuscated_fonts.get(&normalised) {
+        font_obfuscation::deobfuscate(&mut out, obfuscation);
+    }
+    Ok(Some(out))
+}
+
+/// 解压单个条目并返回完整字节流（含 50 MiB zip-bomb 上限校验）。
+///
+/// 在私有文件句柄上顺序解压，调用方不持有任何全局锁；
+/// `read_epub_file` 与打开时的元数据读取共用此路径。
+fn read_entry_bytes(epub_path: &str, entry: Entry) -> Result<Vec<u8>, String> {
+    // Zip-bomb guard: reject entries that exceed the uncompressed-size cap.
     if entry.uncompressed_size > MAX_UNCOMPRESSED_BYTES {
         return Err(format!(
-            "read_epub_file: entry '{normalised}' uncompressed size {} \
-             exceeds the 50 MiB safety limit",
+            "read_epub_file: entry uncompressed size {} exceeds the 50 MiB safety limit",
             entry.uncompressed_size
         ));
     }
 
-    // 4. Open a fresh, private file handle for this decompression task.
-    //    No global lock is held from this point onward.
-    let mut file = File::open(&epub_path)
+    // Open a fresh, private file handle for this decompression task.
+    // No global lock is held from this point onward.
+    let mut file = File::open(epub_path)
         .map_err(|e| format!("read_epub_file: cannot open '{epub_path}': {e}"))?;
 
     // Seek to the local file header for this entry so EntryFsm can read
@@ -223,7 +281,7 @@ pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec
     file.seek(SeekFrom::Start(entry.header_offset))
         .map_err(|e| format!("read_epub_file: seek to local header: {e}"))?;
 
-    // 5. Drive EntryFsm to decompress the entry.
+    // Drive EntryFsm to decompress the entry.
     //
     //    EntryFsm handles:
     //      - parsing the local file header (may differ from central dir)
@@ -269,7 +327,7 @@ pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec
 
     // Truncate to the actual byte count in case uncompressed_size was padded.
     out.truncate(out_pos);
-    Ok(Some(out))
+    Ok(out)
 }
 
 /// Remove the cached metadata for `epub_path`.
@@ -278,3 +336,4 @@ pub fn close_epub(epub_path: String) {
     let mut guard = EPUB_CACHE.write();
     guard.remove(&epub_path);
 }
+
