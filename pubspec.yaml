@@ -43,7 +43,7 @@ dependencies:
 
   # EPUB Parsing
   xml: ^7.0.1
-  archive: ^4.0.7
+  archive: ^4.2.0
   crypto: ^3.0.7
   
   # Reader
