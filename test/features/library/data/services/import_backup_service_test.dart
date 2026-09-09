@@ -9,6 +9,7 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/services/import_backup_service.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
@@ -124,13 +125,14 @@ void main() {
     List<Map<String, dynamic>>? books,
     Map<String, Map<String, dynamic>>? manifests,
     bool withCover = false,
+    int? shelfVersion = 1,
   }) async {
     final items = books ?? [bookMap()];
     final directory = await Directory('${root.path}/backup').create();
     final shelf = File('${directory.path}/shelf.json');
     await shelf.writeAsString(
       jsonEncode({
-        'version': 1,
+        'version': ?shelfVersion,
         'books': items,
         'groups': [
           {'name': '书组', 'creationDate': 10, 'updatedAt': 20},
@@ -464,6 +466,40 @@ void main() {
       manifests: {'book-a': manifestMap(hash: 'other')},
     );
     expect((await restore(paths)).last.result, isA<ImportFailure>());
+    expect(await db.select(db.shelfBooks).get(), isEmpty);
+    expect(await db.select(db.bookManifests).get(), isEmpty);
+  });
+
+  test('书架版本高于支持版本时拒绝恢复并报版本错误', () async {
+    final paths = await backup(shelfVersion: 99);
+    final progress = await restore(paths);
+    expect(progress.last.result, isA<ImportFailure>());
+    expect(
+      (progress.last.result! as ImportFailure).error.code,
+      LibraryErrorCode.backupVersionTooNew,
+    );
+    expect(progress.last.current, 0);
+    expect(await db.select(db.shelfBooks).get(), isEmpty);
+    expect(await db.select(db.shelfGroups).get(), isEmpty);
+  });
+
+  test('书架缺少 version 字段时按 1 正常恢复', () async {
+    final paths = await backup(shelfVersion: null);
+    expect((await restore(paths)).last.result, isA<ImportSuccess>());
+    expect(await shelfRepo.getBookByHash('book-a'), isNotNull);
+  });
+
+  test('清单版本高于支持版本时拒绝恢复并报版本错误', () async {
+    final paths = await backup(
+      manifests: {'book-a': manifestMap()..['version'] = 99},
+    );
+    final progress = await restore(paths);
+    expect(progress.last.result, isA<ImportFailure>());
+    expect(
+      (progress.last.result! as ImportFailure).error.code,
+      LibraryErrorCode.backupVersionTooNew,
+    );
+    expect(progress.last.current, 0);
     expect(await db.select(db.shelfBooks).get(), isEmpty);
     expect(await db.select(db.bookManifests).get(), isEmpty);
   });

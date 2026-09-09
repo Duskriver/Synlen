@@ -11,6 +11,8 @@ import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 
 import '../../domain/book_format.dart';
 import '../../domain/import_progress.dart';
+import '../../domain/library_exception.dart';
+import 'backup_decoders.dart';
 import 'backup_json_mapper.dart';
 import 'backup_merger.dart';
 
@@ -64,12 +66,13 @@ class ImportBackupService {
     var currentFileName = '';
 
     // 失败不会清零已成功恢复的书籍数。
-    BackupImportProgress failure(String message) => BackupImportProgress(
-      current: importedCount,
-      total: totalCount,
-      currentFileName: currentFileName,
-      result: ImportFailure(message),
-    );
+    BackupImportProgress failure(LibraryException error) =>
+        BackupImportProgress(
+          current: importedCount,
+          total: totalCount,
+          currentFileName: currentFileName,
+          result: ImportFailure(error),
+        );
 
     try {
       // -----------------------------------------------------------------------
@@ -81,10 +84,10 @@ class ImportBackupService {
       );
       final shelfJson = jsonDecode(shelfString) as Map<String, dynamic>;
 
-      final groupsJson = (shelfJson['groups'] as List<dynamic>)
-          .cast<Map<String, dynamic>>();
-      final booksJson = (shelfJson['books'] as List<dynamic>)
-          .cast<Map<String, dynamic>>();
+      // 版本分派：version 高于支持上限时在此抛出，恢复尚未写库即中止。
+      final shelfData = decodeShelfBackup(shelfJson);
+      final groupsJson = shelfData.groups;
+      final booksJson = shelfData.books;
       totalCount = booksJson.length;
 
       // Emit the initial state so the UI can show indeterminate progress
@@ -141,7 +144,10 @@ class ImportBackupService {
 
         final pathsForBook = backupPaths.bookPaths[hash];
         if (pathsForBook == null) {
-          throw StateError('备份缺少书籍或清单：$hash');
+          throw LibraryException(
+            LibraryErrorCode.backupCorrupted,
+            '备份缺少书籍或清单：$hash',
+          );
         }
 
         // -- A. Process & Copy book file --
@@ -194,9 +200,15 @@ class ImportBackupService {
           pathsForBook.manifestPath,
         );
         final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
-        final manifest = mapToBookManifest(manifestMap);
+        final manifest = decodeManifestBackup(
+          manifestMap,
+          source: '$hash.json',
+        );
         if (manifest.fileHash != hash || manifest.format != format) {
-          throw const FormatException('书架与清单的书籍标识或格式不一致');
+          throw const LibraryException(
+            LibraryErrorCode.backupCorrupted,
+            '书架与清单的书籍标识或格式不一致',
+          );
         }
         await _merger.mergeManifest(manifest);
 
@@ -229,12 +241,18 @@ class ImportBackupService {
         'Import completed: $importedCount books imported.',
         ProgressLogType.success,
       );
+    } on LibraryException catch (e) {
+      // 类型化错误（版本过新、备份损坏等）：细节只入日志，文案由错误码映射。
+      appLogger.e('[ImportBackup] $e');
+      yield failure(e);
     } on FormatException catch (e) {
       appLogger.e('[ImportBackup] JSON parse error: $e');
-      yield failure('Failed to parse backup data: ${e.message}');
+      yield failure(
+        LibraryException(LibraryErrorCode.backupCorrupted, e.message),
+      );
     } catch (e, st) {
       appLogger.e('[ImportBackup] Unexpected error: $e\n$st');
-      yield failure('Import failed: $e');
+      yield failure(LibraryException(LibraryErrorCode.restoreFailed, e));
     } finally {
       // Release all security-scoped resource accesses held by the native iOS
       // picker plugin.  This is a no-op on Android; calling it unconditionally

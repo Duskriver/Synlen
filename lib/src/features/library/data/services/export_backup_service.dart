@@ -13,6 +13,7 @@ import '../book_manifest_repository.dart';
 import '../shelf_book_repository.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
+import 'backup_decoders.dart';
 
 /// Result of an export operation.
 sealed class ExportResult {
@@ -245,7 +246,7 @@ class ExportBackupService {
     List<ShelfBook> books,
     List<ShelfGroup> groups,
   ) => {
-    'version': 1, // for future-proofing the format
+    'version': kBackupFormatVersion, // 恢复端据此分派 decoder
     'books': books.map(_shelfBookToMap).toList(),
     'groups': groups.map(_shelfGroupToMap).toList(),
   };
@@ -293,7 +294,7 @@ class ExportBackupService {
   ///
   /// Excludes [id] — the [fileHash] is the canonical identifier.
   Map<String, dynamic> _manifestToMap(BookManifest m) => {
-    'version': 1, // for future-proofing the format
+    'version': kBackupFormatVersion, // 恢复端据此分派 decoder
     'fileHash': m.fileHash,
     'opfRootPath': m.opfRootPath,
     'epubVersion': m.epubVersion,
