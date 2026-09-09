@@ -6,9 +6,9 @@
 import 'dart:async' as _i3;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:synlen/src/core/database/app_database.dart' as _i4;
 import 'package:synlen/src/features/library/application/book_queries.dart'
     as _i2;
+import 'package:synlen/src/features/library/domain/book_manifest.dart' as _i4;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -34,20 +34,62 @@ class MockBookQueries extends _i1.Mock implements _i2.BookQueries {
   }
 
   @override
-  _i3.Future<_i4.ShelfBook?> findBook(String? fileHash) =>
+  _i3.Future<
+    ({
+      String author,
+      double? chapterScrollPosition,
+      String? coverPath,
+      int currentChapterIndex,
+      int direction,
+      String? filePath,
+      int id,
+      String title,
+      int totalChapters,
+    })?
+  >
+  findBook(String? fileHash) =>
       (super.noSuchMethod(
             Invocation.method(#findBook, [fileHash]),
-            returnValue: _i3.Future<_i4.ShelfBook?>.value(),
+            returnValue:
+                _i3.Future<
+                  ({
+                    String author,
+                    double? chapterScrollPosition,
+                    String? coverPath,
+                    int currentChapterIndex,
+                    int direction,
+                    String? filePath,
+                    int id,
+                    String title,
+                    int totalChapters,
+                  })?
+                >.value(),
           )
-          as _i3.Future<_i4.ShelfBook?>);
+          as _i3.Future<
+            ({
+              String author,
+              double? chapterScrollPosition,
+              String? coverPath,
+              int currentChapterIndex,
+              int direction,
+              String? filePath,
+              int id,
+              String title,
+              int totalChapters,
+            })?
+          >);
 
   @override
-  _i3.Future<_i4.BookManifest?> findManifest(String? fileHash) =>
+  _i3.Future<({List<_i4.SpineItem> spine, List<_i4.TocItem> toc})?>
+  findManifest(String? fileHash) =>
       (super.noSuchMethod(
             Invocation.method(#findManifest, [fileHash]),
-            returnValue: _i3.Future<_i4.BookManifest?>.value(),
+            returnValue:
+                _i3.Future<
+                  ({List<_i4.SpineItem> spine, List<_i4.TocItem> toc})?
+                >.value(),
           )
-          as _i3.Future<_i4.BookManifest?>);
+          as _i3.Future<({List<_i4.SpineItem> spine, List<_i4.TocItem> toc})?>);
 
   @override
   _i3.Future<void> saveProgress({

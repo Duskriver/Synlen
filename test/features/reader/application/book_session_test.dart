@@ -3,10 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/book_queries.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
 
 import 'book_session_test.mocks.dart';
@@ -15,39 +14,30 @@ import 'book_session_test.mocks.dart';
 void main() {
   provideDummy<Either<String, bool>>(const Right(true));
 
-  ShelfBook buildBook({
+  ReaderBookView buildBook({
     int id = 1,
     int currentChapterIndex = 0,
-    double readingProgress = 0,
     double? chapterScrollPosition,
     int direction = 0,
   }) {
-    return ShelfBook(
+    return (
       id: id,
-      fileHash: 'hash1',
       title: '测试书',
       author: '作者',
-      authors: const ['作者'],
-      subjects: const [],
+      coverPath: null,
+      filePath: null,
       totalChapters: 3,
-      epubVersion: '3.0',
-      format: BookFormat.epub,
-      importDate: 0,
       direction: direction,
       currentChapterIndex: currentChapterIndex,
-      readingProgress: readingProgress,
       chapterScrollPosition: chapterScrollPosition,
-      isFinished: false,
-      isDeleted: false,
-      updatedAt: 0,
     );
   }
 
-  BookManifest buildManifest({List<SpineItem>? spine, List<TocItem>? toc}) {
-    return BookManifest(
-      id: 1,
-      fileHash: 'hash1',
-      opfRootPath: 'OEBPS/',
+  ReaderManifestView buildManifest({
+    List<SpineItem>? spine,
+    List<TocItem>? toc,
+  }) {
+    return (
       spine:
           spine ??
           [
@@ -62,10 +52,6 @@ void main() {
               href: Href(path: 'ch1.xhtml', anchor: 'sec2'),
             ),
           ],
-      manifest: const [],
-      epubVersion: '3.0',
-      format: BookFormat.epub,
-      lastUpdated: DateTime(2026, 1, 1),
     );
   }
 

@@ -1,22 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/book_queries.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
 import 'package:synlen/src/features/reader/presentation/reader_toc_state.dart';
 
 class _FakeQueries implements BookQueries {
   _FakeQueries({required this.book, required this.manifest});
 
-  final ShelfBook book;
-  final BookManifest manifest;
+  final ReaderBookView book;
+  final ReaderManifestView manifest;
 
   @override
-  Future<ShelfBook?> findBook(String fileHash) async => book;
+  Future<ReaderBookView?> findBook(String fileHash) async => book;
 
   @override
-  Future<BookManifest?> findManifest(String fileHash) async => manifest;
+  Future<ReaderManifestView?> findManifest(String fileHash) async => manifest;
 
   @override
   Future<void> saveProgress({
@@ -27,29 +26,19 @@ class _FakeQueries implements BookQueries {
   }) async {}
 }
 
-ShelfBook _buildBook() => ShelfBook(
+ReaderBookView _buildBook() => (
   id: 1,
-  fileHash: 'hash1',
   title: '测试书',
   author: '作者',
-  authors: const ['作者'],
-  subjects: const [],
+  coverPath: null,
+  filePath: null,
   totalChapters: 2,
-  epubVersion: '3.0',
-  format: BookFormat.epub,
-  importDate: 0,
   direction: 0,
   currentChapterIndex: 0,
-  readingProgress: 0,
-  updatedAt: 0,
-  isFinished: false,
-  isDeleted: false,
+  chapterScrollPosition: null,
 );
 
-BookManifest _buildManifest() => BookManifest(
-  id: 1,
-  fileHash: 'hash1',
-  opfRootPath: 'OEBPS/',
+ReaderManifestView _buildManifest() => (
   spine: [
     SpineItem(index: 0, href: 'ch1.xhtml'),
     SpineItem(index: 1, href: 'ch2.xhtml'),
@@ -63,10 +52,6 @@ BookManifest _buildManifest() => BookManifest(
       spineIndex: 0,
     ),
   ],
-  manifest: const [],
-  epubVersion: '3.0',
-  format: BookFormat.epub,
-  lastUpdated: DateTime(2026, 1, 1),
 );
 
 void main() {
@@ -98,17 +83,7 @@ void main() {
       fileHash: 'hash1',
       queries: _FakeQueries(
         book: _buildBook(),
-        manifest: BookManifest(
-          id: 1,
-          fileHash: 'hash1',
-          opfRootPath: 'OEBPS/',
-          spine: [SpineItem(index: 0, href: 'ch1.xhtml')],
-          toc: const [],
-          manifest: const [],
-          epubVersion: '3.0',
-          format: BookFormat.epub,
-          lastUpdated: DateTime(2026, 1, 1),
-        ),
+        manifest: (spine: [SpineItem(index: 0, href: 'ch1.xhtml')], toc: []),
       ),
     );
     await emptyTocSession.loadBook();

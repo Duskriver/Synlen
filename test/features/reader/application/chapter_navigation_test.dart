@@ -2,10 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/book_queries.dart';
-import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/reader/application/book_session.dart';
 import 'package:synlen/src/features/reader/application/chapter_navigation.dart';
 
@@ -17,38 +16,24 @@ void main() {
   provideDummy<Either<String, bool>>(const Right(true));
   provideDummy<Either<String, int>>(const Right(1));
 
-  ShelfBook buildBook() => ShelfBook(
+  ReaderBookView buildBook() => (
     id: 1,
-    fileHash: 'hash1',
     title: '测试书',
     author: '作者',
-    authors: const ['作者'],
-    subjects: const [],
+    coverPath: null,
+    filePath: null,
     totalChapters: 3,
-    epubVersion: '3.0',
-    format: BookFormat.epub,
-    importDate: 0,
     direction: 0,
     currentChapterIndex: 0,
-    readingProgress: 0,
-    isFinished: false,
-    isDeleted: false,
-    updatedAt: 0,
+    chapterScrollPosition: null,
   );
 
-  BookManifest buildManifest(int chapters) => BookManifest(
-    id: 1,
-    fileHash: 'hash1',
-    opfRootPath: 'OEBPS/',
+  ReaderManifestView buildManifest(int chapters) => (
     spine: [
       for (var i = 0; i < chapters; i++)
         SpineItem(index: i, href: 'ch${i + 1}.xhtml'),
     ],
     toc: const [],
-    manifest: const [],
-    epubVersion: '3.0',
-    format: BookFormat.epub,
-    lastUpdated: DateTime(2026, 1, 1),
   );
 
   Future<BookSession> loadedSession({int chapters = 3}) async {

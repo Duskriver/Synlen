@@ -102,7 +102,10 @@ void main() {
     expect(await reopened.loadBook(), isTrue);
     expect(reopened.initialChapterIndex, 1);
     expect(reopened.initialScrollPosition, 3 / 8);
-    expect(reopened.book!.readingProgress, 0.75);
-    expect(reopened.book!.lastOpenedDate, greaterThan(1));
+    final persisted = await ShelfBookRepository(
+      db: db,
+    ).getBookByHash('reading-book');
+    expect(persisted!.readingProgress, 0.75);
+    expect(persisted.lastOpenedDate, greaterThan(1));
   });
 }
