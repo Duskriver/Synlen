@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,10 +5,10 @@ import 'package:synlen/src/core/services/toast_service.dart';
 import '../application/bookshelf_notifier.dart';
 import '../application/book_actions.dart';
 import '../application/book_view_mapper.dart';
+import '../domain/book_views.dart';
 import 'widgets/book_detail_edit_body.dart';
 import 'widgets/book_detail_error_view.dart';
 import 'widgets/book_detail_view_body.dart';
-import '../../../core/database/app_database.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Actions available in the unsaved-changes confirmation dialog.
@@ -18,10 +17,10 @@ enum _DiscardAction { save, discard, cancel }
 /// Book Detail Screen - Shows detailed information about a book, with support
 /// for inline editing of title, authors, and description.
 class BookDetailScreen extends ConsumerStatefulWidget {
-  final String bookId; // fileHash
-  final ShelfBook? initialBook; // Optional initial data for instant display
+  /// 书籍主键（fileHash）：展示与保存都按它取数据，路由不上传行类型。
+  final String bookId;
 
-  const BookDetailScreen({super.key, required this.bookId, this.initialBook});
+  const BookDetailScreen({super.key, required this.bookId});
 
   @override
   ConsumerState<BookDetailScreen> createState() => _BookDetailScreenState();
@@ -76,7 +75,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   // --------------------------------------------------------------------------
 
   /// Populates controllers with current book data and switches to edit mode.
-  void _enterEditMode(ShelfBook book) {
+  void _enterEditMode(DetailBookView book) {
     _titleController.text = book.title;
     _authorsController.text = book.authors.join(', ');
     _descriptionController.text = book.description ?? '';
@@ -85,20 +84,22 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     setState(() => _isEditing = true);
   }
 
-  /// Switches back to view mode without saving.
-  /// 分享书籍文件：用例在 application 层，这里只负责错误提示。
-  Future<void> _shareBook(ShelfBook book) async {
+  /// 分享书籍文件：用例在 application 层按哈希取整行，这里只负责错误提示。
+  Future<void> _shareBook() async {
     try {
-      await ref.read(bookActionsProvider.notifier).shareBookFile(book);
+      await ref
+          .read(bookActionsProvider.notifier)
+          .shareBookByHash(widget.bookId);
     } catch (e) {
       if (mounted) {
         ToastService.showError(
-          AppLocalizations.of(context)!.shareEpubFailed(e.toString()),
+          AppLocalizations.of(context)!.shareBookFailed(e.toString()),
         );
       }
     }
   }
 
+  /// Switches back to view mode without saving.
   void _exitEditMode() {
     _colorController.reverse();
     setState(() => _isEditing = false);
@@ -113,8 +114,8 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     }
   }
 
-  /// Persists edits to the repository and refreshes relevant providers.
-  Future<void> _save(ShelfBook book) async {
+  /// Persists edits through the repository and refreshes relevant providers.
+  Future<void> _save() async {
     if (_isSaving) return;
 
     // Validate required fields before hitting the repository.
@@ -133,18 +134,15 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         .toList();
     final newDescription = _descriptionController.text.trim();
 
-    final updated = book.copyWith(
-      title: newTitle,
-      authors: newAuthors,
-      author: newAuthors.isNotEmpty ? newAuthors.first : '',
-      description: Value(newDescription.isEmpty ? null : newDescription),
-      updatedAt: DateTime.now().millisecondsSinceEpoch,
-    );
-
     try {
       final error = await ref
           .read(bookActionsProvider.notifier)
-          .saveMetadata(updated);
+          .saveMetadataByHash(
+            fileHash: widget.bookId,
+            title: newTitle,
+            authors: newAuthors,
+            description: newDescription.isEmpty ? null : newDescription,
+          );
 
       if (error != null) {
         if (mounted) {
@@ -184,7 +182,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   /// itself.
   Future<bool> _handleCancelEdit({
     required bool isPop,
-    required ShelfBook? book,
+    required DetailBookView? book,
   }) async {
     // Skip the dialog if nothing has changed.
     final newAuthors = _authorsController.text
@@ -235,7 +233,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         return true;
 
       case _DiscardAction.save:
-        if (book != null) await _save(book);
+        if (book != null) await _save();
         return false;
 
       case _DiscardAction.cancel:
@@ -296,15 +294,15 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
                       IconButton(
                         icon: const Icon(Icons.check_outlined),
                         tooltip: AppLocalizations.of(context)!.save,
-                        onPressed: book != null ? () => _save(book) : null,
+                        onPressed: book != null ? _save : null,
                       ),
                     ]
                   : [
                       if (book != null)
                         IconButton(
                           icon: const Icon(Icons.share_outlined),
-                          tooltip: AppLocalizations.of(context)!.shareEpub,
-                          onPressed: () => _shareBook(book),
+                          tooltip: AppLocalizations.of(context)!.shareBook,
+                          onPressed: _shareBook,
                         ),
                       if (book != null)
                         IconButton(
@@ -331,12 +329,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   Widget _buildBody(BuildContext context) {
     final bookAsync = ref.watch(bookDetailProvider(widget.bookId));
     return bookAsync.when(
-      loading: () {
-        if (widget.initialBook != null) {
-          return _bodyForBook(context, widget.initialBook!);
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
+      loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _buildErrorBody(context, error.toString()),
       data: (book) {
         if (book == null) {
@@ -351,7 +344,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   }
 
   /// Returns the edit or view body depending on the current [_isEditing] flag.
-  Widget _bodyForBook(BuildContext context, ShelfBook book) {
+  Widget _bodyForBook(BuildContext context, DetailBookView book) {
     if (_isEditing) {
       return BookDetailEditBody(
         book: editableBookView(book),
@@ -362,10 +355,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         onTitleChanged: _checkTitleError,
       );
     }
-    return BookDetailViewBody(
-      book: detailBookView(book),
-      bookId: widget.bookId,
-    );
+    return BookDetailViewBody(book: book, bookId: widget.bookId);
   }
 
   Widget _buildErrorBody(BuildContext context, String message) {

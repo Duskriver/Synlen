@@ -6,7 +6,7 @@ import '../../domain/book_views.dart';
 
 /// Book grid item widget displays a single book in the grid.
 class BookGridItem extends StatelessWidget {
-  final GridBookView book;
+  final ShelfBookView book;
   final bool isSelectionMode;
   final bool isSelected;
   final ViewMode viewMode;

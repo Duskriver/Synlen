@@ -968,17 +968,17 @@ abstract class AppLocalizations {
   /// **', '**
   String get spliter;
 
-  /// Share EPUB source file action label
+  /// Share source file action label
   ///
   /// In en, this message translates to:
-  /// **'Share EPUB'**
-  String get shareEpub;
+  /// **'Share book'**
+  String get shareBook;
 
-  /// Error message when sharing EPUB fails
+  /// Error message when sharing a book fails
   ///
   /// In en, this message translates to:
-  /// **'Failed to share EPUB: {error}'**
-  String shareEpubFailed(String error);
+  /// **'Failed to share book: {error}'**
+  String shareBookFailed(String error);
 
   /// Edit book dialog title
   ///

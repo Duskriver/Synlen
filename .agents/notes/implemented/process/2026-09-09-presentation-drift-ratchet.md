@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-presentation 有 10 个文件直接引 drift 生成的 `ShelfBook` / `ShelfGroup`（其中 2 个是本次重构拆 `LibraryTabView` / `LibraryItemsGrid` 时带出来的）。这层依赖在[窄视图类型提案](../../proposed/architecture/2026-09-09-presentation-shelf-book-view.md)落地前会继续扩散——每拆一个新组件都可能顺手多引一次。
+presentation 有 10 个文件直接引 drift 生成的 `ShelfBook` / `ShelfGroup`（其中 2 个是本次重构拆 `LibraryTabView` / `LibraryItemsGrid` 时带出来的）。这层依赖在[窄视图类型笔记](../architecture/2026-09-09-presentation-shelf-book-view.md)落地前会继续扩散——每拆一个新组件都可能顺手多引一次。
 
 ## Decision
 

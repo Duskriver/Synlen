@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`BookDetailEditBody` 持有整行 `ShelfBook`，实际只用 `id`（封面 hero tag）与 `coverPath`——[窄视图类型提案](../../proposed/architecture/2026-09-09-presentation-shelf-book-view.md)里的又一处可独立迁移的依赖。
+`BookDetailEditBody` 持有整行 `ShelfBook`，实际只用 `id`（封面 hero tag）与 `coverPath`——[窄视图类型笔记](2026-09-09-presentation-shelf-book-view.md)里的又一处可独立迁移的依赖。
 
 ## Decision
 

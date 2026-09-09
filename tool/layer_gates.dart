@@ -21,12 +21,10 @@ const _layers = <String>['presentation', 'application', 'domain', 'data'];
 /// 跨 feature 允许依赖的目标层：application 是能力入口，domain 是值类型与纯逻辑。
 const _crossFeatureAllowedTargetLayers = <String>{'application', 'domain'};
 
-/// presentation 直接依赖 drift 行类型的已知存量（[ADR 提案]：presentation 用窄视图类型
-/// 替代 `ShelfBook`）。这份名单只减不增：迁走一个就从这里删一行，门禁会拒绝过期条目。
-const _presentationDriftAllowlist = <String>{
-  'lib/src/features/library/presentation/book_detail_screen.dart',
-  'lib/src/features/library/presentation/widgets/library_items_grid.dart',
-};
+/// presentation 直接依赖 drift 行类型的存量名单（窄视图类型笔记：presentation 用
+/// 窄视图类型替代 `ShelfBook`）。当前已清零：这份名单只减不增，新增依赖被规则 5
+/// 拒绝，条目失效被 _verifyAllowlistFreshness 拒绝。
+const _presentationDriftAllowlist = <String>{};
 
 const _driftDatabasePath = 'lib/src/core/database/app_database.dart';
 

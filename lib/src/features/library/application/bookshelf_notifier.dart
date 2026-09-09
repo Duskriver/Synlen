@@ -1,12 +1,12 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/shared_preferences_provider.dart';
-import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart';
 import '../data/shelf_book_repository.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/book_import_service_provider.dart';
 import '../data/services/book_import_service.dart';
+import 'book_view_mapper.dart';
 import 'bookshelf_selection.dart';
 import 'bookshelf_state.dart';
 import 'bookshelf_tab_cache.dart';
@@ -81,11 +81,13 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
     final shouldFilterByGroup =
         actualFilterGroupId != null || actualGroupId != null;
-    final books = await _repository.getBooksSorted(
+    final rows = await _repository.getBooksSorted(
       sortBy: actualSortBy,
       groupName: actualFilterGroupId == -1 ? null : filterGroupName,
       includeAll: !shouldFilterByGroup,
     );
+    // 行 → 视图只在这里发生：状态、缓存与 UI 都只吃视图类型。
+    final books = [for (final row in rows) shelfBookView(row)];
     final allGroups = await _repository.getGroups();
     final cacheKey = shouldFilterByGroup ? actualFilterGroupId : null;
     final updatedCache = _tabCache.put(cacheKey, books);
@@ -150,10 +152,10 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   }
 
   /// Toggle item selection
-  void toggleItemSelection(ShelfBook book) {
+  void toggleItemSelection(int bookId) {
     final currentState = state.value;
     if (currentState == null) return;
-    state = AsyncValue.data(withBookSelectionToggled(currentState, book.id));
+    state = AsyncValue.data(withBookSelectionToggled(currentState, bookId));
   }
 
   /// Select all books

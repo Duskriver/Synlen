@@ -1,4 +1,4 @@
-import 'package:synlen/src/core/database/app_database.dart';
+import 'package:synlen/src/features/library/domain/book_views.dart';
 
 /// 书架标签页的 LRU 缓存。
 ///
@@ -11,10 +11,10 @@ class BookshelfTabCache {
   final int maxTabs;
 
   final List<int?> _order = [];
-  final Map<int?, List<ShelfBook>> _entries = {};
+  final Map<int?, List<ShelfBookView>> _entries = {};
 
   /// 写入某分组的书籍并标记最近使用，返回淘汰后的快照。
-  Map<int?, List<ShelfBook>> put(int? key, List<ShelfBook> books) {
+  Map<int?, List<ShelfBookView>> put(int? key, List<ShelfBookView> books) {
     _entries[key] = books;
     _order
       ..remove(key)
@@ -22,13 +22,13 @@ class BookshelfTabCache {
     while (_order.length > maxTabs) {
       _entries.remove(_order.removeAt(0));
     }
-    return Map<int?, List<ShelfBook>>.from(_entries);
+    return Map<int?, List<ShelfBookView>>.from(_entries);
   }
 
   /// 移除某个分组的缓存（分组被删除时），返回剩余快照。
-  Map<int?, List<ShelfBook>> remove(int? key) {
+  Map<int?, List<ShelfBookView>> remove(int? key) {
     _order.remove(key);
     _entries.remove(key);
-    return Map<int?, List<ShelfBook>>.from(_entries);
+    return Map<int?, List<ShelfBookView>>.from(_entries);
   }
 }

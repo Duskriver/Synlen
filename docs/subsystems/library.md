@@ -15,7 +15,8 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 | 类型 | 语义 | 位置 |
 |---|---|---|
 | `BookQueries` / `RepositoryBookQueries` | 跨 feature 书目接口：`findBook`、`findManifest`、`saveProgress`；宿主只依赖它 | `lib/src/features/library/application/book_queries.dart` |
-| `BookActions` / `bookDetailProvider` | 详情页用例：取书、保存元数据、分享文件 | `lib/src/features/library/application/book_actions.dart` |
+| `BookActions` / `bookDetailProvider` | 详情页用例：按哈希取详情视图、保存元数据、按格式给 MIME 分享文件 | `lib/src/features/library/application/book_actions.dart` |
+| `ShelfBookView` / `DetailBookView` / `EditableBookView` | 书架与详情消费的窄视图类型；drift 行到视图的映射在 `application/book_view_mapper.dart` | `lib/src/features/library/domain/book_views.dart` |
 | `BookshelfNotifier` / `BookshelfState` / `ViewMode` | 书架状态：排序、分组过滤、多选；状态值对象在 `bookshelf_state.dart`，多选纯函数在 `bookshelf_selection.dart`，标签页 LRU 缓存在 `bookshelf_tab_cache.dart` | `lib/src/features/library/application/bookshelf_notifier.dart` |
 | `LibraryNotifier` / `ImportProgress` / `ImportStatus` | 导入编排：`importPipelineStream`（逐文件缓存 → 导入 → 清理）与 `importLibraryFromFolder` | `lib/src/features/library/application/library_notifier.dart` |
 | `BookImportService` | 导入流水线编排：去重 → 落盘 → 解析 → 封面 → 落库；格式探测、文件落盘与封面提取分别在 `BookFileProbe` / `BookFileStore` / `CoverExtractor` | `lib/src/features/library/data/services/book_import_service.dart` |
@@ -41,12 +42,12 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 3. TXT 导入：isolate 解码归一化 → 写 `books/{hash}.txt` → spine 与 TOC 落库，无封面。
 4. 恢复：ZIP 来源先解压到导入缓存区（`cleanupDir` 在流结束后删除），再走 `importLibraryFromFolder`；文件夹来源直接读。
 5. 导出：`exportLibraryAsFile` 在临时目录组装 `synlen-backup-{timestamp}/`（books / covers / manifests / shelf.json），压缩后交分享面板。
-6. 详情：`bookDetailProvider` 取书，编辑保存走 `BookActions.saveMetadata`，分享走 `BookActions.shareBookFile`（拷到临时目录，结束后删除）。
+6. 详情：`bookDetailProvider` 按 `fileHash` 返回 `DetailBookView`（网格点击前预取，详情页进入时无加载态）；编辑保存走 `BookActions.saveMetadataByHash`，分享走 `BookActions.shareBookByHash`（MIME 取自 `BookFormat.mimeType`，临时文件在分享结束后删除）。
 
 ## 边界与不变量
 
 - `LibraryNotifier` 必须 keepAlive：`importPipelineStream` 是 `async*`，方法体推迟到对话框订阅流之后才执行。
-- `ShelfBook` 是列表展示用的轻量行；完整结构只在打开阅读器时经 `BookManifest` 查询。
+- `ShelfBook` 是持久化行，只在 `application` 与 `data` 之间流转；presentation 只吃 `book_views.dart` 的视图类型。完整结构只在打开阅读器时经 `BookManifest` 查询。
 - 新书（`id = 0`）落库时主键缺席走自增，避免覆盖已有行。
 - 删除文件的方法同时接受相对与绝对路径；回滚路径必须等待删除完成。
 - 分组为扁平结构，不支持嵌套；`filterGroupId` 为 `-1` 表示未分组，`null` 表示全部。

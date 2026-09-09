@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-`TocDrawer` 持有整行 `ShelfBook`，实际只读 `title` / `author` / `coverPath` / `totalChapters` 四个字段——这是[窄视图类型提案](../../proposed/architecture/2026-09-09-presentation-shelf-book-view.md)里的第一处可独立迁移的依赖。
+`TocDrawer` 持有整行 `ShelfBook`，实际只读 `title` / `author` / `coverPath` / `totalChapters` 四个字段——这是[窄视图类型笔记](2026-09-09-presentation-shelf-book-view.md)里的第一处可独立迁移的依赖。
 
 ## Decision
 
