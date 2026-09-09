@@ -13,7 +13,7 @@ parking_lot = "0.12"
 rc-zip = { version = "5", features = ["deflate"] }
 positioned-io = "0.3"
 sha1 = "0.11.0"
-quick-xml = "0.37"
+quick-xml = "0.42"
 
 [profile.release]
 opt-level = 'z'
