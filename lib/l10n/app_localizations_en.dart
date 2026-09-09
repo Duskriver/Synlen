@@ -181,9 +181,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String importFailed(String error) {
-    return 'Import failed: $error';
-  }
+  String get importFailed => 'Import failed. Please try again.';
+
+  @override
+  String get importFailedDrm =>
+      'This book is protected by DRM and cannot be imported.';
+
+  @override
+  String get importFileUnreadable => 'Cannot read the selected file.';
+
+  @override
+  String get importParseFailed =>
+      'Cannot parse this book file; it may be corrupted or in an unsupported format.';
+
+  @override
+  String get importDuplicateBook => 'This book is already in your library.';
+
+  @override
+  String get importFileWriteFailed =>
+      'Failed to save the book file to device storage.';
+
+  @override
+  String get importSaveFailed => 'Failed to save the book to the library.';
 
   @override
   String get details => 'Details';
@@ -414,6 +433,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'No update channel available for this platform yet, please check GitHub Releases';
 
   @override
+  String get updateInsecureUrl =>
+      'The update download link is insecure (HTTPS required); download cancelled';
+
+  @override
+  String get updateChecksumMismatch =>
+      'Update package failed integrity check; please try again or download from GitHub';
+
+  @override
+  String get backupInvalidArchive =>
+      'Backup file is corrupt or too large; restore cancelled';
+
+  @override
+  String get backupDataCorrupted =>
+      'Backup data is corrupted or incomplete; restore cancelled.';
+
+  @override
+  String get backupVersionTooNew =>
+      'This backup was created by a newer version of the app. Please update the app and try again.';
+
+  @override
   String get languageNameInEnglish => 'English';
 
   @override
@@ -468,9 +507,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreCompleted => 'Restore Completed';
 
   @override
-  String restoreFailed(String message) {
-    return 'Failed to restore backup: $message';
-  }
+  String get restoreFailed => 'Failed to restore the backup. Please try again.';
 
   @override
   String get restoring => 'Restoring';
