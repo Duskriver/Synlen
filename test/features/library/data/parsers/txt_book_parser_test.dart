@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/features/library/data/parsers/txt_book_parser.dart';
 import 'package:synlen/src/features/library/data/parsers/txt_chapter_splitter.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 import 'package:synlen/src/features/library/domain/txt_chapter_path.dart';
 
 void main() {
@@ -13,7 +14,9 @@ void main() {
   const splitter = TxtChapterSplitter();
 
   /// 取 Either 右值；测试中断言的均为成功路径，left 直接失败
-  TxtBookParseResult unwrap(Either<String, TxtBookParseResult> result) {
+  TxtBookParseResult unwrap(
+    Either<LibraryException, TxtBookParseResult> result,
+  ) {
     expect(result.isRight(), isTrue);
     return result.getOrElse((l) => throw StateError('unexpected left: $l'));
   }

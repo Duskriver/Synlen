@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/library/application/library_notifier.dart';
 import 'features/library/application/bookshelf_notifier.dart';
 import 'features/library/domain/import_progress.dart';
+import 'features/library/presentation/library_error_mapper.dart';
 import 'features/library/presentation/widgets/progress_dialog.dart';
 import '../l10n/app_localizations.dart';
 import 'core/services/toast_service.dart';
@@ -146,7 +147,13 @@ class _ShareImportProgressDialogState
   void _onError(Object error, StackTrace st) {
     if (!mounted) return;
     setState(() => _isCompleted = true);
-    ToastService.showError(widget.l10n.importFailed(error.toString()));
+    ToastService.showError(
+      libraryErrorMessageFor(
+        widget.l10n,
+        error,
+        fallback: widget.l10n.importFailed,
+      ),
+    );
   }
 
   void _onDone() {

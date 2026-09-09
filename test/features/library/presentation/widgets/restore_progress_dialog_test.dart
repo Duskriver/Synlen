@@ -6,6 +6,7 @@ import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/core/widgets/toast_bubble.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 import 'package:synlen/src/features/library/presentation/widgets/progress_dialog.dart';
 import 'package:synlen/src/features/library/presentation/widgets/restore_progress_dialog.dart';
 
@@ -86,7 +87,9 @@ void main() {
         current: 1,
         total: 3,
         currentFileName: '第二本',
-        result: const ImportFailure('写入失败'),
+        result: const ImportFailure(
+          LibraryException(LibraryErrorCode.saveFailed, '写入失败'),
+        ),
       ),
     );
     await controller.close();
@@ -112,7 +115,9 @@ void main() {
         current: 0,
         total: 0,
         currentFileName: '',
-        result: const ImportFailure('无法读取元数据'),
+        result: const ImportFailure(
+          LibraryException(LibraryErrorCode.backupCorrupted, '无法读取元数据'),
+        ),
       ),
     );
     await controller.close();
@@ -135,6 +140,31 @@ void main() {
     expect(
       tester.widget<ToastBubble>(find.byType(ToastBubble)).type,
       ToastBubbleType.error,
+    );
+    await clearToast(tester);
+  });
+
+  testWidgets('备份版本过新失败时提示升级应用，而非笼统的恢复未完成', (tester) async {
+    final controller = StreamController<ProgressLog>();
+    final l10n = await showRestore(tester, controller.stream);
+    controller.add(
+      BackupImportProgress(
+        current: 0,
+        total: 0,
+        currentFileName: '',
+        result: const ImportFailure(
+          LibraryException(
+            LibraryErrorCode.backupVersionTooNew,
+            'shelf.json version 99',
+          ),
+        ),
+      ),
+    );
+    await controller.close();
+    await tester.pump();
+    expect(
+      tester.widget<ToastBubble>(find.byType(ToastBubble)).message,
+      l10n.backupVersionTooNew,
     );
     await clearToast(tester);
   });

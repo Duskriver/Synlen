@@ -6,6 +6,7 @@ import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/library/application/library_notifier.dart';
 import 'package:synlen/src/features/library/domain/import_progress.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 import 'package:synlen/src/features/library/presentation/widgets/progress_dialog.dart';
 
 /// Hosts the restore-backup progress dialog.
@@ -35,6 +36,7 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
   String _currentFileName = '';
   bool _isCompleted = false;
   bool _hasFailed = false;
+  bool _versionTooNew = false;
   final List<ProgressLog> _logs = [];
 
   @override
@@ -60,6 +62,10 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
           _successCount++;
         } else if (log.result is ImportFailure) {
           _hasFailed = true;
+          final failure = log.result! as ImportFailure;
+          if (failure.error.code == LibraryErrorCode.backupVersionTooNew) {
+            _versionTooNew = true;
+          }
           if (_currentCount < _totalCount) _failedCount++;
         }
       }
@@ -79,7 +85,12 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
     if (!mounted) return;
     setState(() => _isCompleted = true);
     if (_hasFailed) {
-      ToastService.showError(widget.l10n.restoreIncomplete);
+      // 版本过新是明确的用户可操作错误，给出专属文案而非笼统的"恢复未完成"。
+      ToastService.showError(
+        _versionTooNew
+            ? widget.l10n.backupVersionTooNew
+            : widget.l10n.restoreIncomplete,
+      );
     } else {
       ToastService.showSuccess(widget.l10n.restoreCompleted);
     }

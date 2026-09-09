@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/library/data/parsers/epub_zip_parser.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 
 void main() {
   group('EpubZipParser', () {
@@ -123,9 +124,10 @@ void main() {
         // Assert: Should return Left (error)
         expect(result.isLeft(), true);
 
-        final errorMsg = result.getLeft().toNullable()!;
-        // Archive package may successfully parse invalid bytes but not find OPF, so error message may vary
-        expect(errorMsg, isNotEmpty);
+        final error = result.getLeft().toNullable()!;
+        // Archive package may successfully parse invalid bytes but not find OPF,
+        // 具体 details 不定，只断言错误类型与码
+        expect(error.code, LibraryErrorCode.parseFailed);
       });
 
       test('Input empty byte stream - should return error', () {
@@ -219,8 +221,9 @@ void main() {
         // Assert
         expect(result.isLeft(), true);
 
-        final errorMsg = result.getLeft().toNullable()!;
-        expect(errorMsg, contains('Metadata element not found'));
+        final error = result.getLeft().toNullable()!;
+        expect(error.code, LibraryErrorCode.parseFailed);
+        expect(error.details, contains('Metadata element not found'));
       });
 
       test('Corrupted OPF missing spine element - should return error', () {
@@ -264,8 +267,9 @@ void main() {
         // Assert
         expect(result.isLeft(), true);
 
-        final errorMsg = result.getLeft().toNullable()!;
-        expect(errorMsg, contains('Spine or manifest element not found'));
+        final error = result.getLeft().toNullable()!;
+        expect(error.code, LibraryErrorCode.parseFailed);
+        expect(error.details, contains('Spine or manifest element not found'));
       });
 
       test('OPF file does not exist at all - should return error', () {
@@ -296,8 +300,9 @@ void main() {
         // Assert
         expect(result.isLeft(), true);
 
-        final errorMsg = result.getLeft().toNullable()!;
-        expect(errorMsg, contains('OPF file not found in archive'));
+        final error = result.getLeft().toNullable()!;
+        expect(error.code, LibraryErrorCode.parseFailed);
+        expect(error.details, contains('OPF file not found in archive'));
       });
     });
 

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
+import 'package:synlen/src/features/library/presentation/library_error_mapper.dart';
 import 'package:synlen/src/features/library/presentation/widgets/import_progress_dialog.dart';
 import 'package:synlen/src/features/library/presentation/widgets/restore_progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -85,8 +87,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     } catch (e) {
       isSelectingFiles = false;
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ToastService.showError(
-          AppLocalizations.of(context)!.importFailed(e.toString()),
+          libraryErrorMessageFor(l10n, e, fallback: l10n.importFailed),
         );
       }
     }
@@ -108,8 +111,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     } catch (e) {
       isSelectingFiles = false;
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ToastService.showError(
-          AppLocalizations.of(context)!.importFailed(e.toString()),
+          libraryErrorMessageFor(l10n, e, fallback: l10n.importFailed),
         );
       }
     }
@@ -131,8 +135,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     } catch (e) {
       isSelectingFiles = false;
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ToastService.showError(
-          AppLocalizations.of(context)!.importFailed(e.toString()),
+          libraryErrorMessageFor(l10n, e, fallback: l10n.importFailed),
         );
       }
     }
@@ -347,10 +352,21 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
         builder: (ctx) =>
             RestoreProgressDialog(stream: progressStream, l10n: l10n),
       );
-    } catch (e) {
+    } on BackupArchiveViolationException {
+      // 桥接 core 的归档校验异常到 library 错误码（zip bomb / 路径越界）。
       if (context.mounted) {
         ToastService.showError(
-          AppLocalizations.of(context)!.restoreFailed(e.toString()),
+          libraryErrorMessage(
+            AppLocalizations.of(context)!,
+            LibraryErrorCode.backupArchiveInvalid,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ToastService.showError(
+          libraryErrorMessageFor(l10n, e, fallback: l10n.restoreFailed),
         );
       }
     } finally {

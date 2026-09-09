@@ -10,7 +10,7 @@ import 'dart:typed_data' as _i9;
 import 'package:fpdart/fpdart.dart' as _i11;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i8;
-import 'package:synlen/src/core/database/app_database.dart' as _i12;
+import 'package:synlen/src/core/database/app_database.dart' as _i13;
 import 'package:synlen/src/core/file_handling/backup_paths.dart' as _i3;
 import 'package:synlen/src/core/file_handling/importable_epub.dart' as _i2;
 import 'package:synlen/src/core/file_handling/platform_path.dart' as _i7;
@@ -18,6 +18,8 @@ import 'package:synlen/src/core/file_handling/unified_import_service.dart'
     as _i5;
 import 'package:synlen/src/features/library/data/services/book_import_service.dart'
     as _i10;
+import 'package:synlen/src/features/library/domain/library_exception.dart'
+    as _i12;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -212,7 +214,7 @@ class MockBookImportService extends _i1.Mock implements _i10.BookImportService {
   }
 
   @override
-  _i6.Future<_i11.Either<String, _i12.ShelfBook>> importBook(
+  _i6.Future<_i11.Either<_i12.LibraryException, _i13.ShelfBook>> importBook(
     _i4.File? file, {
     String? precomputedHash,
     String? originalFileName,
@@ -228,25 +230,30 @@ class MockBookImportService extends _i1.Mock implements _i10.BookImportService {
                 #moveSourceFile: moveSourceFile,
               },
             ),
-            returnValue: _i6.Future<_i11.Either<String, _i12.ShelfBook>>.value(
-              _i8.dummyValue<_i11.Either<String, _i12.ShelfBook>>(
-                this,
-                Invocation.method(
-                  #importBook,
-                  [file],
-                  {
-                    #precomputedHash: precomputedHash,
-                    #originalFileName: originalFileName,
-                    #moveSourceFile: moveSourceFile,
-                  },
+            returnValue:
+                _i6.Future<
+                  _i11.Either<_i12.LibraryException, _i13.ShelfBook>
+                >.value(
+                  _i8.dummyValue<
+                    _i11.Either<_i12.LibraryException, _i13.ShelfBook>
+                  >(
+                    this,
+                    Invocation.method(
+                      #importBook,
+                      [file],
+                      {
+                        #precomputedHash: precomputedHash,
+                        #originalFileName: originalFileName,
+                        #moveSourceFile: moveSourceFile,
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
           )
-          as _i6.Future<_i11.Either<String, _i12.ShelfBook>>);
+          as _i6.Future<_i11.Either<_i12.LibraryException, _i13.ShelfBook>>);
 
   @override
-  _i6.Future<_i11.Either<String, bool>> deleteBook(_i12.ShelfBook? book) =>
+  _i6.Future<_i11.Either<String, bool>> deleteBook(_i13.ShelfBook? book) =>
       (super.noSuchMethod(
             Invocation.method(#deleteBook, [book]),
             returnValue: _i6.Future<_i11.Either<String, bool>>.value(

@@ -12,6 +12,7 @@ import 'package:synlen/src/features/library/data/services/book_import_service.da
 import 'package:synlen/src/features/library/data/services/book_import_service_provider.dart';
 import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 
 import 'library_notifier_test.mocks.dart';
 
@@ -56,7 +57,7 @@ void main() {
     bookImportService = MockBookImportService();
 
     // mockito 无法为 fpdart 的 Either 自动造 dummy，需显式提供
-    provideDummy<Either<String, ShelfBook>>(right(buildBook()));
+    provideDummy<Either<LibraryException, ShelfBook>>(right(buildBook()));
 
     when(unifiedImportService.processEpub(any)).thenAnswer(
       (_) async => ImportableEpub(

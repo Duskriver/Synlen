@@ -6,6 +6,7 @@ import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 
 import '../../domain/book_format.dart';
+import '../../domain/library_exception.dart';
 
 /// 书籍文件落盘：EPUB 原样复制，TXT 写归一化字节。
 class BookFileStore {
@@ -13,7 +14,7 @@ class BookFileStore {
 
   /// Copy EPUB file to books directory
   /// Returns absolute path to the copied file
-  Future<Either<String, String>> copyBook(
+  Future<Either<LibraryException, String>> copyBook(
     File sourceFile,
     String fileHash, {
     bool moveSourceFile = false,
@@ -45,7 +46,7 @@ class BookFileStore {
       }
       return right(targetPath);
     } catch (e) {
-      return left('File copy failed: $e');
+      return left(LibraryException(LibraryErrorCode.fileWriteFailed, e));
     }
   }
 
@@ -54,7 +55,7 @@ class BookFileStore {
   /// 与 EPUB 的直接拷贝不同：TXT 在解析时已归一化为 UTF-8，
   /// 此处落盘的是归一化结果而非源文件，阅读时无需关心原始编码。
   /// Returns absolute path to the written file
-  Future<Either<String, String>> writeNormalizedTxt(
+  Future<Either<LibraryException, String>> writeNormalizedTxt(
     Uint8List normalizedBytes,
     String fileHash,
   ) async {
@@ -71,7 +72,7 @@ class BookFileStore {
       await File(targetPath).writeAsBytes(normalizedBytes, flush: true);
       return right(targetPath);
     } catch (e) {
-      return left('File write failed: $e');
+      return left(LibraryException(LibraryErrorCode.fileWriteFailed, e));
     }
   }
 }
