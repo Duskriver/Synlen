@@ -7,6 +7,7 @@ import 'package:synlen/src/core/config/app_info.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
+import 'package:synlen/src/features/library/application/library_consistency_repair.dart';
 import 'package:synlen/src/features/reader/data/services/epub_stream_service_provider.dart';
 import 'package:synlen/src/features/reader/presentation/reader_webview.dart';
 import 'package:synlen/src/rust/frb_generated.dart';
@@ -81,6 +82,10 @@ void main() async {
     ],
   );
   container.read(epubStreamServiceProvider);
+
+  // 启动一致性修复：清理孤儿 DB 记录；fire-and-forget，不阻塞首屏，
+  // 失败只在提供器内部记日志
+  container.read(libraryConsistencyRepairProvider.future).ignore();
 
   runApp(
     UncontrolledProviderScope(

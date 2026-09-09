@@ -6,8 +6,10 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 
 import '../book_manifest_repository.dart';
+import '../library_book_store.dart';
 import '../shelf_book_repository.dart';
 import 'book_file_probe.dart';
 import 'book_file_store.dart';
@@ -18,10 +20,11 @@ import 'cover_extractor.dart';
 ///   extracts cover to AppDocDir/covers/{fileHash}.jpg
 /// - TXT: 解析后归一化为 UTF-8 写入 AppDocDir/books/{fileHash}.txt，无封面
 /// - Parses metadata in-memory (no full unzip)
-/// - Saves to drift: ShelfBook + BookManifest
+/// - Saves to drift: ShelfBook + BookManifest 在同一事务中双写
 class BookImportService {
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
+  final LibraryBookStore _libraryBookStore;
 
   static const _probe = BookFileProbe();
   static const _fileStore = BookFileStore();
@@ -30,14 +33,16 @@ class BookImportService {
   BookImportService({
     required ShelfBookRepository shelfBookRepo,
     required BookManifestRepository manifestRepo,
+    required LibraryBookStore libraryBookStore,
   }) : _shelfBookRepo = shelfBookRepo,
-       _manifestRepo = manifestRepo;
+       _manifestRepo = manifestRepo,
+       _libraryBookStore = libraryBookStore;
 
   /// Import a book file (EPUB or TXT) following a clean pipeline pattern
   /// Returns Either:
   ///   - Right: The imported ShelfBook
-  ///   - Left: error message
-  Future<Either<String, ShelfBook>> importBook(
+  ///   - Left: 类型化错误（用户文案由 presentation 按错误码映射）
+  Future<Either<LibraryException, ShelfBook>> importBook(
     File file, {
     String? precomputedHash,
     String? originalFileName,
@@ -51,9 +56,7 @@ class BookImportService {
           precomputedHash ??
           await _probe
               .calculateHash(file)
-              .then(
-                (result) => result.getOrElse((error) => throw Exception(error)),
-              );
+              .then((result) => result.getOrElse((error) => throw error));
 
       final bookExists = await _checkBookExistence(fileHash);
       if (bookExists.isLeft()) {
@@ -73,20 +76,16 @@ class BookImportService {
             fileHash: fileHash,
             originalFileName: originalFileName ?? file.path.split('/').last,
           ),
-        ).then((result) => result.getOrElse((error) => throw Exception(error)));
+        ).then((result) => result.getOrElse((error) => throw error));
         parseData = outcome.parseResult;
         bookPath = await _fileStore
             .writeNormalizedTxt(outcome.normalizedBytes, fileHash)
-            .then(
-              (result) => result.getOrElse((error) => throw Exception(error)),
-            );
+            .then((result) => result.getOrElse((error) => throw error));
         coverPath = null;
       } else {
         bookPath = await _fileStore
             .copyBook(file, fileHash, moveSourceFile: moveSourceFile)
-            .then(
-              (result) => result.getOrElse((error) => throw Exception(error)),
-            );
+            .then((result) => result.getOrElse((error) => throw error));
 
         parseData =
             await _parseAndExtract(
@@ -97,7 +96,7 @@ class BookImportService {
               if (result.isLeft()) {
                 // 解析失败：清理已落盘的书籍文件再报错
                 await _deleteFile(bookPath);
-                throw Exception(result.getLeft().toNullable());
+                throw result.getLeft().toNullable()!;
               }
               return result.getRight().toNullable()!;
             });
@@ -118,25 +117,23 @@ class BookImportService {
         bookExists.getRight().toNullable()!,
       );
 
-      final savedBook =
-          await _saveTransaction(
-            entities.$1,
-            entities.$2,
-            bookPath,
-            coverPath,
-          ).then((result) async {
-            if (result.isLeft()) {
-              // 保存失败回滚：清理已落盘的书籍文件与封面
-              await _deleteFile(bookPath);
-              if (coverPath != null) await _deleteFile(coverPath);
-              throw Exception(result.getLeft().toNullable());
-            }
-            return result.getRight().toNullable()!;
-          });
+      final savedBook = await _saveWithManifest(entities.$1, entities.$2).then((
+        result,
+      ) async {
+        if (result.isLeft()) {
+          // 保存失败：事务已回滚，只需清理已落盘的书籍文件与封面
+          await _deleteFile(bookPath);
+          if (coverPath != null) await _deleteFile(coverPath);
+          throw result.getLeft().toNullable()!;
+        }
+        return result.getRight().toNullable()!;
+      });
 
       return right(savedBook);
+    } on LibraryException catch (e) {
+      return left(e);
     } catch (e) {
-      return left('Import failed: $e');
+      return left(LibraryException(LibraryErrorCode.importFailed, e));
     }
   }
 
@@ -144,12 +141,14 @@ class BookImportService {
   /// Returns Either:
   ///   - Left: error (book already exists)
   ///   - Right: true if book exists but deleted, false if never existed
-  Future<Either<String, bool>> _checkBookExistence(String fileHash) async {
+  Future<Either<LibraryException, bool>> _checkBookExistence(
+    String fileHash,
+  ) async {
     final existsAndNotDeleted = await _shelfBookRepo.bookExistsAndNotDeleted(
       fileHash,
     );
     if (existsAndNotDeleted) {
-      return left('Book already exists');
+      return left(LibraryException(LibraryErrorCode.duplicateBook, fileHash));
     }
 
     final exists = await _shelfBookRepo.bookExists(fileHash);
@@ -157,7 +156,7 @@ class BookImportService {
   }
 
   /// Parse EPUB and extract metadata using isolate
-  Future<Either<String, ParseResult>> _parseAndExtract(
+  Future<Either<LibraryException, ParseResult>> _parseAndExtract(
     String epubPath,
     String fileHash,
     String originalFileName,
@@ -225,30 +224,21 @@ class BookImportService {
     return (shelfBook, manifest);
   }
 
-  /// Save ShelfBook and BookManifest in a transactional manner
-  /// Rollback on failure
-  Future<Either<String, ShelfBook>> _saveTransaction(
+  /// 在同一事务中保存 ShelfBook 与 BookManifest（见 [LibraryBookStore]）。
+  /// 失败时数据库已由事务回滚，返回 Left 交给调用方清理已落盘的文件。
+  Future<Either<LibraryException, ShelfBook>> _saveWithManifest(
     ShelfBook shelfBook,
     BookManifest manifest,
-    String epubPath,
-    String? coverPath,
   ) async {
-    final saveBookResult = await _shelfBookRepo.saveBook(shelfBook);
-    if (saveBookResult.isLeft()) {
-      return left(saveBookResult.getLeft().toNullable()!);
-    }
-
-    final bookId = saveBookResult.getRight().toNullable()!;
-
-    final saveManifestResult = await _manifestRepo.saveManifest(manifest);
-    if (saveManifestResult.isLeft()) {
-      // Rollback: delete ShelfBook
-      await _shelfBookRepo.deleteBook(bookId);
-      return left(saveManifestResult.getLeft().toNullable()!);
-    }
-
-    // 更新 book 的数据库 ID
-    return right(shelfBook.copyWith(id: bookId));
+    final result = await _libraryBookStore.saveBookWithManifest(
+      shelfBook,
+      manifest,
+    );
+    return result
+        .map((bookId) => shelfBook.copyWith(id: bookId))
+        .mapLeft(
+          (error) => LibraryException(LibraryErrorCode.saveFailed, error),
+        );
   }
 
   /// Delete a file (helper for cleanup)

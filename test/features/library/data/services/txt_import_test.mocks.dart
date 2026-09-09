@@ -11,6 +11,8 @@ import 'package:mockito/src/dummies.dart' as _i7;
 import 'package:synlen/src/core/database/app_database.dart' as _i2;
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart'
     as _i8;
+import 'package:synlen/src/features/library/data/library_book_store.dart'
+    as _i9;
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart'
     as _i3;
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart'
@@ -361,4 +363,42 @@ class MockBookManifestRepository extends _i1.Mock
             ),
           )
           as _i4.Future<_i6.Either<String, bool>>);
+}
+
+/// A class which mocks [LibraryBookStore].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockLibraryBookStore extends _i1.Mock implements _i9.LibraryBookStore {
+  MockLibraryBookStore() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i6.Either<String, int>> saveBookWithManifest(
+    _i2.ShelfBook? book,
+    _i2.BookManifest? manifest,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveBookWithManifest, [book, manifest]),
+            returnValue: _i4.Future<_i6.Either<String, int>>.value(
+              _i7.dummyValue<_i6.Either<String, int>>(
+                this,
+                Invocation.method(#saveBookWithManifest, [book, manifest]),
+              ),
+            ),
+          )
+          as _i4.Future<_i6.Either<String, int>>);
+
+  @override
+  _i4.Future<_i6.Either<String, (int, int)>> repairOrphanRecords() =>
+      (super.noSuchMethod(
+            Invocation.method(#repairOrphanRecords, []),
+            returnValue: _i4.Future<_i6.Either<String, (int, int)>>.value(
+              _i7.dummyValue<_i6.Either<String, (int, int)>>(
+                this,
+                Invocation.method(#repairOrphanRecords, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i6.Either<String, (int, int)>>);
 }
