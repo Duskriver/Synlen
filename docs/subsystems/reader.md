@@ -57,7 +57,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 
 - `reader/presentation` 仍是最大的 UI 层，剩余 5 个 part mixin（进度显示、主题刷新、外链、图片、脚注）的逻辑继续下沉 `reader/application`。
 - 这 5 个 mixin 是 part 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test（[测试现状](../testing.md#现状)）。
-- `BookWebViewHandler` 同时服务 EPUB 与 TXT；虚拟域已格式中立（`book://`），类型名待改为 `BookWebViewHandler`。
+- `BookWebViewHandler` 同时服务 EPUB 与 TXT，虚拟域格式中立（`book://`）。
 - 超 400 行文件：`reader_screen.dart`。复现：
 
 ```sh
