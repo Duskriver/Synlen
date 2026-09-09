@@ -20,11 +20,15 @@
   "docs/cookbook/changing-reader-web-assets.md": 75,
   "docs/cookbook/changing-the-database-schema.md": 55,
   "docs/cookbook/publishing-a-release.md": 65,
+  "docs/cookbook/handling-a-release-incident.md": 45,
+  "docs/cookbook/measuring-performance.md": 60,
   "docs/postmortem/README.md": 35,
   "docs/user/index.md": 45,
   "docs/user/guide/quickstart.md": 65,
   "docs/user/guide/import-and-backup.md": 65,
   "docs/user/guide/ai-service-keys.md": 60,
   "docs/user/guide/in-app-update.md": 50,
+  "docs/user/scope.md": 55,
+  "docs/user/privacy.md": 50,
   ".agents/notes/README.md": 130
 }
