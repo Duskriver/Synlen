@@ -28,7 +28,7 @@ dependencies:
   go_router: ^17.4.0
 
   # Database
-  drift: ^2.34.3
+  drift: ^2.34.4
   drift_flutter: ^0.3.1
   path_provider: ^2.1.6
   collection: ^1.19.1
