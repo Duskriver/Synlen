@@ -77,7 +77,7 @@ dependencies:
 
   # Audio
   flutter_sound: ^9.30.0
-  logger: ^2.7.0
+  logger: ^2.8.0
   #flutter_markdown: ^0.7.7+1
   flutter_markdown_plus: ^1.0.12
   fast_gbk: ^1.0.0
