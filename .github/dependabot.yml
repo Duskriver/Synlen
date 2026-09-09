@@ -1,0 +1,29 @@
+version: 2
+# 依赖治理：Dependabot 负责版本更新与安全告警（pub / cargo / npm / Actions 四类生态）。
+# Actions 在 workflow 里固定到 commit SHA，由本配置提 PR 更新。
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "cargo"
+    directory: "/rust"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/web_assets/controller.js"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

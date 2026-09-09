@@ -11,6 +11,8 @@ flutter pub get
 flutter run -d <device-id>
 ```
 
+实际构建版本由 `rust-toolchain.toml`（Rust 1.97.1）与 CI 的 `flutter-version: '3.44.9'` 固定；本地与 CI 必须同版本，升级走[工具链锁定](../.agents/notes/implemented/process/2026-08-11-pin-toolchain-and-dependency-ceiling.md)的流程。依赖更新与漏洞告警由 Dependabot 每周提 PR，Rust 侧另有每周 `cargo audit`（[依赖审计](../.agents/notes/implemented/process/2026-09-09-dependency-audit-and-dependabot.md)）。
+
 ## 按规模选流程
 
 | 规模 | 例子 | 走的步骤 |
@@ -80,8 +82,10 @@ dart run tool/doc_gates.dart                     # 动了文档时（CI 在 PR �
 | 简化机会 | [syn-find-simplifications](../.agents/skills/syn-find-simplifications/SKILL.md) → Agent Note 提案 |
 | 评审改动 | [syn-code-review](../.agents/skills/syn-code-review/SKILL.md) |
 | 文档结构与审计 | [syn-doc](../.agents/skills/syn-doc/SKILL.md) |
+| 技术债与待办 | GitHub issues（`gh issue list`）；新增债务开 issue 并标注优先级 |
 | 文字精简与会话泄漏清理 | [syn-prose-standard](../.agents/skills/syn-prose-standard/SKILL.md) / [syn-trim-cot-leakage](../.agents/skills/syn-trim-cot-leakage/SKILL.md) |
 | 发版 | [发布一个版本](cookbook/publishing-a-release.md) |
+| 发布后出问题 | [发布故障响应](cookbook/handling-a-release-incident.md) |
 
 ## Dev Note
 
