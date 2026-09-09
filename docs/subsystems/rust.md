@@ -6,6 +6,7 @@
 
 - 中央目录缓存：一本书只解析一次 ZIP 中央目录，之后按路径 O(1) 查条目。
 - 条目解压：按需解压单个文件，不做整包解压。
+- 字体混淆还原：`load_epub` 现场解析 `META-INF/encryption.xml` 与 OPF，缓存混淆字体的还原参数；`read_epub_file` 命中时还原前缀字节。
 - 生命周期：书籍关闭时释放缓存元数据。
 - 绑定：`rust/src/api/` 是唯一需要手写的 Rust 面，Dart 侧绑定由 codegen 生成。
 
@@ -16,7 +17,8 @@
 | `load_epub` | 打开文件、解析 ZIP 中央目录并缓存；同路径重复调用不产生 I/O | `rust/src/api/epub.rs` |
 | `read_epub_file` | 归一化路径查索引后解压单个条目；条目不存在返回 `None` | `rust/src/api/epub.rs` |
 | `close_epub` | 删除该路径的缓存元数据 | `rust/src/api/epub.rs` |
-| `CachedArchive` | 解析后的 ZIP 元数据 + 归一化路径索引 | `rust/src/api/epub.rs` |
+| `CachedArchive` | 解析后的 ZIP 元数据 + 归一化路径索引 + 混淆字体还原参数 | `rust/src/api/epub.rs` |
+| `font_obfuscation` | 字体混淆纯函数：encryption.xml / OPF 解析、IDPF 与 Adobe key 派生、前缀 XOR 还原 | `rust/src/font_obfuscation.rs` |
 | `EPUB_CACHE` | 全局 `RwLock<HashMap<String, Arc<CachedArchive>>>`，键为 EPUB 绝对路径 | `rust/src/api/epub.rs` |
 | `MAX_UNCOMPRESSED_BYTES` | 单条目解压上限 50 MiB，超限报错不解压 | `rust/src/api/epub.rs` |
 | `loadEpub` / `readEpubFile` / `closeEpub` | Dart 侧绑定，生成物不手改 | `lib/src/rust/api/epub.dart` |
@@ -36,12 +38,13 @@
 - 读锁只在 `Arc::clone` 期间持有，不跨 I/O 与解压。
 - 条目缺失返回 `Ok(None)`，调用方按 404 处理；I/O 错误、解压失败与 zip 炸弹返回 `Err(msg)`。
 - 音视频条目（`mp4` / `mp3` / `wav` 等扩展名）返回空字节，不解压以省内存。
+- 混淆字体只收录「算法是 IDPF（前 1040 字节）或 Adobe（前 1024 字节）且 OPF manifest media-type 是字体」的条目；映射构建失败退化为空映射，不阻断打开。
 - 缓存无自动淘汰，书籍关闭时必须调 `close_epub`。
 - `frb_generated.rs` 与 `lib/src/rust/**` 是生成物，不手改。
 
 ## 已知限制与待办
 
-- `rust/src/` 没有 `#[test]`，`cargo test` 只能证明可编译；解析与解压的正确性由 Dart 侧导入与阅读测试间接覆盖。
+- `api/epub.rs` 与 `font_obfuscation` 都有单元测试：中央目录解析、读取幂等、条目缺失、zip-bomb 守卫与字体混淆接线都在 Rust 侧有直接证据；Dart 侧导入与阅读测试仍覆盖端到端。
 - 缓存无容量上限：`EpubStreamService` 为 keepAlive，切换书籍时关闭上一本、自身销毁时关闭当前书；同一会话内不会累积多本缓存条目。
 - 该后端只服务 EPUB；TXT 内容不经 Rust（见 [reader.md](reader.md)）。
 
