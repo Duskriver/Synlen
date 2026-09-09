@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-`tool/layer_gates.dart` 与 `tool/doc_gates.dart` 同形态：扫描 `lib/src` 的 import 边，违规即非零退出，CI 在 Flutter job 中执行。
+`tool/layer_gates.dart` 与 `tool/doc_gates.dart` 同形态：扫描 `lib/src` 的 import 边，违规即非零退出，PR 的 CI 与发版的 quality-gates 都执行。
 
 规则：
 
