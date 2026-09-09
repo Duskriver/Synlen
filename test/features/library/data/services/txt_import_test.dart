@@ -11,18 +11,21 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
+import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'package:synlen/src/features/library/data/services/book_import_service.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
+import 'package:synlen/src/features/library/domain/library_exception.dart';
 
 import 'txt_import_test.mocks.dart';
 
-@GenerateMocks([ShelfBookRepository, BookManifestRepository])
+@GenerateMocks([ShelfBookRepository, BookManifestRepository, LibraryBookStore])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late MockShelfBookRepository shelfRepo;
   late MockBookManifestRepository manifestRepo;
+  late MockLibraryBookStore libraryBookStore;
   late BookImportService service;
   late Directory tempDir;
   late Directory booksDir;
@@ -33,9 +36,11 @@ void main() {
   setUp(() async {
     shelfRepo = MockShelfBookRepository();
     manifestRepo = MockBookManifestRepository();
+    libraryBookStore = MockLibraryBookStore();
     service = BookImportService(
       shelfBookRepo: shelfRepo,
       manifestRepo: manifestRepo,
+      libraryBookStore: libraryBookStore,
     );
 
     // AppStorage 是静态全局，测试指向独立临时目录，避免触碰真实应用存储
@@ -51,9 +56,9 @@ void main() {
 
     when(shelfRepo.bookExistsAndNotDeleted(any)).thenAnswer((_) async => false);
     when(shelfRepo.bookExists(any)).thenAnswer((_) async => false);
-    when(shelfRepo.deleteBook(any)).thenAnswer((_) async => right(true));
-    when(shelfRepo.saveBook(any)).thenAnswer((_) async => right(1));
-    when(manifestRepo.saveManifest(any)).thenAnswer((_) async => right(1));
+    when(
+      libraryBookStore.saveBookWithManifest(any, any),
+    ).thenAnswer((_) async => right(1));
   });
 
   tearDown(() async {
@@ -68,17 +73,12 @@ void main() {
     return file;
   }
 
-  ShelfBook captureSavedBook() {
-    final captured =
-        verify(shelfRepo.saveBook(captureAny)).captured.single as ShelfBook;
-    return captured;
-  }
-
-  BookManifest captureSavedManifest() {
-    final captured =
-        verify(manifestRepo.saveManifest(captureAny)).captured.single
-            as BookManifest;
-    return captured;
+  /// 捕获双写调用：单次调用同时拿到书与清单
+  (ShelfBook, BookManifest) captureSavedPair() {
+    final captured = verify(
+      libraryBookStore.saveBookWithManifest(captureAny, captureAny),
+    ).captured;
+    return (captured[0] as ShelfBook, captured[1] as BookManifest);
   }
 
   group('TXT 导入', () {
@@ -90,10 +90,15 @@ void main() {
         originalFileName: '测试书.txt',
       );
 
-      expect(result.isRight(), isTrue, reason: result.getLeft().toNullable());
-      final book = result.getOrElse((l) => throw StateError(l));
-      // 返回的 book 与写库实体一致（saveBook 单次捕获）
-      expect(captureSavedBook().title, book.title);
+      expect(
+        result.isRight(),
+        isTrue,
+        reason: result.getLeft().toNullable()?.toString(),
+      );
+      final book = result.getOrElse((l) => throw l);
+      // 返回的 book 与写库实体一致（双写单次捕获）
+      final (savedBook, manifest) = captureSavedPair();
+      expect(savedBook.title, book.title);
 
       // 实体：格式、书名取自文件名、章节数
       expect(book.format, BookFormat.txt);
@@ -112,7 +117,6 @@ void main() {
       );
 
       // manifest：spine 字节范围与落盘文件严格对齐
-      final manifest = captureSavedManifest();
       expect(manifest.format, BookFormat.txt);
       expect(manifest.spine.length, 2);
       var expectedStart = 0;
@@ -141,7 +145,11 @@ void main() {
         originalFileName: 'unknown.epub',
       );
 
-      expect(result.isRight(), isTrue, reason: result.getLeft().toNullable());
+      expect(
+        result.isRight(),
+        isTrue,
+        reason: result.getLeft().toNullable()?.toString(),
+      );
       expect(result.getRight().toNullable()!.format, BookFormat.txt);
     });
 
@@ -153,7 +161,11 @@ void main() {
         originalFileName: 'plain.txt',
       );
 
-      expect(result.isRight(), isTrue, reason: result.getLeft().toNullable());
+      expect(
+        result.isRight(),
+        isTrue,
+        reason: result.getLeft().toNullable()?.toString(),
+      );
       expect(result.getRight().toNullable()!.title, 'plain');
     });
 
@@ -169,9 +181,9 @@ void main() {
       );
 
       expect(result.isLeft(), isTrue);
+      expect(result.getLeft().toNullable()?.code, LibraryErrorCode.parseFailed);
       expect(booksDir.existsSync(), isFalse);
-      verifyNever(shelfRepo.saveBook(any));
-      verifyNever(manifestRepo.saveManifest(any));
+      verifyNever(libraryBookStore.saveBookWithManifest(any, any));
     });
 
     test('书籍已存在时返回 left 且不重复导入', () async {
@@ -186,13 +198,16 @@ void main() {
       );
 
       expect(result.isLeft(), isTrue);
-      verifyNever(shelfRepo.saveBook(any));
-      verifyNever(manifestRepo.saveManifest(any));
+      expect(
+        result.getLeft().toNullable()?.code,
+        LibraryErrorCode.duplicateBook,
+      );
+      verifyNever(libraryBookStore.saveBookWithManifest(any, any));
     });
 
-    test('manifest 保存失败回滚：删除 ShelfBook 与已落盘的书籍文件', () async {
+    test('双写失败时不做手工补偿删除，只清理已落盘的书籍文件', () async {
       when(
-        manifestRepo.saveManifest(any),
+        libraryBookStore.saveBookWithManifest(any, any),
       ).thenAnswer((_) async => left('DB error'));
       final source = writeSourceFile('rollback.txt', utf8.encode(chapterText));
 
@@ -202,7 +217,9 @@ void main() {
       );
 
       expect(result.isLeft(), isTrue);
-      verify(shelfRepo.deleteBook(1)).called(1);
+      expect(result.getLeft().toNullable()?.code, LibraryErrorCode.saveFailed);
+      // 双写在数据库事务中回滚，服务层不再调 deleteBook 补偿
+      verifyNever(shelfRepo.deleteBook(any));
       expect(booksDir.existsSync(), isTrue);
       expect(booksDir.listSync().whereType<File>(), isEmpty);
     });
