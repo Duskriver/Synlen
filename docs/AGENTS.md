@@ -23,7 +23,7 @@
 | 生成物（`*.g.dart`、l10n 生成文件、`lib/src/web/web_assets.dart`） | 从源再生成，提交入库 | 手改 |
 | [.agents/skills/](../.agents/skills/) | 可复用工作流与判断标准 | 产品与运行时契约（→ docs 或源码） |
 
-放置速查：缺陷 → postmortem；理由 → Agent Notes；步骤 → cookbook；类型与模块语义 → subsystems；面向用户的用法 → user/；术语 → glossary；常驻指令 → 根 AGENTS.md + 一条理由链接。
+放置速查：缺陷 → postmortem；理由 → Agent Notes；步骤 → cookbook；类型与模块语义 → subsystems；面向用户的用法 → user/；术语 → glossary；债务与待办 → GitHub issues；常驻指令 → 根 AGENTS.md + 一条理由链接。
 
 ## 形态：教程与参考
 
