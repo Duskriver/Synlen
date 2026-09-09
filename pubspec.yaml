@@ -68,7 +68,7 @@ dependencies:
   share_plus: ^13.3.0
 
   # Rust FFI bridge
-  flutter_rust_bridge: 2.12.0
+  flutter_rust_bridge: 2.13.0
   synlen_rust:
     path: rust_builder
   
