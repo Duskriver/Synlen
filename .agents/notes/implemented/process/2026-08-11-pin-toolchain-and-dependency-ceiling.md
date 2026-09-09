@@ -9,6 +9,8 @@ Status: implemented
 ## Decision
 
 - 工具链固定在验证过的组合：Flutter 3.44.9 stable、Dart 3.12.2、Rust 1.97.1（`rust-toolchain.toml` 固定 channel 与 minimal profile）。
+- CI 与发布 workflow 跟本地同版本：`subosito/flutter-action` 的 `flutter-version` 一律 `3.44.9`（含发版的两个构建 job），`dtolnay/rust-toolchain` 显式传 `toolchain: 1.97.1`，`cargo install cargo-ndk --version 4.1.2 --locked`。
+- 所有 GitHub Actions 固定到 commit SHA（尾注标出语义版本），由 Dependabot 提更新 PR（见[依赖审计](2026-09-09-dependency-audit-and-dependabot.md)）。
 - `pubspec.yaml` 只声明下限（`sdk: ^3.10.8`、`flutter: ">=3.38.0"`），CI 用 `flutter-version: '3.44.9'` 固定实际构建版本。
 - 依赖锁在 analyzer 12 可解的版本：`flutter_riverpod ^3.3.2`、`riverpod_annotation 4.0.3`；升级 generator 与 drift_dev 要等 Flutter 解锁 analyzer 13，与升级同批验证。
 - 升级工具链是独立改动，跑全量 `flutter test` 与 `cargo test` 后再提交。
