@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/reader/data/services/epub_stream_service.dart';
 import 'package:synlen/src/features/reader/data/services/txt_content_service.dart';
+import 'package:synlen/src/features/reader/domain/xhtml_sanitizer.dart';
 
 class _CachedResource {
   final Uint8List bytes;
@@ -269,8 +271,16 @@ class BookWebViewHandler {
       return left(result.getLeft().toNullable() ?? 'Error reading file');
     }
 
-    final data = result.getRight().toNullable()!;
+    var data = result.getRight().toNullable()!;
     final mimeType = _streamService.getMimeType(fileRelativePath);
+
+    // 书内脚本剥离：TXT 章节内容已整体转义（TxtContentService.buildChapterHtml），
+    // 无脚本面；EPUB 的 XHTML/SVG 在供给前剥离 <script> 与 on* 属性
+    if (needsScriptStripping(mimeType)) {
+      data = Uint8List.fromList(
+        utf8.encode(sanitizeBookXhtml(utf8.decode(data, allowMalformed: true))),
+      );
+    }
 
     return right((data, mimeType));
   }

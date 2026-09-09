@@ -136,6 +136,21 @@ video {
   -webkit-column-break-inside: avoid;
 }
 
+/* 宽表格：块级化后表内布局由匿名表格盒保持，超出列宽时横向滚动，
+   避免被全局 max-width 规则压坏或溢出到下一栏 */
+table {
+  display: block;
+  overflow: auto;
+}
+
+/* MathML 依赖 WebView 原生 MathML Core 渲染；超宽公式横向滚动，禁止跨栏断裂 */
+math {
+  overflow-x: auto;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
 figure {
   margin: 0;
   padding: 0;
