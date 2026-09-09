@@ -29,7 +29,7 @@ lib/src/
 
 - **依赖方向**：`presentation → application → domain`、`data → domain`；`application` 可以依赖本 feature `data` 的 provider 与实现。禁止 `presentation → data`（presentation 只 `ref.watch` provider）；禁止 `domain` 依赖上层。
 - **接口归属**：跨 feature 暴露的接口与实现都在 `application`（`BookQueries` / `RepositoryBookQueries`）；feature 内部的 seam 接口就近定义（如 `data/stores/` 的 `WordCacheStore`）。
-- **feature 之间不互相 import**；跨 feature 只经对方 `application` 暴露的接口，见 [跨 feature 依赖](#跨-feature-依赖)。
+- **feature 之间不互相 import**；跨 feature 只经对方 `application` 暴露的接口；唯一例外是组合面 `settings/application`，可编排其他 feature 的 `data`，见 [跨 feature 依赖](#跨-feature-依赖)。
 - **`core/` 是共享工具箱**：放进去的东西必须被 ≥2 个 feature 使用，否则留在所属 feature。
 - **`domain` 是纯 Dart**：不 import Riverpod，不触碰 data / presentation。UI 类型（如 `Color`）仅在无法避免时允许（参考 `ReaderSettings` 引入 `AppThemeSettings` 的做法）。
 
