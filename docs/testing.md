@@ -36,7 +36,7 @@
 
 ## 现状
 
-- `test/` 有 40 个测试文件；`flutter test` 报告 273 个用例通过、2 个按环境变量跳过（真实 DeepSeek 接口验收）。查当前数字：
+- `test/` 有 63 个测试文件；`flutter test` 报告 392 个用例通过、2 个按环境变量跳过（真实 DeepSeek 接口验收）。查当前数字：
 
   ```sh
   find test -name '*_test.dart' | wc -l
@@ -51,7 +51,7 @@
   flutter test integration_test/learning_e2e_test.dart -d <device> --dart-define=SYNLEN_DEEPSEEK_KEY=<key>
   ```
 
-- `reader/presentation` 的 7 个 mixin 是 `part` 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；这部分覆盖缺口记在 [reader 子系统](subsystems/reader.md#已知限制与待办)。
+- `reader/presentation` 的 5 个 mixin 是 `part` 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；这部分覆盖缺口记在 [reader 子系统](subsystems/reader.md#已知限制与待办)。
 - 端到端验收只覆盖学习链路；实机触摸坐标、长按时序、WebView 版本与分页体验仍靠人工验收。
 
 ## Dev Note
