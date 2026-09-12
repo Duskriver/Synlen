@@ -11,9 +11,3 @@ part 'unified_import_service_provider.g.dart';
 UnifiedImportService unifiedImportService(Ref ref) {
   return UnifiedImportService();
 }
-
-/// 导入缓存目录与文件操作的 provider；需要更底层的缓存管理时可直接使用。
-@riverpod
-ImportCacheManager importCacheManager(Ref ref) {
-  return ImportCacheManager();
-}

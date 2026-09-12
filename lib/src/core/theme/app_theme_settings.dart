@@ -227,19 +227,6 @@ class AppThemeSettings {
     darkColorScheme,
   ).copyWith(extensions: [SynlenThemeExtension(preset: activeDarkPreset)]);
 
-  /// Returns the color scheme that is actually active at runtime, given the
-  /// current [platformBrightness].
-  ColorScheme resolvedColorScheme(Brightness platformBrightness) {
-    final effectiveBrightness = switch (themeMode) {
-      AppThemeMode.system => platformBrightness,
-      AppThemeMode.light => Brightness.light,
-      AppThemeMode.dark => Brightness.dark,
-    };
-    return effectiveBrightness == Brightness.dark
-        ? darkColorScheme
-        : lightColorScheme;
-  }
-
   /// Maps a [AppThemeVariant] to its corresponding [ColorScheme] based on the given brightness.
   static ColorScheme colorSchemeFor(
     AppThemeVariant variant,
@@ -273,16 +260,6 @@ class AppThemeSettings {
         AppThemeVariant.twilight => SynlenThemePreset.twilightDark,
         AppThemeVariant.coffee => SynlenThemePreset.coffeeDark,
       };
-
-  /// Maps a [AppThemeVariant] to its [SynlenThemePreset].
-  static SynlenThemePreset presetFor(
-    AppThemeVariant variant,
-    Brightness brightness,
-  ) {
-    return brightness == Brightness.dark
-        ? _darkPresetFor(variant)
-        : _lightPresetFor(variant);
-  }
 }
 
 /// A [ThemeExtension] that injects the active [SynlenThemePreset] into the

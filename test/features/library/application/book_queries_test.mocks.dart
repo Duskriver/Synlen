@@ -166,28 +166,6 @@ class MockShelfBookRepository extends _i1.Mock
           as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i4.Future<_i6.Either<String, bool>> updateBookGroup({
-    required int? bookId,
-    String? groupName,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#updateBookGroup, [], {
-              #bookId: bookId,
-              #groupName: groupName,
-            }),
-            returnValue: _i4.Future<_i6.Either<String, bool>>.value(
-              _i7.dummyValue<_i6.Either<String, bool>>(
-                this,
-                Invocation.method(#updateBookGroup, [], {
-                  #bookId: bookId,
-                  #groupName: groupName,
-                }),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
   _i4.Future<_i6.Either<String, bool>> moveBooksToGroup({
     required Set<int>? bookIds,
     String? targetGroupName,

@@ -72,29 +72,6 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     }
   }
 
-  Future<void> importPaths(
-    BuildContext context,
-    WidgetRef ref,
-    List<PlatformPath> paths,
-  ) async {
-    try {
-      isSelectingFiles = true;
-      if (context.mounted) {
-        await _importPaths(context, ref, paths, () {
-          isSelectingFiles = false;
-        });
-      }
-    } catch (e) {
-      isSelectingFiles = false;
-      if (context.mounted) {
-        final l10n = AppLocalizations.of(context)!;
-        ToastService.showError(
-          libraryErrorMessageFor(l10n, e, fallback: l10n.importFailed),
-        );
-      }
-    }
-  }
-
   Future<void> handleScanFolder(BuildContext context, WidgetRef ref) async {
     try {
       isSelectingFiles = true;

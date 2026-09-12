@@ -52,26 +52,4 @@ class FreeDictionaryService {
       request.dispose();
     }
   }
-
-  /// 根据 API 文档获取单词的详细词典条目
-  ///
-  /// [word] 要查询的单词
-  /// [language] 语言代码，默认为 'en'
-  Future<List<dynamic>?> getWordEntries(
-    String word, {
-    String language = 'en',
-  }) async {
-    try {
-      final response = await dio.get(
-        'https://api.dictionaryapi.dev/api/v2/entries/$language/$word',
-      );
-
-      if (response.statusCode == 200) {
-        return response.data as List<dynamic>;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
 }

@@ -218,24 +218,6 @@ class ShelfBookRepository {
     }
   }
 
-  /// 更新单本书的分组归属
-  Future<Either<String, bool>> updateBookGroup({
-    required int bookId,
-    String? groupName,
-  }) async {
-    try {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(
-        _db.shelfBooks,
-      )..where((t) => t.id.equals(bookId))).write(
-        ShelfBooksCompanion(groupName: Value(groupName), updatedAt: Value(now)),
-      );
-      return right(true);
-    } catch (e) {
-      return left('Update group failed: $e');
-    }
-  }
-
   /// 批量移动多本书到指定分组
   Future<Either<String, bool>> moveBooksToGroup({
     required Set<int> bookIds,
