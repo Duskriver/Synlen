@@ -1,8 +1,10 @@
 // Synlen 文档门禁。
 //
+// 纯 Dart 脚本，无 package 依赖，CI 用 setup-dart 直接运行（见 flutter_ci.yml 的 docs job）。
+//
 // ignore_for_file: avoid_print —— 这是命令行门禁脚本，stdout 就是它的输出。
 //
-// 用法：dart run tool/doc_gates.dart [--list]
+// 用法：dart tool/doc_gates.dart [--list]
 // 退出码非零表示有检查失败；CI 与本地提交前都应跑。
 import 'dart:convert';
 import 'dart:io';

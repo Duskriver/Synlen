@@ -1,3 +1,4 @@
+// 纯 Dart 脚本，无 package 依赖，CI 用 setup-dart 直接运行（见 flutter_ci.yml 的 web-assets job）。
 import 'dart:io';
 // ignore_for_file: avoid_print
 

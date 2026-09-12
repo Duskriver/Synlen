@@ -44,19 +44,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      # doc_gates 是纯 Dart 脚本，用 setup-dart 即可；Dart 版本与 Flutter 3.44.9 自带 Dart 锁步，flutter-version 升级时同步改
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
-          flutter-version: '3.44.9'
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
+          sdk: '3.12.2'
 
       # 链接 / 锚点 / 术语 / Agent Note 格式 / 技能元数据 / 预算 / Markdown 卫生
       - name: Run documentation gates
-        run: dart run tool/doc_gates.dart
+        run: dart tool/doc_gates.dart
 
   web-assets:
     name: Reader typecheck · Playwright tests · assets drift
@@ -65,20 +61,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      # build_web_assets 是纯 Dart 脚本，用 setup-dart 即可；Dart 版本与 Flutter 3.44.9 自带 Dart 锁步，flutter-version 升级时同步改
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
-          flutter-version: '3.44.9'
-          channel: 'stable'
-          cache: true
+          sdk: '3.12.2'
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
-
-      - name: Install dependencies
-        run: flutter pub get
 
       # 安装 lockfile 锁定的 typescript / esbuild（构建脚本使用本地 .bin/esbuild）
       - name: Install web toolchain
@@ -106,7 +98,7 @@ jobs:
       # 重新生成 web_assets.dart 并检测漂移：TS/CSS 源码改动必须同步生成物
       - name: Detect generated assets drift
         run: |
-          dart run tool/build_web_assets.dart
+          dart tool/build_web_assets.dart
           git diff --exit-code lib/src/web/web_assets.dart
 
   rust:
