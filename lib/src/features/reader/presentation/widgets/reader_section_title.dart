@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// A primary section heading used in settings and configuration screens.
+/// 阅读样式面板的主区块标题。
 ///
-/// Renders [label] in the theme's primary colour at 14 sp.
-class SettingsSectionTitle extends StatelessWidget {
-  const SettingsSectionTitle({super.key, required this.label});
+/// 以主题主色 14sp 渲染 [label]。
+class ReaderSectionTitle extends StatelessWidget {
+  const ReaderSectionTitle({super.key, required this.label});
 
   final String label;
 

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../../../l10n/app_localizations.dart';
 
-/// A text widget that can be expanded to show full content
-/// Useful for long descriptions that need to be truncated
+/// 可展开的长文本：超过 [maxLines] 行时截断，点击展开显示全文。
 class ExpandableText extends StatefulWidget {
   final String text;
   final int maxLines;

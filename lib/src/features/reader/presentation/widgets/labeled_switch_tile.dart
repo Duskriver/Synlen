@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// A settings-row widget that pairs a leading [icon] and [label] with a
-/// trailing [Switch].
+/// 阅读样式面板中的开关行：左侧 [icon] 与 [label]，右侧 [Switch]。
 ///
-/// Commonly used for boolean preferences such as "Follow App Theme".
+/// 用于阅读器的布尔偏好，如"跟随应用主题"。
 class LabeledSwitchTile extends StatelessWidget {
   const LabeledSwitchTile({
     super.key,

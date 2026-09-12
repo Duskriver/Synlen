@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// A secondary label used beneath a section title to describe a sub-group of
-/// controls (e.g. "Scale", "Margins").
+/// 阅读样式面板中区块标题下的次级说明文字，用于描述一组控件的用途
+/// （如"缩放""边距"）。
 ///
-/// Renders [label] in the theme's `onSurfaceVariant` colour at 13 sp.
-class SettingsSubLabel extends StatelessWidget {
-  const SettingsSubLabel({super.key, required this.label});
+/// 以主题的 `onSurfaceVariant` 色 13sp 渲染 [label]。
+class ReaderSubLabel extends StatelessWidget {
+  const ReaderSubLabel({super.key, required this.label});
 
   final String label;
 

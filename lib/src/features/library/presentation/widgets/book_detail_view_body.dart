@@ -6,7 +6,7 @@ import '../../domain/book_format.dart';
 import '../../domain/book_meta.dart';
 import '../../domain/book_views.dart';
 import '../../../../core/widgets/book_cover.dart';
-import '../../../../core/widgets/expandable_text.dart';
+import 'expandable_text.dart';
 import '../../../../../l10n/app_localizations.dart';
 
 /// Read-only detail view for a single book.

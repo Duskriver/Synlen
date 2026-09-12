@@ -5,17 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/theme/app_theme_settings.dart';
-import 'package:synlen/src/core/widgets/integer_stepper.dart';
-import 'package:synlen/src/core/widgets/labeled_switch_tile.dart';
-import 'package:synlen/src/core/widgets/settings_section_title.dart';
-import 'package:synlen/src/core/widgets/settings_sub_label.dart';
 import 'package:synlen/src/core/widgets/theme_variant_chip.dart';
 import 'package:synlen/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
+import 'integer_stepper.dart';
+import 'labeled_switch_tile.dart';
 import 'reader_font_selector.dart';
 import 'reader_link_handling_selector.dart';
 import 'reader_page_animation_selector.dart';
 import 'reader_scale_slider.dart';
+import 'reader_section_title.dart';
+import 'reader_sub_label.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
 class ReaderStyleBottomSheet extends ConsumerStatefulWidget {
@@ -93,7 +93,7 @@ class _ReaderStyleBottomSheetState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Section 1: Appearance ───────────────────────────────────────
-                SettingsSectionTitle(label: l10n.readerAppearance),
+                ReaderSectionTitle(label: l10n.readerAppearance),
                 const SizedBox(height: 12),
 
                 // Reader Theme – only shown when Follow App Theme is off.
@@ -173,13 +173,13 @@ class _ReaderStyleBottomSheetState
                 const SizedBox(height: 24),
 
                 // ── Section 2: Typography & Layout ─────────────────────────────
-                SettingsSectionTitle(label: l10n.readerTypographyLayout),
+                ReaderSectionTitle(label: l10n.readerTypographyLayout),
                 const SizedBox(height: 16),
 
                 // Scale
                 Row(
                   children: [
-                    SettingsSubLabel(label: l10n.readerScale),
+                    ReaderSubLabel(label: l10n.readerScale),
                     const Spacer(),
                     Text(
                       '${_scale.toStringAsFixed(1)}x',
@@ -205,7 +205,7 @@ class _ReaderStyleBottomSheetState
                 const SizedBox(height: 20),
 
                 // Margins
-                SettingsSubLabel(label: l10n.readerMargins),
+                ReaderSubLabel(label: l10n.readerMargins),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -290,7 +290,7 @@ class _ReaderStyleBottomSheetState
                 const SizedBox(height: 24),
 
                 // ── Section 3: Links ────────────────────────────────────────────────────
-                SettingsSectionTitle(label: l10n.readerLinkHandlingSection),
+                ReaderSectionTitle(label: l10n.readerLinkHandlingSection),
                 const SizedBox(height: 12),
                 ReaderLinkHandlingSelector(
                   value: _linkHandling,
@@ -316,7 +316,7 @@ class _ReaderStyleBottomSheetState
                 const SizedBox(height: 24),
 
                 // ── Section 4: Page Animation ─────────────────────────────────
-                SettingsSectionTitle(label: l10n.readerPageAnimationSection),
+                ReaderSectionTitle(label: l10n.readerPageAnimationSection),
                 const SizedBox(height: 12),
                 ReaderPageAnimationSelector(
                   value: _pageAnimation,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:synlen/src/core/widgets/expandable_fab.dart';
 
 import '../application/bookshelf_notifier.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'mixins/library_actions_mixin.dart';
+import 'widgets/expandable_fab.dart';
 import 'widgets/library_tab_view.dart';
 
 /// Library Screen - Displays user's book collection with advanced bookshelf features

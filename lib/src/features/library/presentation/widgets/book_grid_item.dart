@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:synlen/src/core/widgets/middle_ellipsis_two_lines_text.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../domain/book_views.dart';
+import 'middle_ellipsis_two_lines_text.dart';
 
 /// Book grid item widget displays a single book in the grid.
 class BookGridItem extends StatelessWidget {
