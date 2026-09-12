@@ -10,19 +10,15 @@ import '../providers/cover_file_provider.dart';
 /// Parent should handle clipping with ClipRRect if rounded corners are needed.
 class BookCover extends ConsumerWidget {
   static const double _coverAspectRatio = 210 / 297;
-  static const int globalCacheHeight = 900;
+  static const int _cacheHeight = 900;
 
   final String? relativePath;
   final BorderRadius radius;
-  final bool enableBorder;
-  final int cacheHeight;
 
   const BookCover({
     super.key,
     required this.relativePath,
     this.radius = BorderRadius.zero,
-    this.enableBorder = true,
-    this.cacheHeight = globalCacheHeight,
   });
 
   bool _isWellImageFile(String path) {
@@ -56,15 +52,13 @@ class BookCover extends ConsumerWidget {
           ),
           foregroundDecoration: BoxDecoration(
             borderRadius: radius,
-            border: enableBorder
-                ? Border.all(color: Theme.of(context).dividerColor, width: 1)
-                : null,
+            border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           ),
           child: Image.file(
             file,
             fit: BoxFit.cover,
-            cacheHeight: cacheHeight,
-            cacheWidth: (cacheHeight * _coverAspectRatio).round(),
+            cacheHeight: _cacheHeight,
+            cacheWidth: (_cacheHeight * _coverAspectRatio).round(),
             filterQuality: FilterQuality.low,
             gaplessPlayback: true,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
@@ -101,13 +95,11 @@ class BookCover extends ConsumerWidget {
         ),
         foregroundDecoration: BoxDecoration(
           borderRadius: radius,
-          border: enableBorder
-              ? Border.all(color: Theme.of(context).dividerColor, width: 1)
-              : null,
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
         ),
         constraints: BoxConstraints(
-          maxHeight: cacheHeight.toDouble(),
-          maxWidth: cacheHeight.toDouble() * _coverAspectRatio,
+          maxHeight: _cacheHeight.toDouble(),
+          maxWidth: _cacheHeight.toDouble() * _coverAspectRatio,
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {

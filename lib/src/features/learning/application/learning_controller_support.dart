@@ -29,12 +29,14 @@ class LearningControllerSession<T> {
   }
 }
 
+/// 流消费的最小更新间隔，避免高频回调触发整页重建。
+const Duration _kThrottle = Duration(milliseconds: 100);
+
 Future<void> consumeLearningContentStream({
   required Stream<String> stream,
   required bool Function() isDisposed,
   required void Function(String appendedContent) onContent,
   required LearningCancellation cancellation,
-  Duration throttle = const Duration(milliseconds: 100),
 }) async {
   if (isDisposed()) return;
   final iterator = StreamIterator(stream);
@@ -46,7 +48,7 @@ Future<void> consumeLearningContentStream({
       if (isDisposed()) return;
       buffer += iterator.current;
       final now = DateTime.now();
-      if (now.difference(lastUpdateTime) < throttle) continue;
+      if (now.difference(lastUpdateTime) < _kThrottle) continue;
       onContent(buffer);
       buffer = '';
       lastUpdateTime = now;

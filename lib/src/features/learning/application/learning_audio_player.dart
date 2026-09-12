@@ -32,8 +32,8 @@ abstract class LearningAudioPlayer {
 }
 
 class FlutterSoundLearningAudioPlayer implements LearningAudioPlayer {
-  FlutterSoundLearningAudioPlayer({Level logLevel = Level.error})
-    : _player = FlutterSoundPlayer(logLevel: logLevel);
+  FlutterSoundLearningAudioPlayer()
+    : _player = FlutterSoundPlayer(logLevel: Level.error);
 
   final FlutterSoundPlayer _player;
 

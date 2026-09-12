@@ -6,37 +6,26 @@ enum ToastBubbleType { success, error, info }
 class ToastBubble extends StatelessWidget {
   final String message;
   final ToastBubbleType type;
-  final IconData? iconOverride;
-  final bool useBlur;
 
-  const ToastBubble({
-    super.key,
-    required this.message,
-    required this.type,
-    this.iconOverride,
-    this.useBlur = true,
-  });
+  const ToastBubble({super.key, required this.message, required this.type});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final bgAlpha = useBlur ? 0.8 : 1.0;
     final backgroundColor = _backgroundColor(
       type,
       colorScheme,
-    ).withValues(alpha: bgAlpha);
+    ).withValues(alpha: 0.8);
     final contentColor = _contentColor(type, colorScheme);
-    final icon = iconOverride ?? _iconForType(type);
+    final icon = _iconForType(type);
 
     final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 18, color: contentColor),
-            const SizedBox(width: 8),
-          ],
+          Icon(icon, size: 18, color: contentColor),
+          const SizedBox(width: 8),
           Flexible(
             child: Text(
               message,
@@ -57,15 +46,13 @@ class ToastBubble extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
     );
 
-    final innerBubble = useBlur
-        ? ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(decoration: glassDecoration, child: content),
-            ),
-          )
-        : Container(decoration: glassDecoration, child: content);
+    final innerBubble = ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(decoration: glassDecoration, child: content),
+      ),
+    );
 
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(999)),
@@ -93,7 +80,7 @@ class ToastBubble extends StatelessWidget {
     }
   }
 
-  static IconData? _iconForType(ToastBubbleType type) {
+  static IconData _iconForType(ToastBubbleType type) {
     switch (type) {
       case ToastBubbleType.success:
         return Icons.check_circle_outlined;
