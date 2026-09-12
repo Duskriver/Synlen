@@ -8,6 +8,7 @@ import 'package:synlen/src/features/library/data/services/epub_import_workers.da
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/library_exception.dart';
 
+import '../parsers/epub_zip_parser.dart';
 import '../book_manifest_repository.dart';
 import '../library_book_store.dart';
 import '../shelf_book_repository.dart';
@@ -39,12 +40,14 @@ class BookImportService {
        _libraryBookStore = libraryBookStore;
 
   /// Import a book file (EPUB or TXT) following a clean pipeline pattern
+  /// [precomputedHash] 为调用方预先算好的 SHA-256 hex 哈希，与导入缓存、
+  /// 备份清单共用同一编码
   /// Returns Either:
   ///   - Right: The imported ShelfBook
   ///   - Left: 类型化错误（用户文案由 presentation 按错误码映射）
   Future<Either<LibraryException, ShelfBook>> importBook(
     File file, {
-    String? precomputedHash,
+    required String precomputedHash,
     String? originalFileName,
     bool moveSourceFile = false,
   }) async {
@@ -52,11 +55,7 @@ class BookImportService {
       final format = await _probe.detectFormat(file, originalFileName);
 
       // Pipeline: Hash → Check → Store → Parse → Extract → Create → Save
-      final String fileHash =
-          precomputedHash ??
-          await _probe
-              .calculateHash(file)
-              .then((result) => result.getOrElse((error) => throw error));
+      final String fileHash = precomputedHash;
 
       final bookExists = await _checkBookExistence(fileHash);
       if (bookExists.isLeft()) {
@@ -65,7 +64,7 @@ class BookImportService {
 
       // 格式分发：TXT 先解析（产出归一化字节）再落盘；EPUB 先落盘再解析。
       final String bookPath;
-      final ParseResult parseData;
+      final EpubZipParseResult parseData;
       String? coverPath;
 
       if (format == BookFormat.txt) {
@@ -156,7 +155,7 @@ class BookImportService {
   }
 
   /// Parse EPUB and extract metadata using isolate
-  Future<Either<LibraryException, ParseResult>> _parseAndExtract(
+  Future<Either<LibraryException, EpubZipParseResult>> _parseAndExtract(
     String epubPath,
     String fileHash,
     String originalFileName,
@@ -177,7 +176,7 @@ class BookImportService {
     String fileHash,
     String bookPath,
     String? coverPath,
-    ParseResult parseData,
+    EpubZipParseResult parseData,
     bool bookExisted,
   ) async {
     final relativePath = bookPath.replaceAll(AppStorage.documentsPath, '');

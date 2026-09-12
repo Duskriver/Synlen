@@ -1,12 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:synlen/src/features/library/data/services/epub_import_workers.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
-import 'package:synlen/src/features/library/domain/library_exception.dart';
 
-/// 导入前的文件探测：格式识别与哈希计算。
+/// 导入前的文件探测：格式识别。
 class BookFileProbe {
   const BookFileProbe();
 
@@ -35,10 +31,5 @@ class BookFileProbe {
     } finally {
       await raf?.close();
     }
-  }
-
-  /// Calculate file hash using isolate
-  Future<Either<LibraryException, String>> calculateHash(File file) async {
-    return compute(ImportWorkers.calculateFileHash, file.path);
   }
 }

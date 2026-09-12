@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fast_gbk/fast_gbk.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
@@ -73,6 +74,12 @@ void main() {
     return file;
   }
 
+  /// 预计算 SHA-256 hex 哈希，与主链路编码一致
+  Future<String> sha256Hex(File file) async {
+    final digest = await sha256.bind(file.openRead()).first;
+    return digest.toString();
+  }
+
   /// 捕获双写调用：单次调用同时拿到书与清单
   (ShelfBook, BookManifest) captureSavedPair() {
     final captured = verify(
@@ -87,6 +94,7 @@ void main() {
 
       final result = await service.importBook(
         source,
+        precomputedHash: await sha256Hex(source),
         originalFileName: '测试书.txt',
       );
 
@@ -142,6 +150,7 @@ void main() {
 
       final result = await service.importBook(
         source,
+        precomputedHash: await sha256Hex(source),
         originalFileName: 'unknown.epub',
       );
 
@@ -158,6 +167,7 @@ void main() {
 
       final result = await service.importBook(
         source,
+        precomputedHash: await sha256Hex(source),
         originalFileName: 'plain.txt',
       );
 
@@ -177,6 +187,7 @@ void main() {
 
       final result = await service.importBook(
         source,
+        precomputedHash: await sha256Hex(source),
         originalFileName: 'fake.txt',
       );
 
@@ -194,6 +205,7 @@ void main() {
 
       final result = await service.importBook(
         source,
+        precomputedHash: await sha256Hex(source),
         originalFileName: 'dup.txt',
       );
 
@@ -213,6 +225,7 @@ void main() {
 
       final result = await service.importBook(
         source,
+        precomputedHash: await sha256Hex(source),
         originalFileName: 'rollback.txt',
       );
 

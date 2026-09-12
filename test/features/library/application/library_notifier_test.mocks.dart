@@ -216,7 +216,7 @@ class MockBookImportService extends _i1.Mock implements _i10.BookImportService {
   @override
   _i6.Future<_i11.Either<_i12.LibraryException, _i13.ShelfBook>> importBook(
     _i4.File? file, {
-    String? precomputedHash,
+    required String? precomputedHash,
     String? originalFileName,
     bool? moveSourceFile = false,
   }) =>

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:archive/archive_io.dart';
 import 'package:xml/xml.dart';
 import 'package:fpdart/fpdart.dart';
+import '../../domain/book_format.dart';
 import '../../domain/book_manifest.dart';
 import '../../domain/library_exception.dart';
 
@@ -349,6 +350,11 @@ class EpubZipParser {
   }
 }
 
+/// 解析结果（EPUB 与 TXT 共用）。
+///
+/// TXT 路径下部分字段无对应信息，消费方（`BookImportService._createEntities`）
+/// 对它们填空串 / null / 空列表；这些空值会原样写入 `BookManifest`，
+/// 落库语义不能随意更改。
 class EpubZipParseResult {
   final String title;
   final String author;
@@ -364,6 +370,9 @@ class EpubZipParseResult {
   final List<ManifestItem> manifestItems;
   final int readDirection;
 
+  /// 书籍格式（EPUB/TXT），决定存储扩展名与阅读时的内容供给方式
+  final BookFormat format;
+
   EpubZipParseResult({
     required this.title,
     required this.author,
@@ -378,6 +387,7 @@ class EpubZipParseResult {
     required this.toc,
     required this.manifestItems,
     required this.readDirection,
+    this.format = BookFormat.epub,
   });
 }
 

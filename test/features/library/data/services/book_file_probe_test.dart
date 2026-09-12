@@ -45,34 +45,4 @@ void main() {
       expect(await probe.detectFormat(file, null), BookFormat.txt);
     });
   });
-
-  group('BookFileProbe.calculateHash', () {
-    test('返回 SHA-256 的 base64url 摘要（43 字符，无填充）', () async {
-      final file = File('${tempDir.path}/book.txt');
-      await file.writeAsString('content');
-
-      final result = await probe.calculateHash(file);
-
-      expect(result.isRight(), isTrue);
-      final hash = result.getOrElse((l) => throw l);
-      expect(hash, hasLength(43));
-      expect(RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(hash), isTrue);
-    });
-
-    test('同一内容得到相同哈希', () async {
-      final first = File('${tempDir.path}/a.txt');
-      final second = File('${tempDir.path}/b.txt');
-      await first.writeAsString('same');
-      await second.writeAsString('same');
-
-      final hashA = (await probe.calculateHash(
-        first,
-      )).getOrElse((l) => throw l);
-      final hashB = (await probe.calculateHash(
-        second,
-      )).getOrElse((l) => throw l);
-
-      expect(hashA, hashB);
-    });
-  });
 }

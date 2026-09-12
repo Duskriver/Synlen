@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_format.dart';
-import '../../domain/book_manifest.dart';
 import '../../domain/library_exception.dart';
 import '../parsers/epub_zip_parser.dart';
 import '../parsers/txt_book_parser.dart';
@@ -30,46 +28,9 @@ class ParseParams {
   });
 }
 
-/// Result of in-memory EPUB parsing
-class ParseResult {
-  final String title;
-  final String author;
-  final List<String> authors;
-  final String? description;
-  final List<String> subjects;
-  final String? coverHref;
-  final String opfRootPath;
-  final String epubVersion;
-  final int totalChapters;
-  final List<SpineItem> spine;
-  final List<TocItem> toc;
-  final List<ManifestItem> manifestItems;
-  final int readDirection;
-
-  /// 书籍格式（EPUB/TXT），决定存储扩展名与阅读时的内容供给方式
-  final BookFormat format;
-
-  ParseResult({
-    required this.title,
-    required this.author,
-    required this.authors,
-    this.description,
-    required this.subjects,
-    this.coverHref,
-    required this.opfRootPath,
-    required this.epubVersion,
-    required this.totalChapters,
-    required this.spine,
-    required this.toc,
-    required this.manifestItems,
-    required this.readDirection,
-    this.format = BookFormat.epub,
-  });
-}
-
-/// TXT 解析产物：统一 ParseResult + 归一化 UTF-8 字节流
+/// TXT 解析产物：统一解析结果 + 归一化 UTF-8 字节流
 class TxtParseOutcome {
-  final ParseResult parseResult;
+  final EpubZipParseResult parseResult;
   final Uint8List normalizedBytes;
 
   TxtParseOutcome({required this.parseResult, required this.normalizedBytes});
@@ -78,26 +39,8 @@ class TxtParseOutcome {
 /// Static utility class for EPUB import operations
 /// These methods are designed to be run in isolates via compute()
 class ImportWorkers {
-  /// Calculate SHA-256 hash of a file and convert to Base62
-  static Future<Either<LibraryException, String>> calculateFileHash(
-    String path,
-  ) async {
-    try {
-      final file = File(path);
-      final stream = file.openRead();
-      final digest = await sha256.bind(stream).first;
-
-      BigInt number = BigInt.parse(digest.toString(), radix: 16);
-      final hash = _toBase62(number);
-
-      return right(hash);
-    } catch (e) {
-      return left(LibraryException(LibraryErrorCode.fileUnreadable, e));
-    }
-  }
-
   /// Parse EPUB file in-memory and extract metadata
-  static Future<Either<LibraryException, ParseResult>> parseEpub(
+  static Future<Either<LibraryException, EpubZipParseResult>> parseEpub(
     ParseParams params,
   ) async {
     try {
@@ -111,25 +54,7 @@ class ImportWorkers {
         return left(parseResult.getLeft().toNullable()!);
       }
 
-      final data = parseResult.getRight().toNullable()!;
-
-      final result = ParseResult(
-        title: data.title,
-        author: data.author,
-        authors: data.authors,
-        description: data.description,
-        subjects: data.subjects,
-        coverHref: data.coverHref,
-        opfRootPath: data.opfRootPath,
-        epubVersion: data.epubVersion,
-        totalChapters: data.totalChapters,
-        spine: data.spine,
-        toc: data.toc,
-        manifestItems: data.manifestItems,
-        readDirection: data.readDirection,
-      );
-
-      return right(result);
+      return right(parseResult.getRight().toNullable()!);
     } catch (e) {
       return left(LibraryException(LibraryErrorCode.parseFailed, e));
     }
@@ -152,9 +77,11 @@ class ImportWorkers {
 
       final data = result.getRight().toNullable()!;
 
+      // TXT 无 EPUB 专属信息，空串 / null / 空列表字段原样落库
+      // （与合并前 ParseResult 的填法一字节相同）
       return right(
         TxtParseOutcome(
-          parseResult: ParseResult(
+          parseResult: EpubZipParseResult(
             title: data.title,
             author: '',
             authors: const [],
@@ -198,23 +125,5 @@ class ImportWorkers {
       appLogger.w('Image compression worker error: $e');
       return null;
     }
-  }
-
-  /// Convert BigInt to Base62 string
-  static String _toBase62(BigInt num) {
-    if (num == BigInt.zero) return '0';
-
-    const chars =
-        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    final base = BigInt.from(chars.length);
-    final codeUnits = <int>[];
-
-    while (num > BigInt.zero) {
-      var remainder = (num % base).toInt();
-      codeUnits.add(chars.codeUnitAt(remainder));
-      num = num ~/ base;
-    }
-
-    return String.fromCharCodes(codeUnits.reversed);
   }
 }
