@@ -16,6 +16,7 @@ import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache
 import 'package:synlen/src/features/learning/data/stores/sentence_pronunciation_cache_store.dart';
 import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
 class InMemoryAudioFileStore implements AudioFileStore {
@@ -287,11 +288,13 @@ void main() {
           InMemoryAudioFileStore(),
         );
 
-        final result = await repository.getWordInfo(word, context);
+        final result = await repository.getInfo(
+          const WordLearningQuery(word: word, context: context),
+        );
 
-        expect(result.explanation, 'cached explanation');
+        expect(result.content, 'cached explanation');
         expect(result.audioUrl, isNull);
-        expect(result.hasCachedExplanation, isTrue);
+        expect(result.hasCachedContent, isTrue);
         expect(result.hasCachedAudio, isFalse);
       },
     );
@@ -312,11 +315,13 @@ void main() {
           InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
         );
 
-        final result = await repository.getWordInfo(word, context);
+        final result = await repository.getInfo(
+          const WordLearningQuery(word: word, context: context),
+        );
 
-        expect(result.explanation, isNull);
+        expect(result.content, isNull);
         expect(result.audioUrl, '/tmp/clarity.wav');
-        expect(result.hasCachedExplanation, isFalse);
+        expect(result.hasCachedContent, isFalse);
         expect(result.hasCachedAudio, isTrue);
       },
     );
@@ -340,11 +345,13 @@ void main() {
         InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
       );
 
-      final result = await repository.getWordInfo(word, context);
+      final result = await repository.getInfo(
+        const WordLearningQuery(word: word, context: context),
+      );
 
-      expect(result.explanation, 'cached explanation');
+      expect(result.content, 'cached explanation');
       expect(result.audioUrl, '/tmp/clarity.wav');
-      expect(result.hasCachedExplanation, isTrue);
+      expect(result.hasCachedContent, isTrue);
       expect(result.hasCachedAudio, isTrue);
       expect(result.isFullyCached, isTrue);
     });
@@ -365,7 +372,9 @@ void main() {
           InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/fresh.wav'}),
         );
 
-        final result = await repository.getWordInfo(word, context);
+        final result = await repository.getInfo(
+          const WordLearningQuery(word: word, context: context),
+        );
 
         expect(result.audioUrl, '/tmp/fresh.wav');
         expect(cacheStore.pronunciations[word]?.audioUrl, '/tmp/fresh.wav');
@@ -442,7 +451,9 @@ void main() {
       );
 
       final chunks = await repository
-          .getWordExplanationStream(word, context)
+          .getContentStream(
+            const WordLearningQuery(word: word, context: context),
+          )
           .toList();
 
       expect(chunks, <String>['clear', ' ', 'idea']);
@@ -480,11 +491,13 @@ void main() {
           InMemoryAudioFileStore(),
         );
 
-        final result = await repository.getSentenceInfo(sentence);
+        final result = await repository.getInfo(
+          const SentenceLearningQuery(sentence: sentence),
+        );
 
-        expect(result.analysis, 'cached analysis');
+        expect(result.content, 'cached analysis');
         expect(result.audioUrl, isNull);
-        expect(result.hasCachedAnalysis, isTrue);
+        expect(result.hasCachedContent, isTrue);
         expect(result.hasCachedAudio, isFalse);
       },
     );
@@ -506,11 +519,13 @@ void main() {
           ),
         );
 
-        final result = await repository.getSentenceInfo(sentence);
+        final result = await repository.getInfo(
+          const SentenceLearningQuery(sentence: sentence),
+        );
 
-        expect(result.analysis, isNull);
+        expect(result.content, isNull);
         expect(result.audioUrl, '/tmp/sentence.wav');
-        expect(result.hasCachedAnalysis, isFalse);
+        expect(result.hasCachedContent, isFalse);
         expect(result.hasCachedAudio, isTrue);
       },
     );
@@ -534,11 +549,13 @@ void main() {
         ),
       );
 
-      final result = await repository.getSentenceInfo(sentence);
+      final result = await repository.getInfo(
+        const SentenceLearningQuery(sentence: sentence),
+      );
 
-      expect(result.analysis, 'cached analysis');
+      expect(result.content, 'cached analysis');
       expect(result.audioUrl, '/tmp/sentence.wav');
-      expect(result.hasCachedAnalysis, isTrue);
+      expect(result.hasCachedContent, isTrue);
       expect(result.hasCachedAudio, isTrue);
       expect(result.isFullyCached, isTrue);
     });
@@ -560,7 +577,9 @@ void main() {
           ),
         );
 
-        final result = await repository.getSentenceInfo(sentence);
+        final result = await repository.getInfo(
+          const SentenceLearningQuery(sentence: sentence),
+        );
 
         expect(result.audioUrl, '/tmp/fresh.wav');
         expect(
@@ -611,7 +630,7 @@ void main() {
       );
 
       final chunks = await repository
-          .getSentenceAnalysisStream(sentence)
+          .getContentStream(const SentenceLearningQuery(sentence: sentence))
           .toList();
 
       expect(chunks, <String>['translation', '\n', 'analysis']);

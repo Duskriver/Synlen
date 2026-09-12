@@ -8,6 +8,7 @@ import 'package:synlen/src/features/learning/data/services/deep_seek_service.dar
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 import 'package:synlen/src/features/learning/data/repositories/word_repository.dart';
 import 'package:synlen/src/features/learning/data/repositories/sentence_repository.dart';
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
 import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
 
@@ -258,8 +259,12 @@ void main() {
         InMemoryAudioFileStore(),
       );
       for (final stream in [
-        wordRepository.getWordExplanationStream('word', 'context'),
-        sentenceRepository.getSentenceAnalysisStream('Sentence.'),
+        wordRepository.getContentStream(
+          const WordLearningQuery(word: 'word', context: 'context'),
+        ),
+        sentenceRepository.getContentStream(
+          const SentenceLearningQuery(sentence: 'Sentence.'),
+        ),
       ]) {
         dio.httpClientAdapter = FakeChatAdapter(
           (_) async => body(responseText()),

@@ -9,6 +9,7 @@ import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.da
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
 import 'package:synlen/src/features/learning/data/services/free_dictionary_service.dart';
 import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
 
 import '../repositories/learning_repository_test.dart'
     show InMemoryAudioFileStore, InMemoryWordCacheStore;
@@ -158,7 +159,10 @@ void main() {
     final finished = Completer<void>();
     final errors = <Object>[];
     repository
-        .getWordExplanationStream('word', 'context', cancellation: cancellation)
+        .getContentStream(
+          const WordLearningQuery(word: 'word', context: 'context'),
+          cancellation: cancellation,
+        )
         .listen(
           (_) => firstChunk.complete(),
           onError: errors.add,

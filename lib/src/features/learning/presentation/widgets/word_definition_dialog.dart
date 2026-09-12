@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/l10n/app_localizations.dart';
-import 'package:synlen/src/features/learning/application/word_learning_controller.dart';
+import 'package:synlen/src/features/learning/application/learning_controller.dart';
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/features/learning/presentation/widgets/learning_detail_dialog_view.dart';
 
 class WordDefinitionDialog extends ConsumerWidget {
@@ -19,8 +20,8 @@ class WordDefinitionDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final provider = wordLearningControllerProvider(
-      WordLearningRequest(word: word, context: this.context),
+    final provider = learningControllerProvider(
+      WordLearningQuery(word: word, context: this.context),
     );
 
     return LearningDetailDialogView(

@@ -40,7 +40,7 @@ dart run tool/doc_gates.dart                     # 动了文档时（CI 在 PR �
 
 ## 资源生命周期
 
-`@riverpod` 的 `build()` 只做初始化与订阅，异步加载放私有方法。**在 `build()` 中创建的资源（音频协调器、流订阅、控制器）必须在 `ref.onDispose` 中释放**，参考 `SentenceLearningController`。重复进入同一页面不得泄漏。
+`@riverpod` 的 `build()` 只做初始化与订阅，异步加载放私有方法。**在 `build()` 中创建的资源（音频协调器、流订阅、控制器）必须在 `ref.onDispose` 中释放**，参考 `LearningController`。重复进入同一页面不得泄漏。
 
 ## Riverpod
 

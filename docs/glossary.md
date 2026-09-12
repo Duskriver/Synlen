@@ -33,7 +33,7 @@
 | 术语 | 定义 | 禁用别称 |
 |---|---|---|
 | `LearningEntry` | 宿主（阅读器）调用学习能力的唯一 application 入口。 | 学习服务、LearningService |
-| `WordLearningController` / `SentenceLearningController` | 点词释义与长句分析的用例编排，持有页面状态并做错误转换。 | 学习管理器、LearningManager |
+| `LearningController` | 点词释义与长句分析共用的用例编排，持有页面状态并做错误转换。 | 学习管理器、LearningManager |
 | `LearningException` / `LearningErrorCode` | 领域异常与错误码；展示层经 `resolveLearningErrorText` 映射为 l10n 文案，`details` 只入日志。 | 学习错误、ApiError |
 | `AudioStreamResult` / `AudioFormat` | TTS 音频流结果：流 + 格式（mp3 / wav / pcm）+ 采样信息；audioUrl 播放与流式播放共用。 | 音频结果、TTS 返回 |
 | `AliyunTtsVoice` | TTS 音色枚举，含英文名、中文名与音色描述，由设置模块选择。 | voice、VoiceEnum |

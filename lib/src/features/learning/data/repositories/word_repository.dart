@@ -9,31 +9,11 @@ import 'package:synlen/src/features/learning/data/services/free_dictionary_servi
 import 'package:synlen/src/features/learning/data/stores/learning_audio_file_store.dart';
 import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
-
-/// 单词学习结果
-class WordLearningResult {
-  /// 发音音频 URL (来自 API 或 TTS)
-  final String? audioUrl;
-
-  /// 单词解释 (Markdown 格式)
-  final String? explanation;
-
-  /// 是否是缓存结果
-  final bool hasCachedExplanation;
-  final bool hasCachedAudio;
-
-  WordLearningResult({
-    this.audioUrl,
-    this.explanation,
-    this.hasCachedExplanation = false,
-    this.hasCachedAudio = false,
-  });
-
-  bool get isFullyCached => hasCachedExplanation && hasCachedAudio;
-}
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
+import 'package:synlen/src/features/learning/domain/learning_repository.dart';
 
 /// 单词学习仓库，专门负责单词的发音、解释及缓存逻辑
-class WordRepository {
+class WordRepository implements LearningRepository {
   final FreeDictionaryService _freeDictionaryService;
   final DeepSeekService _deepSeekService;
   final AliyunTTSService _aliyunTTSService;
@@ -64,6 +44,7 @@ class WordRepository {
   /// 1. 首先尝试从免费词典 API 获取 URL (返回 mp3)
   /// 2. 如果成功，流式下载该 URL 的内容
   /// 3. 如果失败，降级调用阿里云 TTS 流式接口 (返回 pcm)
+  @override
   Stream<AudioStreamResult> getPronunciationStream(
     String word, {
     LearningCancellation? cancellation,
@@ -119,15 +100,16 @@ class WordRepository {
 
   /// 获取单词基础信息
   ///
-  /// [word] 目标单词
-  /// [context] 上下文句子
-  /// 返回 [WordLearningResult]，如果 explanation 为 null 且 isFromCache 为 false，
-  /// UI 应并行启动 getWordExplanationStream 和 getPronunciationStream
-  Future<WordLearningResult> getWordInfo(
-    String word,
-    String context, {
+  /// 返回 [LearningInfo]，如果 content 为 null 且 hasCachedContent 为 false，
+  /// UI 应并行启动 getContentStream 和 getPronunciationStream
+  @override
+  Future<LearningInfo> getInfo(
+    LearningQuery query, {
     LearningCancellation? cancellation,
   }) async {
+    final wordQuery = query as WordLearningQuery;
+    final word = wordQuery.word;
+    final context = wordQuery.context;
     cancellation?.throwIfCancelled();
     final voice = _aliyunTTSService.currentVoiceParam;
     final cachedExplanation = await getCachedWord(word, context);
@@ -146,15 +128,16 @@ class WordRepository {
       await persistAudioPath(word, audioPath);
     }
 
-    return WordLearningResult(
+    return LearningInfo(
       audioUrl: audioPath,
-      explanation: cachedExplanation?.explanation,
-      hasCachedExplanation: cachedExplanation?.explanation.isNotEmpty ?? false,
+      content: cachedExplanation?.explanation,
+      hasCachedContent: cachedExplanation?.explanation.isNotEmpty ?? false,
       hasCachedAudio: audioPath != null,
     );
   }
 
   /// 保存音频文件到本地并返回路径；保存后按容量预算清退最旧音频。
+  @override
   Future<String> saveAudioFile(
     String word,
     List<int> bytes,
@@ -172,16 +155,20 @@ class WordRepository {
     return path;
   }
 
+  @override
   Future<void> persistAudioPath(String word, String audioPath) {
     return _cacheStore.savePronunciationPath(word, audioPath);
   }
 
   /// 流式获取单词解释并自动持久化
-  Stream<String> getWordExplanationStream(
-    String word,
-    String context, {
+  @override
+  Stream<String> getContentStream(
+    LearningQuery query, {
     LearningCancellation? cancellation,
   }) async* {
+    final wordQuery = query as WordLearningQuery;
+    final word = wordQuery.word;
+    final context = wordQuery.context;
     cancellation?.throwIfCancelled();
     String fullContent = '';
 

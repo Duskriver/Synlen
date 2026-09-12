@@ -55,7 +55,7 @@ lib/src/
   → ShelfBook + BookManifest 落库（drift）
 阅读：ReaderScreen → ReaderSessionFactory → BookSession / ReaderNavigator → 内容供给（book:// 虚拟域 / TXT 章节）
       进度：ReadingProgressController → 防抖落库 ShelfBook.progress
-学习：点词 / 长按 → LearningEntry → WordLearningController / SentenceLearningController
+学习：点词 / 长按 → LearningEntry → LearningController（按 LearningQuery 选词/句仓库）
       → DeepSeek（释义、分析）+ 阿里云 TTS（发音）→ 缓存表（按音色区分）
 ```
 

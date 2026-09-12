@@ -355,6 +355,99 @@ final class SentencePronunciationCacheStoreProvider
 String _$sentencePronunciationCacheStoreHash() =>
     r'6ac002c5dd75171a5ff1d0fb4545b9c10eeebf22';
 
+/// 按查询类型选择对应的词/句学习仓库。
+
+@ProviderFor(learningRepository)
+final learningRepositoryProvider = LearningRepositoryFamily._();
+
+/// 按查询类型选择对应的词/句学习仓库。
+
+final class LearningRepositoryProvider
+    extends
+        $FunctionalProvider<
+          LearningRepository,
+          LearningRepository,
+          LearningRepository
+        >
+    with $Provider<LearningRepository> {
+  /// 按查询类型选择对应的词/句学习仓库。
+  LearningRepositoryProvider._({
+    required LearningRepositoryFamily super.from,
+    required LearningQuery super.argument,
+  }) : super(
+         retry: null,
+         name: r'learningRepositoryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$learningRepositoryHash();
+
+  @override
+  String toString() {
+    return r'learningRepositoryProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<LearningRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  LearningRepository create(Ref ref) {
+    final argument = this.argument as LearningQuery;
+    return learningRepository(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LearningRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LearningRepository>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LearningRepositoryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$learningRepositoryHash() =>
+    r'21c4d682dca7b5280b2940ef85d01f189e14f475';
+
+/// 按查询类型选择对应的词/句学习仓库。
+
+final class LearningRepositoryFamily extends $Family
+    with $FunctionalFamilyOverride<LearningRepository, LearningQuery> {
+  LearningRepositoryFamily._()
+    : super(
+        retry: null,
+        name: r'learningRepositoryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 按查询类型选择对应的词/句学习仓库。
+
+  LearningRepositoryProvider call(LearningQuery query) =>
+      LearningRepositoryProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'learningRepositoryProvider';
+}
+
 /// 提供 [WordRepository] 实例
 
 @ProviderFor(wordRepository)

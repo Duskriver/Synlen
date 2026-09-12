@@ -11,27 +11,26 @@ import '../data/services/deep_seek_service_test.dart'
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:synlen/src/features/learning/application/learning_controller.dart';
 import 'package:synlen/src/features/learning/application/learning_controller_support.dart';
-import 'package:synlen/src/features/learning/application/sentence_learning_controller.dart';
-import 'package:synlen/src/features/learning/application/word_learning_controller.dart';
 import 'package:synlen/src/features/learning/data/repositories/learning_repository_provider.dart';
-import 'package:synlen/src/features/learning/data/repositories/sentence_repository.dart';
 import 'package:synlen/src/features/learning/data/repositories/word_repository.dart';
 import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
+import 'package:synlen/src/features/learning/domain/learning_repository.dart';
 
 import 'learning_audio_coordinator_test.dart' show FakeLearningAudioPlayer;
 
-class DeferredWordRepository implements WordRepository {
-  final info = Completer<WordLearningResult>();
+class DeferredLearningRepository implements LearningRepository {
+  final info = Completer<LearningInfo>();
   final started = Completer<void>();
   final text = StreamController<String>();
   LearningCancellation? cancellation;
   void Function()? afterRead;
 
   @override
-  Future<WordLearningResult> getWordInfo(
-    String word,
-    String context, {
+  Future<LearningInfo> getInfo(
+    LearningQuery query, {
     LearningCancellation? cancellation,
   }) async {
     this.cancellation = cancellation;
@@ -42,38 +41,8 @@ class DeferredWordRepository implements WordRepository {
   }
 
   @override
-  Stream<String> getWordExplanationStream(
-    String word,
-    String context, {
-    LearningCancellation? cancellation,
-  }) => text.stream;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class DeferredSentenceRepository implements SentenceRepository {
-  final info = Completer<SentenceLearningResult>();
-  final started = Completer<void>();
-  final text = StreamController<String>();
-  LearningCancellation? cancellation;
-  void Function()? afterRead;
-
-  @override
-  Future<SentenceLearningResult> getSentenceInfo(
-    String sentence, {
-    LearningCancellation? cancellation,
-  }) async {
-    this.cancellation = cancellation;
-    started.complete();
-    final result = await info.future;
-    afterRead?.call();
-    return result;
-  }
-
-  @override
-  Stream<String> getSentenceAnalysisStream(
-    String sentence, {
+  Stream<String> getContentStream(
+    LearningQuery query, {
     LearningCancellation? cancellation,
   }) => text.stream;
 
@@ -109,6 +78,7 @@ void main() {
     final marker = Provider((_) => 'test-key');
     var serviceDisposed = false;
     var keyReads = 0;
+    const query = WordLearningQuery(word: 'word', context: 'context');
     final container = ProviderContainer.test(
       overrides: [
         learningAudioPlayerFactoryProvider.overrideWith(
@@ -134,7 +104,7 @@ void main() {
             },
           );
         }),
-        wordRepositoryProvider.overrideWith(
+        learningRepositoryProvider(query).overrideWith(
           (ref) => WordRepository(
             ref.watch(freeDictionaryServiceProvider),
             ref.watch(deepSeekServiceProvider),
@@ -145,9 +115,7 @@ void main() {
         ),
       ],
     );
-    final provider = wordLearningControllerProvider(
-      const WordLearningRequest(word: 'word', context: 'context'),
-    );
+    final provider = learningControllerProvider(query);
     final finished = Completer<void>();
     final subscription = container.listen(provider, (_, next) {
       if (!next.isLoading && !next.isFetchingAudio && !finished.isCompleted) {
@@ -171,18 +139,16 @@ void main() {
     expect(serviceDisposed, isTrue);
   });
 
-  final wordProvider = wordLearningControllerProvider(
-    const WordLearningRequest(word: 'word', context: 'A word.'),
-  );
-  final sentenceProvider = sentenceLearningControllerProvider('A sentence.');
+  const wordQuery = WordLearningQuery(word: 'word', context: 'A word.');
+  const sentenceQuery = SentenceLearningQuery(sentence: 'A sentence.');
 
   for (final isWord in [true, false]) {
     final label = isWord ? '单词' : '句子';
-    final provider = isWord ? wordProvider : sentenceProvider;
+    final query = isWord ? wordQuery : sentenceQuery;
+    final provider = learningControllerProvider(query);
 
     test('$label：慢缓存查询期间持有 Repository，关闭后才释放', () async {
-      final word = DeferredWordRepository();
-      final sentence = DeferredSentenceRepository();
+      final repository = DeferredLearningRepository();
       var disposed = false;
       final marker = Provider((_) => 'still alive');
       final container = ProviderContainer.test(
@@ -190,33 +156,22 @@ void main() {
           learningAudioPlayerFactoryProvider.overrideWith(
             (_) => FakeLearningAudioPlayer.new,
           ),
-          wordRepositoryProvider.overrideWith((ref) {
+          learningRepositoryProvider(query).overrideWith((ref) {
             ref.onDispose(() => disposed = true);
-            word.afterRead = () => expect(ref.read(marker), 'still alive');
-            return word;
-          }),
-          sentenceRepositoryProvider.overrideWith((ref) {
-            ref.onDispose(() => disposed = true);
-            sentence.afterRead = () => expect(ref.read(marker), 'still alive');
-            return sentence;
+            repository.afterRead = () =>
+                expect(ref.read(marker), 'still alive');
+            return repository;
           }),
         ],
       );
       final subscription = container.listen(provider, (_, _) {});
-      await (isWord ? word.started.future : sentence.started.future);
+      await repository.started.future;
       await container.pump();
       expect(disposed, isFalse);
-      word.info.complete(
-        WordLearningResult(
-          explanation: '缓存',
-          hasCachedExplanation: true,
-          hasCachedAudio: true,
-        ),
-      );
-      sentence.info.complete(
-        SentenceLearningResult(
-          analysis: '缓存',
-          hasCachedAnalysis: true,
+      repository.info.complete(
+        const LearningInfo(
+          content: '缓存',
+          hasCachedContent: true,
           hasCachedAudio: true,
         ),
       );
@@ -226,31 +181,23 @@ void main() {
       subscription.close();
       await container.pump();
       expect(disposed, isTrue);
-      expect(
-        (isWord ? word.cancellation : sentence.cancellation)!.isCancelled,
-        isTrue,
-      );
-      unawaited(word.text.close());
-      unawaited(sentence.text.close());
+      expect(repository.cancellation!.isCancelled, isTrue);
+      unawaited(repository.text.close());
     });
 
     test('$label：正文没有首包时关闭也立即取消订阅', () async {
-      final word = DeferredWordRepository();
-      final sentence = DeferredSentenceRepository();
-      final source = isWord ? word.text : sentence.text;
+      final repository = DeferredLearningRepository();
       final listening = Completer<void>();
       final cancelled = Completer<void>();
-      source.onListen = listening.complete;
-      source.onCancel = cancelled.complete;
-      word.info.complete(WordLearningResult(hasCachedAudio: true));
-      sentence.info.complete(SentenceLearningResult(hasCachedAudio: true));
+      repository.text.onListen = listening.complete;
+      repository.text.onCancel = cancelled.complete;
+      repository.info.complete(const LearningInfo(hasCachedAudio: true));
       final container = ProviderContainer.test(
         overrides: [
           learningAudioPlayerFactoryProvider.overrideWith(
             (_) => FakeLearningAudioPlayer.new,
           ),
-          wordRepositoryProvider.overrideWith((_) => word),
-          sentenceRepositoryProvider.overrideWith((_) => sentence),
+          learningRepositoryProvider(query).overrideWith((_) => repository),
         ],
       );
       final subscription = container.listen(provider, (_, _) {});
@@ -258,74 +205,44 @@ void main() {
       subscription.close();
       await container.pump();
       await cancelled.future.timeout(const Duration(seconds: 1));
-      expect(
-        (isWord ? word.cancellation : sentence.cancellation)!.isCancelled,
-        isTrue,
-      );
-      unawaited(word.text.close());
-      unawaited(sentence.text.close());
+      expect(repository.cancellation!.isCancelled, isTrue);
+      unawaited(repository.text.close());
     });
 
     test('$label：依赖重建后旧缓存结果不得覆盖新查询', () async {
-      final oldWord = DeferredWordRepository();
-      final oldSentence = DeferredSentenceRepository();
-      final newWord = DeferredWordRepository();
-      final newSentence = DeferredSentenceRepository();
+      final oldRepository = DeferredLearningRepository();
+      final newRepository = DeferredLearningRepository();
       var generation = 0;
       final container = ProviderContainer.test(
         overrides: [
           learningAudioPlayerFactoryProvider.overrideWith(
             (_) => FakeLearningAudioPlayer.new,
           ),
-          wordRepositoryProvider.overrideWith(
-            (_) => generation == 0 ? oldWord : newWord,
-          ),
-          sentenceRepositoryProvider.overrideWith(
-            (_) => generation == 0 ? oldSentence : newSentence,
+          learningRepositoryProvider(query).overrideWith(
+            (_) => generation == 0 ? oldRepository : newRepository,
           ),
         ],
       );
       final subscription = container.listen(provider, (_, _) {});
-      await (isWord ? oldWord.started.future : oldSentence.started.future);
+      await oldRepository.started.future;
       generation++;
-      if (isWord) {
-        container.invalidate(wordRepositoryProvider);
-      } else {
-        container.invalidate(sentenceRepositoryProvider);
-      }
+      container.invalidate(learningRepositoryProvider(query));
       await container.pump();
-      await (isWord ? newWord.started.future : newSentence.started.future);
-      expect(
-        (isWord ? oldWord.cancellation : oldSentence.cancellation)!.isCancelled,
-        isTrue,
-      );
-      newWord.info.complete(
-        WordLearningResult(
-          explanation: '新查询',
-          hasCachedExplanation: true,
-          hasCachedAudio: true,
-        ),
-      );
-      newSentence.info.complete(
-        SentenceLearningResult(
-          analysis: '新查询',
-          hasCachedAnalysis: true,
+      await newRepository.started.future;
+      expect(oldRepository.cancellation!.isCancelled, isTrue);
+      newRepository.info.complete(
+        const LearningInfo(
+          content: '新查询',
+          hasCachedContent: true,
           hasCachedAudio: true,
         ),
       );
       await container.pump();
       expect(container.read(provider).content, '新查询');
-      oldWord.info.complete(
-        WordLearningResult(
-          explanation: '旧查询',
-          hasCachedExplanation: true,
-          hasCachedAudio: true,
-        ),
-      );
-      oldSentence.info.complete(
-        SentenceLearningResult(
-          analysis: '旧查询',
-          hasCachedAnalysis: true,
+      oldRepository.info.complete(
+        const LearningInfo(
+          content: '旧查询',
+          hasCachedContent: true,
           hasCachedAudio: true,
         ),
       );
@@ -334,12 +251,7 @@ void main() {
       expect(container.read(provider).contentError, isNull);
       subscription.close();
       await container.pump();
-      for (final source in [
-        oldWord.text,
-        oldSentence.text,
-        newWord.text,
-        newSentence.text,
-      ]) {
+      for (final source in [oldRepository.text, newRepository.text]) {
         unawaited(source.close());
       }
     });

@@ -10,6 +10,8 @@ import 'package:synlen/src/features/learning/data/services/free_dictionary_servi
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/features/settings/application/api_key_notifier.dart';
 import 'package:synlen/src/features/settings/application/tts_voice_notifier.dart';
+import 'package:synlen/src/features/learning/domain/learning_query.dart';
+import 'package:synlen/src/features/learning/domain/learning_repository.dart';
 
 import 'word_repository.dart';
 import 'sentence_repository.dart';
@@ -70,6 +72,15 @@ SentencePronunciationCacheStore sentencePronunciationCacheStore(Ref ref) {
 }
 
 // --- Repository Providers ---
+
+/// 按查询类型选择对应的词/句学习仓库。
+@riverpod
+LearningRepository learningRepository(Ref ref, LearningQuery query) {
+  return switch (query) {
+    WordLearningQuery() => ref.watch(wordRepositoryProvider),
+    SentenceLearningQuery() => ref.watch(sentenceRepositoryProvider),
+  };
+}
 
 /// 提供 [WordRepository] 实例
 @riverpod
