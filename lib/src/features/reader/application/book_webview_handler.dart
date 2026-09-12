@@ -20,6 +20,21 @@ class _CachedResource {
   int get sizeInBytes => bytes.lengthInBytes;
 }
 
+/// 共享资源管线的解析结果。
+class _ResolvedResource {
+  final Uint8List bytes;
+  final String mimeType;
+
+  /// 是否命中内存缓存；Android 通道用它区分 'OK (Cached)' 与 'OK' 的 reasonPhrase。
+  final bool fromCache;
+
+  const _ResolvedResource({
+    required this.bytes,
+    required this.mimeType,
+    required this.fromCache,
+  });
+}
+
 /// WebView request handler for streaming book content
 /// Intercepts requests to virtual domain and serves files from compressed EPUB,
 /// 或从 TXT 单文件按字节范围切片包装为 XHTML。
@@ -104,63 +119,25 @@ class BookWebViewHandler {
     required WebUri requestUrl,
   }) async {
     try {
-      final urlString = requestUrl.toString();
-
-      // 1. 优先从内存缓存中获取资源
-      final cached = _getCachedResource(urlString);
-      if (cached != null) {
-        return WebResourceResponse(
-          contentType: cached.mimeType,
-          statusCode: 200,
-          reasonPhrase: 'OK (Cached)',
-          data: cached.bytes,
-          headers: _headers,
-        );
-      }
-
-      // Serve user-imported fonts.
-      if (isFontRequest(requestUrl)) {
-        final result = await _readFontFile(requestUrl);
-        if (result.isLeft()) {
-          return WebResourceResponse(
-            statusCode: 404,
-            reasonPhrase: 'Not Found',
-            data: Uint8List.fromList('Font not found'.codeUnits),
-          );
-        }
-        final cachedData = result.getRight().toNullable()!;
-        _cacheResource(urlString, cachedData.$1, cachedData.$2);
-
-        return WebResourceResponse(
-          contentType: cachedData.$2,
-          statusCode: 200,
-          reasonPhrase: 'OK',
-          data: cachedData.$1,
-          headers: _headers,
-        );
-      }
-
-      // Read file from EPUB
-      final result = await _readFileFromEpub(epubPath, fileHash, requestUrl);
-
+      final result = await _resolveResource(epubPath, fileHash, requestUrl);
       if (result.isLeft()) {
-        // File not found or error
+        // Android 通道对字体错误回退通用文案，不暴露内部细节
+        final body = isFontRequest(requestUrl)
+            ? 'Font not found'
+            : 'File not found';
         return WebResourceResponse(
           statusCode: 404,
           reasonPhrase: 'Not Found',
-          data: Uint8List.fromList('File not found'.codeUnits),
+          data: Uint8List.fromList(body.codeUnits),
         );
       }
 
-      final dataPair = result.getRight().toNullable()!;
-      _cacheResource(urlString, dataPair.$1, dataPair.$2);
-
-      // Return the file content
+      final resolved = result.getRight().toNullable()!;
       return WebResourceResponse(
-        contentType: dataPair.$2,
+        contentType: resolved.mimeType,
         statusCode: 200,
-        reasonPhrase: 'OK',
-        data: dataPair.$1,
+        reasonPhrase: resolved.fromCache ? 'OK (Cached)' : 'OK',
+        data: resolved.bytes,
         headers: _headers,
       );
     } catch (e) {
@@ -179,49 +156,21 @@ class BookWebViewHandler {
     required WebUri requestUrl,
   }) async {
     try {
-      final urlString = requestUrl.toString();
-
-      // 1. 优先从内存缓存中获取资源
-      final cached = _getCachedResource(urlString);
-      if (cached != null) {
-        return CustomSchemeResponse(
-          contentType: cached.mimeType,
-          data: cached.bytes,
-        );
-      }
-
-      // Serve user-imported fonts.
-      if (isFontRequest(requestUrl)) {
-        final result = await _readFontFile(requestUrl);
-        if (result.isLeft()) {
-          final msg = result.getLeft().toNullable()!;
-          return CustomSchemeResponse(
-            contentType: 'text/plain',
-            data: Uint8List.fromList(msg.codeUnits),
-          );
-        }
-        final cachedData = result.getRight().toNullable()!;
-        _cacheResource(urlString, cachedData.$1, cachedData.$2);
-        return CustomSchemeResponse(
-          contentType: cachedData.$2,
-          data: cachedData.$1,
-        );
-      }
-
-      final result = await _readFileFromEpub(epubPath, fileHash, requestUrl);
-
+      final result = await _resolveResource(epubPath, fileHash, requestUrl);
       if (result.isLeft()) {
-        final errorMessage = result.getLeft().toNullable()!;
+        // iOS 通道把真实错误消息直接交给渲染引擎
+        final msg = result.getLeft().toNullable()!;
         return CustomSchemeResponse(
           contentType: 'text/plain',
-          data: Uint8List.fromList(errorMessage.codeUnits),
+          data: Uint8List.fromList(msg.codeUnits),
         );
       }
 
-      final dataPair = result.getRight().toNullable()!;
-      _cacheResource(urlString, dataPair.$1, dataPair.$2);
-
-      return CustomSchemeResponse(contentType: dataPair.$2, data: dataPair.$1);
+      final resolved = result.getRight().toNullable()!;
+      return CustomSchemeResponse(
+        contentType: resolved.mimeType,
+        data: resolved.bytes,
+      );
     } catch (e) {
       final errorMessage = 'Error reading file: $e';
       return CustomSchemeResponse(
@@ -229,6 +178,46 @@ class BookWebViewHandler {
         data: Uint8List.fromList(errorMessage.codeUnits),
       );
     }
+  }
+
+  /// 两条公开方法共享的资源解析管线：内存缓存 → 字体/书籍读取 → 写入内存缓存。
+  /// 改 EPUB 资源读取规则只动这里与 [_readFileFromEpub]，无需同步平台包装层。
+  /// Returns Either:
+  ///   - Left: error message
+  ///   - Right: 解析结果（字节 + MIME + 是否缓存命中）
+  Future<Either<String, _ResolvedResource>> _resolveResource(
+    String epubPath,
+    String fileHash,
+    WebUri requestUrl,
+  ) async {
+    final urlString = requestUrl.toString();
+
+    // 1. 优先从内存缓存中获取资源
+    final cached = _getCachedResource(urlString);
+    if (cached != null) {
+      return right(
+        _ResolvedResource(
+          bytes: cached.bytes,
+          mimeType: cached.mimeType,
+          fromCache: true,
+        ),
+      );
+    }
+
+    // 2. 用户导入字体走本地字体目录，其余按 EPUB/TXT 书籍读取
+    final Either<String, (Uint8List, String)> result = isFontRequest(requestUrl)
+        ? await _readFontFile(requestUrl)
+        : await _readFileFromEpub(epubPath, fileHash, requestUrl);
+
+    final data = result.getRight().toNullable();
+    if (data == null) {
+      return left(result.getLeft().toNullable()!);
+    }
+
+    _cacheResource(urlString, data.$1, data.$2);
+    return right(
+      _ResolvedResource(bytes: data.$1, mimeType: data.$2, fromCache: false),
+    );
   }
 
   /// Read a file from the book container (EPUB ZIP 或 TXT 单文件)
@@ -275,7 +264,9 @@ class BookWebViewHandler {
     final mimeType = _streamService.getMimeType(fileRelativePath);
 
     // 书内脚本剥离：TXT 章节内容已整体转义（TxtContentService.buildChapterHtml），
-    // 无脚本面；EPUB 的 XHTML/SVG 在供给前剥离 <script> 与 on* 属性
+    // 无脚本面；EPUB 的 XHTML/SVG 在供给前剥离 <script> 与 on* 属性。
+    // 两条平台通道（handleRequest / handleRequestWithCustomScheme）都经
+    // _resolveResource 进入本方法，这里是 EPUB 资源读取规则的唯一改动点
     if (needsScriptStripping(mimeType)) {
       data = Uint8List.fromList(
         utf8.encode(sanitizeBookXhtml(utf8.decode(data, allowMalformed: true))),
@@ -344,12 +335,6 @@ class BookWebViewHandler {
     final url =
         '$virtualScheme://$virtualDomain/book/$fileHash/${href.path}${'#${href.anchor}'}';
     return Uri.encodeFull(url);
-  }
-
-  /// Generate URL for a user-imported font file.
-  /// Format: book://localhost/fonts/{fileName}
-  static String getFontUrl(String fileName) {
-    return '$virtualScheme://$virtualDomain/fonts/$fileName';
   }
 
   /// Check if a request is for a book chapter: 两种格式共用 `book://` 虚拟域。
