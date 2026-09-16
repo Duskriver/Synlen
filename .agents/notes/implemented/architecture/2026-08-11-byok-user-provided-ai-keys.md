@@ -27,4 +27,4 @@ Status: implemented
 
 - 用户必须自配密钥才能用学习功能；未配置时其余功能不受影响，说明见 [AI 服务密钥](../../../../docs/user/guide/ai-service-keys.md)。
 - 密钥不进日志：内部细节只入 `appLogger`，用户可读消息走 l10n。
-- 发布流水线只剩签名密钥，见[更新分发走阿里云 OSS](../process/2026-08-11-release-distribution-via-oss.md)。
+- 发布流水线只持有签名与分发凭据，见[更新分发走 Gitee](../process/2026-09-17-release-distribution-via-gitee.md)。

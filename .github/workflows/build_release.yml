@@ -11,6 +11,10 @@ on:
         required: false
         default: ''
 
+concurrency:
+  group: synlen-release
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -77,17 +81,16 @@ jobs:
           git diff --exit-code lib/src/web/web_assets.dart
 
   build-android:
-    name: Build Android APKs & AAB
+    name: Build Android ARM64 APK
     needs: [quality-gates]
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # OSS 凭据经 env 中转：GitHub 禁止在 if 条件里直接引用 secrets 上下文，
-    # 而 job 级 env 在 step 级 if 中可见，用它判空才能保住整个 workflow 有效。
     env:
-      OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
-      OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+      RELEASE_TAG: ${{ github.event.inputs.version || github.ref_name }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
@@ -107,7 +110,7 @@ jobs:
         uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
         with:
           toolchain: 1.97.1
-          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+          targets: aarch64-linux-android
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
@@ -133,7 +136,9 @@ jobs:
         run: |
           # versionCode 从 tag 派生（vX.Y.Z → X*10000+Y*100+Z），
           # 保证每次发版递增，覆盖安装不会被拒
-          TAG="${{ github.event.inputs.version || github.ref_name }}"
+          TAG="$RELEASE_TAG"
+          [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || exit 1
+          (( BASH_REMATCH[1] <= 209999 && BASH_REMATCH[2] < 100 && BASH_REMATCH[3] < 100 )) || exit 1
           TAG="${TAG#v}"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG"
           echo "value=$((MAJOR * 10000 + MINOR * 100 + PATCH))" >> "$GITHUB_OUTPUT"
@@ -141,22 +146,12 @@ jobs:
       - name: Create Output Dir
         run: mkdir -p build/outputs
 
-      - name: Build App Bundle
-        run: |
-          flutter build appbundle --release --target-platform android-arm64 \
-            --build-number=${{ steps.build_number.outputs.value }}
-          
-          NEW_NAME="synlen-${{ github.ref_name }}-bundle-release.aab"
-          
-          mv build/app/outputs/bundle/release/app-release.aab build/outputs/$NEW_NAME
-          echo "Generated $NEW_NAME"
-
       - name: Build arm64 APK
         run: |
           flutter build apk --release --target-platform android-arm64 \
-            --build-number=${{ steps.build_number.outputs.value }}
+            --build-name="${RELEASE_TAG#v}" --build-number=${{ steps.build_number.outputs.value }}
           
-          NEW_NAME="synlen-${{ github.ref_name }}-arm64-release.apk"
+          NEW_NAME="synlen-${RELEASE_TAG}-arm64-release.apk"
           
           mv build/app/outputs/flutter-apk/app-release.apk build/outputs/$NEW_NAME
           echo "Generated $NEW_NAME"
@@ -167,89 +162,18 @@ jobs:
           name: android-artifacts
           path: build/outputs/*
 
-      # 可选：上传到阿里云 OSS（国内分发源）。
-      # 配置 GitHub Secrets（OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET / OSS_BUCKET / OSS_REGION）后自动生效；
-      # 开源后 fork 拿不到 secrets，天然安全。未配置则跳过。
-      - name: Upload to Aliyun OSS (optional)
-        if: startsWith(github.ref, 'refs/tags/') && env.OSS_ACCESS_KEY_ID != '' && env.OSS_ACCESS_KEY_SECRET != ''
-        run: |
-          # ossutil v1 只认配置文件，不读 OSS_ACCESS_KEY_ID/SECRET 环境变量：
-          # 只设环境变量时会以 "accessKeyID and ecsUrl are both empty" 失败，
-          # 所以先落到默认配置路径，脚本里的裸 ossutil 调用才拿得到凭据。
-          curl -fsSL -o /tmp/ossutil.zip "https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil-v1.7.19-linux-amd64.zip"
-          unzip -o -q /tmp/ossutil.zip -d /tmp/ossutil-bin
-          OSSUTIL_BIN="$(find /tmp/ossutil-bin -type f -name ossutil -perm -u+x | head -1)"
-          chmod +x "$OSSUTIL_BIN"
-          export PATH="$(dirname "$OSSUTIL_BIN"):$PATH"
+      - name: Sync Gitee source and tags
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: bash tool/sync_gitee.sh
 
-          cat > "$HOME/.ossutilconfig" <<EOF
-          [Credentials]
-          language=CH
-          endpoint=oss-${{ secrets.OSS_REGION }}.aliyuncs.com
-          accessKeyID=$OSS_ACCESS_KEY_ID
-          accessKeySecret=$OSS_ACCESS_KEY_SECRET
-          EOF
-
-          # 复用发布脚本：生成 version.json 并上传 APK
-          bash tool/upload_release.sh "${{ github.ref_name }}" "${{ secrets.OSS_BUCKET }}" "${{ secrets.OSS_REGION }}"
-
-  build-ios:
-    name: Build iOS IPA
-    needs: [quality-gates]
-    runs-on: macos-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          flutter-version: '3.44.9'
-          channel: 'stable'
-          cache: true
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
-        with:
-          toolchain: 1.97.1
-          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: rust
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Compute Build Number
-        id: build_number
-        run: |
-          # 与 Android 侧同规则派生 CFBundleVersion，保持双端一致
-          TAG="${{ github.event.inputs.version || github.ref_name }}"
-          TAG="${TAG#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG"
-          echo "value=$((MAJOR * 10000 + MINOR * 100 + PATCH))" >> "$GITHUB_OUTPUT"
-
-      - name: Build IPA (Unsigned)
-        run: |
-          flutter build ios --release --no-codesign \
-            --build-number=${{ steps.build_number.outputs.value }}
-
-      - name: Package into IPA
-        run: |
-          mkdir Payload
-          mv build/ios/iphoneos/Runner.app Payload/
-
-          NAME="synlen-${{ github.ref_name }}-ios-unsigned.ipa"
-          zip -r $NAME Payload
-          echo "Generated $NAME"
-
-      - name: Upload IPA Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: ios-artifacts
-          path: synlen-${{ github.ref_name }}-ios-unsigned.ipa
+      - name: Publish to Gitee
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: bash tool/upload_release.sh "$RELEASE_TAG"
 
   create-release:
     name: Create GitHub Release
@@ -260,14 +184,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # iOS 产物是可选的：Android 是当前唯一的分发目标，iOS 构建失败不应拦住发布。
-      - name: Download iOS Artifacts
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ios-artifacts
-          path: artifacts
-          
       - name: Download Android Artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -284,7 +200,7 @@ jobs:
           # 不再依赖第三方动作按固定序号取段（那会取出上一版的说明）。
           VERSION="${RELEASE_TAG#v}"
           NOTES="$(awk -v ver="$VERSION" '
-            index($0, "## v" ver) == 1 {in_section=1; next}
+            $0 == "## v" ver {in_section=1; next}
             in_section && index($0, "## ") == 1 {exit}
             in_section {print}
           ' docs/user/release-notes.md)"
@@ -304,8 +220,6 @@ jobs:
         with:
           files: |
             artifacts/**/*.apk
-            artifacts/**/*.aab
-            artifacts/**/*.ipa
-          body: ${{ steps.extract_notes.outputs.release_notes }}
+          body: ${{ steps.extract_notes.outputs.notes }}
           generate_release_notes: false
           prerelease: false

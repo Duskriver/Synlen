@@ -17,11 +17,8 @@ Status: implemented
 
 ## Decision
 
-- ossutil 下载改为存在的地址 `https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil-v1.7.19-linux-amd64.zip`，并给 `curl` 加 `-f`：下载失败立刻中止，不再把错误页当产物。
-- 解压后用 `find /tmp/ossutil-bin -type f -name ossutil -perm -u+x` 定位二进制并把其目录加进 `PATH`，不再假设解压后的层级。
-- 凭据改为写默认配置文件 `~/.ossutilconfig`（`[Credentials]` + `endpoint` / `accessKeyID` / `accessKeySecret`，取自 GitHub Secrets），再由 `tool/upload_release.sh` 里的裸 `ossutil` 调用读取。脚本头部的前置条件注释同步改正。
 - Release 正文改成与 `tool/upload_release.sh` 同一套 awk 规则：取 `docs/user/release-notes.md` 中 `## v<version>` 段到下一个 `##` 之间；缺段即以 `::error::` 失败，不再依赖第三方动作的取段策略。
-- iOS 构建步骤改用 `run: |` 字面块：行继续符交给 shell 解释，不再由 YAML 折叠标量时原样保留。Android 侧同名参数本就在字面块里，不受影响。
+- OSS 与 iOS 构建步骤由 [Gitee ARM64 分发](2026-09-17-release-distribution-via-gitee.md)取代；这里保留首次故障的证据与版本说明提取决策。
 
 ## Alternatives considered
 
@@ -35,8 +32,6 @@ Status: implemented
 
 ## Consequences
 
-- 凭据落在 runner 的 `~/.ossutilconfig`：runner 单租户且随实例销毁，GitHub 仍会对 secrets 做掩码；相比把凭据塞进每个命令的参数，配置文件少一次进程参数暴露。
-- 本机手工发版时必须先 `ossutil config`（环境变量不管用），脚本头部注释已写明——这与 CI 路径的凭据来源不同，是 v1 的硬约束。
 - 提取规则在 `tool/upload_release.sh` 与 workflow 里各有一份，改格式要同改两处；合并成一个共享脚本是后续可做的简化。
-- v0.3.0 的 Android 产物与 `version.json` 由修复后的上传步骤真实产出，universal APK 的 SHA-256 与清单声明一致；iOS 失败导致 Release 被跳过，该 Release 随后手工补建。发布门禁的调整见[发布门禁只等 Android 产物](2026-09-16-android-only-release-gating.md)。
-- 通道形态与凭据边界的决策见[更新分发通道的 OSS 基础设施](2026-09-16-release-channel-infrastructure.md)。
+- v0.3.0 的 Android 产物与 `version.json` 由修复后的上传步骤真实产出，universal APK 的 SHA-256 与清单声明一致；iOS 失败导致 Release 被跳过，该 Release 随后手工补建。发布门禁的调整见[发布门禁只等 Android 产物](../../archived/process/2026-09-16-android-only-release-gating.md)。
+- 通道形态与凭据边界的决策见[Gitee ARM64 分发](2026-09-17-release-distribution-via-gitee.md)。

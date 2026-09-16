@@ -1,6 +1,7 @@
 # Agent Note: 更新分发通道的 OSS 基础设施
 
 Status: implemented
+Archived: 2026-09-17
 
 ## Problem
 

@@ -1,6 +1,7 @@
 # Agent Note: 发布门禁只等 Android 产物
 
 Status: implemented
+Archived: 2026-09-17
 
 ## Problem
 

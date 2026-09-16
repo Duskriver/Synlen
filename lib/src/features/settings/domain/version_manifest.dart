@@ -31,7 +31,7 @@ class VersionManifest {
   /// GitHub Releases 地址
   final String githubUrl;
 
-  /// Android：APK 直链（国内 OSS 分发）
+  /// Android：APK 的 HTTPS 下载地址
   final String androidApkUrl;
 
   /// Android：清单下发的 APK SHA-256（十六进制）；为空跳过校验（兼容旧清单）

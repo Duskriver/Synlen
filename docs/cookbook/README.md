@@ -10,7 +10,7 @@
 | [adding-an-l10n-string](adding-an-l10n-string.md) | 用户可见文案：ARB 同批更新、占位符、重新生成、错误码到文案的映射 |
 | [changing-reader-web-assets](changing-reader-web-assets.md) | 阅读器 TypeScript/CSS：源与生成物、学习文本提取规则、浏览器回归测试 |
 | [changing-the-database-schema](changing-the-database-schema.md) | drift schema：加表、加列、改列、`schemaVersion` 与迁移测试 |
-| [publishing-a-release](publishing-a-release.md) | 发版：版本号与 versionCode 派生、release notes 段改名、tag 构建、OSS 上传与验证 |
+| [publishing-a-release](publishing-a-release.md) | 发版：版本号与 versionCode 派生、release notes 段改名、tag 构建、Gitee 发布与验证 |
 | [handling-a-release-incident](handling-a-release-incident.md) | 发布后出问题：判定影响面、回退 `version.json`、处理 Release、发修复版本 |
 | [measuring-performance](measuring-performance.md) | 性能基线：设备矩阵、冷启动 / 导入 / 翻章 / 内存的测量方法与记录格式 |
 

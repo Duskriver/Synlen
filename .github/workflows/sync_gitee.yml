@@ -1,0 +1,26 @@
+name: Sync Gitee
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitee-source-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'Duskriver/Synlen'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Sync source and tags
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: bash tool/sync_gitee.sh

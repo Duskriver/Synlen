@@ -1,110 +1,80 @@
 #!/usr/bin/env bash
-# 发布上传脚本：生成 version.json 并上传 APK 到阿里云 OSS（国内分发）。
-#
-# 用法：
-#   ./tool/upload_release.sh <tag> [bucket] [region]
-# 示例：
-#   ./tool/upload_release.sh v0.3.0 synlen cn-hangzhou
-#
-# 前置条件：
-#   1. 已安装 ossutil v1（https://help.aliyun.com/zh/oss/developer-reference/install-ossutil）
-#   2. 已配置 ossutil 凭证：ossutil config -e oss-<region>.aliyuncs.com -i <id> -k <secret>
-#      ossutil v1 不读 OSS_ACCESS_KEY_ID/SECRET 环境变量，只认配置文件（默认 ~/.ossutilconfig）；
-#      CI 侧由 build_release.yml 从 secrets 写该文件后再调用本脚本。
-#   3. 本地已构建好 release APK（flutter build apk --release --split-per-abi 或 universal）
-#
-# 产物：
-#   oss://<bucket>/version.json          —— 客户端检查更新用的版本元数据
-#   oss://<bucket>/apk/synlen-<tag>-arm64-release.apk
+# 上传 ARM64 APK 到 Gitee，匿名校验成功后更新 version.json。
+# 用法：./tool/upload_release.sh <vX.Y.Z> [owner/repo] [apk路径]
+# 依赖 curl、jq、shasum；凭据使用 GITEE_TOKEN 或已登录的 Gitee CLI。
 set -euo pipefail
 
-TAG="${1:?用法: ./tool/upload_release.sh <tag> [bucket] [region]}"
-BUCKET="${2:-synlen}"
-REGION="${3:-cn-hangzhou}"
-ENDPOINT="oss-${REGION}.aliyuncs.com"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-
-# 从 tag 派生版本号与 buildNumber（规则与 CI 一致：vX.Y.Z → X*10000+Y*100+Z）
-VERSION="${TAG#v}"
-IFS='.' read -r MAJOR MINOR PATCH <<<"$VERSION"
+TAG="${1:?用法: ./tool/upload_release.sh <vX.Y.Z> [owner/repo] [apk路径]}"
+REPO="${2:-Tang_Lei789/synlen}"
+[[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo '版本必须是 vX.Y.Z' >&2; exit 1; }
+MAJOR="${BASH_REMATCH[1]}" MINOR="${BASH_REMATCH[2]}" PATCH="${BASH_REMATCH[3]}"
+# 与 Android versionCode 派生规则保持单调且不碰撞。
+(( MAJOR <= 209999 && MINOR < 100 && PATCH < 100 )) || { echo '版本超出构建号范围' >&2; exit 1; }
 BUILD_NUMBER=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-
-echo "==> 版本: $VERSION (build $BUILD_NUMBER)"
-
-# 从 docs/user/release-notes.md 提取该版本段的更新日志（第一个 "## vx.y.z" 到下一个 "## " 之间）。
-# 注：用 index() 字符串匹配而非正则，避免 BSD/GNU awk 对 \ 转义的行为差异。
-UPDATE_LOG="$(
-  awk -v ver="$VERSION" '
-    index($0, "## v" ver) == 1 {in_section=1; next}
-    in_section && index($0, "## ") == 1 {exit}
-    in_section {print}
-  ' "$ROOT/docs/user/release-notes.md"
-)"
-if [ -z "$UPDATE_LOG" ]; then
-  echo "!! docs/user/release-notes.md 中未找到 v$VERSION 段：发版前先把「未发布」段改名为 ## v$VERSION（见 docs/cookbook/publishing-a-release.md），中止发布" >&2
-  exit 1
+[[ "$REPO" =~ ^[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+$ ]] || { echo '仓库格式必须是 owner/repo' >&2; exit 1; }
+APK="${3:-$ROOT/build/outputs/synlen-${TAG}-arm64-release.apk}"
+if [[ $# -lt 3 && ! -f "$APK" ]]; then APK="$ROOT/build/app/outputs/flutter-apk/app-release.apk"; fi
+[[ -f "$APK" ]] || { echo "未找到 APK: $APK" >&2; exit 1; }
+APK_NAME="$(basename "$APK")"
+[[ "$APK_NAME" =~ ^[A-Za-z0-9._-]+\.apk$ ]] || { echo 'APK 文件名只能包含英文字母、数字、点、横线和下划线' >&2; exit 1; }
+UPDATE_LOG="$(awk -v heading="## $TAG" '$0 == heading {found=1; next} found && /^## / {exit} found {print}' "$ROOT/docs/user/release-notes.md")"
+[[ -n "$UPDATE_LOG" ]] || { echo "release-notes.md 中缺少 $TAG 段" >&2; exit 1; }
+APK_SHA256="$(shasum -a 256 "$APK" | awk '{print $1}')"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+umask 077
+if [[ -z "${GITEE_TOKEN:-}" ]]; then
+  GITEE_TOKEN="$(gitee auth token)"
 fi
-
-# 定位 arm64 APK 并计算 SHA-256（本地构建在 flutter-apk/，CI 会移动到 build/outputs/）。
-# 摘要写进 version.json 的 androidApkSha256，客户端下载后比对，缺失时客户端放行（兼容旧清单）。
-APK_DIR="$ROOT/build/app/outputs/flutter-apk"
-OUTPUTS_DIR="$ROOT/build/outputs"
-ARM64_APK="$APK_DIR/synlen-${TAG}-arm64-release.apk"
-if [ ! -f "$ARM64_APK" ]; then
-  ARM64_APK="$APK_DIR/app-release.apk"
-fi
-if [ ! -f "$ARM64_APK" ]; then
-  ARM64_APK="$OUTPUTS_DIR/synlen-${TAG}-arm64-release.apk"
-fi
-if [ ! -f "$ARM64_APK" ]; then
-  echo "!! 未找到 APK（已查找 $APK_DIR 与 $OUTPUTS_DIR），请先构建 release 包" >&2
-  exit 1
-fi
-APK_SHA256="$(shasum -a 256 "$ARM64_APK" | awk '{print $1}')"
-echo "==> APK SHA-256: $APK_SHA256"
-
-# 组装 version.json（客户端协议见 check_update_tile.dart）
-VERSION_JSON="$(
-  python3 - "$MAJOR" "$MINOR" "$PATCH" "$BUILD_NUMBER" "$TAG" "$UPDATE_LOG" "$BUCKET" "$REGION" "$APK_SHA256" <<'PYEOF'
-import json, sys
-major, minor, patch, build, tag, update_log = (
-    int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]),
-    int(sys.argv[4]), sys.argv[5], sys.argv[6],
-)
-bucket, region, apk_sha256 = sys.argv[7], sys.argv[8], sys.argv[9]
-base = f"https://{bucket}.oss-{region}.aliyuncs.com"
-payload = {
-    "code": 200,
-    "data": {
-        "majorNumber": major,
-        "minorNumber": minor,
-        "patchNumber": patch,
-        "buildNumber": build,
-        "updateLog": update_log.strip(),
-        "lanzouUrl": "",
-        "lanzouPassword": "",
-        "githubUrl": f"https://github.com/Duskriver/Synlen/releases/tag/{tag}",
-        "androidApkUrl": f"{base}/apk/synlen-{tag}-arm64-release.apk",
-        "androidApkSha256": apk_sha256,
-        "iosAppStoreUrl": "",
-    },
+[[ -n "$GITEE_TOKEN" && "$GITEE_TOKEN" != *$'\n'* && "$GITEE_TOKEN" != *'"'* && "$GITEE_TOKEN" != *'\'* ]] || { echo 'Gitee 凭据无效' >&2; exit 1; }
+printf 'header = "Authorization: Bearer %s"\n' "$GITEE_TOKEN" > "$WORK/auth"
+unset GITEE_TOKEN
+API="https://gitee.com/api/v5/repos/$REPO"
+# 授权仅发送给 API；下载使用匿名请求，绝不携带令牌跟随重定向。
+api() { curl --config "$WORK/auth" -sS --fail-with-body --connect-timeout 15 --max-time 300 "$@"; }
+get_optional() {
+  local status
+  status="$(curl --config "$WORK/auth" -sS --connect-timeout 15 --max-time 30 -o "$2" -w '%{http_code}' "$1")"
+  case "$status" in 200) return 0 ;; 404) return 1 ;; *) echo "Gitee 请求失败: HTTP $status" >&2; exit 1 ;; esac
 }
-print(json.dumps(payload, ensure_ascii=False, indent=2))
-PYEOF
-)"
-echo "$VERSION_JSON" > /tmp/synlen-version.json
-
-echo "==> 上传 APK: $ARM64_APK"
-ossutil cp -f "$ARM64_APK" \
-  "oss://$BUCKET/apk/synlen-${TAG}-arm64-release.apk" \
-  -e "$ENDPOINT"
-
-echo "==> 上传 version.json"
-ossutil cp -f /tmp/synlen-version.json "oss://$BUCKET/version.json" \
-  -e "$ENDPOINT"
-
-echo ""
-echo "==> 完成！version.json 内容："
-echo "$VERSION_JSON"
-echo ""
-echo "客户端版本检查端点：https://$BUCKET.$ENDPOINT/version.json"
+api "$API" > "$WORK/repo.json"
+jq -e '.public == true' "$WORK/repo.json" >/dev/null || { echo '分发仓库必须公开' >&2; exit 1; }
+BRANCH=updates
+CONTENTS="$API/contents/version.json"
+METHOD=POST
+if get_optional "$CONTENTS?ref=$BRANCH" "$WORK/contents.json" && ! jq -e '. == []' "$WORK/contents.json" >/dev/null; then
+  METHOD=PUT
+  jq -r '.content' "$WORK/contents.json" | tr -d '\n' | base64 --decode > "$WORK/previous.json"
+  jq -e --argjson build "$BUILD_NUMBER" '.code == 200 and (.data.buildNumber <= $build)' "$WORK/previous.json" >/dev/null || { echo '拒绝降级或覆盖无效清单' >&2; exit 1; }
+fi
+if ! get_optional "$API/releases/tags/$TAG" "$WORK/release.json"; then
+  jq -n --arg tag "$TAG" --arg body "$UPDATE_LOG" --arg branch "$TAG" '{tag_name:$tag,name:$tag,body:$body,target_commitish:$branch,prerelease:false}' > "$WORK/release-request.json"
+  api -X POST -H 'Content-Type: application/json' --data-binary "@$WORK/release-request.json" "$API/releases" > "$WORK/release.json"
+fi
+RELEASE_ID="$(jq -er '.id' "$WORK/release.json")"
+APK_URL="$(jq -r --arg name "$APK_NAME" '.assets[]? | select(.name == $name) | .browser_download_url' "$WORK/release.json")"
+if [[ -z "$APK_URL" ]]; then
+  api -F "file=@$APK" "$API/releases/$RELEASE_ID/attach_files" > "$WORK/attachment.json"
+  APK_URL="$(jq -er '.browser_download_url' "$WORK/attachment.json")"
+fi
+[[ "$APK_URL" == https://* ]] || { echo 'APK 地址必须是 HTTPS' >&2; exit 1; }
+curl -fLsS --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 300 "$APK_URL" -o "$WORK/verify.apk"
+REMOTE_SHA256="$(shasum -a 256 "$WORK/verify.apk" | awk '{print $1}')"
+[[ "$APK_SHA256" == "$REMOTE_SHA256" ]] || { echo '远端 APK 摘要不匹配；拒绝更新清单或覆盖已发布附件' >&2; exit 1; }
+jq -n --argjson major "$MAJOR" --argjson minor "$MINOR" --argjson patch "$PATCH" --argjson build "$BUILD_NUMBER" --arg log "$UPDATE_LOG" --arg tag "$TAG" --arg url "$APK_URL" --arg sha "$APK_SHA256" '{code:200,data:{majorNumber:$major,minorNumber:$minor,patchNumber:$patch,buildNumber:$build,updateLog:($log|gsub("^\\s+|\\s+$";"")),androidApkUrl:$url,androidApkSha256:$sha,githubUrl:("https://github.com/Duskriver/Synlen/releases/tag/"+$tag),lanzouUrl:"",lanzouPassword:"",iosAppStoreUrl:""}}' > "$WORK/version.json"
+# 同一版本只允许重试完全相同的安装包。
+if [[ -f "$WORK/previous.json" ]]; then
+  jq -e --argjson build "$BUILD_NUMBER" --arg sha "$APK_SHA256" '.data.buildNumber != $build or .data.androidApkSha256 == $sha' "$WORK/previous.json" >/dev/null || { echo '同一构建号不能替换 APK' >&2; exit 1; }
+fi
+CONTENT="$(base64 < "$WORK/version.json" | tr -d '\n')"
+SHA="$(jq -r '.sha // ""' "$WORK/contents.json" 2>/dev/null || true)"
+jq -n --arg content "$CONTENT" --arg sha "$SHA" --arg branch "$BRANCH" --arg message "发布 $TAG 更新清单" '{content:$content,branch:$branch,message:$message} + (if $sha == "" then {} else {sha:$sha} end)' > "$WORK/manifest-request.json"
+api -X "$METHOD" -H 'Content-Type: application/json' --data-binary "@$WORK/manifest-request.json" "$CONTENTS" > "$WORK/result.json"
+ENDPOINT="https://gitee.com/$REPO/raw/$BRANCH/version.json"
+curl -fLsS --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 30 "$ENDPOINT" -o "$WORK/public.json"
+diff -u <(jq -S . "$WORK/version.json") <(jq -S . "$WORK/public.json")
+mkdir -p "$ROOT/build/outputs"
+cp "$WORK/version.json" "$ROOT/build/outputs/version.json"
+echo "已发布并匿名验证：$ENDPOINT"
+echo "APK SHA-256: $APK_SHA256"

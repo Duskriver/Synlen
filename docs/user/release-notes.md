@@ -2,6 +2,12 @@
 
 面向使用者的版本记录，按版本倒序，只列你能感知的变化。发版时把「未发布」段改名为 `## vX.Y.Z`，`tool/upload_release.sh` 从这里提取该段作为应用内更新的更新说明；完整流程见[发布一个版本](../cookbook/publishing-a-release.md)，工程变更的完整记录在 git 历史与 [Agent Notes](../../.agents/notes/README.md)。
 
+## v0.3.1
+
+- 以 MIT 协议开源，GitHub 与 Gitee 同步源码和 Android ARM64 安装包。
+- 更新检查与安装包下载通过 Gitee 分发。
+- 只提供 Android ARM64 APK，不上架应用商店。
+
 ## v0.3.0
 
 ### 新增

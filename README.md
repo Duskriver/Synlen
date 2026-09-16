@@ -4,11 +4,11 @@
   <img src="docs/icon.png" width="128" alt="词镜图标" />
 </p>
 
-词镜是一个基于 Flutter 开发的英语学习阅读器，支持 Android 和 iOS。通过阅读英文原书学英语：点击单词查看音标与释义，长按句子获取翻译与语法分析。
+词镜是一个基于 Flutter 开发的英语学习阅读器，当前发布 Android ARM64 安装包。通过阅读英文原书学英语：点击单词查看音标与释义，长按句子获取翻译与语法分析。
 
 [![Flutter](https://img.shields.io/badge/Flutter-blue.svg)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Android%20ARM64-lightgrey.svg)]()
 
 ## 功能
 
@@ -21,14 +21,17 @@
 
 ## 开始使用
 
-用户指南见 [docs/user/index.md](docs/user/index.md)。自行构建：
+下载安装包：[Gitee 发行版](https://gitee.com/Tang_Lei789/synlen/releases) · [GitHub 发行版](https://github.com/Duskriver/Synlen/releases)。用户指南见 [docs/user/index.md](docs/user/index.md)。自行构建：
 
 ```sh
 flutter pub get
 flutter run
-flutter build apk --release
-flutter build ios --release
+flutter build apk --release --target-platform android-arm64
 ```
+
+## 源码与贡献
+
+[GitHub](https://github.com/Duskriver/Synlen) 是主仓库，[Gitee](https://gitee.com/Tang_Lei789/synlen) 自动同步源码与发行包。请在 GitHub 提交 issue 和 PR。
 
 ## 文档
 

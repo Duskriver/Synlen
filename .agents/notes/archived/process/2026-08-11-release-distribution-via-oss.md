@@ -1,6 +1,7 @@
 # Agent Note: 更新分发走阿里云 OSS
 
 Status: implemented
+Archived: 2026-09-17
 
 ## Problem
 

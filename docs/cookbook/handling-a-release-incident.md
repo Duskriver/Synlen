@@ -4,9 +4,9 @@
 
 ## 步骤
 
-1. **判定影响面**：确认问题版本、受影响的平台与入口（`version.json` 是否已指向问题产物、GitHub Release 是否已公开）。拉取当前清单：`curl -s https://<bucket>.oss-<region>.aliyuncs.com/version.json`。
-2. **止血 `version.json`**：客户端唯一的更新入口就是它。用 `ossutil cp` 把上一次已知良好的 `version.json` 副本回传覆盖（发版时应保留上一版副本），或把 `androidApkUrl` / `androidApkSha256` 改回旧 APK 后重新上传。注意 `tool/upload_release.sh` 只会写入新版本，不会回退。
-3. **处理 GitHub Release**：`gh release edit vX.Y.Z --prerelease` 降级，或删除有问题的资产；不要删除已安装用户仍可能回滚到的旧产物。
+1. **判定影响面**：确认问题版本、受影响的平台与入口（`version.json` 是否已指向问题产物、GitHub Release 是否已公开）。拉取当前清单：`curl -s https://gitee.com/Tang_Lei789/synlen/raw/updates/version.json`。
+2. **止血 `version.json`**：在 Gitee 分发仓库恢复上一次已知良好的完整清单（版本号、APK 地址与摘要必须配套），提交到默认分支。不要用发布脚本回退，它会拒绝降低版本号。
+3. **处理发行版**：在 Gitee 标记问题版本为预发布，并用 `gh release edit vX.Y.Z --prerelease` 同步 GitHub 状态，或删除有问题的资产；不要删除已安装用户仍可能回滚到的旧产物。
 4. **发布修复版本**：用**递增的新版本号**重新走发布流程，不要重用已推的 tag，也不要改写历史 tag。
 5. **通知与留证**：在 Release 说明或相关 issue 记录影响范围与处理动作。
 6. **复盘**：若故障满足[事故复盘](../postmortem/README.md)的条件（微妙、系统性、重新发现代价高），补一篇复盘并链接本次新增的护栏。

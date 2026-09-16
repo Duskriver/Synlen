@@ -10,7 +10,7 @@ Status: implemented
 
 ## Decision
 
-- Android 只构建 arm64 单 ABI 包：APK 与 AAB 都加 `--target-platform android-arm64`；产物名从 `<tag>-universal-release.apk` 改为 `<tag>-arm64-release.apk`，`tool/upload_release.sh` 的定位、上传键与清单 URL 同步改名。
+- Android 只构建 arm64 单 ABI 包：APK 加 `--target-platform android-arm64`；产物名从 `<tag>-universal-release.apk` 改为 `<tag>-arm64-release.apk`，`tool/upload_release.sh` 的定位、上传键与清单 URL 同步改名。
 - 删除 CI 里的 `Build Split APKs` 步骤与脚本里的 split 上传循环：只有一个 ABI 时 split 不再产生额外产物。
 - `AppVersion.parse` 去掉 `buildNumber % 1000` 归一化。归一化是为 split 构建的 `abiCode * 1000 + build` 前缀偏移准备的（Flutter Gradle 里该 override 严格嵌套在 `shouldProjectSplitPerAbi` 判断内），不再产出 split 后它只会造成伤害：构建号规则是 `MAJOR*10000+MINOR*100+PATCH`，v1.0.0 起就是 10000，取余会截成 0，而清单里的构建号是原值，比较结果失真会让已是最新的用户被反复提示更新。
 
@@ -27,4 +27,4 @@ Status: implemented
 - 32 位真机与 x86_64 模拟器不再能安装。将来若要支持，需同时恢复多 ABI 构建与清单侧的 ABI 选择逻辑，并注意 split 的构建号前缀偏移会随之回来。
 - 已安装 v0.3.0 split 包（versionCode 带 `2 * 1000` 前缀，即 2300）的设备**无法**用新的单包（301）覆盖安装——Android 拒绝 versionCode 回退，必须先卸载。v0.3.0 未对外发布，实际只影响本机测试安装。
 - 构建号与 versionCode 从此同口径（`MAJOR*10000+MINOR*100+PATCH`），清单与本地的比较不再经过任何变换。
-- 发布门禁与 iOS 的关系见[发布门禁只等 Android 产物](2026-09-16-android-only-release-gating.md)。
+- 发布门禁与 iOS 的关系见[Gitee ARM64 分发](2026-09-17-release-distribution-via-gitee.md)。
