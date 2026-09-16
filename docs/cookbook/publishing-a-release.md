@@ -20,6 +20,7 @@
 ## 约束
 
 - 更新分发只走 OSS 的 `version.json`，`androidApkUrl` 必须是 universal APK；split APK 只作备用下载，不进 `version.json`。`androidApkSha256` 由 `tool/upload_release.sh` 自动写入；手工维护 `version.json` 时必须带上 `shasum -a 256` 的摘要，缺失时客户端放行但记 warning。
+- **APK 直链不能是 OSS 默认域名**：阿里云（2023-08-15 后建的桶）与腾讯云 COS（2024-01 起）都对 `.apk`/`.ipa` 返回 400 `ApkDownloadForbidden`，匿名与签名请求都拦，传输加速域名与海外地域同样受限，换服务商或换地域都绕不开。`androidApkUrl` 必须指向自有域名 CNAME，或改走备选下载入口。`version.json` 等非 `.apk` 对象不受影响。
 - 发版 job 与门禁用同一套固定工具链（Flutter 3.44.9、Rust 1.97.1、cargo-ndk 4.1.2），Actions 固定到 commit SHA；版本升级见[工具链锁定](../../.agents/notes/implemented/process/2026-08-11-pin-toolchain-and-dependency-ceiling.md)。
 - 发布链路不含 AI 服务密钥：签名密钥走 GitHub Secrets，AI 密钥由用户在设备上自填（见 [BYOK 决策](../../.agents/notes/implemented/architecture/2026-08-11-byok-user-provided-ai-keys.md)）。
 - iOS 的 App Store 链接在服务端 `version.json` 里配置；为空时对话框不显示该入口。
