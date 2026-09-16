@@ -15,8 +15,7 @@
 #
 # 产物：
 #   oss://<bucket>/version.json          —— 客户端检查更新用的版本元数据
-#   oss://<bucket>/apk/synlen-<tag>-universal-release.apk
-#   oss://<bucket>/apk/synlen-<tag>-<abi>-release.apk（存在则一并上传）
+#   oss://<bucket>/apk/synlen-<tag>-arm64-release.apk
 set -euo pipefail
 
 TAG="${1:?用法: ./tool/upload_release.sh <tag> [bucket] [region]}"
@@ -46,22 +45,22 @@ if [ -z "$UPDATE_LOG" ]; then
   exit 1
 fi
 
-# 定位 universal APK 并计算 SHA-256（本地构建在 flutter-apk/，CI 会移动到 build/outputs/）。
+# 定位 arm64 APK 并计算 SHA-256（本地构建在 flutter-apk/，CI 会移动到 build/outputs/）。
 # 摘要写进 version.json 的 androidApkSha256，客户端下载后比对，缺失时客户端放行（兼容旧清单）。
 APK_DIR="$ROOT/build/app/outputs/flutter-apk"
 OUTPUTS_DIR="$ROOT/build/outputs"
-UNIVERSAL_APK="$APK_DIR/synlen-${TAG}-universal-release.apk"
-if [ ! -f "$UNIVERSAL_APK" ]; then
-  UNIVERSAL_APK="$APK_DIR/app-release.apk"
+ARM64_APK="$APK_DIR/synlen-${TAG}-arm64-release.apk"
+if [ ! -f "$ARM64_APK" ]; then
+  ARM64_APK="$APK_DIR/app-release.apk"
 fi
-if [ ! -f "$UNIVERSAL_APK" ]; then
-  UNIVERSAL_APK="$OUTPUTS_DIR/synlen-${TAG}-universal-release.apk"
+if [ ! -f "$ARM64_APK" ]; then
+  ARM64_APK="$OUTPUTS_DIR/synlen-${TAG}-arm64-release.apk"
 fi
-if [ ! -f "$UNIVERSAL_APK" ]; then
+if [ ! -f "$ARM64_APK" ]; then
   echo "!! 未找到 APK（已查找 $APK_DIR 与 $OUTPUTS_DIR），请先构建 release 包" >&2
   exit 1
 fi
-APK_SHA256="$(shasum -a 256 "$UNIVERSAL_APK" | awk '{print $1}')"
+APK_SHA256="$(shasum -a 256 "$ARM64_APK" | awk '{print $1}')"
 echo "==> APK SHA-256: $APK_SHA256"
 
 # 组装 version.json（客户端协议见 check_update_tile.dart）
@@ -85,7 +84,7 @@ payload = {
         "lanzouUrl": "",
         "lanzouPassword": "",
         "githubUrl": f"https://github.com/Duskriver/Synlen/releases/tag/{tag}",
-        "androidApkUrl": f"{base}/apk/synlen-{tag}-universal-release.apk",
+        "androidApkUrl": f"{base}/apk/synlen-{tag}-arm64-release.apk",
         "androidApkSha256": apk_sha256,
         "iosAppStoreUrl": "",
     },
@@ -95,21 +94,10 @@ PYEOF
 )"
 echo "$VERSION_JSON" > /tmp/synlen-version.json
 
-echo "==> 上传 APK: $UNIVERSAL_APK"
-ossutil cp -f "$UNIVERSAL_APK" \
-  "oss://$BUCKET/apk/synlen-${TAG}-universal-release.apk" \
+echo "==> 上传 APK: $ARM64_APK"
+ossutil cp -f "$ARM64_APK" \
+  "oss://$BUCKET/apk/synlen-${TAG}-arm64-release.apk" \
   -e "$ENDPOINT"
-
-# 上传 split APK（若存在，同样兼容 CI 的 build/outputs/）
-for abi in armeabi-v7a arm64-v8a x86_64; do
-  SPLIT_APK="$APK_DIR/synlen-${TAG}-${abi}-release.apk"
-  [ -f "$SPLIT_APK" ] || SPLIT_APK="$OUTPUTS_DIR/synlen-${TAG}-${abi}-release.apk"
-  if [ -f "$SPLIT_APK" ]; then
-    echo "==> 上传 split APK: $SPLIT_APK"
-    ossutil cp -f "$SPLIT_APK" "oss://$BUCKET/apk/synlen-${TAG}-${abi}-release.apk" \
-      -e "$ENDPOINT"
-  fi
-done
 
 echo "==> 上传 version.json"
 ossutil cp -f /tmp/synlen-version.json "oss://$BUCKET/version.json" \
