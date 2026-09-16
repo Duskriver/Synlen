@@ -13,6 +13,14 @@ Status: implemented
 - bucket `synlen`，地域 `cn-hangzhou`，ACL `public-read`。地域与桶名跟 `lib/src/core/config/app_info.dart` 里 `AppInfo.versionEndpoint` 的硬编码一致，因此不必为建通道改代码、重新发版。
 - 关闭桶级「阻止公共访问」（`BlockPublicAccess=false`）。新建桶默认开启该开关，它会静默架空 `public-read` ACL：实测桶 ACL 已是 `public-read` 而匿名请求仍返回 `AccessDenied`（`because of bucket acl`），关闭后同一请求变为 `NoSuchKey`（对象不存在但读取被允许）。
 
+**APK 直链的硬约束（v0.3.0 发布当天实测）**
+
+OSS 禁止用默认域名分发 `.apk` / `.ipa`：2023-08-15 之后创建的桶，匿名或签名请求访问这两类扩展名的对象都返回 400 `ApkDownloadForbidden`，提示 "please use CNAME instead"。实测 `cn-hangzhou` 与 `cn-hongkong` 两个地域都返回同一错误，传输加速域名也在官方说明的阻断范围内，所以**换地域绕不开**；同一桶内的非 `.apk` 对象（实测 `.bin`）匿名读取正常，说明拦截按扩展名生效，与 ACL 和对象内容无关。
+
+结果是通道分裂：`version.json` 走默认域名可用，`androidApkUrl` 指向的 APK 走默认域名必然 400，应用内「下载并安装」拿不到包。官方给出的通路是自有域名 CNAME 到桶：大陆地域的桶用自定义域名须完成 ICP 备案，海外地域的桶不需要。该直链是清单下发的数据而非客户端硬编码，换域名只需改 `version.json`，不必重新发版。
+
+**此为当前唯一未决项**：域名来源与是否备案待定，未决期间 Android 的更新入口靠 GitHub Release 附件的备选按钮。
+
 **凭据边界**
 
 - 匿名可达范围：**单个对象可读、列表不可枚举**（实测匿名 `GET /version.json` 通过，匿名 `GET /?max-keys=3` 被拒）。知道 URL 就能下载，不知道就不能遍历。
