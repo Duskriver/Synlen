@@ -69,10 +69,11 @@ void main() {
       expect((v.major, v.minor, v.patch), (1, 2, 0));
     });
 
-    test('split APK 构建号按 1000 取余归一化', () {
-      // 构建 1 的 arm64 包实际构建号为 1001
-      expect(AppVersion.parse('1.0.0', buildNumber: 1001).build, 1);
-      expect(AppVersion.parse('1.0.0', buildNumber: 2010).build, 10);
+    test('构建号取原值，四位数不被截断', () {
+      // v1.0.0 的构建号按 MAJOR*10000+MINOR*100+PATCH 派生为 10000；
+      // 取余归一化会把它截成 0，于是已是最新的用户会被反复提示更新。
+      expect(AppVersion.parse('1.0.0', buildNumber: 10000).build, 10000);
+      expect(AppVersion.parse('0.3.0', buildNumber: 300).build, 300);
     });
   });
 }

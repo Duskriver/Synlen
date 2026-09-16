@@ -33,7 +33,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 | `DeepSeekKeyCheck` / `DeepSeekConnectivity` | 密钥连通性检查 | `lib/src/features/settings/application/deep_seek_connectivity.dart` |
 | `UpdateCheck` / `UpdateState` | 更新检查与下载的状态流（`AsyncValue`：loading = 检查中，error = `UpdateException`），下载子状态带进度与错误码 | `lib/src/features/settings/application/update_check.dart` |
 | `UpdateService` | 拉取并解析远端 version.json、读本地版本、下载 APK 到缓存并校验 SHA-256；平台依赖全经构造注入 | `lib/src/features/settings/data/services/update_service.dart` |
-| `AppVersion` / `VersionManifest` / `UpdateErrorCode` | 版本值类型（split APK 构建号归一化）、远端清单值类型、更新错误码 | `lib/src/features/settings/domain/` |
+| `AppVersion` / `VersionManifest` / `UpdateErrorCode` | 版本值类型、远端清单值类型、更新错误码 | `lib/src/features/settings/domain/` |
 
 ## 流程
 

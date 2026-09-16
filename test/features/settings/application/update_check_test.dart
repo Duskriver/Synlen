@@ -126,18 +126,19 @@ void main() {
       );
     });
 
-    test('本地构建号带 split APK 架构偏移时先归一化再比较', () async {
-      // 本地构建号 1010（构建 10 的 arm64 包）与远端 10 相等 → upToDate
+    test('构建号与清单同口径直接比较，五位数不被截断', () async {
+      // v1.0.0 的构建号派生为 10000。此前的取余归一化会把它截成 0，
+      // 使已是最新的用户被反复提示更新——这个用例守住不再归一化。
       final same = await check(
-        manifestJson(),
-        packageInfo: localInfo('1.1.0', '1010'),
+        manifestJson(major: 1, minor: 0, build: 10000),
+        packageInfo: localInfo('1.0.0', '10000'),
       );
       expect(same.asData!.value.checkStatus, UpdateCheckStatus.upToDate);
 
-      // 远端构建号 11 → 真有更新
+      // 构建号前进一位 → 真有更新
       final newer = await check(
-        manifestJson(build: 11),
-        packageInfo: localInfo('1.1.0', '1010'),
+        manifestJson(major: 1, minor: 0, build: 10001),
+        packageInfo: localInfo('1.0.0', '10000'),
       );
       expect(
         newer.asData!.value.checkStatus,
