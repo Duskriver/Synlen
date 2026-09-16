@@ -7,9 +7,10 @@
 #   ./tool/upload_release.sh v0.3.0 synlen cn-hangzhou
 #
 # 前置条件：
-#   1. 已安装 ossutil（https://help.aliyun.com/zh/oss/developer-reference/install-ossutil）
-#   2. 已配置 ossutil 凭证（ossutil config），或设置环境变量：
-#      OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET / OSS_ENDPOINT
+#   1. 已安装 ossutil v1（https://help.aliyun.com/zh/oss/developer-reference/install-ossutil）
+#   2. 已配置 ossutil 凭证：ossutil config -e oss-<region>.aliyuncs.com -i <id> -k <secret>
+#      ossutil v1 不读 OSS_ACCESS_KEY_ID/SECRET 环境变量，只认配置文件（默认 ~/.ossutilconfig）；
+#      CI 侧由 build_release.yml 从 secrets 写该文件后再调用本脚本。
 #   3. 本地已构建好 release APK（flutter build apk --release --split-per-abi 或 universal）
 #
 # 产物：

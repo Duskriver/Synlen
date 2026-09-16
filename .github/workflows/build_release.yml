@@ -189,11 +189,23 @@ jobs:
       - name: Upload to Aliyun OSS (optional)
         if: startsWith(github.ref, 'refs/tags/') && env.OSS_ACCESS_KEY_ID != '' && env.OSS_ACCESS_KEY_SECRET != ''
         run: |
-          # 安装 ossutil v1
-          curl -sL -o /tmp/ossutil.zip "https://gosspublic.alicdn.com/ossutil/ossutil-1.7.19-linux-amd64.zip"
+          # ossutil v1 只认配置文件，不读 OSS_ACCESS_KEY_ID/SECRET 环境变量：
+          # 只设环境变量时会以 "accessKeyID and ecsUrl are both empty" 失败，
+          # 所以先落到默认配置路径，脚本里的裸 ossutil 调用才拿得到凭据。
+          curl -fsSL -o /tmp/ossutil.zip "https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil-v1.7.19-linux-amd64.zip"
           unzip -o -q /tmp/ossutil.zip -d /tmp/ossutil-bin
-          chmod +x /tmp/ossutil-bin/ossutil
-          export PATH="/tmp/ossutil-bin:$PATH"
+          OSSUTIL_BIN="$(find /tmp/ossutil-bin -type f -name ossutil -perm -u+x | head -1)"
+          chmod +x "$OSSUTIL_BIN"
+          export PATH="$(dirname "$OSSUTIL_BIN"):$PATH"
+
+          cat > "$HOME/.ossutilconfig" <<EOF
+          [Credentials]
+          language=CH
+          endpoint=oss-${{ secrets.OSS_REGION }}.aliyuncs.com
+          accessKeyID=$OSS_ACCESS_KEY_ID
+          accessKeySecret=$OSS_ACCESS_KEY_SECRET
+          EOF
+
           # 复用发布脚本：生成 version.json 并上传 APK
           bash tool/upload_release.sh "${{ github.ref_name }}" "${{ secrets.OSS_BUCKET }}" "${{ secrets.OSS_REGION }}"
 
@@ -277,7 +289,27 @@ jobs:
 
       - name: Extract Release Notes
         id: extract_notes
-        uses: ffurrer2/extract-release-notes@273da39a24fb7db106a35526c8162815faffd31d # v3
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.version || github.ref_name }}
+        run: |
+          # 与 tool/upload_release.sh 用同一套提取规则（`## v<version>` 段），
+          # 让 Release 正文与 version.json 的 updateLog 同源；缺段即失败，
+          # 不再依赖第三方动作按固定序号取段（那会取出上一版的说明）。
+          VERSION="${RELEASE_TAG#v}"
+          NOTES="$(awk -v ver="$VERSION" '
+            index($0, "## v" ver) == 1 {in_section=1; next}
+            in_section && index($0, "## ") == 1 {exit}
+            in_section {print}
+          ' docs/user/release-notes.md)"
+          if [ -z "$NOTES" ]; then
+            echo "::error::docs/user/release-notes.md 中未找到 v$VERSION 段"
+            exit 1
+          fi
+          {
+            echo 'notes<<SYNLEN_RELEASE_NOTES_EOF'
+            printf '%s\n' "$NOTES"
+            echo 'SYNLEN_RELEASE_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Release to GitHub
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
