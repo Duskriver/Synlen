@@ -28,6 +28,11 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        ndk {
+            // Flutter 的默认过滤包含三种 ABI，第三方预编译库也必须限定为 ARM64。
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     val keystoreProperties = Properties()
@@ -88,4 +93,3 @@ dependencies {
     // DocumentFile for SAF folder traversal
     implementation("androidx.documentfile:documentfile:1.0.1")
 }
-

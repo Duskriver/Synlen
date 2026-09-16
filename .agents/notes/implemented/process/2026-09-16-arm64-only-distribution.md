@@ -11,6 +11,7 @@ Status: implemented
 ## Decision
 
 - Android 只构建 arm64 单 ABI 包：APK 加 `--target-platform android-arm64`；产物名从 `<tag>-universal-release.apk` 改为 `<tag>-arm64-release.apk`，`tool/upload_release.sh` 的定位、上传键与清单 URL 同步改名。
+- `defaultConfig.ndk.abiFilters` 清空 Flutter 默认的三种 ABI，再只加入 `arm64-v8a`。仅传 `--target-platform android-arm64` 仍会把第三方的 `libdartjni.so` 与 `libdatastore_shared_counter.so` 的 armv7 / x86_64 版本打入包，CI 直接检查 APK 中的原生库目录必须只有 ARM64。配置依据见 [Flutter ABI 过滤说明](https://docs.flutter.dev/release/breaking-changes/default-abi-filters-android)。
 - 删除 CI 里的 `Build Split APKs` 步骤与脚本里的 split 上传循环：只有一个 ABI 时 split 不再产生额外产物。
 - `AppVersion.parse` 去掉 `buildNumber % 1000` 归一化。归一化是为 split 构建的 `abiCode * 1000 + build` 前缀偏移准备的（Flutter Gradle 里该 override 严格嵌套在 `shouldProjectSplitPerAbi` 判断内），不再产出 split 后它只会造成伤害：构建号规则是 `MAJOR*10000+MINOR*100+PATCH`，v1.0.0 起就是 10000，取余会截成 0，而清单里的构建号是原值，比较结果失真会让已是最新的用户被反复提示更新。
 

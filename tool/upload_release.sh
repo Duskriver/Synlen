@@ -48,7 +48,8 @@ if get_optional "$CONTENTS?ref=$BRANCH" "$WORK/contents.json" && ! jq -e '. == [
   jq -r '.content' "$WORK/contents.json" | tr -d '\n' | base64 --decode > "$WORK/previous.json"
   jq -e --argjson build "$BUILD_NUMBER" '.code == 200 and (.data.buildNumber <= $build)' "$WORK/previous.json" >/dev/null || { echo '拒绝降级或覆盖无效清单' >&2; exit 1; }
 fi
-if ! get_optional "$API/releases/tags/$TAG" "$WORK/release.json"; then
+# Gitee 对不存在的发行版返回 HTTP 200 + null，而不是 404。
+if ! get_optional "$API/releases/tags/$TAG" "$WORK/release.json" || ! jq -e '.id != null' "$WORK/release.json" >/dev/null; then
   jq -n --arg tag "$TAG" --arg body "$UPDATE_LOG" --arg branch "$TAG" '{tag_name:$tag,name:$tag,body:$body,target_commitish:$branch,prerelease:false}' > "$WORK/release-request.json"
   api -X POST -H 'Content-Type: application/json' --data-binary "@$WORK/release-request.json" "$API/releases" > "$WORK/release.json"
 fi

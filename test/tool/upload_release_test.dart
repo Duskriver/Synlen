@@ -57,7 +57,7 @@ case "$url" in
     if [[ "${SCENARIO:-}" == retry ]]; then
       response='{"id":1,"assets":[{"name":"app.apk","browser_download_url":"https://gitee.com/test/release.apk"}]}'
     else
-      code=404; response='{}'
+      response='null'
     fi ;;
   */releases) response='{"id":1,"assets":[]}' ;;
   */attach_files) response='{"browser_download_url":"https://gitee.com/test/release.apk"}' ;;
