@@ -2,9 +2,7 @@
 
 面向使用者的版本记录，按版本倒序，只列你能感知的变化。发版时把「未发布」段改名为 `## vX.Y.Z`，`tool/upload_release.sh` 从这里提取该段作为应用内更新的更新说明；完整流程见[发布一个版本](../cookbook/publishing-a-release.md)，工程变更的完整记录在 git 历史与 [Agent Notes](../../.agents/notes/README.md)。
 
-## 未发布
-
-以下内容尚未发布，实际以发布版本为准。
+## v0.3.0
 
 ### 新增
 
