@@ -2,6 +2,13 @@
 
 面向使用者的版本记录，按版本倒序，只列你能感知的变化。发版时把「未发布」段改名为 `## vX.Y.Z`，`tool/upload_release.sh` 从这里提取该段作为应用内更新的更新说明；完整流程见[发布一个版本](../cookbook/publishing-a-release.md)，工程变更的完整记录在 git 历史与 [Agent Notes](../../.agents/notes/README.md)。
 
+## v0.3.3
+
+- 修复点击「检查更新」时因连接提前关闭而失败的问题。
+- 修复更新包下载中断，以及检查或下载期间退出页面引发的异常。
+
+旧版本若无法检查更新，请手动下载本版 APK 覆盖安装。
+
 ## v0.3.2
 
 - 以 MIT 协议开源，GitHub 与 Gitee 同步源码和 Android ARM64 安装包。
