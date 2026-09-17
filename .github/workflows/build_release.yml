@@ -1,15 +1,13 @@
 name: Build And Release App
 
+# 日常发布使用 tool/release.sh；云端只作为手动备用。
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号（如 v0.3.0），手动触发时必填，用于派生 versionCode'
-        required: false
-        default: ''
+        description: '已推送的版本 tag（如 v0.3.4），必须与 pubspec.yaml 一致'
+        required: true
+        type: string
 
 concurrency:
   group: synlen-release
@@ -17,15 +15,30 @@ concurrency:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
-  # 发布前置质量门禁：测试不过不构建产物。
-  quality-gates:
-    name: Quality Gates (analyze · test · layer · rust · assets drift)
+  release:
+    name: Check · Build ARM64 · Publish
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
+    env:
+      RELEASE_TAG: ${{ inputs.version }}
     steps:
+      - name: Validate release tag
+        run: '[[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]'
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.version }}
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -43,188 +56,52 @@ jobs:
         uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
         with:
           toolchain: 1.97.1
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: rust
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Run tests
-        run: flutter test
-
-      - name: Run layer gates
-        run: dart run tool/layer_gates.dart
-
-      - name: Run Rust tests
-        run: cargo test --locked --manifest-path rust/Cargo.toml
-
-      - name: Run documentation gates
-        run: dart run tool/doc_gates.dart
-
-      - name: Install web toolchain
-        working-directory: web_assets/controller.js
-        run: npm ci
-
-      - name: Typecheck reader TypeScript
-        working-directory: web_assets/controller.js
-        run: npm run typecheck
-
-      - name: Detect generated assets drift
-        run: |
-          dart run tool/build_web_assets.dart
-          git diff --exit-code lib/src/web/web_assets.dart
-
-  build-android:
-    name: Build Android ARM64 APK
-    needs: [quality-gates]
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    env:
-      RELEASE_TAG: ${{ github.event.inputs.version || github.ref_name }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Setup Java
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-          cache: 'gradle'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          flutter-version: '3.44.9'
-          channel: 'stable'
-          cache: true
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
-        with:
-          toolchain: 1.97.1
           targets: aarch64-linux-android
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
-          workspaces: rust
+          workspaces: |
+            rust
+            rust -> ../build/synlen_rust/build
 
-      - name: Install cargo-ndk
-        run: cargo install cargo-ndk --version 4.1.2 --locked
+      - name: Install browser system dependencies
+        working-directory: web_assets/controller.js
+        run: |
+          npm ci
+          # Playwright 使用自带浏览器，避开 runner 中偶发索引错误的 Chrome 软件源。
+          sudo rm -f /etc/apt/sources.list.d/google*.list /etc/apt/sources.list.d/google*.sources
+          npx playwright install-deps chromium webkit
 
       - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-          echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" > android/key.properties
-          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=upload-keystore.jks" >> android/key.properties
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          {
+            printf 'storePassword=%s\n' "$STORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'storeFile=upload-keystore.jks\n'
+          } > android/key.properties
 
-      - name: Get Dependencies
-        run: flutter pub get
+      - name: Check, build and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: bash tool/release.sh "$RELEASE_TAG"
 
-      - name: Compute Build Number
-        id: build_number
-        run: |
-          # versionCode 从 tag 派生（vX.Y.Z → X*10000+Y*100+Z），
-          # 保证每次发版递增，覆盖安装不会被拒
-          TAG="$RELEASE_TAG"
-          [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || exit 1
-          (( BASH_REMATCH[1] <= 209999 && BASH_REMATCH[2] < 100 && BASH_REMATCH[3] < 100 )) || exit 1
-          TAG="${TAG#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG"
-          echo "value=$((MAJOR * 10000 + MINOR * 100 + PATCH))" >> "$GITHUB_OUTPUT"
-
-      - name: Create Output Dir
-        run: mkdir -p build/outputs
-
-      - name: Build arm64 APK
-        run: |
-          flutter build apk --release --target-platform android-arm64 \
-            --build-name="${RELEASE_TAG#v}" --build-number=${{ steps.build_number.outputs.value }}
-          
-          NEW_NAME="synlen-${RELEASE_TAG}-arm64-release.apk"
-          
-          mv build/app/outputs/flutter-apk/app-release.apk build/outputs/$NEW_NAME
-          echo "Generated $NEW_NAME"
-
-      - name: Verify APK architecture
-        run: |
-          ABIS="$(unzip -Z -1 "build/outputs/synlen-${RELEASE_TAG}-arm64-release.apk" | awk -F/ '$1 == "lib" && NF == 3 && $3 ~ "[.]so$" {print $2}' | sort -u)"
-          test "$ABIS" = 'arm64-v8a'
-
-      - name: Upload Android Artifacts
+      # 发布失败时也保留同一份产物和源码摘要，供下载后重试。
+      - name: Upload release artifacts
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: android-artifacts
-          path: build/outputs/*
-
-      - name: Sync Gitee source and tags
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-        run: bash tool/sync_gitee.sh
-
-      - name: Publish to Gitee
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-        run: bash tool/upload_release.sh "$RELEASE_TAG"
-
-  create-release:
-    name: Create GitHub Release
-    needs: [build-android]
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Download Android Artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: android-artifacts
-          path: artifacts
-
-      - name: Extract Release Notes
-        id: extract_notes
-        env:
-          RELEASE_TAG: ${{ github.event.inputs.version || github.ref_name }}
-        run: |
-          # 与 tool/upload_release.sh 用同一套提取规则（`## v<version>` 段），
-          # 让 Release 正文与 version.json 的 updateLog 同源；缺段即失败，
-          # 不再依赖第三方动作按固定序号取段（那会取出上一版的说明）。
-          VERSION="${RELEASE_TAG#v}"
-          NOTES="$(awk -v ver="$VERSION" '
-            $0 == "## v" ver {in_section=1; next}
-            in_section && index($0, "## ") == 1 {exit}
-            in_section {print}
-          ' docs/user/release-notes.md)"
-          if [ -z "$NOTES" ]; then
-            echo "::error::docs/user/release-notes.md 中未找到 v$VERSION 段"
-            exit 1
-          fi
-          {
-            echo 'notes<<SYNLEN_RELEASE_NOTES_EOF'
-            printf '%s\n' "$NOTES"
-            echo 'SYNLEN_RELEASE_NOTES_EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Release to GitHub
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            artifacts/**/*.apk
-          body: ${{ steps.extract_notes.outputs.notes }}
-          generate_release_notes: false
-          prerelease: false
+          path: |
+            build/outputs/*.apk
+            build/outputs/*.apk.json
+          if-no-files-found: ignore

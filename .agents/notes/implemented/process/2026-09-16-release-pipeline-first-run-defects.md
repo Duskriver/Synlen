@@ -32,6 +32,6 @@ Status: implemented
 
 ## Consequences
 
-- 提取规则在 `tool/upload_release.sh` 与 workflow 里各有一份，改格式要同改两处；合并成一个共享脚本是后续可做的简化。
+- 提取规则在 `tool/upload_release.sh` 与 `tool/release.sh` 中各有一份，改格式要同改两处。
 - v0.3.0 的 Android 产物与 `version.json` 由修复后的上传步骤真实产出，universal APK 的 SHA-256 与清单声明一致；iOS 失败导致 Release 被跳过，该 Release 随后手工补建。发布门禁的调整见[发布门禁只等 Android 产物](../../archived/process/2026-09-16-android-only-release-gating.md)。
 - 通道形态与凭据边界的决策见[Gitee ARM64 分发](2026-09-17-release-distribution-via-gitee.md)。
