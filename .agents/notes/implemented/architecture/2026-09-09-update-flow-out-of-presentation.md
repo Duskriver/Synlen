@@ -6,14 +6,16 @@ Status: implemented
 
 `check_update_tile.dart`（396 行）把版本清单拉取与解析、语义化版本比较、Dio 下载、SHA-256 校验、FileProvider 安装与对话框 UI 混在一个 StatefulWidget 里：网络与文件逻辑无法注入 fake、错误以裸 catch + Toast 上屏、违反 presentation 不得含业务逻辑的分层约定。P0 已在此文件内补了 HTTPS 强制与 sha256 校验（见[更新下载链路与备份解压加固](../bug-fix/2026-09-09-update-backup-hardening.md)），结构性问题仍在。
 
+异步调用还必须持有服务依赖：`UpdateCheck` 仅用 `ref.read` 获取自动释放的 `UpdateService` 时，服务在无人订阅后执行 `dio.close(force: true)`，请求报 `Can't establish connection after the adapter was closed`。v0.3.2 发布包的更新检查可复现此失败；直接请求 Gitee 清单成功，原测试的 `overrideWithValue` 绕过服务销毁，未覆盖这一时序。
+
 ## Decision
 
 按既有分层落点拆成四层：
 
-- **domain**：`AppVersion`（语义化版本 + split APK 构建号归一化 + 逐段比较）、`VersionManifest`（远端清单值类型，含 `androidApkSha256`）、`UpdateException` / `UpdateErrorCode`（`checkFailed`、`noUpdateChannel`、`insecureUrl`、`downloadFailed`、`checksumMismatch`），参照 `LearningErrorCode` 范式，`details` 仅入日志不上屏。
+- **domain**：`AppVersion`（语义化版本与原始构建号逐段比较）、`VersionManifest`（远端清单值类型，含 `androidApkSha256`）、`UpdateException` / `UpdateErrorCode`（`checkFailed`、`noUpdateChannel`、`insecureUrl`、`downloadFailed`、`checksumMismatch`），参照 `LearningErrorCode` 范式，`details` 仅入日志不上屏。
 - **data**：`UpdateService`（`lib/src/features/settings/data/services/update_service.dart`）负责清单拉取与解析、本地版本读取、HTTPS scheme 校验、Dio 下载到缓存目录、sha256 比对（不匹配删文件、字段缺失放行记 warning——P0 行为原样保留），产物是安装包路径。Dio、清单端点、`PackageInfo` 读取、缓存目录解析全部经构造注入，测试用 stub `HttpClientAdapter` 替换。
-- **application**：`UpdateCheck` notifier 暴露 `AsyncValue<UpdateState>`：检查阶段占满三态（loading = 检查中、error = `UpdateException`、data 带 `idle / upToDate / updateAvailable`），下载作为 data 内的子状态（进度、产物路径、失败错误码），保证下载失败不丢已渲染的清单。错误只在此捕获并转成错误码。
-- **presentation**：`check_update_tile.dart` 瘦身为 259 行，只余 UI、状态订阅与按错误码映射 l10n；HTTP、版本比较、下载、校验代码全部删除。
+- **application**：`UpdateCheck` notifier 暴露 `AsyncValue<UpdateState>`：检查阶段占满三态（loading = 检查中、error = `UpdateException`、data 带 `idle / upToDate / updateAvailable`），下载作为 data 内的子状态（进度、产物路径、失败错误码），保证下载失败不丢已渲染的清单。错误只在此捕获并转成错误码。`build()` 订阅更新服务，使服务随检查器存活；检查器销毁后关闭连接，异步返回先检查 `ref.mounted`，不再读写已销毁的状态。
+- **presentation**：`check_update_tile.dart` 负责 UI、状态订阅与按错误码映射 l10n。
 
 **安装留在 UI 侧薄壳**：`android_intent_plus` 的 `canResolveActivity` / `launch` 没有可注入 seam，副作用只是拉起系统界面，与 `UrlLauncher` 同类；薄壳只消费 application 给出的安装包路径，不含判断逻辑。
 
@@ -25,16 +27,18 @@ Status: implemented
 
 **清单获取沿用 dart:io HttpClient** —— 放弃：与下载统一走注入的 Dio，测试基建（stub adapter）与 `DeepSeekService` 一致，少一种 HTTP 路径。
 
+**让更新服务永久存活或删除 Dio 清理回调** —— 放弃：没有消费者时仍保留连接资源。由检查器订阅服务，既覆盖检查与下载的等待期，也保留退出后的释放行为。
+
 ## Consequences
 
 - presentation 不再 import `dio` / `crypto` / `path_provider`；分层门禁把守着 presentation → data 的边界。
-- 更新流程首次有测试：版本比较边界、HTTPS 拒绝、sha256 匹配 / 不匹配 / 缺失放行、网络失败路径，见 `test/features/settings/application/update_check_test.dart` 与 `test/features/settings/domain/app_version_test.dart`。
+- 更新测试覆盖版本比较、HTTPS 拒绝、SHA-256 校验与网络失败；服务替身保留 `onDispose` 关闭 Dio 的行为，并用延迟响应覆盖检查与下载的自动释放时机、退出后释放、再次进入及请求中途销毁，见[更新检查测试](../../../../test/features/settings/application/update_check_test.dart)与[版本比较测试](../../../../test/features/settings/domain/app_version_test.dart)。
 - 新增错误码时要同步 presentation 的 `_updateErrorMessage` 映射与双语 l10n；现有五个码均复用既有文案。
 - 真机行为（FileProvider 安装、系统未知来源引导）不受本次重构影响，未重复验证。
 
 ## Testing
 
-- `flutter test test/features/settings` 全绿；`flutter analyze` 零 error 零 warning；`dart run tool/layer_gates.dart` 通过（218 个源文件、488 条 import 边）。
+- 最小回归命令：`flutter test test/features/settings/application/update_check_test.dart test/features/settings/domain/app_version_test.dart`；静态检查与分层门禁按[测试策略](../../../../docs/testing.md)执行。
 
 ## Related
 

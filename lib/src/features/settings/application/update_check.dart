@@ -73,7 +73,11 @@ class UpdateState {
 @riverpod
 class UpdateCheck extends _$UpdateCheck {
   @override
-  AsyncValue<UpdateState> build() => const AsyncValue.data(UpdateState());
+  AsyncValue<UpdateState> build() {
+    // 检查与下载跨越异步等待，必须订阅服务以免 Dio 提前关闭。
+    ref.watch(updateServiceProvider);
+    return const AsyncValue.data(UpdateState());
+  }
 
   /// 拉取远端清单并与本地版本比较。
   ///
@@ -86,6 +90,7 @@ class UpdateCheck extends _$UpdateCheck {
       final service = ref.read(updateServiceProvider);
       final manifest = await service.fetchManifest();
       final local = await service.localVersion();
+      if (!ref.mounted) return;
       state = AsyncValue.data(
         manifest.version.isNewerThan(local)
             ? UpdateState(
@@ -95,9 +100,11 @@ class UpdateCheck extends _$UpdateCheck {
             : const UpdateState(checkStatus: UpdateCheckStatus.upToDate),
       );
     } on UpdateException catch (e, st) {
+      if (!ref.mounted) return;
       appLogger.w('更新检查失败（${e.code.name}）: ${e.details}');
       state = AsyncValue.error(e, st);
     } catch (e, st) {
+      if (!ref.mounted) return;
       appLogger.e('更新检查失败', error: e, stackTrace: st);
       state = AsyncValue.error(
         UpdateException(UpdateErrorCode.checkFailed, e),
@@ -116,6 +123,7 @@ class UpdateCheck extends _$UpdateCheck {
     if (current.download.status == UpdateDownloadStatus.downloading) return;
 
     void emit(UpdateDownloadState download) {
+      if (!ref.mounted) return;
       final s = state.asData?.value;
       if (s != null && identical(s.manifest, manifest)) {
         state = AsyncValue.data(s.copyWith(download: download));
@@ -143,6 +151,7 @@ class UpdateCheck extends _$UpdateCheck {
         ),
       );
     } on UpdateException catch (e) {
+      if (!ref.mounted) return;
       appLogger.w('更新包下载失败（${e.code.name}）: ${e.details}');
       emit(
         UpdateDownloadState(
@@ -151,6 +160,7 @@ class UpdateCheck extends _$UpdateCheck {
         ),
       );
     } catch (e, st) {
+      if (!ref.mounted) return;
       appLogger.e('更新包下载失败', error: e, stackTrace: st);
       emit(
         const UpdateDownloadState(

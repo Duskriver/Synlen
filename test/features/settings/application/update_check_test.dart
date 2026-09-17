@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -47,14 +48,15 @@ void main() {
     addTearDown(() => dio.close(force: true));
     final container = ProviderContainer(
       overrides: [
-        updateServiceProvider.overrideWithValue(
-          UpdateService(
+        updateServiceProvider.overrideWith((ref) {
+          ref.onDispose(() => dio.close(force: true));
+          return UpdateService(
             dio: dio,
             versionEndpoint: 'https://updates.example.com/version.json',
             readPackageInfo: () async => packageInfo ?? defaultLocal,
             cacheDirectory: () async => cacheDir,
-          ),
-        ),
+          );
+        }),
       ],
     );
     addTearDown(container.dispose);
@@ -94,6 +96,27 @@ void main() {
   }
 
   group('checkForUpdates', () {
+    test('清单响应跨过自动释放时机仍能完成检查', () async {
+      final adapter = _PendingAdapter();
+      final container = containerWith(adapter: adapter);
+      final checking = container
+          .read(updateCheckProvider.notifier)
+          .checkForUpdates();
+
+      await adapter.started.future;
+      await container.pump();
+      adapter.respond(ResponseBody.fromString(manifestJson(), 200));
+      await checking;
+
+      final state = container.read(updateCheckProvider);
+      expect(
+        state.asData?.value.checkStatus,
+        UpdateCheckStatus.upToDate,
+        reason: '${state.error}',
+      );
+      expect(adapter.isClosed, isFalse);
+    });
+
     test('远端版本更高 → updateAvailable，清单含 sha256 字段', () async {
       final state = await check(
         manifestJson(major: 1, minor: 2, androidApkSha256: 'ab' * 32),
@@ -285,7 +308,135 @@ void main() {
       expect(download.status, UpdateDownloadStatus.failed);
       expect(download.errorCode, UpdateErrorCode.downloadFailed);
     });
+
+    test('APK 响应跨过自动释放时机仍能完成下载与校验', () async {
+      final adapter = _PendingAdapter(
+        manifestBody: manifestJson(
+          minor: 2,
+          androidApkSha256: sha256.convert(apkBytes).toString(),
+        ),
+      );
+      final container = containerWith(adapter: adapter);
+      await container.read(updateCheckProvider.notifier).checkForUpdates();
+      final downloading = container
+          .read(updateCheckProvider.notifier)
+          .downloadAndInstall();
+
+      await Future.any([adapter.started.future, downloading]);
+      await container.pump();
+      adapter.respond(ResponseBody.fromBytes(apkBytes, 200));
+      await downloading;
+
+      final download = downloadStateOf(container);
+      expect(
+        download.status,
+        UpdateDownloadStatus.completed,
+        reason: '${download.errorCode}',
+      );
+      expect(File(download.apkPath!).readAsBytesSync(), apkBytes);
+      expect(adapter.isClosed, isFalse);
+    });
   });
+
+  test('更新入口关闭后释放服务，重新进入可再次检查', () async {
+    var created = 0;
+    var disposed = 0;
+    final container = ProviderContainer.test(
+      overrides: [
+        updateServiceProvider.overrideWith((ref) {
+          created++;
+          final dio = Dio()
+            ..httpClientAdapter = _StubAdapter(manifestBody: manifestJson());
+          ref.onDispose(() {
+            disposed++;
+            dio.close(force: true);
+          });
+          return UpdateService(
+            dio: dio,
+            versionEndpoint: 'https://updates.example.com/version.json',
+            readPackageInfo: () async => defaultLocal,
+            cacheDirectory: () async => cacheDir,
+          );
+        }),
+      ],
+    );
+
+    for (var visit = 1; visit <= 2; visit++) {
+      final subscription = container.listen(updateCheckProvider, (_, _) {});
+      await container.read(updateCheckProvider.notifier).checkForUpdates();
+      await container.pump();
+      expect(created, visit);
+      expect(disposed, visit - 1);
+      expect(
+        container.read(updateCheckProvider).asData?.value.checkStatus,
+        UpdateCheckStatus.upToDate,
+      );
+
+      subscription.close();
+      await container.pump();
+      expect(disposed, visit);
+    }
+  });
+
+  for (final downloading in [false, true]) {
+    test('${downloading ? '下载' : '检查'}期间销毁检查器会关闭连接且不再写状态', () async {
+      final adapter = _PendingAdapter(
+        manifestBody: downloading ? manifestJson(minor: 2) : null,
+      );
+      final container = containerWith(adapter: adapter);
+      final notifier = container.read(updateCheckProvider.notifier);
+      if (downloading) await notifier.checkForUpdates();
+      final operation = downloading
+          ? notifier.downloadAndInstall()
+          : notifier.checkForUpdates();
+      await adapter.started.future;
+
+      container.dispose();
+
+      await expectLater(operation, completes);
+      expect(adapter.isClosed, isTrue);
+    });
+  }
+}
+
+/// 延迟响应越过 provider 释放时机；强制关闭时中断请求，与真实 Dio 一致。
+class _PendingAdapter implements HttpClientAdapter {
+  _PendingAdapter({this.manifestBody});
+
+  final String? manifestBody;
+  final started = Completer<void>();
+  final _response = Completer<ResponseBody>();
+  bool isClosed = false;
+
+  void respond(ResponseBody response) {
+    if (!_response.isCompleted) _response.complete(response);
+  }
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) {
+    if (isClosed) {
+      if (!started.isCompleted) started.complete();
+      return Future.error(StateError('HTTP adapter closed before request'));
+    }
+    final manifest = manifestBody;
+    if (manifest != null && options.uri.path.endsWith('version.json')) {
+      return Future.value(ResponseBody.fromString(manifest, 200));
+    }
+    started.complete();
+    return _response.future;
+  }
+
+  @override
+  void close({bool force = false}) {
+    isClosed = true;
+    if (force && !_response.isCompleted && started.isCompleted) {
+      _response.completeError(StateError('HTTP adapter closed during request'));
+    }
+  }
 }
 
 /// 固定响应清单与 APK 字节的 HttpClientAdapter。
