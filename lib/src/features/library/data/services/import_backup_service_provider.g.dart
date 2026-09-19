@@ -8,18 +8,12 @@ part of 'import_backup_service_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provider for [ImportBackupService].
-///
-/// 直接注入数据库实例，以便服务调用 repository 层未暴露的
-/// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
+/// 注入恢复所需的书目读取、跨表事务与平台文件入口。
 
 @ProviderFor(importBackupService)
 final importBackupServiceProvider = ImportBackupServiceProvider._();
 
-/// Provider for [ImportBackupService].
-///
-/// 直接注入数据库实例，以便服务调用 repository 层未暴露的
-/// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
+/// 注入恢复所需的书目读取、跨表事务与平台文件入口。
 
 final class ImportBackupServiceProvider
     extends
@@ -29,10 +23,7 @@ final class ImportBackupServiceProvider
           ImportBackupService
         >
     with $Provider<ImportBackupService> {
-  /// Provider for [ImportBackupService].
-  ///
-  /// 直接注入数据库实例，以便服务调用 repository 层未暴露的
-  /// 按索引 upsert 方法（`putByFileHash`、`putByName`）。
+  /// 注入恢复所需的书目读取、跨表事务与平台文件入口。
   ImportBackupServiceProvider._()
     : super(
         from: null,
@@ -68,4 +59,4 @@ final class ImportBackupServiceProvider
 }
 
 String _$importBackupServiceHash() =>
-    r'7c62909bc901d1b6c6fcb774c3a2c225a90f249f';
+    r'5a9efd7a11678bc2150005991b446a0796437e69';

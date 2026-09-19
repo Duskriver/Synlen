@@ -1,3 +1,4 @@
+import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -48,7 +49,7 @@ void main() {
     fileImport = LocalBackupImport();
     service = ImportBackupService(
       shelfBookRepository: shelfRepo,
-      bookManifestRepository: manifestRepo,
+      bookStore: LibraryBookStore(db: db),
       importService: fileImport,
     );
   });
@@ -236,9 +237,19 @@ void main() {
   });
 
   test('已有清单更新失败保留原值，不计为恢复成功', () async {
-    final paths = await backup();
+    final paths = await backup(withCover: true);
     await restore(paths);
     final original = (await manifestRepo.getManifestByHash('book-a'))!;
+    final originalBook = (await shelfRepo.getBookByHash('book-a'))!;
+    final cover = File('${AppStorage.documentsPath}covers/book-a.jpg');
+    await cover.writeAsBytes([9, 8]);
+    await File((paths.shelfFile as IOSFilePath).path).writeAsString(
+      jsonEncode({
+        'version': 1,
+        'groups': [],
+        'books': [bookMap(updatedAt: 900, title: '新标题')],
+      }),
+    );
     await db.customStatement(
       "CREATE TRIGGER reject_manifest_update BEFORE UPDATE ON book_manifests "
       "BEGIN SELECT RAISE(ABORT, 'test failure'); END",
@@ -252,6 +263,11 @@ void main() {
     final result = (await manifestRepo.getManifestByHash('book-a'))!;
     expect(result.id, original.id);
     expect(result.lastUpdated, original.lastUpdated);
+    expect(
+      (await shelfRepo.getBookByHash('book-a'))!.title,
+      originalBook.title,
+    );
+    expect(await cover.readAsBytes(), [9, 8]);
   });
 
   test('较旧清单不覆盖本机较新版本', () async {
@@ -443,6 +459,12 @@ void main() {
         isEmpty,
       );
       expect(fileImport.releases, 1);
+      expect(await db.select(db.shelfBooks).get(), isEmpty);
+      expect(await db.select(db.bookManifests).get(), isEmpty);
+      expect(
+        await File('${AppStorage.documentsPath}books/book-a.txt').exists(),
+        isFalse,
+      );
     });
   }
 

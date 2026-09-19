@@ -10,7 +10,7 @@ Status: implemented
 
 ## Decision
 
-删除 `LibraryState` / `LibraryLoaded` / `LibraryError` / `_loadBooks` / `refresh`，并顺带删除零调用方的 `deleteBook`（真实删除路径是 `bookshelf_notifier.dart` 直连 `_importService.deleteBook`，此处是同一编排的重复副本），随之移除仅被它使用的 `fpdart` 与 `shelf_book_repository_provider.dart` import。`LibraryNotifier.build()` 改为 `void build() {}`，导入编排方法保持不变。
+删除 `LibraryState` / `LibraryLoaded` / `LibraryError` / `_loadBooks` / `refresh`，并顺带删除零调用方的 `deleteBook`（真实删除路径由 `bookshelf_notifier.dart` 经 `BookDeletion` 编排，此处是同一编排的重复副本），随之移除仅被它使用的 `fpdart` 与 `shelf_book_repository_provider.dart` import。`LibraryNotifier.build()` 改为 `void build() {}`，导入编排方法保持不变。
 
 ## Alternatives considered
 

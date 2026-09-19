@@ -251,17 +251,4 @@ class MockBookImportService extends _i1.Mock implements _i10.BookImportService {
                 ),
           )
           as _i6.Future<_i11.Either<_i12.LibraryException, _i13.ShelfBook>>);
-
-  @override
-  _i6.Future<_i11.Either<String, bool>> deleteBook(_i13.ShelfBook? book) =>
-      (super.noSuchMethod(
-            Invocation.method(#deleteBook, [book]),
-            returnValue: _i6.Future<_i11.Either<String, bool>>.value(
-              _i8.dummyValue<_i11.Either<String, bool>>(
-                this,
-                Invocation.method(#deleteBook, [book]),
-              ),
-            ),
-          )
-          as _i6.Future<_i11.Either<String, bool>>);
 }

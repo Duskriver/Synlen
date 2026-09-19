@@ -29,7 +29,7 @@ Status: implemented
 - 导入落库的原子性由 SQLite 事务保证，手工补偿路径删除；`txt_import_test.dart` 的回滚用例改为断言"双写失败时不调 deleteBook 补偿"。
 - 墓碑行语义成为不变量：软删除的书不视为孤儿，后续改删除流程时不得让墓碑行失去清单以外的其他依赖语义。
 - `ShelfBookRepository.deleteBook`（硬删除）在导入路径不再被调用，但仍是合法 CRUD 原语，保留。
-- 备份恢复链路（`BackupMerger`）仍是书与清单分步 upsert，未纳入本次事务化；如出现同类问题再处理。
+- 恢复双写与删除事务遵循[藏书写入契约](../architecture/2026-09-19-library-write-consistency.md)，与导入共用 `LibraryBookStore`。
 
 ## Testing
 

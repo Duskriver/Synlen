@@ -9,11 +9,11 @@ import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/library_exception.dart';
 
 import '../parsers/epub_zip_parser.dart';
-import '../book_manifest_repository.dart';
 import '../library_book_store.dart';
 import '../shelf_book_repository.dart';
 import 'book_file_probe.dart';
 import 'book_file_store.dart';
+import 'book_file_changes.dart';
 import 'cover_extractor.dart';
 
 /// Service for importing book files using "stream-from-zip" strategy
@@ -24,20 +24,19 @@ import 'cover_extractor.dart';
 /// - Saves to drift: ShelfBook + BookManifest 在同一事务中双写
 class BookImportService {
   final ShelfBookRepository _shelfBookRepo;
-  final BookManifestRepository _manifestRepo;
   final LibraryBookStore _libraryBookStore;
 
   static const _probe = BookFileProbe();
-  static const _fileStore = BookFileStore();
+  final BookFileStore _fileStore;
   static const _coverExtractor = CoverExtractor();
 
   BookImportService({
     required ShelfBookRepository shelfBookRepo,
-    required BookManifestRepository manifestRepo,
     required LibraryBookStore libraryBookStore,
+    required BookFileStore fileStore,
   }) : _shelfBookRepo = shelfBookRepo,
-       _manifestRepo = manifestRepo,
-       _libraryBookStore = libraryBookStore;
+       _libraryBookStore = libraryBookStore,
+       _fileStore = fileStore;
 
   /// Import a book file (EPUB or TXT) following a clean pipeline pattern
   /// [precomputedHash] 为调用方预先算好的 SHA-256 hex 哈希，与导入缓存、
@@ -51,6 +50,7 @@ class BookImportService {
     String? originalFileName,
     bool moveSourceFile = false,
   }) async {
+    final files = BookFileChanges();
     try {
       final format = await _probe.detectFormat(file, originalFileName);
 
@@ -78,12 +78,21 @@ class BookImportService {
         ).then((result) => result.getOrElse((error) => throw error));
         parseData = outcome.parseResult;
         bookPath = await _fileStore
-            .writeNormalizedTxt(outcome.normalizedBytes, fileHash)
+            .writeNormalizedTxt(
+              outcome.normalizedBytes,
+              fileHash,
+              changes: files,
+            )
             .then((result) => result.getOrElse((error) => throw error));
         coverPath = null;
       } else {
         bookPath = await _fileStore
-            .copyBook(file, fileHash, moveSourceFile: moveSourceFile)
+            .copyBook(
+              file,
+              fileHash,
+              moveSourceFile: moveSourceFile,
+              changes: files,
+            )
             .then((result) => result.getOrElse((error) => throw error));
 
         parseData =
@@ -93,8 +102,7 @@ class BookImportService {
               originalFileName ?? file.path.split('/').last,
             ).then((result) async {
               if (result.isLeft()) {
-                // 解析失败：清理已落盘的书籍文件再报错
-                await _deleteFile(bookPath);
+                // 解析失败由文件作用域恢复导入前状态。
                 throw result.getLeft().toNullable()!;
               }
               return result.getRight().toNullable()!;
@@ -105,6 +113,7 @@ class BookImportService {
           fileHash: fileHash,
           coverHref: parseData.coverHref,
           opfRootPath: parseData.opfRootPath,
+          changes: files,
         );
       }
 
@@ -120,19 +129,20 @@ class BookImportService {
         result,
       ) async {
         if (result.isLeft()) {
-          // 保存失败：事务已回滚，只需清理已落盘的书籍文件与封面
-          await _deleteFile(bookPath);
-          if (coverPath != null) await _deleteFile(coverPath);
+          // 数据库与文件分别回滚各自的变更。
           throw result.getLeft().toNullable()!;
         }
         return result.getRight().toNullable()!;
       });
 
+      files.commit();
       return right(savedBook);
     } on LibraryException catch (e) {
       return left(e);
     } catch (e) {
       return left(LibraryException(LibraryErrorCode.importFailed, e));
+    } finally {
+      await files.close();
     }
   }
 
@@ -238,151 +248,5 @@ class BookImportService {
         .mapLeft(
           (error) => LibraryException(LibraryErrorCode.saveFailed, error),
         );
-  }
-
-  /// Delete a file (helper for cleanup)
-  Future<Either<String, bool>> _deleteFile(String path) async {
-    try {
-      // 数据库存的是相对路径，导入管线中的失败回滚拿到的是绝对路径，二者都接受
-      final absolutePath = path.startsWith('/')
-          ? path
-          : '${AppStorage.documentsPath}$path';
-      final file = File(absolutePath);
-      if (await file.exists()) {
-        await file.delete();
-        return right(true);
-      }
-      return right(false);
-    } catch (e) {
-      return left('Failed to delete file $path: $e');
-    }
-  }
-
-  Future<Either<String, bool>> _rollbackDeleteFailure({
-    required String message,
-    required ShelfBook book,
-    required bool originalDeletedState,
-    required bool bookWasSoftDeleted,
-    required BookManifest? originalManifest,
-    required bool manifestWasDeleted,
-  }) async {
-    final rollbackErrors = <String>[];
-
-    if (manifestWasDeleted && originalManifest != null) {
-      final restoreManifestResult = await _manifestRepo.saveManifest(
-        originalManifest,
-      );
-      if (restoreManifestResult.isLeft()) {
-        rollbackErrors.add(
-          'Restore manifest failed: ${restoreManifestResult.getLeft().toNullable()!}',
-        );
-      }
-    }
-
-    if (bookWasSoftDeleted) {
-      final restoredBook = book.copyWith(
-        isDeleted: originalDeletedState,
-        updatedAt: DateTime.now().millisecondsSinceEpoch,
-      );
-      final restoreBookResult = await _shelfBookRepo.saveBook(restoredBook);
-      if (restoreBookResult.isLeft()) {
-        rollbackErrors.add(
-          'Restore book failed: ${restoreBookResult.getLeft().toNullable()!}',
-        );
-      }
-    }
-
-    if (rollbackErrors.isEmpty) {
-      return left(message);
-    }
-
-    return left('$message (rollback errors: ${rollbackErrors.join('; ')})');
-  }
-
-  /// Delete imported book (ShelfBook + BookManifest + files)
-  Future<Either<String, bool>> deleteBook(ShelfBook book) async {
-    final originalDeletedState = book.isDeleted;
-    final originalManifest = await _manifestRepo.getManifestByHash(
-      book.fileHash,
-    );
-    var bookWasSoftDeleted = false;
-    var manifestWasDeleted = false;
-
-    try {
-      final softDeleteResult = await _shelfBookRepo.softDeleteBook(book.id);
-      if (softDeleteResult.isLeft()) {
-        return left(softDeleteResult.getLeft().toNullable()!);
-      }
-      if (softDeleteResult.getRight().toNullable() != true) {
-        return left('Delete book failed: book record was not updated');
-      }
-      bookWasSoftDeleted = true;
-
-      final deleteManifestResult = await _manifestRepo.deleteManifestByHash(
-        book.fileHash,
-      );
-      if (deleteManifestResult.isLeft()) {
-        return _rollbackDeleteFailure(
-          message: deleteManifestResult.getLeft().toNullable()!,
-          book: book,
-          originalDeletedState: originalDeletedState,
-          bookWasSoftDeleted: bookWasSoftDeleted,
-          originalManifest: originalManifest,
-          manifestWasDeleted: manifestWasDeleted,
-        );
-      }
-      final didDeleteManifest = deleteManifestResult.getRight().toNullable()!;
-      if (!didDeleteManifest && originalManifest != null) {
-        return _rollbackDeleteFailure(
-          message: 'Delete manifest failed: manifest record still exists',
-          book: book,
-          originalDeletedState: originalDeletedState,
-          bookWasSoftDeleted: bookWasSoftDeleted,
-          originalManifest: originalManifest,
-          manifestWasDeleted: manifestWasDeleted,
-        );
-      }
-      manifestWasDeleted = didDeleteManifest;
-
-      // Delete files after metadata is removed so a failed rollback favors
-      // keeping the primary EPUB file over the derived cover image.
-      if (book.coverPath != null) {
-        final coverDeleteResult = await _deleteFile(book.coverPath!);
-        if (coverDeleteResult.isLeft()) {
-          return _rollbackDeleteFailure(
-            message: coverDeleteResult.getLeft().toNullable()!,
-            book: book,
-            originalDeletedState: originalDeletedState,
-            bookWasSoftDeleted: bookWasSoftDeleted,
-            originalManifest: originalManifest,
-            manifestWasDeleted: manifestWasDeleted,
-          );
-        }
-      }
-      if (book.filePath != null) {
-        final bookFileDeleteResult = await _deleteFile(book.filePath!);
-        if (bookFileDeleteResult.isLeft()) {
-          return _rollbackDeleteFailure(
-            message: bookFileDeleteResult.getLeft().toNullable()!,
-            book: book,
-            originalDeletedState: originalDeletedState,
-            bookWasSoftDeleted: bookWasSoftDeleted,
-            originalManifest: originalManifest,
-            manifestWasDeleted: manifestWasDeleted,
-          );
-        }
-      }
-
-      return right(true);
-    } catch (e) {
-      return _rollbackDeleteFailure(
-        message: 'Delete book failed: $e',
-        book: book,
-        originalDeletedState: originalDeletedState,
-        bookWasSoftDeleted: bookWasSoftDeleted,
-        originalManifest: originalManifest,
-        manifestWasDeleted: manifestWasDeleted,
-      );
-    }
   }
 }

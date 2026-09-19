@@ -4,8 +4,8 @@ import '../../../core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart';
 import '../data/shelf_book_repository.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
-import '../data/services/book_import_service_provider.dart';
-import '../data/services/book_import_service.dart';
+import 'book_deletion.dart';
+import 'book_deletion_provider.dart';
 import 'book_view_mapper.dart';
 import 'bookshelf_selection.dart';
 import 'bookshelf_state.dart';
@@ -28,7 +28,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   // Access repositories via providers (lazy initialization)
   ShelfBookRepository get _repository => ref.read(shelfBookRepositoryProvider);
-  BookImportService get _importService => ref.read(bookImportServiceProvider);
+  BookDeletion get _deletion => ref.read(bookDeletionProvider);
 
   @override
   Future<BookshelfState> build() async {
@@ -214,7 +214,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Delete selected books
   Future<bool> deleteSelected() async {
-    final currentState = state.value;
+    final currentState = state.asData?.value;
     if (currentState == null || !currentState.hasSelection) return false;
 
     try {
@@ -224,9 +224,9 @@ class BookshelfNotifier extends _$BookshelfNotifier {
           return false;
         }
 
-        // Delete using import service (handles files + database)
-        final deleteResult = await _importService.deleteBook(book);
-        if (deleteResult.isLeft()) {
+        // 事务提交后再清理物理文件。
+        final deleteResult = await _deletion.delete(book);
+        if (deleteResult == BookDeletionResult.failed) {
           return false;
         }
       }

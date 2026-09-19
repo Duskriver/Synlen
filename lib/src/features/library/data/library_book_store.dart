@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'services/backup_merger.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
@@ -20,27 +21,89 @@ class LibraryBookStore {
     BookManifest manifest,
   ) async {
     try {
-      return await _db.transaction(() async {
-        final bookCompanion = book.id == 0
-            ? book.toCompanion(false).copyWith(id: const Value.absent())
-            : book.toCompanion(false);
-        final bookId = await _db
-            .into(_db.shelfBooks)
-            .insertOnConflictUpdate(bookCompanion);
-
-        final manifestCompanion = manifest.id == 0
-            ? manifest.toCompanion(false).copyWith(id: const Value.absent())
-            : manifest.toCompanion(false);
-        await _db
-            .into(_db.bookManifests)
-            .insertOnConflictUpdate(manifestCompanion);
-
-        return right(bookId);
-      });
+      return right(await _db.transaction(() => _savePair(book, manifest)));
     } catch (e) {
       return left('Save book with manifest failed: $e');
     }
   }
+
+  Future<int> _savePair(ShelfBook book, BookManifest manifest) async {
+    if (book.fileHash != manifest.fileHash || book.format != manifest.format) {
+      throw ArgumentError('书目与清单的标识或格式不一致');
+    }
+    final bookCompanion = book.id == 0
+        ? book.toCompanion(false).copyWith(id: const Value.absent())
+        : book.toCompanion(false);
+    final id = await _db
+        .into(_db.shelfBooks)
+        .insertOnConflictUpdate(bookCompanion);
+    final manifestCompanion = manifest.id == 0
+        ? manifest.toCompanion(false).copyWith(id: const Value.absent())
+        : manifest.toCompanion(false);
+    await _db.into(_db.bookManifests).insertOnConflictUpdate(manifestCompanion);
+    return id;
+  }
+
+  /// 在同一事务中读取本机值、合并并双写，防止第二步失败留下半本书。
+  Future<void> restoreBookWithManifest(
+    ShelfBook book,
+    BookManifest manifest,
+  ) => _db.transaction(() async {
+    final existingBook = await (_db.select(
+      _db.shelfBooks,
+    )..where((row) => row.fileHash.equals(book.fileHash))).getSingleOrNull();
+    final existingManifest = await (_db.select(
+      _db.bookManifests,
+    )..where((row) => row.fileHash.equals(book.fileHash))).getSingleOrNull();
+    await _savePair(
+      mergeRestoredBook(book, existingBook),
+      mergeRestoredManifest(manifest, existingManifest),
+    );
+  });
+
+  /// 书组按名称合并，一次恢复的书组更新原子完成。
+  Future<void> restoreGroups(List<ShelfGroup> groups) => _db.transaction(
+    () async {
+      for (final group in groups) {
+        final existing = await (_db.select(
+          _db.shelfGroups,
+        )..where((row) => row.name.equals(group.name))).getSingleOrNull();
+        if (existing != null && existing.updatedAt >= group.updatedAt) continue;
+        await _db
+            .into(_db.shelfGroups)
+            .insertOnConflictUpdate(
+              group
+                  .toCompanion(false)
+                  .copyWith(
+                    id: existing == null
+                        ? const Value.absent()
+                        : Value(existing.id),
+                  ),
+            );
+      }
+    },
+  );
+
+  /// 原子写入墓碑并移除清单；物理文件在提交后清理，不回滚已完成的逻辑删除。
+  Future<void> deleteBookWithManifest(ShelfBook book) => _db.transaction(
+    () async {
+      final count =
+          await (_db.update(_db.shelfBooks)..where(
+                (row) =>
+                    row.id.equals(book.id) & row.fileHash.equals(book.fileHash),
+              ))
+              .write(
+                ShelfBooksCompanion(
+                  isDeleted: const Value(true),
+                  updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+                ),
+              );
+      if (count != 1) throw StateError('删除目标不存在');
+      await (_db.delete(
+        _db.bookManifests,
+      )..where((row) => row.fileHash.equals(book.fileHash))).go();
+    },
+  );
 
   /// 启动一致性修复：清理两个方向的 DB 孤儿，返回（删书数, 删清单数）。
   ///

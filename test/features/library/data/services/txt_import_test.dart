@@ -1,3 +1,4 @@
+import 'package:synlen/src/features/library/data/services/book_file_store.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -11,7 +12,6 @@ import 'package:mockito/mockito.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
 import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'package:synlen/src/features/library/data/services/book_import_service.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
@@ -20,12 +20,11 @@ import 'package:synlen/src/features/library/domain/library_exception.dart';
 
 import 'txt_import_test.mocks.dart';
 
-@GenerateMocks([ShelfBookRepository, BookManifestRepository, LibraryBookStore])
+@GenerateMocks([ShelfBookRepository, LibraryBookStore])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late MockShelfBookRepository shelfRepo;
-  late MockBookManifestRepository manifestRepo;
   late MockLibraryBookStore libraryBookStore;
   late BookImportService service;
   late Directory tempDir;
@@ -36,12 +35,11 @@ void main() {
 
   setUp(() async {
     shelfRepo = MockShelfBookRepository();
-    manifestRepo = MockBookManifestRepository();
     libraryBookStore = MockLibraryBookStore();
     service = BookImportService(
       shelfBookRepo: shelfRepo,
-      manifestRepo: manifestRepo,
       libraryBookStore: libraryBookStore,
+      fileStore: const BookFileStore(),
     );
 
     // AppStorage 是静态全局，测试指向独立临时目录，避免触碰真实应用存储

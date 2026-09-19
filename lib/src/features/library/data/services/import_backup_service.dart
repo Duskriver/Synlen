@@ -6,7 +6,7 @@ import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart';
+import '../library_book_store.dart';
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 
 import '../../domain/book_format.dart';
@@ -14,7 +14,7 @@ import '../../domain/import_progress.dart';
 import '../../domain/library_exception.dart';
 import 'backup_decoders.dart';
 import 'backup_json_mapper.dart';
-import 'backup_merger.dart';
+import 'book_file_changes.dart';
 
 // ---------------------------------------------------------------------------
 // Service
@@ -39,18 +39,15 @@ import 'backup_merger.dart';
 class ImportBackupService {
   final ShelfBookRepository _shelfBookRepository;
   final UnifiedImportService _importService;
-  final BackupMerger _merger;
+  final LibraryBookStore _bookStore;
 
   ImportBackupService({
     required ShelfBookRepository shelfBookRepository,
-    required BookManifestRepository bookManifestRepository,
+    required LibraryBookStore bookStore,
     required UnifiedImportService importService,
   }) : _shelfBookRepository = shelfBookRepository,
        _importService = importService,
-       _merger = BackupMerger(
-         shelfBookRepository: shelfBookRepository,
-         bookManifestRepository: bookManifestRepository,
-       );
+       _bookStore = bookStore;
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -104,7 +101,7 @@ class ImportBackupService {
 
       if (groupsJson.isNotEmpty) {
         final groups = groupsJson.map(mapToShelfGroup).toList();
-        await _merger.mergeGroups(groups);
+        await _bookStore.restoreGroups(groups);
       }
 
       yield ProgressLog('Groups restored.', ProgressLogType.info);
@@ -150,76 +147,84 @@ class ImportBackupService {
           );
         }
 
-        // -- A. Process & Copy book file --
-        final destBook = File(p.join(internalBooksDir.path, bookFileName));
-        if (!destBook.existsSync()) {
-          final importableBook = await _importService.processEpub(
-            pathsForBook.epubPath,
-          );
-          try {
-            await importableBook.cacheFile.copy(destBook.path);
-          } finally {
-            await _importService.cleanCache(importableBook.cacheFile);
+        final files = BookFileChanges();
+        try {
+          // -- A. Process & Copy book file --
+          final destBook = File(p.join(internalBooksDir.path, bookFileName));
+          if (!destBook.existsSync()) {
+            final importableBook = await _importService.processEpub(
+              pathsForBook.epubPath,
+            );
+            try {
+              await files.copyIfMissing(importableBook.cacheFile, destBook);
+            } finally {
+              await _importService.cleanCache(importableBook.cacheFile);
+            }
           }
-        }
 
-        // -- B. Process & Copy Cover --
-        final existingBook = await _shelfBookRepository.getBookByHash(hash);
-        final existingCover = existingBook?.coverPath;
-        final keepLocalCover =
-            existingBook != null &&
-            existingBook.updatedAt >= (bookMap['updatedAt'] as int) &&
-            existingCover != null &&
-            await File(
-              p.join(AppStorage.documentsPath, existingCover),
-            ).exists();
-        String? restoredCoverPath = keepLocalCover ? existingCover : null;
-        if (!keepLocalCover && pathsForBook.coverPath != null) {
-          try {
-            final coverBytes = await _importService.processBinaryFile(
-              pathsForBook.coverPath!,
-            );
-            final coverFileName = pathsForBook.coverPath!.name;
-            final destCover = File(
-              p.join(internalCoversDir.path, coverFileName),
-            );
-            await destCover.writeAsBytes(coverBytes);
-            restoredCoverPath =
-                '${AppStorageConstants.coversDir}/$coverFileName';
-          } catch (e) {
-            appLogger.w('[ImportBackup] Failed to process cover for $hash: $e');
-            yield ProgressLog(
-              'Warning: Failed to restore cover for "$displayName", skipping cover.',
-              ProgressLogType.warning,
+          // -- B. Process & Copy Cover --
+          final existingBook = await _shelfBookRepository.getBookByHash(hash);
+          final existingCover = existingBook?.coverPath;
+          final keepLocalCover =
+              existingBook != null &&
+              existingBook.updatedAt >= (bookMap['updatedAt'] as int) &&
+              existingCover != null &&
+              await File(
+                p.join(AppStorage.documentsPath, existingCover),
+              ).exists();
+          String? restoredCoverPath = keepLocalCover ? existingCover : null;
+          if (!keepLocalCover && pathsForBook.coverPath != null) {
+            try {
+              final coverBytes = await _importService.processBinaryFile(
+                pathsForBook.coverPath!,
+              );
+              final coverFileName = pathsForBook.coverPath!.name;
+              final destCover = File(
+                p.join(internalCoversDir.path, coverFileName),
+              );
+              await files.write(destCover, coverBytes);
+              restoredCoverPath =
+                  '${AppStorageConstants.coversDir}/$coverFileName';
+            } catch (e) {
+              appLogger.w(
+                '[ImportBackup] Failed to process cover for $hash: $e',
+              );
+              yield ProgressLog(
+                'Warning: Failed to restore cover for "$displayName", skipping cover.',
+                ProgressLogType.warning,
+              );
+            }
+          }
+
+          // -- C. Process Manifest JSON --
+          final manifestString = await _importService.processPlainFile(
+            pathsForBook.manifestPath,
+          );
+          final manifestMap =
+              jsonDecode(manifestString) as Map<String, dynamic>;
+          final manifest = decodeManifestBackup(
+            manifestMap,
+            source: '$hash.json',
+          );
+          if (manifest.fileHash != hash || manifest.format != format) {
+            throw const LibraryException(
+              LibraryErrorCode.backupCorrupted,
+              '书架与清单的书籍标识或格式不一致',
             );
           }
-        }
 
-        // -- C. Process Manifest JSON --
-        final manifestString = await _importService.processPlainFile(
-          pathsForBook.manifestPath,
-        );
-        final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
-        final manifest = decodeManifestBackup(
-          manifestMap,
-          source: '$hash.json',
-        );
-        if (manifest.fileHash != hash || manifest.format != format) {
-          throw const LibraryException(
-            LibraryErrorCode.backupCorrupted,
-            '书架与清单的书籍标识或格式不一致',
+          // -- D. Build ShelfBook and upsert immediately --
+          final book = mapToShelfBook(
+            bookMap,
+            filePath: '${AppStorageConstants.booksDir}/$bookFileName',
+            coverPath: restoredCoverPath,
+            format: format,
           );
+          await _bookStore.restoreBookWithManifest(book, manifest);
+          files.commit();
+        } finally {
+          await files.close();
         }
-        await _merger.mergeManifest(manifest);
-
-        // -- D. Build ShelfBook and upsert immediately --
-        final book = mapToShelfBook(
-          bookMap,
-          filePath: '${AppStorageConstants.booksDir}/$bookFileName',
-          coverPath: restoredCoverPath,
-          format: format,
-        );
-        await _merger.mergeBook(book);
 
         importedCount++;
         appLogger.i(

@@ -33,7 +33,7 @@ library/data 约 30 处 `Either<String, T>`：错误码、内部细节、用户�
 
 - l10n：`importFailed` / `restoreFailed` 去掉 `{error}` / `{message}` 参数（不再上屏内部细节），新增 `importFileUnreadable`、`importParseFailed`、`importDuplicateBook`、`importFileWriteFailed`、`importSaveFailed`、`backupDataCorrupted` 六个 key，双语同批。
 - 新增错误码时必须同步 `library_error_mapper.dart` 的 switch 与双语 l10n；switch 穷举由编译器保证。
-- 未迁移区域（后续 issue 收）：`ShelfBookRepository` / `BookManifestRepository` / `LibraryBookStore` 的 `Either<String, T>`、`BookImportService.deleteBook` 的回滚链路、`ExportBackupService` 的 `ExportFailure(String message)`、分组 CRUD 与 `StorageCleanupService`。
+- 未迁移区域（后续 issue 收）：`ShelfBookRepository` / `BookManifestRepository` / `LibraryBookStore` 的 `Either<String, T>`、`ExportBackupService` 的 `ExportFailure(String message)`、分组 CRUD 与 `StorageCleanupService`。
 - core 的 `backup_archive_guard.dart` 未动；若未来其他 feature 消费备份恢复，桥接点需要下沉。
 
 ## Testing
