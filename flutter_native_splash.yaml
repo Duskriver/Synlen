@@ -7,5 +7,6 @@ flutter_native_splash:
   android_12:
     color: "#000000"
     color_dark: "#000000"
+    # icon_opaque_android12.png 的生成方法：icon_opaque.png 等比缩放到 66% 后居中绘制在 1840×1840 黑底画布（高精度双三次插值）。
     image: assets/icons/icon_opaque_android12.png
     image_dark: assets/icons/icon_opaque_android12.png
