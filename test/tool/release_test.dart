@@ -36,7 +36,11 @@ void main() {
     ]) {
       await Directory('${repo.path}/$path').create(recursive: true);
     }
-    for (final script in ['release.sh', 'verify_release_apk.sh']) {
+    for (final script in [
+      'release.sh',
+      'verify_release_apk.sh',
+      'verify_android_page_alignment.sh',
+    ]) {
       await File('tool/$script').copy('${repo.path}/tool/$script');
     }
     await File(
@@ -85,9 +89,26 @@ fingerprint=aaecfc6b98149129dfb674117b663af6cd524e34b3dd7af8ad0a3c87bc3d21ff
 echo "Signer #1 certificate SHA-256 digest: $fingerprint"
 ''');
     await executable('bin/unzip', r'''
+if [[ "$1" == -q ]]; then
+  mkdir -p "$5/lib/arm64-v8a"
+  touch "$5/lib/arm64-v8a/libapp.so"
+  exit 0
+fi
 echo lib/arm64-v8a/libapp.so
 if [[ "${SCENARIO:-}" == wrong-abi ]]; then echo lib/x86_64/libapp.so; fi
 ''');
+    await executable('sdk/build-tools/36.0.0/zipalign', r'''
+[[ "${SCENARIO:-}" != unaligned-zip ]]
+''');
+    await executable(
+      'sdk/ndk/27.3/toolchains/llvm/prebuilt/test/bin/llvm-objdump',
+      r'''
+alignment=14
+[[ "${SCENARIO:-}" != unaligned-elf ]] || alignment=12
+[[ "${SCENARIO:-}" != invalid-elf ]] || { echo 'invalid ELF' >&2; exit 1; }
+echo "    LOAD off 0x0000000000000000 vaddr 0x0000000000000000 align 2**$alignment"
+''',
+    );
     await executable('bin/gh', r'''
 echo "gh $1 ${2:-}" >> "$FIXTURE/events"
 asset="$FIXTURE/github.apk"
@@ -218,6 +239,9 @@ esac
     'debug-signature',
     'invalid-signature',
     'wrong-abi',
+    'unaligned-elf',
+    'unaligned-zip',
+    'invalid-elf',
     'busy',
   ]) {
     test('$scenario 阻止推送标签与上传', () async {
@@ -233,6 +257,9 @@ esac
         'wrong-version': 'APK 包名、版本号或构建号',
         'debug-signature': 'APK 签名与正式发布证书不一致',
         'wrong-abi': 'APK 必须只包含 ARM64',
+        'unaligned-elf': 'ELF LOAD 段未按 16 KB 对齐',
+        'unaligned-zip': 'APK ZIP 条目未按 16 KB 对齐',
+        'invalid-elf': 'ELF LOAD 段未按 16 KB 对齐',
         'busy': '云发布正在运行或排队',
       };
       if (expectedErrors.containsKey(scenario)) {

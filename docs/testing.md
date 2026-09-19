@@ -24,6 +24,7 @@
 | l10n ARB | `flutter gen-l10n`（或 `flutter pub get`）重新生成 localizations + 受影响页面的测试 |
 | `pubspec.yaml` / `analysis_options.yaml` / `build.yaml` / `l10n.yaml` | `flutter analyze` + **全量** `flutter test` |
 | `rust/` 或 FFI 绑定 | `cargo test`（在 `rust/` 内）→ 绑定重新生成 → analyze + 冒烟测试 |
+| Android 原生库构建或 APK 校验 | 重建 APK → `bash tool/verify_android_page_alignment.sh <apk>`（需 `ANDROID_HOME`）+ `flutter test test/tool/release_test.dart`；在设备上覆盖安装并启动 |
 | reader Web 资源 | `npm run typecheck` + `npm test --prefix web_assets/controller.js` → `dart run tool/build_web_assets.dart`（见[操作手册](cookbook/changing-reader-web-assets.md)） |
 
 测试文件过滤不等于覆盖率豁免：新增源文件必须有对应测试。全量本地演练只在用户明确要求、排查 CI 失败或变更横跨全仓库时执行；**推送与合并前全量 `flutter test` 必须全绿**。
@@ -36,7 +37,7 @@
 
 ## 现状
 
-- `test/` 有 72 个测试文件；`flutter test` 报告 471 个用例通过、2 个按环境变量跳过（真实 DeepSeek 接口验收）。查当前数字：
+- 当前用例数以 `flutter test` 输出为准，测试文件可用以下命令统计：
 
   ```sh
   find test -name '*_test.dart' | wc -l
@@ -45,14 +46,14 @@
 
   用例数只认 `flutter test` 的输出：用 `grep 'test('` 数会漏掉循环生成的用例。
 
-- `integration_test/learning_e2e_test.dart` 是唯一的端到端验收：真机或模拟器上以真实 WebView 渲染 TXT 书籍，点词与长按句子走真实 DeepSeek 接口，未设密钥时跳过。
+- `integration_test/learning_e2e_test.dart` 验证学习链路：真机或模拟器上以真实 WebView 渲染 TXT 书籍，点词与长按句子走真实 DeepSeek 接口，未设密钥时跳过。
 
   ```sh
   flutter test integration_test/learning_e2e_test.dart -d <device> --dart-define=SYNLEN_DEEPSEEK_KEY=<key>
   ```
 
-- `reader/presentation` 的 5 个 mixin 是 `part` 文件（依赖 `reader_screen.dart`），单测需先拆分或改 widget test；这部分覆盖缺口记在 [reader 子系统](subsystems/reader.md#已知限制与待办)。
-- 端到端验收只覆盖学习链路；实机触摸坐标、长按时序、WebView 版本与分页体验仍靠人工验收。
+- `integration_test/reader_smoke_test.dart` 无需密钥，在 Android / iOS 设备验证真实 TXT 导入、WebView 翻页与跨章、主题重新分页、退出保存和重开恢复：`flutter test integration_test/reader_smoke_test.dart -d <device>`。
+- 浏览器测试在 Chromium 与 WebKit 执行真实三 iframe，覆盖跨章、位置恢复与主题回执；实机触摸坐标、长按时序和不同 WebView 版本的体验仍需人工验收。
 
 ## Dev Note
 

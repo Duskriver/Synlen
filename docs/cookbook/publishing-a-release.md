@@ -17,7 +17,7 @@ GitHub 是源码的唯一写入源；`main` 推送触发镜像同步，发布命
 
 1. 定版本号 `vX.Y.Z`，更新 `pubspec.yaml` 的 `version`。`versionCode` 为 `X*10000 + Y*100 + Z`，`Y`、`Z` 均小于 100；发布版本必须递增。
 2. 把 `docs/user/release-notes.md` 的「未发布」小节改名为 `## vX.Y.Z`，删掉「以下内容尚未发布」那行并核对说明。发布脚本只接受完整匹配的版本标题。
-3. 在 `main` 提交全部改动，保持工作区干净；先不打 tag。执行 `./tool/release.sh vX.Y.Z`，命令先跑发布门禁，再构建 Android ARM64 APK，校验包名、版本、构建号与正式签名。
+3. 在 `main` 提交全部改动，保持工作区干净；先不打 tag。执行 `./tool/release.sh vX.Y.Z`，命令先跑发布门禁，再构建 Android ARM64 APK，校验包名、版本、构建号、16 KB 对齐与正式签名。
 4. 命令推送源码与 tag、同步 Gitee，上传并下载验证 GitHub 附件，然后调用 `tool/upload_release.sh` 发布 Gitee 并更新清单。同名附件不会被覆盖，摘要不一致即失败；旧版本不能覆盖较新的清单。
 5. 保留 `build/outputs/` 中的 `.apk` 与 `.apk.json`：构建记录绑定源码提交与文件摘要。重试时在同一提交执行 `./tool/release.sh vX.Y.Z --apk /绝对路径/synlen-vX.Y.Z-arm64-release.apk`；它仍执行门禁，但复用原包。
 
