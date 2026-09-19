@@ -88,7 +88,8 @@ class UpdateService {
     }
 
     final cacheDir = await _cacheDirectory();
-    final apkPath = '${cacheDir.path}/${apkRelativePath(manifest.versionLabel)}';
+    final apkPath =
+        '${cacheDir.path}/${apkRelativePath(manifest.versionLabel)}';
     await File(apkPath).parent.create(recursive: true);
     // 删除可能存在的旧文件，避免覆盖安装校验失败
     final oldFile = File(apkPath);

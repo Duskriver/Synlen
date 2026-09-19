@@ -24,7 +24,8 @@ void main() {
       contains(
         'android:authorities="\${applicationId}.$apkFileProviderAuthoritySuffix"',
       ),
-      reason: 'AndroidManifest.xml 的 authority 必须与 apkFileProviderAuthoritySuffix 同步',
+      reason:
+          'AndroidManifest.xml 的 authority 必须与 apkFileProviderAuthoritySuffix 同步',
     );
   });
 
