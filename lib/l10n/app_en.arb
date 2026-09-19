@@ -1079,5 +1079,7 @@
   "deepSeekCheckConnectivity": "Check DeepSeek connectivity",
   "deepSeekCheckOk": "DeepSeek connected successfully",
   "deepSeekCheckBadKey": "DeepSeek key is invalid or expired",
-  "deepSeekCheckFailed": "Cannot reach DeepSeek. Check your network"
+  "deepSeekCheckFailed": "Cannot reach DeepSeek. Check your network",
+  "readerLoadFailed": "Could not open this book. Please try again.",
+  "readerRenderFailed": "Could not update the reading layout. Please try again."
 }

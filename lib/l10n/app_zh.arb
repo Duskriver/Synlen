@@ -1087,5 +1087,7 @@
   "deepSeekCheckConnectivity": "检查 DeepSeek 连通性",
   "deepSeekCheckOk": "DeepSeek 连接成功",
   "deepSeekCheckBadKey": "DeepSeek 密钥无效或已过期",
-  "deepSeekCheckFailed": "无法连接 DeepSeek，请检查网络"
+  "deepSeekCheckFailed": "无法连接 DeepSeek，请检查网络",
+  "readerLoadFailed": "无法打开这本书，请重试。",
+  "readerRenderFailed": "阅读排版更新失败，请重试。"
 }

@@ -48,7 +48,7 @@ final class ReaderSessionFactoryProvider
 }
 
 String _$readerSessionFactoryHash() =>
-    r'82a804955bc07af32b212f3d74535e96952e7576';
+    r'86d9472aaf318db6e876ce62d12056ec43ccc037';
 
 /// 阅读会话的装配入口：data 层依赖的注入集中在这里，
 /// presentation 只取装配好的会话与 WebView 处理器。

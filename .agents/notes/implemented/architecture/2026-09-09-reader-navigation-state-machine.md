@@ -12,7 +12,7 @@ Status: implemented
 
 - 状态 `ReaderNavState`（章节序号、章内页、总页数、加载中、翻章中、主题刷新中）经一个 `ValueNotifier` 暴露；忙态判定复用 `shouldIgnoreChapterNavigation`。
 - 方法返回 `ReaderNavOutcome`（moved / ignored / firstChapter / lastChapter / firstPageOfBook / lastPageOfBook / tocItemHasNoContent / tocItemNotInSpine），文案由 presentation 映射 l10n。
-- 渲染引擎经 `ReaderViewport` 接口注入：`preloadChapter` / `waitForEvents` / `restoreScrollPosition` / 三个跨章跳转 / `jumpToPage`。`ReaderRendererController` 是生产实现，测试用 fake。
+- 渲染引擎经 `ReaderViewport` 接口注入：`prepareChapters` / `updateTheme` / `restoreScrollPosition` / 三个跨章跳转 / `jumpToPage`。`ReaderRendererController` 是生产实现，测试用 fake。
 - 预载后的 30ms 渲染沉降等待改为构造参数 `settleDelay`，默认值不变。
 
 `spine_navigation_mixin` 与 `page_navigation_mixin` 删除，`ReaderViewState` 删除；TOC 高亮随后收进 `ReaderTocState`，页码显示留在 presentation 的 `ValueNotifier`。
@@ -28,5 +28,5 @@ Status: implemented
 ## Consequences
 
 - 导航编排（预载顺序、忙态忽略、跨章边界、页码收敛）由 `test/features/reader/application/reader_navigator_test.dart` 的 23 个用例覆盖，不再依赖真机手测。
-- `reader/presentation` 仍剩 5 个 part mixin（进度显示、主题刷新、外链、图片、脚注），按同一路径继续下沉。
+- 阅读会话的时序、主题队列和进度采集由[阅读流程决策](2026-09-19-reader-workflow-render-contract.md)拥有；导航器继续拥有位置与忙态。
 - `reader_screen.dart` 减少的是状态复制，UI 骨架仍在该文件。

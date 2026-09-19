@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:synlen/src/features/reader/domain/epub_theme.dart';
 import 'package:synlen/src/features/library/application/book_queries.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/library/domain/book_views.dart';
@@ -13,15 +14,14 @@ class _FakeViewport implements ReaderViewport {
   double? restoredRatio;
 
   @override
-  Future<int?> preloadChapter(ChapterPreloadRequest request) async {
-    calls.add('preload:${request.slot.name}:${request.index}');
-    return request.index;
+  Future<void> prepareChapters(List<ChapterPreloadRequest> requests) async {
+    for (final request in requests) {
+      calls.add('preload:${request.slot.name}:${request.index}');
+    }
   }
 
   @override
-  Future<void> waitForEvents(List<int> tokens) async {
-    calls.add('wait:${tokens.length}');
-  }
+  Future<void> updateTheme(EpubTheme theme) async {}
 
   @override
   Future<void> restoreScrollPosition(double ratio) async {
@@ -126,7 +126,7 @@ void main() {
       await setUpNavigator();
       await navigator.load();
 
-      expect(viewport.calls, ['preload:current:0', 'preload:next:1', 'wait:2']);
+      expect(viewport.calls, ['preload:current:0', 'preload:next:1']);
       expect(navigator.state.value.isLoading, isFalse);
       expect(navigator.state.value.spineIndex, 0);
     });
@@ -139,7 +139,6 @@ void main() {
         'preload:current:1',
         'preload:previous:0',
         'preload:next:2',
-        'wait:3',
       ]);
     });
 

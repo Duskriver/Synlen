@@ -1549,6 +1549,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cannot reach DeepSeek. Check your network'**
   String get deepSeekCheckFailed;
+
+  /// No description provided for @readerLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this book. Please try again.'**
+  String get readerLoadFailed;
+
+  /// No description provided for @readerRenderFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update the reading layout. Please try again.'**
+  String get readerRenderFailed;
 }
 
 class _AppLocalizationsDelegate

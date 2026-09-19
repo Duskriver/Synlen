@@ -11,7 +11,7 @@ import 'package:synlen/src/features/reader/presentation/widgets/footnot_popup_ov
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../application/reader_navigator.dart';
 import '../application/reader_settings_notifier.dart';
-import '../application/reading_progress_controller.dart';
+import '../application/reader_workflow.dart';
 import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
@@ -30,7 +30,6 @@ import './toc_drawer.dart';
 import './widgets/reader_image_overlay.dart';
 import '../../../../l10n/app_localizations.dart';
 
-part 'mixins/progress_mixin.dart';
 part 'mixins/theme_mixin.dart';
 part 'mixins/link_handling_mixin.dart';
 part 'mixins/image_viewer_mixin.dart';
@@ -49,7 +48,6 @@ class ReaderScreen extends ConsumerStatefulWidget {
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
     with
         WidgetsBindingObserver,
-        _ProgressMixin,
         _ThemeMixin,
         _LinkHandlingMixin,
         _ImageViewerMixin,
@@ -60,35 +58,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   late final BookSession bookSession;
 
-  @override
   final ReaderRendererController rendererController =
       ReaderRendererController();
 
   /// 导航状态机：位置与忙态的唯一拥有者。
+  ReaderNavigator get navigator => workflow.navigator;
+
   @override
-  late final ReaderNavigator navigator;
+  late final ReaderWorkflow workflow;
 
   // 覆盖层状态：TOC 高亮与页码显示，跟随导航状态由宿主更新。
   final tocState = ReaderTocState();
   final ValueNotifier<String> displayProgressNotifier = ValueNotifier('');
-
-  // 供剩余 mixin 读取的导航状态视图（唯一来源是 navigator.state）。
-  @override
-  bool get isWebViewLoading => navigator.state.value.isLoading;
-  @override
-  int get currentSpineItemIndex => navigator.state.value.spineIndex;
-  @override
-  int get currentPageInChapter => navigator.state.value.pageInChapter;
-  @override
-  int get totalPagesInChapter => navigator.state.value.totalPagesInChapter;
-  @override
-  bool get updatingTheme => navigator.state.value.isRefreshingTheme;
-  @override
-  bool get isChangingChapter => navigator.state.value.isChangingChapter;
-  @override
-  String get displayProgress => displayProgressNotifier.value;
-  @override
-  set displayProgress(String value) => displayProgressNotifier.value = value;
 
   @override
   bool showControls = false;
@@ -97,18 +78,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Animation<double>? routeAnimation;
   bool shouldShowWebView = false;
 
-  @override
-  Timer? progressDebouncer;
-  @override
-  late final ReadingProgressController progressController;
+  Timer? _progressLabelTimer;
   bool _exitInProgress = false;
-  String? _progressSaveFailedMessage;
 
   // Theme state (used by _ThemeMixin)
   @override
   ThemeData? currentTheme;
-  @override
-  Timer? themeUpdateDebouncer;
 
   // Image viewer state (used by _ImageViewerMixin)
   @override
@@ -143,18 +118,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     super.initState();
     final sessionFactory = ref.read(readerSessionFactoryProvider.notifier);
     webViewHandler = sessionFactory.createWebViewHandler();
-    bookSession = sessionFactory.createSession(widget.fileHash);
-    navigator = ReaderNavigator(
-      session: bookSession,
-      viewport: rendererController,
+    workflow = sessionFactory.createWorkflow(
+      widget.fileHash,
+      rendererController,
     );
-    progressController = ReadingProgressController(
-      save: bookSession.saveProgress,
-      onSaveFailed: () {
-        final message = _progressSaveFailedMessage;
-        if (message != null) ToastService.showError(message);
-      },
-    );
+    bookSession = workflow.book;
+    navigator.state.addListener(_refreshNavigationView);
+    workflow.failure.addListener(_showFailure);
     volumeKeyPageTurn = VolumeKeyPageTurnController(
       events: VolumeControlService.volumeKeyEvents,
       enableInterception: VolumeControlService.enableInterception,
@@ -213,13 +183,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     WidgetsBinding.instance.removeObserver(this);
     routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
     routeAnimation = null;
-    themeUpdateDebouncer?.cancel();
-    progressDebouncer?.cancel();
-    saveProgressDebounced();
-    unawaited(progressController.close());
+    _progressLabelTimer?.cancel();
+    navigator.state.removeListener(_refreshNavigationView);
+    workflow.failure.removeListener(_showFailure);
+    unawaited(workflow.close());
     _readerSettingsSubscription?.close();
     _volumeKeyTurnsPageSubscription?.close();
-    navigator.dispose();
     tocState.dispose();
     displayProgressNotifier.dispose();
     removeFootnoteOverlay(animate: false);
@@ -236,7 +205,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
-      unawaited(saveProgress());
+      unawaited(workflow.flush());
     }
 
     lastLifecycleState = state;
@@ -246,7 +215,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Future<void> _leaveReader() async {
     if (_exitInProgress) return;
     _exitInProgress = true;
-    final saved = await saveProgress();
+    final saved = await workflow.flush();
     _exitInProgress = false;
     if (!mounted || !saved) return;
     if (ModalRoute.of(context)?.isCurrent == true) context.pop();
@@ -263,9 +232,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  @override
-  void refreshActiveTocState() {
-    tocState.refresh(bookSession, navigator.state.value.spineIndex);
+  void _refreshNavigationView() {
+    if (!mounted) return;
+    final nav = navigator.state.value;
+    tocState.refresh(bookSession, nav.spineIndex);
+    _progressLabelTimer?.cancel();
+    _progressLabelTimer = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted || navigator.state.value.isBusy) return;
+      final current = navigator.state.value;
+      displayProgressNotifier.value =
+          '${current.pageInChapter + 1}/${current.totalPagesInChapter}';
+    });
+  }
+
+  void _showFailure() {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    final message = switch (workflow.failure.value) {
+      ReaderFailure.bookNotFound => l10n.bookNotFound,
+      ReaderFailure.load => l10n.readerLoadFailed,
+      ReaderFailure.render => l10n.readerRenderFailed,
+      ReaderFailure.progress => l10n.readingProgressSaveFailed,
+      null => null,
+    };
+    if (message != null) ToastService.showError(message);
   }
 
   void handleScrollAnchors(List<String> anchorIds) {
@@ -285,16 +275,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     ).show(outcome);
   }
 
-  /// 执行一次导航动作：提示结果，位置变化后刷新 TOC 与进度。
+  /// 导航反馈只映射文案，位置与进度由会话同步。
   Future<void> _navigate(Future<ReaderNavOutcome> Function() action) async {
     final outcome = await action();
     if (!mounted) return;
     _showNavOutcome(outcome);
-    if (outcome == ReaderNavOutcome.moved) {
-      refreshActiveTocState();
-      updateProgressDebounced();
-      saveProgressDebounced();
-    }
   }
 
   /// 翻页前的边界判定：越界时提示并阻止本次翻页。
@@ -305,13 +290,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> handlePageTurn(bool isNext) =>
-      _navigate(() => navigator.turnPage(isNext));
+      _navigate(() => workflow.turnPage(isNext));
 
   Future<void> navigateToTocItem(TocItem item) =>
-      _navigate(() => navigator.goToTocItem(item));
+      _navigate(() => workflow.goToTocItem(item));
 
   Future<void> navigateToFirstTocItemFirstPage() =>
-      _navigate(() => navigator.goToChapter(0));
+      _navigate(() => workflow.goToChapter(0));
 
   void hideBottomNavigationBar() {
     SystemChrome.setEnabledSystemUIMode(
@@ -327,9 +312,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _progressSaveFailedMessage = AppLocalizations.of(
-      context,
-    )!.readingProgressSaveFailed;
     handleSystemThemeChanged();
   }
 
@@ -343,36 +325,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
-  /// Load book and manifest views via the library seam
+  /// 书目就绪后挂载视口，分页初始化由 WebView 就绪事件触发。
   Future<void> _loadBook() async {
-    try {
-      final loaded = await bookSession.loadBook();
-
-      if (!loaded) {
-        if (mounted) {
-          ToastService.showError(AppLocalizations.of(context)!.bookNotFound);
-          context.pop();
-        }
-        return;
-      }
-
-      await navigator.load(
-        anchor: 'top',
-        overrideSpineIndex: bookSession.initialChapterIndex,
-      );
-      refreshActiveTocState();
-      if (mounted) {
-        setState(() {});
-      }
-      updateProgressDebounced();
-    } catch (e) {
-      if (mounted) {
-        ToastService.showError(
-          AppLocalizations.of(context)!.errorLoadingBook(e.toString()),
-        );
-        context.pop();
-      }
+    final loaded = await workflow.open();
+    if (!mounted) return;
+    if (!loaded) {
+      context.pop();
+      return;
     }
+    _refreshNavigationView();
+    setState(() {});
   }
 
   void toggleControls() {
@@ -432,7 +394,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       canPop: footnoteOverlayEntry == null,
       onPopInvoked: (didPop) {
         if (didPop) {
-          unawaited(saveProgress());
+          unawaited(workflow.flush());
           return;
         }
         if (footnoteOverlayEntry != null) {
@@ -479,23 +441,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               canPerformPageTurn: canPerformPageTurn,
               onPerformPageTurn: handlePageTurn,
               onToggleControls: toggleControls,
+              runInteraction: workflow.renderInteraction,
               callbacks: ReaderWebViewCallbacks(
-                onInitialized: () async {
-                  final ratio = bookSession.initialScrollPosition;
-                  await navigator.load(restoreScrollRatio: ratio);
-                  if (!mounted) return;
-                  updateProgressDebounced();
-                  saveProgressDebounced();
-                },
-                onPageCountReady: (totalPages) async {
-                  navigator.reportPageCount(totalPages);
-                  updateProgressDebounced();
-                },
-                onPageChanged: (pageIndex) {
-                  navigator.reportPageIndex(pageIndex);
-                  updateProgressDebounced();
-                  saveProgressDebounced();
-                },
+                onInitialized: () =>
+                    workflow.initializeRenderer(theme: getEpubTheme()),
+                onViewportResize: () =>
+                    workflow.requestTheme(getEpubTheme(), force: true),
+                onPageCountReady: workflow.reportPageCount,
+                onPageChanged: workflow.reportPageIndex,
                 onScrollAnchors: handleScrollAnchors,
                 onImageLongPress: handleImageLongPress,
                 onTap: (x, y) {},
@@ -507,16 +460,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               ),
               actions: ReaderPanelActions(
                 onPreviousPage: rendererController.performPreviousPageTurn,
-                onFirstPage: () => _navigate(() => navigator.goToPage(0)),
+                onFirstPage: () => _navigate(() => workflow.goToPage(0)),
                 onNextPage: rendererController.performNextPageTurn,
                 onLastPage: () => _navigate(
-                  () => navigator.goToPage(
+                  () => workflow.goToPage(
                     navigator.state.value.totalPagesInChapter - 1,
                   ),
                 ),
-                onPreviousChapter: () =>
-                    _navigate(navigator.previousChapterFirstPage),
-                onNextChapter: () => _navigate(navigator.nextChapter),
+                onPreviousChapter: () => _navigate(workflow.previousChapter),
+                onNextChapter: () => _navigate(workflow.nextChapter),
               ),
               onBack: _leaveReader,
               onOpenDrawer: openDrawer,

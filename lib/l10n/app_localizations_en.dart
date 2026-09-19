@@ -820,4 +820,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deepSeekCheckFailed => 'Cannot reach DeepSeek. Check your network';
+
+  @override
+  String get readerLoadFailed => 'Could not open this book. Please try again.';
+
+  @override
+  String get readerRenderFailed =>
+      'Could not update the reading layout. Please try again.';
 }

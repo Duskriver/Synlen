@@ -31,6 +31,7 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final bool Function(bool isNext) canPerformPageTurn;
   final Future<void> Function(bool isNext) onPerformPageTurn;
   final VoidCallback onToggleControls;
+  final Future<void> Function(Future<void> Function()) runInteraction;
   final ReaderWebViewCallbacks callbacks;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
@@ -48,6 +49,7 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.canPerformPageTurn,
     required this.onPerformPageTurn,
     required this.onToggleControls,
+    required this.runInteraction,
     required this.callbacks,
     required this.shouldShowWebView,
     required this.initializeTheme,
@@ -135,7 +137,13 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     super.dispose();
   }
 
-  Future<void> _performPageTurn(bool isNext) async {
+  Future<void> _performPageTurn(bool isNext) =>
+      widget.runInteraction(() => _animatePageTurn(isNext));
+
+  Future<void> _animatePageTurn(bool isNext) async {
+    if (!mounted || !widget.canPerformPageTurn(isNext)) return;
+    await _webViewController.waitForRender();
+    if (!mounted) return;
     if (!widget.canPerformPageTurn(isNext)) return;
 
     if (Platform.isAndroid) {
@@ -179,9 +187,13 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         _iosPageTurnSession.isAnimating) {
       _handleTapZone(details.localPosition.dx, details.localPosition.dy);
     } else {
-      _webViewController.checkTapElementAt(
-        details.localPosition.dx,
-        details.localPosition.dy,
+      unawaited(
+        widget.runInteraction(
+          () => _webViewController.checkTapElementAt(
+            details.localPosition.dx,
+            details.localPosition.dy,
+          ),
+        ),
       );
     }
   }
@@ -238,9 +250,11 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   }
 
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
-    await _webViewController.checkLongPressElementAt(
-      details.localPosition.dx,
-      details.localPosition.dy,
+    await widget.runInteraction(
+      () => _webViewController.checkLongPressElementAt(
+        details.localPosition.dx,
+        details.localPosition.dy,
+      ),
     );
   }
 
