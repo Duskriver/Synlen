@@ -48,6 +48,7 @@ class ReaderStage extends StatelessWidget {
     required this.canPerformPageTurn,
     required this.onPerformPageTurn,
     required this.onToggleControls,
+    required this.runInteraction,
     required this.callbacks,
     required this.actions,
     required this.onBack,
@@ -68,6 +69,7 @@ class ReaderStage extends StatelessWidget {
   final bool Function(bool isNext) canPerformPageTurn;
   final Future<void> Function(bool isNext) onPerformPageTurn;
   final VoidCallback onToggleControls;
+  final Future<void> Function(Future<void> Function()) runInteraction;
   final ReaderWebViewCallbacks callbacks;
   final ReaderPanelActions actions;
   final VoidCallback onBack;
@@ -94,6 +96,7 @@ class ReaderStage extends StatelessWidget {
                 canPerformPageTurn: canPerformPageTurn,
                 onPerformPageTurn: onPerformPageTurn,
                 onToggleControls: onToggleControls,
+                runInteraction: runInteraction,
                 callbacks: callbacks,
                 shouldShowWebView: shouldShowWebView,
                 initializeTheme: initializeTheme,

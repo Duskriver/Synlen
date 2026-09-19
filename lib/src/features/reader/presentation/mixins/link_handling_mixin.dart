@@ -4,12 +4,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
   // === Borrowed state (provided by _ReaderScreenState fields) ===
   BookSession get bookSession;
 
-  ReaderNavigator get navigator;
-
-  // === Cross-mixin: 位置变化后刷新宿主状态 ===
-  void refreshActiveTocState();
-  void updateProgressDebounced();
-  void saveProgressDebounced();
+  ReaderWorkflow get workflow;
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
@@ -27,18 +22,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
 
   Future<void> handleLinkTap(String url) async {
     if (url.startsWith('book://')) {
-      final index = bookSession.findSpineIndexByUrl(url);
-      if (index != null) {
-        String anchor = 'top';
-        if (url.contains('#')) {
-          anchor = url.split('#').last;
-        }
-        await navigator.load(anchor: anchor, overrideSpineIndex: index);
-        if (!mounted) return;
-        refreshActiveTocState();
-        updateProgressDebounced();
-        saveProgressDebounced();
-      }
+      await workflow.followInternalLink(url);
     } else {
       final linkHandling = ref.read(readerSettingsProvider).linkHandling;
 

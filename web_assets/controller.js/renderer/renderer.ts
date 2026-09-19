@@ -109,10 +109,10 @@ export class Renderer implements SynlenApi {
     } else {
       const currentUrl = new URL(iframe.src);
       const newUrl = new URL(url);
-      if (currentUrl.origin === newUrl.origin && currentUrl.pathname === newUrl.pathname) {
-        iframe.onload = () => { this.onFrameLoad(iframe, token); };
-        iframe.src = url;
-        this.onFrameLoad(iframe, token);
+      if (currentUrl.origin === newUrl.origin && currentUrl.pathname === newUrl.pathname
+          && iframe.contentDocument?.readyState === 'complete') {
+        // 同一文档只重新定位，避免导航事件与手动装载重复发送回执。
+        this.onFrameLoad(iframe, token, url);
       } else {
         iframe.onload = () => { this.onFrameLoad(iframe, token); };
         iframe.src = url;
@@ -173,6 +173,7 @@ export class Renderer implements SynlenApi {
     const res = this.frameMgr.cycleFramesDOMAndState(direction);
     if (!res) {
       FlutterBridge.onEventFinished(token);
+      return;
     }
 
     requestAnimationFrame(() => {
@@ -197,25 +198,25 @@ export class Renderer implements SynlenApi {
     this.interactionMgr.checkLongPressElementAt(x, y);
   }
 
-  updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
-    this.themeMgr.updateThemeState(viewWidth, viewHeight, newTheme);
-    this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
+async updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): Promise<void> {
+  // 比例必须在修改尺寸和 CSS 之前采集；只有当前章节需要恢复阅读位置。
+  const currentCount = this.paginationMgr.calculatePageCount(this.frameMgr.getCurrFrame());
+  const ratio = currentCount > 0 ? this.paginationMgr.calculateCurrentPageIndex() / currentCount : 0;
+  this.themeMgr.updateThemeState(viewWidth, viewHeight, newTheme);
+  this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
+  const frames = Array.from(document.getElementsByTagName('iframe'));
+  await Promise.all(frames.map(async iframe => {
+    if (!iframe.contentDocument) throw new Error('阅读章节尚未就绪');
+    this.themeMgr.updateCSSVariables(iframe.contentDocument, 'injected-variable-style', iframe);
+    await this.nextFrame();
+    await this.reloadFrame(iframe, ratio);
+  }));
+  FlutterBridge.onEventFinished(token);
+}
 
-    const iframes = document.getElementsByTagName('iframe');
-    for (let i = 0; i < iframes.length; i++) {
-      const iframe = iframes[i];
-      if (iframe && iframe.contentDocument) {
-        const doc = iframe.contentDocument;
-        const pageIndex = this.paginationMgr.calculateCurrentPageIndex();
-        const pageCount = this.paginationMgr.calculatePageCount(iframe);
-        const pageIndexPercentage = pageCount > 0 ? pageIndex / pageCount : 0;
-        this.themeMgr.updateCSSVariables(doc, 'injected-variable-style', iframe);
-        requestAnimationFrame(() => {
-          this.reloadFrame(iframe, pageIndexPercentage, token);
-        });
-      }
-    }
-  }
+private nextFrame(): Promise<void> {
+  return new Promise(resolve => requestAnimationFrame(() => resolve()));
+}
 
   waitForRender(token: number): void {
     requestAnimationFrame(function () {
@@ -225,7 +226,7 @@ export class Renderer implements SynlenApi {
     });
   }
 
-  private onFrameLoad(iframe: HTMLIFrameElement, token: number): void {
+  private onFrameLoad(iframe: HTMLIFrameElement, token: number, targetUrl = iframe.src): void {
     if (!iframe || !iframe.contentDocument) return;
 
     const doc = iframe.contentDocument;
@@ -261,7 +262,7 @@ export class Renderer implements SynlenApi {
               const pageCount = this.paginationMgr.calculatePageCount(iframe);
 
               let pageIndex = 0;
-              const url = iframe.src;
+              const url = targetUrl;
               if (url && url.includes('#')) {
                 const anchor = url.split('#')[1];
                 pageIndex = this.paginationMgr.calculatePageIndexOfAnchor(iframe, anchor);
@@ -293,46 +294,28 @@ export class Renderer implements SynlenApi {
     });
   }
 
-  private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
-    if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
-
-    waitForAllResources(iframe.contentDocument).then(() => {
-      const doc = iframe.contentDocument!;
-      const overrideColor = this.state.config.theme.shouldOverrideTextColor
-        && this.themeMgr.getOriginalBackgroundColor(iframe) == null;
-      polyfillCss(doc, overrideColor);
-
-      const reflow = doc.body.scrollHeight; void reflow;
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const pageCount = this.paginationMgr.calculatePageCount(iframe);
-
-          const pageIndex = Math.round(pageIndexPercentage * pageCount);
-          this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
-
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              this.interactionMgr.buildInteractionMap().then(() => {
-                if (iframe.id === 'frame-curr') {
-                  FlutterBridge.onPageCountReady(pageCount);
-                  FlutterBridge.onPageChanged(pageIndex);
-                } else if (iframe.id === 'frame-prev') {
-                  this.jumpToLastPageOfFrame(-1, 'prev');
-                } else if (iframe.id === 'frame-next') {
-                  this.jumpToPageFor(-1, 'next', 0);
-                }
-                this.paginationMgr.detectActiveAnchor(iframe);
-
-                requestAnimationFrame(() => {
-                  FlutterBridge.onEventFinished(token);
-                });
-              });
-            });
-          });
-        });
-      });
-    });
+  private async reloadFrame(iframe: HTMLIFrameElement, ratio: number): Promise<void> {
+    const doc = iframe.contentDocument;
+    if (!doc || !iframe.contentWindow) throw new Error('阅读章节已关闭');
+    await waitForAllResources(doc);
+    const overrideColor = this.state.config.theme.shouldOverrideTextColor
+      && this.themeMgr.getOriginalBackgroundColor(iframe) == null;
+    polyfillCss(doc, overrideColor);
+    await this.nextFrame();
+    await this.nextFrame();
+    const count = this.paginationMgr.calculatePageCount(iframe);
+    const index = iframe.id === 'frame-prev' ? Math.max(0, count - 1)
+      : iframe.id === 'frame-next' ? 0
+      : Math.max(0, Math.min(count - 1, Math.round(ratio * count)));
+    this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(index));
+    await this.nextFrame();
+    await this.nextFrame();
+    await this.interactionMgr.buildInteractionMap();
+    if (iframe.id === 'frame-curr') {
+      FlutterBridge.onPageCountReady(count);
+      FlutterBridge.onPageChanged(index);
+    }
+    this.paginationMgr.detectActiveAnchor(iframe);
+    await this.nextFrame();
   }
 }
-

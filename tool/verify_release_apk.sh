@@ -21,6 +21,7 @@ CODE="$(printf '%s\n' "$BADGING" | sed -n "s/^package: .*versionCode='\([^']*\)'
 [[ "$PACKAGE" == com.tanglei.synlen && "$VERSION" == "${TAG#v}" && "$CODE" == "$BUILD_NUMBER" ]] || { echo 'APK 包名、版本号或构建号与发布版本不一致' >&2; exit 1; }
 ABIS="$(unzip -Z -1 "$APK" | awk -F/ '$1 == "lib" && NF == 3 && $3 ~ /[.]so$/ {print $2}' | sort -u)"
 [[ "$ABIS" == arm64-v8a ]] || { echo 'APK 必须只包含 ARM64 原生库' >&2; exit 1; }
+bash "$(dirname "$0")/verify_android_page_alignment.sh" "$APK"
 CERTS="$("$TOOLS/apksigner" verify --print-certs "$APK")"
 FINGERPRINT="$(printf '%s\n' "$CERTS" | sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: //p' | tr '[:upper:]' '[:lower:]')"
 # 已发布正式包的证书摘要，防止 Gradle 回退到 debug 签名后被上传。

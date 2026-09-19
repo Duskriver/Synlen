@@ -139,27 +139,33 @@ class ReaderNavigator {
       _set(state.value.copyWith(spineIndex: overrideSpineIndex));
     }
 
-    final tokensForWait = <int>[];
-    for (final request in planChapterPreload(
-      _session,
-      index: state.value.spineIndex,
-      anchor: anchor,
-    )) {
-      final token = await _viewport.preloadChapter(request);
-      if (token != null) tokensForWait.add(token);
+    try {
+      await _viewport.prepareChapters(
+        planChapterPreload(
+          _session,
+          index: state.value.spineIndex,
+          anchor: anchor,
+        ),
+      );
+      if (_disposed) return;
+      if (restoreScrollRatio != null) {
+        await _viewport.restoreScrollPosition(restoreScrollRatio);
+      }
+      await Future<void>.delayed(_settleDelay);
+    } finally {
+      if (!_disposed) _set(state.value.copyWith(isLoading: false));
     }
+  }
 
-    await _viewport.waitForEvents(tokensForWait);
+  /// 首次渲染前确定章节，内容准备在视口就绪后执行。
+  void initializePosition() {
     if (_disposed) return;
-
-    if (restoreScrollRatio != null) {
-      await _viewport.restoreScrollPosition(restoreScrollRatio);
-    }
-
-    await Future<void>.delayed(_settleDelay);
-    if (_disposed) return;
-
-    _set(state.value.copyWith(isLoading: false));
+    final index = _session.initialChapterIndex;
+    _set(
+      state.value.copyWith(
+        spineIndex: index >= 0 && index < _session.spine.length ? index : 0,
+      ),
+    );
   }
 
   /// 跳到 [index] 章（可带锚点）。
@@ -178,64 +184,50 @@ class ReaderNavigator {
   }
 
   /// 跳到下一章首页。
-  Future<ReaderNavOutcome> nextChapter() async {
-    if (_disposed || state.value.isBusy) return ReaderNavOutcome.ignored;
-    if (state.value.spineIndex >= _session.spine.length - 1) {
-      return ReaderNavOutcome.lastChapter;
-    }
-
-    _set(state.value.copyWith(isChangingChapter: true, totalPagesInChapter: 0));
-    await _viewport.jumpToNextChapter();
-    if (_disposed) return ReaderNavOutcome.ignored;
-
-    _set(
-      state.value.copyWith(
-        spineIndex: state.value.spineIndex + 1,
-        pageInChapter: 0,
-        isChangingChapter: false,
-      ),
-    );
-    await _preloadNeighbour(forward: true);
-    return ReaderNavOutcome.moved;
-  }
+  Future<ReaderNavOutcome> nextChapter() => _changeChapter(
+    forward: true,
+    firstPage: true,
+    jump: _viewport.jumpToNextChapter,
+  );
 
   /// 跳到上一章末页。
-  Future<ReaderNavOutcome> previousChapter() async {
-    if (_disposed || state.value.isBusy) return ReaderNavOutcome.ignored;
-    if (state.value.spineIndex <= 0) return ReaderNavOutcome.firstChapter;
-
-    _set(state.value.copyWith(isChangingChapter: true, totalPagesInChapter: 0));
-    await _viewport.jumpToPreviousChapterLastPage();
-    if (_disposed) return ReaderNavOutcome.ignored;
-
-    _set(
-      state.value.copyWith(
-        spineIndex: state.value.spineIndex - 1,
-        isChangingChapter: false,
-      ),
-    );
-    await _preloadNeighbour(forward: false);
-    return ReaderNavOutcome.moved;
-  }
+  Future<ReaderNavOutcome> previousChapter() => _changeChapter(
+    forward: false,
+    firstPage: false,
+    jump: _viewport.jumpToPreviousChapterLastPage,
+  );
 
   /// 跳到上一章首页。
-  Future<ReaderNavOutcome> previousChapterFirstPage() async {
+  Future<ReaderNavOutcome> previousChapterFirstPage() => _changeChapter(
+    forward: false,
+    firstPage: true,
+    jump: _viewport.jumpToPreviousChapterFirstPage,
+  );
+
+  Future<ReaderNavOutcome> _changeChapter({
+    required bool forward,
+    required bool firstPage,
+    required Future<void> Function() jump,
+  }) async {
     if (_disposed || state.value.isBusy) return ReaderNavOutcome.ignored;
-    if (state.value.spineIndex <= 0) return ReaderNavOutcome.firstChapter;
-
+    final target = state.value.spineIndex + (forward ? 1 : -1);
+    if (target < 0) return ReaderNavOutcome.firstChapter;
+    if (target >= _session.spine.length) return ReaderNavOutcome.lastChapter;
     _set(state.value.copyWith(isChangingChapter: true, totalPagesInChapter: 0));
-    await _viewport.jumpToPreviousChapterFirstPage();
-    if (_disposed) return ReaderNavOutcome.ignored;
-
-    _set(
-      state.value.copyWith(
-        spineIndex: state.value.spineIndex - 1,
-        pageInChapter: 0,
-        isChangingChapter: false,
-      ),
-    );
-    await _preloadNeighbour(forward: false);
-    return ReaderNavOutcome.moved;
+    try {
+      await jump();
+      if (_disposed) return ReaderNavOutcome.ignored;
+      _set(
+        state.value.copyWith(
+          spineIndex: target,
+          pageInChapter: firstPage ? 0 : state.value.pageInChapter,
+        ),
+      );
+      await _preloadNeighbour(forward: forward);
+      return _disposed ? ReaderNavOutcome.ignored : ReaderNavOutcome.moved;
+    } finally {
+      if (!_disposed) _set(state.value.copyWith(isChangingChapter: false));
+    }
   }
 
   /// 跳到目录项指向的章节。
@@ -334,6 +326,6 @@ class ReaderNavigator {
       forward: forward,
     );
     if (request == null || _disposed) return;
-    await _viewport.preloadChapter(request);
+    await _viewport.prepareChapters([request]);
   }
 }

@@ -1,119 +1,57 @@
 import 'dart:async';
 
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:synlen/src/core/services/app_logger.dart';
-
-/// Manages JS↔Dart communication over an [InAppWebViewController].
-///
-/// Provides token-based async call tracking so that callers can fire a JS
-/// method that will eventually invoke `FlutterBridge.onEventFinished(token)`,
-/// and await the result on the Dart side via [waitForEvent].
-///
-/// Typical usage:
-/// ```dart
-/// // Fire and forget the token; caller awaits separately.
-/// final token = await _bridge.call((t) => "window.api.loadFrame($t, ...)");
-/// await _bridge.waitForEvent(token);
-///
-/// // Fire and immediately await.
-/// await _bridge.callAndWait((t) => "window.api.jumpToPage($t, $idx)");
-/// ```
+/// 管理一次 WebView 挂载期间的命令回执；超时、执行失败、卸载均使命令失败。
 class WebViewBridge {
-  InAppWebViewController? _controller;
-
+  Future<void> Function(String source)? _evaluate;
+  Object? _viewId;
   int _currentToken = 0;
-  final Map<int, Completer<void>> _completers = {};
+  final Map<int, Completer<void>> _pending = {};
 
-  // ─── Controller lifecycle ──────────────────────────────────────────
-
-  /// Attaches a live [InAppWebViewController]. Call this in `onWebViewCreated`.
-  void attach(InAppWebViewController controller) {
-    _controller = controller;
+  /// 同一原生视口切换控制器时保留在途回执；换视口或未提供标识则取消旧请求。
+  void attach(Future<void> Function(String source) evaluate, {Object? viewId}) {
+    if (_evaluate != null && (viewId == null || viewId != _viewId)) detach();
+    _evaluate = evaluate;
+    _viewId = viewId;
   }
 
-  /// Detaches the controller and cancels all pending completers.
   void detach() {
-    _controller = null;
-    for (final completer in _completers.values) {
-      if (!completer.isCompleted) {
-        completer.completeError(StateError('WebViewBridge detached'));
-      }
+    _evaluate = null;
+    _viewId = null;
+    for (final completion in _pending.values) {
+      completion.completeError(StateError('阅读视口已关闭'));
     }
-    _completers.clear();
+    _pending.clear();
   }
 
-  // ─── JS evaluation ─────────────────────────────────────────────────
-
-  /// Evaluates [source] in the WebView. No-ops if no controller is attached.
-  Future<void> evaluate(String source) async {
-    await _controller?.evaluateJavascript(source: source);
+  Future<void> evaluate(String source) {
+    final evaluate = _evaluate;
+    if (evaluate == null) return Future.error(StateError('阅读视口尚未就绪'));
+    return evaluate(source);
   }
 
-  // ─── Token management ──────────────────────────────────────────────
-
-  /// Allocates a new token and registers a [Completer] for it.
-  ///
-  /// Embed the returned token in the JS call so JS can resolve it via
-  /// `FlutterBridge.onEventFinished(token)`.
-  int issueToken() {
-    _currentToken++;
-    _completers[_currentToken] = Completer<void>();
-    return _currentToken;
-  }
-
-  /// Called by the `onEventFinished` JS handler to resolve a pending token.
-  ///
-  /// A [token] of `-1` is a sentinel for fire-and-forget notifications that
-  /// do not need to be tracked.
+  /// 未知回执（含超时或上一次挂载的迟到回执）不影响当前命令。
   void resolveToken(int token) {
-    if (token == -1) return;
-    final completer = _completers.remove(token);
-    if (completer != null && !completer.isCompleted) {
-      completer.complete();
-    }
+    _pending.remove(token)?.complete();
   }
 
-  // ─── Awaiting ──────────────────────────────────────────────────────
-
-  /// Waits for [token] to be resolved, or times out after [timeoutMs] ms.
-  Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
-    final completer = _completers[token];
-    if (completer == null) {
-      appLogger.w('WebViewBridge: no completer for token $token');
-      return;
-    }
-    return completer.future.timeout(
-      Duration(milliseconds: timeoutMs),
-      onTimeout: () {
-        _completers.remove(token);
-        appLogger.w('WebViewBridge: timeout for token $token');
-      },
-    );
-  }
-
-  /// Waits for all [tokens] to be resolved concurrently.
-  Future<void> waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
-    await Future.wait(tokens.map((t) => waitForEvent(t, timeoutMs)));
-  }
-
-  // ─── Convenience helpers ───────────────────────────────────────────
-
-  /// Issues a token, evaluates the JS returned by [source], and returns the
-  /// token so the caller can [waitForEvent] later.
-  Future<int> call(String Function(int token) source) async {
-    final token = issueToken();
-    await evaluate(source(token));
-    return token;
-  }
-
-  /// Issues a token, evaluates the JS returned by [source], and immediately
-  /// awaits [waitForEvent] before returning.
   Future<void> callAndWait(
     String Function(int token) source, [
     int timeoutMs = 10000,
-  ]) async {
-    final token = issueToken();
-    await evaluate(source(token));
-    await waitForEvent(token, timeoutMs);
+  ]) {
+    final evaluate = _evaluate;
+    if (evaluate == null) return Future.error(StateError('阅读视口尚未就绪'));
+    final token = ++_currentToken;
+    final completion = Completer<void>();
+    _pending[token] = completion;
+    // 先订阅回执再执行脚本，执行器内同步回执或卸载也不会丢失结果。
+    return Future.wait<void>([
+          completion.future,
+          Future.sync(() => evaluate(source(token))),
+        ], eagerError: true)
+        .timeout(Duration(milliseconds: timeoutMs))
+        .then<void>((_) {})
+        .whenComplete(() {
+          _pending.remove(token);
+        });
   }
 }

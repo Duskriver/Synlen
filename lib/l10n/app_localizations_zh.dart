@@ -789,4 +789,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deepSeekCheckFailed => '无法连接 DeepSeek，请检查网络';
+
+  @override
+  String get readerLoadFailed => '无法打开这本书，请重试。';
+
+  @override
+  String get readerRenderFailed => '阅读排版更新失败，请重试。';
 }

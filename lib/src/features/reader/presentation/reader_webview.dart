@@ -13,6 +13,7 @@ import '../application/book_webview_handler.dart';
 import '../application/reader_scripts.dart';
 import 'package:synlen/src/web/api/webview_bridge.dart';
 import 'package:synlen/src/web/api/synlen_api.dart';
+import 'package:synlen/src/web/api/reader_web_event.dart';
 
 part 'reader_webview_controller.dart';
 part 'reader_webview_js_handlers.dart';
@@ -136,15 +137,15 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _waitForWebviewRender();
   }
 
-  Future<int> _jumpToLastPageOfFrame(String frame) =>
+  Future<void> _jumpToLastPageOfFrame(String frame) =>
       _api.jumpToLastPageOfFrame(frame);
 
-  Future<int> _cycleFrames(String direction) => _api.cycleFrames(direction);
+  Future<void> _cycleFrames(String direction) => _api.cycleFrames(direction);
 
-  Future<int> _jumpToPageFor(String frame, int pageIndex) =>
+  Future<void> _jumpToPageFor(String frame, int pageIndex) =>
       _api.jumpToPageFor(frame, pageIndex);
 
-  Future<int> _loadFrame(
+  Future<void> _loadFrame(
     String frame,
     String url,
     String anchors,
@@ -212,7 +213,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   void _onWebViewCreated(InAppWebViewController controller) {
     _controller = controller;
-    _bridge.attach(controller);
+    _bridge.attach((source) async {
+      await controller.evaluateJavascript(source: source);
+    }, viewId: controller.getViewId() ?? controller);
     _registerJavaScriptHandlers(this, controller);
     widget.onWebViewCreated?.call();
   }

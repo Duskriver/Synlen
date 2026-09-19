@@ -41,6 +41,7 @@
 - 混淆字体只收录「算法是 IDPF（前 1040 字节）或 Adobe（前 1024 字节）且 OPF manifest media-type 是字体」的条目；映射构建失败退化为空映射，不阻断打开。
 - 缓存无自动淘汰，书籍关闭时必须调 `close_epub`。
 - `frb_generated.rs` 与 `lib/src/rust/**` 是生成物，不手改。
+- `rust/build.rs` 只向 Android 动态库注入 16 KB 链接参数，覆盖调试与发布构建；产物检查见[测试策略](../testing.md#最小证据)。
 
 ## 已知限制与待办
 

@@ -10,57 +10,51 @@ class ReaderRendererController implements ReaderViewport {
   ReaderWebViewController? get webViewController =>
       _rendererState?._webViewController;
 
+  ReaderWebViewController get _webView =>
+      webViewController ?? (throw StateError('阅读视口尚未就绪'));
+
   void _attachState(_ReaderRendererState? state) {
     _rendererState = state;
   }
 
   Future<void> performPreviousPageTurn() async {
-    await webViewController?.waitForRender();
     await _rendererState?._performPageTurn(false);
   }
 
   Future<void> performNextPageTurn() async {
-    await webViewController?.waitForRender();
     await _rendererState?._performPageTurn(true);
   }
 
   @override
   Future<void> jumpToPage(int pageIndex) async {
-    await webViewController?.jumpToPage(pageIndex);
+    await _webView.jumpToPage(pageIndex);
   }
 
   @override
   Future<void> restoreScrollPosition(double ratio) async {
-    await webViewController?.restoreScrollPosition(ratio);
+    await _webView.restoreScrollPosition(ratio);
   }
 
   @override
-  Future<void> jumpToPreviousChapterLastPage() async {
-    final token1 = await webViewController?.jumpToLastPageOfFrame('prev');
-    final token2 = await webViewController?.cycleFrames('prev');
-    final tokens = [token1, token2].whereType<int>().toList();
-    await webViewController?.waitForEvents(tokens);
-  }
+  Future<void> jumpToPreviousChapterLastPage() => Future.wait([
+    _webView.jumpToLastPageOfFrame('prev'),
+    _webView.cycleFrames('prev'),
+  ]);
 
   @override
-  Future<void> jumpToPreviousChapterFirstPage() async {
-    final token1 = await webViewController?.jumpToPageFor('prev', 0);
-    final token2 = await webViewController?.cycleFrames('prev');
-    final tokens = [token1, token2].whereType<int>().toList();
-    await webViewController?.waitForEvents(tokens);
-  }
+  Future<void> jumpToPreviousChapterFirstPage() => Future.wait([
+    _webView.jumpToPageFor('prev', 0),
+    _webView.cycleFrames('prev'),
+  ]);
 
   @override
-  Future<void> jumpToNextChapter() async {
-    final token1 = await webViewController?.jumpToPageFor('next', 0);
-    final token2 = await webViewController?.cycleFrames('next');
-    final tokens = [token1, token2].whereType<int>().toList();
-    await webViewController?.waitForEvents(tokens);
-  }
+  Future<void> jumpToNextChapter() => Future.wait([
+    _webView.jumpToPageFor('next', 0),
+    _webView.cycleFrames('next'),
+  ]);
 
   /// 按预载请求的槽位把章节送进对应的 iframe。
-  @override
-  Future<int?> preloadChapter(ChapterPreloadRequest request) async {
+  Future<void> _preloadChapter(ChapterPreloadRequest request) async {
     final frame = switch (request.slot) {
       ChapterSlot.current => 'curr',
       ChapterSlot.previous => 'prev',
@@ -73,7 +67,7 @@ class ReaderRendererController implements ReaderViewport {
     final propertiesJson = jsonEncode(
       propertiesList.map((p) => p.replaceAll(':', '-COLON-')).toList(),
     );
-    return await webViewController?.loadFrame(
+    return await _webView.loadFrame(
       frame,
       request.url,
       anchorsJson,
@@ -81,16 +75,17 @@ class ReaderRendererController implements ReaderViewport {
     );
   }
 
+  @override
   Future<void> updateTheme(EpubTheme theme) async {
-    await _rendererState?._updateTheme(theme);
+    final state = _rendererState;
+    if (state == null) throw StateError('阅读视口尚未就绪');
+    await state._updateTheme(theme);
   }
 
   @override
-  Future<void> waitForEvents(List<int> tokens) async {
-    await webViewController?.waitForEvents(tokens);
-  }
-
-  Future<void> waitForEvent(int token) async {
-    await webViewController?.waitForEvent(token);
+  Future<void> prepareChapters(List<ChapterPreloadRequest> requests) async {
+    final controller = webViewController;
+    if (controller == null) throw StateError('阅读视口尚未就绪');
+    await Future.wait(requests.map(_preloadChapter));
   }
 }

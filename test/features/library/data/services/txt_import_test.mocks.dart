@@ -9,10 +9,8 @@ import 'package:fpdart/fpdart.dart' as _i6;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i7;
 import 'package:synlen/src/core/database/app_database.dart' as _i2;
-import 'package:synlen/src/features/library/data/book_manifest_repository.dart'
-    as _i8;
 import 'package:synlen/src/features/library/data/library_book_store.dart'
-    as _i9;
+    as _i8;
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart'
     as _i3;
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart'
@@ -297,56 +295,10 @@ class MockShelfBookRepository extends _i1.Mock
           as _i4.Future<_i6.Either<String, bool>>);
 }
 
-/// A class which mocks [BookManifestRepository].
-///
-/// See the documentation for Mockito's code generation for more information.
-class MockBookManifestRepository extends _i1.Mock
-    implements _i8.BookManifestRepository {
-  MockBookManifestRepository() {
-    _i1.throwOnMissingStub(this);
-  }
-
-  @override
-  _i4.Future<_i2.BookManifest?> getManifestByHash(String? fileHash) =>
-      (super.noSuchMethod(
-            Invocation.method(#getManifestByHash, [fileHash]),
-            returnValue: _i4.Future<_i2.BookManifest?>.value(),
-          )
-          as _i4.Future<_i2.BookManifest?>);
-
-  @override
-  _i4.Future<_i6.Either<String, int>> saveManifest(
-    _i2.BookManifest? manifest,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#saveManifest, [manifest]),
-            returnValue: _i4.Future<_i6.Either<String, int>>.value(
-              _i7.dummyValue<_i6.Either<String, int>>(
-                this,
-                Invocation.method(#saveManifest, [manifest]),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, int>>);
-
-  @override
-  _i4.Future<_i6.Either<String, bool>> deleteManifestByHash(String? fileHash) =>
-      (super.noSuchMethod(
-            Invocation.method(#deleteManifestByHash, [fileHash]),
-            returnValue: _i4.Future<_i6.Either<String, bool>>.value(
-              _i7.dummyValue<_i6.Either<String, bool>>(
-                this,
-                Invocation.method(#deleteManifestByHash, [fileHash]),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, bool>>);
-}
-
 /// A class which mocks [LibraryBookStore].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockLibraryBookStore extends _i1.Mock implements _i9.LibraryBookStore {
+class MockLibraryBookStore extends _i1.Mock implements _i8.LibraryBookStore {
   MockLibraryBookStore() {
     _i1.throwOnMissingStub(this);
   }
@@ -366,6 +318,36 @@ class MockLibraryBookStore extends _i1.Mock implements _i9.LibraryBookStore {
             ),
           )
           as _i4.Future<_i6.Either<String, int>>);
+
+  @override
+  _i4.Future<void> restoreBookWithManifest(
+    _i2.ShelfBook? book,
+    _i2.BookManifest? manifest,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreBookWithManifest, [book, manifest]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> restoreGroups(List<_i2.ShelfGroup>? groups) =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreGroups, [groups]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> deleteBookWithManifest(_i2.ShelfBook? book) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteBookWithManifest, [book]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 
   @override
   _i4.Future<_i6.Either<String, (int, int)>> repairOrphanRecords() =>

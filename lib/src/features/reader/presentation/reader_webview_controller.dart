@@ -4,6 +4,9 @@ part of 'reader_webview.dart';
 class ReaderWebViewController {
   _ReaderWebViewState? _webViewState;
 
+  _ReaderWebViewState get _state =>
+      _webViewState ?? (throw StateError('阅读视口尚未就绪'));
+
   bool get isAttached => _webViewState != null;
 
   void _attachState(_ReaderWebViewState? state) {
@@ -11,67 +14,60 @@ class ReaderWebViewController {
   }
 
   // JavaScript wrapper methods
-  Future<int?> jumpToLastPageOfFrame(String frame) async {
-    return await _webViewState?._jumpToLastPageOfFrame(frame);
+  Future<void> jumpToLastPageOfFrame(String frame) async {
+    return await _state._jumpToLastPageOfFrame(frame);
   }
 
-  Future<int?> cycleFrames(String direction) async {
-    return await _webViewState?._cycleFrames(direction);
+  Future<void> cycleFrames(String direction) async {
+    return await _state._cycleFrames(direction);
   }
 
-  Future<int?> jumpToPageFor(String frame, int pageIndex) async {
-    return await _webViewState?._jumpToPageFor(frame, pageIndex);
+  Future<void> jumpToPageFor(String frame, int pageIndex) async {
+    return await _state._jumpToPageFor(frame, pageIndex);
   }
 
-  Future<int?> loadFrame(
+  Future<void> loadFrame(
     String frame,
     String url,
     String anchors,
     String properties,
   ) async {
-    return await _webViewState?._loadFrame(frame, url, anchors, properties);
+    return await _state._loadFrame(frame, url, anchors, properties);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
-    await _webViewState?._jumpToPage(pageIndex);
+    await _state._jumpToPage(pageIndex);
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewState?._restoreScrollPosition(ratio);
+    await _state._restoreScrollPosition(ratio);
   }
 
   Future<void> checkLongPressElementAt(double x, double y) async {
-    await _webViewState?._checkLongPressElementAt(x, y);
+    await _state._checkLongPressElementAt(x, y);
   }
 
   Future<void> checkTapElementAt(double x, double y) async {
-    await _webViewState?._checkTapElementAt(x, y);
+    await _state._checkTapElementAt(x, y);
   }
 
   Future<ui.Image?> takeScreenshot() async {
-    return await _webViewState?._takeScreenshot();
+    return await _state._takeScreenshot();
   }
 
   Future<void> waitForRender() async {
-    await _webViewState?._waitForRender();
+    await _state._waitForRender();
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
-    await _webViewState?._updateTheme(theme);
-  }
-
-  Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
-    await _webViewState?._bridge.waitForEvent(token, timeoutMs);
-  }
-
-  Future<void> waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
-    await _webViewState?._bridge.waitForEvents(tokens, timeoutMs);
+    await _state._updateTheme(theme);
   }
 }
 
 /// Callbacks for WebView events
 class ReaderWebViewCallbacks {
   final Function() onInitialized;
+  final VoidCallback? onViewportResize;
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
   final Function(List<String> anchors) onScrollAnchors;
@@ -85,6 +81,7 @@ class ReaderWebViewCallbacks {
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
+    this.onViewportResize,
     required this.onPageCountReady,
     required this.onPageChanged,
     required this.onScrollAnchors,
@@ -102,6 +99,7 @@ class ReaderWebViewCallbacks {
   ReaderWebViewCallbacks withTap(Function(double x, double y) onTap) {
     return ReaderWebViewCallbacks(
       onInitialized: onInitialized,
+      onViewportResize: onViewportResize,
       onPageCountReady: onPageCountReady,
       onPageChanged: onPageChanged,
       onScrollAnchors: onScrollAnchors,

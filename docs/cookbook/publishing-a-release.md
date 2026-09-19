@@ -7,7 +7,7 @@
 - GitHub 主仓库 `Duskriver/Synlen` 与 Gitee 镜像 `Tang_Lei789/synlen` 均公开。Gitee 账号已绑定手机，`main` 存源码，`updates` 存版本清单。
 - 按[开发环境](../development.md#环境)配置 Flutter、Rust 与 Node；安装 Android SDK Build-Tools 并设置 `ANDROID_HOME`。命令另需 `gh`、`curl`、`jq`、`shasum` 与 `unzip`。
 - 使用 `gh auth login` 与 `gitee auth login`，或提供 `GH_TOKEN` 与 `GITEE_TOKEN`。Gitee 令牌只用于发布，不编入客户端。
-- 本地 `android/key.properties` 指向正式签名密钥，凭据文件不提交。APK 校验会拒绝 debug 签名，保证可以覆盖安装。
+- 在本地 `android/` 目录创建 `key.properties` 并指向正式签名密钥；该凭据文件不随仓库提供，也不得提交。APK 校验会拒绝 debug 签名，保证可以覆盖安装。
 
 ## 源码同步
 
@@ -17,7 +17,7 @@ GitHub 是源码的唯一写入源；`main` 推送触发镜像同步，发布命
 
 1. 定版本号 `vX.Y.Z`，更新 `pubspec.yaml` 的 `version`。`versionCode` 为 `X*10000 + Y*100 + Z`，`Y`、`Z` 均小于 100；发布版本必须递增。
 2. 把 `docs/user/release-notes.md` 的「未发布」小节改名为 `## vX.Y.Z`，删掉「以下内容尚未发布」那行并核对说明。发布脚本只接受完整匹配的版本标题。
-3. 在 `main` 提交全部改动，保持工作区干净；先不打 tag。执行 `./tool/release.sh vX.Y.Z`，命令先跑发布门禁，再构建 Android ARM64 APK，校验包名、版本、构建号与正式签名。
+3. 在 `main` 提交全部改动，保持工作区干净；先不打 tag。执行 `./tool/release.sh vX.Y.Z`，命令先跑发布门禁，再构建 Android ARM64 APK，校验包名、版本、构建号、16 KB 对齐与正式签名。
 4. 命令推送源码与 tag、同步 Gitee，上传并下载验证 GitHub 附件，然后调用 `tool/upload_release.sh` 发布 Gitee 并更新清单。同名附件不会被覆盖，摘要不一致即失败；旧版本不能覆盖较新的清单。
 5. 保留 `build/outputs/` 中的 `.apk` 与 `.apk.json`：构建记录绑定源码提交与文件摘要。重试时在同一提交执行 `./tool/release.sh vX.Y.Z --apk /绝对路径/synlen-vX.Y.Z-arm64-release.apk`；它仍执行门禁，但复用原包。
 

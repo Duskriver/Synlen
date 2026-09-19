@@ -10,7 +10,7 @@ Status: implemented
 
 `tool/release.sh` 是本地与手动云构建的共同入口，先执行格式、分析、Flutter 全量测试、分层、Rust、文档和 reader Web 门禁，再构建并校验正式签名 ARM64 APK。源码与版本说明必须提交；推送和上传都在检查之后。
 
-APK 验证读取安装包内部的包名、版本号、构建号与 ABI，并通过 `apksigner` 验证签名及已发布证书摘要。产物旁的 JSON 记录源码提交与 SHA-256；`--apk` 只复用记录匹配的原文件，重试仍执行质量门禁。
+APK 验证读取安装包内部的包名、版本号、构建号与 ABI，检查 [16 KB 对齐](../bug-fix/2026-09-19-android-native-page-alignment.md)，并通过 `apksigner` 验证签名及已发布证书摘要。产物旁的 JSON 记录源码提交与 SHA-256；`--apk` 只复用记录匹配的原文件，重试仍执行质量门禁。
 
 默认命令推送 `main` 与 tag、同步 Gitee、上传并验证 GitHub APK，再调用现有 Gitee 上传脚本更新客户端清单。`--prepare-only` 只产出经过验证的本地文件。GitHub tag 推送不触发构建；手动工作流检出指定 tag，执行同一命令，并在发布失败时保存产物供重试。
 

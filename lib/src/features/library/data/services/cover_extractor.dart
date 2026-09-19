@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'book_file_changes.dart';
 
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
@@ -20,6 +21,7 @@ class CoverExtractor {
     required String fileHash,
     required String? coverHref,
     required String opfRootPath,
+    BookFileChanges? changes,
   }) async {
     if (coverHref == null || coverHref.isEmpty) {
       return null;
@@ -61,7 +63,11 @@ class CoverExtractor {
       }
 
       final outputPath = '${coversDir.path}/$fileHash$extension';
-      await File(outputPath).writeAsBytes(coverData as List<int>);
+      if (changes != null) {
+        await changes.write(File(outputPath), coverData as List<int>);
+      } else {
+        await File(outputPath).writeAsBytes(coverData as List<int>);
+      }
 
       return '${AppStorageConstants.coversDir}/$fileHash$extension';
     } catch (e) {

@@ -12,7 +12,7 @@ Status: implemented
 - `BookFileStore`（`book_file_store.dart`）：`copyBook`（EPUB 原样复制，支持移动源文件）与 `writeNormalizedTxt`（TXT 归一化字节落盘）。
 - `CoverExtractor`（`cover_extractor.dart`）：`extract` 按 OPF 根目录解析封面条目，压缩后写入 covers 目录；失败只记日志并返回 null。
 
-三者都是无状态具体类，服务以 `static const` 持有；`BookImportService` 只留流水线编排与失败回滚。
+三者都是无状态具体类；`BookFileStore` 经 provider 注入并供删除流程复用，探测与封面提取以常量持有。文件补偿作用域见[藏书写入契约](2026-09-19-library-write-consistency.md)。
 
 ## Alternatives considered
 

@@ -26,7 +26,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 | `TxtDecoder` / `TxtEncoding` / `TxtDecodeResult` | TXT 编码识别：BOM → UTF-8 严格 → GBK 兜底，并用控制字符占比拦二进制内容 | `lib/src/features/library/data/parsers/txt_decoder.dart` |
 | `TxtChapterSplitter` / `TxtChapter` | 章节切分：标题行正则、引导块、无标题时按体积分割 | `lib/src/features/library/data/parsers/txt_chapter_splitter.dart` |
 | `TxtBookParser` / `TxtBookParseResult` | TXT 解析：产出 spine（`txt/chapter_N.xhtml` + 字节范围）、TOC 与归一化 UTF-8 | `lib/src/features/library/data/parsers/txt_book_parser.dart` |
-| `ImportBackupService` / `BackupMerger` | 恢复：读 `shelf.json`、逐本 upsert，物理文件用 `File.copy` 不载入内存；合并策略（元数据与进度分别取较新）在 `BackupMerger` | `lib/src/features/library/data/services/import_backup_service.dart` |
+| `ImportBackupService` / `LibraryBookStore` | 恢复：读 `shelf.json`、逐本事务合并书目与清单；元数据与进度分别取较新 | `lib/src/features/library/data/services/import_backup_service.dart` |
 | `ExportBackupService` / `ExportResult` | 导出：临时目录拼装备份文件夹 → `ZipFileEncoder` 流式压缩 → 分享面板 | `lib/src/features/library/data/services/export_backup_service.dart` |
 | `StorageCleanupService` | 清理孤儿书籍 / 封面 / 字体、缓存与分享临时文件 | `lib/src/features/library/data/services/storage_cleanup_service.dart` |
 | `ShelfBookRepository` | 书与分组读写、软删除、进度更新、排序查询 | `lib/src/features/library/data/shelf_book_repository.dart` |
@@ -37,6 +37,8 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 | `ProgressLog` / `ImportResult` / `BackupImportProgress` | 导入与恢复的进度事件与结果值对象，data / application / presentation 共用 | `lib/src/features/library/domain/import_progress.dart` |
 | `LibraryErrorCode` / `LibraryException` | import / backup 主链路的类型化错误：错误码供 presentation 映射 l10n，`details` 仅入日志；进度事件经 `ProgressLog.error` 携带 | `lib/src/features/library/domain/library_exception.dart` |
 | `BookManifest` / `SpineItem` / `TocItem` / `ManifestItem` / `Href` | 阅读清单结构；`SpineItem.sourceRange` 记录 TXT 章节在归一化字节流中的范围 | `lib/src/features/library/domain/book_manifest.dart` |
+| `BookFileChanges` | 导入与恢复的文件补偿：保留旧文件副本，事务失败恢复，成功清理副本 | `lib/src/features/library/data/services/book_file_changes.dart` |
+| `BookDeletion` | 原子写入墓碑并删清单，再清理文件；清理失败等待存储清理重试 | `lib/src/features/library/application/book_deletion.dart` |
 
 ## 流程
 
@@ -48,6 +50,9 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 6. 详情：`bookDetailProvider` 按 `fileHash` 返回 `DetailBookView`（网格点击前预取，详情页进入时无加载态）；编辑保存走 `BookActions.saveMetadataByHash`，分享走 `BookActions.shareBookByHash`（MIME 取自 `BookFormat.mimeType`，临时文件在分享结束后删除）。
 
 ## 边界与不变量
+
+- 导入与恢复的书目和清单在同一事务中提交；文件补偿只覆盖运行中异常，不保证跨进程崩溃原子性。
+- 删除事务失败不触碰文件；提交后的文件清理失败保留墓碑，书架按已删除处理，残留文件由存储清理重试。
 
 - `LibraryNotifier` 必须 keepAlive：`importPipelineStream` 是 `async*`，方法体推迟到对话框订阅流之后才执行。
 - `ShelfBook` 与 `BookManifest` 是持久化行，只在 `application` 与 `data` 之间流转；presentation 与 reader 只吃 `book_views.dart` 的视图类型。完整清单只在打开阅读器时查询。

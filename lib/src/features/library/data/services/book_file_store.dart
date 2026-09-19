@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'book_file_changes.dart';
 import 'dart:typed_data';
 
 import 'package:fpdart/fpdart.dart';
@@ -18,6 +19,7 @@ class BookFileStore {
     File sourceFile,
     String fileHash, {
     bool moveSourceFile = false,
+    BookFileChanges? changes,
   }) async {
     try {
       final booksDir = Directory(
@@ -35,6 +37,14 @@ class BookFileStore {
         return right(targetPath);
       }
 
+      if (changes != null) {
+        await changes.copyIfMissing(
+          sourceFile,
+          targetFile,
+          moveSource: moveSourceFile,
+        );
+        return right(targetPath);
+      }
       if (moveSourceFile) {
         try {
           await sourceFile.rename(targetPath);
@@ -57,8 +67,9 @@ class BookFileStore {
   /// Returns absolute path to the written file
   Future<Either<LibraryException, String>> writeNormalizedTxt(
     Uint8List normalizedBytes,
-    String fileHash,
-  ) async {
+    String fileHash, {
+    BookFileChanges? changes,
+  }) async {
     try {
       final booksDir = Directory(
         '${AppStorage.documentsPath}${AppStorageConstants.booksDir}',
@@ -69,10 +80,24 @@ class BookFileStore {
 
       final targetPath =
           '${booksDir.path}/$fileHash${BookFormat.txt.fileExtension}';
-      await File(targetPath).writeAsBytes(normalizedBytes, flush: true);
+      if (changes != null) {
+        await changes.write(File(targetPath), normalizedBytes);
+      } else {
+        await File(targetPath).writeAsBytes(normalizedBytes, flush: true);
+      }
       return right(targetPath);
     } catch (e) {
       return left(LibraryException(LibraryErrorCode.fileWriteFailed, e));
+    }
+  }
+
+  /// 逻辑删除提交后清理原书与封面；失败交由 application 保留待清理状态。
+  Future<void> removeFiles(Iterable<String> paths) async {
+    for (final path in paths) {
+      final file = File(
+        path.startsWith('/') ? path : '${AppStorage.documentsPath}$path',
+      );
+      if (await file.exists()) await file.delete();
     }
   }
 }

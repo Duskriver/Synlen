@@ -27,5 +27,5 @@ Status: implemented
 ## Consequences
 
 - 由 1 个 544 行文件变成 3 个不超过 324 行的文件，reader 的超 400 行清单少一项。
-- 行为不变：事件名、参数顺序与类型转换逐字保留；该注册逻辑依赖真实 WebView，仍由端到端手测覆盖。
+- 事件解码通过独立的 `ReaderWebEvent` 校验后分发；协议、浏览器与设备验证见[渲染契约](2026-09-19-reader-workflow-render-contract.md)。
 - part 共享同一个库，`_ReaderWebViewState` 的私有成员不跨库暴露。

@@ -61,4 +61,4 @@ final class BookImportServiceProvider
   }
 }
 
-String _$bookImportServiceHash() => r'bbfd8fd1081dd9b04e702d9931f4114ae5b80060';
+String _$bookImportServiceHash() => r'2c60fee0a75ec52b698c1cf75b538aa16b52134e';

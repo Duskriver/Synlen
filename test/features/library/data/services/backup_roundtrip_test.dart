@@ -1,3 +1,4 @@
+import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show Rect;
@@ -169,7 +170,7 @@ void main() {
         importBackupServiceProvider.overrideWithValue(
           ImportBackupService(
             shelfBookRepository: shelfRepo,
-            bookManifestRepository: manifestRepo,
+            bookStore: LibraryBookStore(db: db),
             importService: unified,
           ),
         ),
