@@ -3,7 +3,7 @@ description: "Synlen Reader - A lightweight, cross-platform EPUB reader built wi
 publish_to: 'none'
 homepage: https://github.com/Duskriver/Synlen
 
-version: 0.3.4+304
+version: 0.3.5+305
 
 environment:
   sdk: ^3.10.8
