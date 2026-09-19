@@ -7,7 +7,7 @@
 - GitHub 主仓库 `Duskriver/Synlen` 与 Gitee 镜像 `Tang_Lei789/synlen` 均公开。Gitee 账号已绑定手机，`main` 存源码，`updates` 存版本清单。
 - 按[开发环境](../development.md#环境)配置 Flutter、Rust 与 Node；安装 Android SDK Build-Tools 并设置 `ANDROID_HOME`。命令另需 `gh`、`curl`、`jq`、`shasum` 与 `unzip`。
 - 使用 `gh auth login` 与 `gitee auth login`，或提供 `GH_TOKEN` 与 `GITEE_TOKEN`。Gitee 令牌只用于发布，不编入客户端。
-- 本地 `android/key.properties` 指向正式签名密钥，凭据文件不提交。APK 校验会拒绝 debug 签名，保证可以覆盖安装。
+- 在本地 `android/` 目录创建 `key.properties` 并指向正式签名密钥；该凭据文件不随仓库提供，也不得提交。APK 校验会拒绝 debug 签名，保证可以覆盖安装。
 
 ## 源码同步
 
