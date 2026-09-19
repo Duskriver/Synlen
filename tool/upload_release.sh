@@ -63,7 +63,9 @@ fi
 curl -fLsS --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 300 "$APK_URL" -o "$WORK/verify.apk"
 REMOTE_SHA256="$(shasum -a 256 "$WORK/verify.apk" | awk '{print $1}')"
 [[ "$APK_SHA256" == "$REMOTE_SHA256" ]] || { echo '远端 APK 摘要不匹配；拒绝更新清单或覆盖已发布附件' >&2; exit 1; }
-jq -n --argjson major "$MAJOR" --argjson minor "$MINOR" --argjson patch "$PATCH" --argjson build "$BUILD_NUMBER" --arg log "$UPDATE_LOG" --arg tag "$TAG" --arg url "$APK_URL" --arg sha "$APK_SHA256" '{code:200,data:{majorNumber:$major,minorNumber:$minor,patchNumber:$patch,buildNumber:$build,updateLog:($log|gsub("^\\s+|\\s+$";"")),androidApkUrl:$url,androidApkSha256:$sha,githubUrl:("https://github.com/Duskriver/Synlen/releases/tag/"+$tag),lanzouUrl:"",lanzouPassword:"",iosAppStoreUrl:""}}' > "$WORK/version.json"
+# githubUrl 的键名是已安装客户端读取的，不能改；值指向 Gitee 发行页——
+# 更新弹窗里的外部下载按钮读它，国内用户从 Gitee 取包比 GitHub 可靠。
+jq -n --argjson major "$MAJOR" --argjson minor "$MINOR" --argjson patch "$PATCH" --argjson build "$BUILD_NUMBER" --arg log "$UPDATE_LOG" --arg tag "$TAG" --arg repo "$REPO" --arg url "$APK_URL" --arg sha "$APK_SHA256" '{code:200,data:{majorNumber:$major,minorNumber:$minor,patchNumber:$patch,buildNumber:$build,updateLog:($log|gsub("^\\s+|\\s+$";"")),androidApkUrl:$url,androidApkSha256:$sha,githubUrl:("https://gitee.com/"+$repo+"/releases/tag/"+$tag),lanzouUrl:"",lanzouPassword:"",iosAppStoreUrl:""}}' > "$WORK/version.json"
 # 同一版本只允许重试完全相同的安装包。
 if [[ -f "$WORK/previous.json" ]]; then
   jq -e --argjson build "$BUILD_NUMBER" --arg sha "$APK_SHA256" '.data.buildNumber != $build or .data.androidApkSha256 == $sha' "$WORK/previous.json" >/dev/null || { echo '同一构建号不能替换 APK' >&2; exit 1; }
