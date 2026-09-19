@@ -13,6 +13,7 @@ import 'package:synlen/src/core/url_launcher/url_launcher.dart';
 import 'package:synlen/src/features/settings/application/update_check.dart';
 import 'package:synlen/src/features/settings/domain/update_exception.dart';
 import 'package:synlen/src/features/settings/domain/version_manifest.dart';
+import 'package:synlen/src/features/settings/presentation/update_install_uri.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_info_section.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/simple_markdown.dart';
 
@@ -124,9 +125,9 @@ class _UpdateDialog extends ConsumerWidget {
     switch (download.status) {
       case UpdateDownloadStatus.completed:
         ToastService.showSuccess(l10n.downloadCompleted);
-        final apkPath = download.apkPath;
-        if (apkPath != null && context.mounted) {
-          await _installApk(context, apkPath);
+        final apkRelativePath = download.apkRelativePath;
+        if (apkRelativePath != null && context.mounted) {
+          await _installApk(context, apkRelativePath);
         }
       case UpdateDownloadStatus.failed:
         ToastService.showError(_updateErrorMessage(l10n, download.errorCode));
@@ -139,17 +140,17 @@ class _UpdateDialog extends ConsumerWidget {
   ///
   /// 薄壳说明：android_intent_plus 的 canResolveActivity / launch 没有可注入
   /// seam，副作用只是「拉起系统界面」，故与 [UrlLauncher] 同类保留在 UI 侧；
-  /// 安装包路径由 application 层的下载状态给出。
-  Future<void> _installApk(BuildContext context, String apkPath) async {
+  /// 安装包在缓存内的相对路径由 application 层的下载状态给出。
+  Future<void> _installApk(BuildContext context, String apkRelativePath) async {
     final l10n = AppLocalizations.of(context)!;
     final packageInfo = await PackageInfo.fromPlatform();
-    final authority = '${packageInfo.packageName}.fileprovider';
-    final fileName = File(apkPath).uri.pathSegments.last;
-    final contentUri = 'content://$authority/apk_cache/$fileName';
 
     final intent = AndroidIntent(
       action: 'android.intent.action.VIEW',
-      data: contentUri,
+      data: apkContentUri(
+        packageName: packageInfo.packageName,
+        apkRelativePath: apkRelativePath,
+      ),
       type: 'application/vnd.android.package-archive',
       flags: <int>[
         Flag.FLAG_ACTIVITY_NEW_TASK,

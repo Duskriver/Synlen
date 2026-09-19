@@ -34,7 +34,7 @@ Status: implemented
 - presentation 不再 import `dio` / `crypto` / `path_provider`；分层门禁把守着 presentation → data 的边界。
 - 更新测试覆盖版本比较、HTTPS 拒绝、SHA-256 校验与网络失败；服务替身保留 `onDispose` 关闭 Dio 的行为，并用延迟响应覆盖检查与下载的自动释放时机、退出后释放、再次进入及请求中途销毁，见[更新检查测试](../../../../test/features/settings/application/update_check_test.dart)与[版本比较测试](../../../../test/features/settings/domain/app_version_test.dart)。
 - 新增错误码时要同步 presentation 的 `_updateErrorMessage` 映射与双语 l10n；现有五个码均复用既有文案。
-- 真机行为（FileProvider 安装、系统未知来源引导）不受本次重构影响，未重复验证。
+- 真机行为（FileProvider 安装、系统未知来源引导）当时未重复验证，「不受本次重构影响」的判断是错的：本次重构把下载落点移进缓存 `apk/` 子目录，安装侧仍只带文件名拼 URI，v0.3.0–v0.3.4 的应用内安装因此全部失败，见[安装 URI 与下载落点对齐](../bug-fix/2026-09-20-update-install-uri-path-mismatch.md)。
 
 ## Testing
 
@@ -43,4 +43,5 @@ Status: implemented
 ## Related
 
 - [更新下载链路与备份解压加固](../bug-fix/2026-09-09-update-backup-hardening.md)：HTTPS 与 sha256 校验的决策来源，本次只搬家不改行为。
+- [安装 URI 与下载落点对齐](../bug-fix/2026-09-20-update-install-uri-path-mismatch.md)：本次重构引入的安装失败及其修复。
 - [组合面跨 feature 依赖](2026-09-08-composition-surface-cross-feature.md)：settings 作为组合面的分层依据。

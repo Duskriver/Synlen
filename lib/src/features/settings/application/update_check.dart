@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
+import 'package:synlen/src/features/settings/data/services/update_service.dart';
 import 'package:synlen/src/features/settings/data/services/update_service_provider.dart';
 import 'package:synlen/src/features/settings/domain/update_exception.dart';
 import 'package:synlen/src/features/settings/domain/version_manifest.dart';
@@ -27,6 +28,7 @@ class UpdateDownloadState {
     this.status = UpdateDownloadStatus.idle,
     this.progress = 0,
     this.apkPath,
+    this.apkRelativePath,
     this.errorCode,
   });
 
@@ -37,6 +39,12 @@ class UpdateDownloadState {
 
   /// 下载完成并通过校验后的安装包路径
   final String? apkPath;
+
+  /// 安装包相对缓存目录的路径，供 presentation 拼系统安装器的 content URI。
+  ///
+  /// 与 [apkPath] 指向同一个文件；URI 必须带这段相对路径，否则 FileProvider
+  /// 会去缓存根目录找文件（`apk/` 子目录被丢掉），安装器报 ENOENT。
+  final String? apkRelativePath;
 
   /// 失败的类型化错误码，presentation 据此映射 l10n
   final UpdateErrorCode? errorCode;
@@ -148,6 +156,7 @@ class UpdateCheck extends _$UpdateCheck {
           status: UpdateDownloadStatus.completed,
           progress: 1,
           apkPath: path,
+          apkRelativePath: UpdateService.apkRelativePath(manifest.versionLabel),
         ),
       );
     } on UpdateException catch (e) {

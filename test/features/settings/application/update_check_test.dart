@@ -266,6 +266,12 @@ void main() {
       expect(download.progress, 1);
       expect(download.apkPath, isNotNull);
       expect(File(download.apkPath!).existsSync(), isTrue);
+      expect(download.apkRelativePath, isNotNull);
+      expect(
+        File('${cacheDir.path}/${download.apkRelativePath!}').path,
+        download.apkPath,
+        reason: '安装 URI 拼的相对路径必须与下载落点一致',
+      );
     });
 
     test('sha256 不匹配 → checksumMismatch，安装包被删除', () async {

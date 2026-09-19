@@ -61,6 +61,15 @@ class UpdateService {
     );
   }
 
+  /// 安装包在缓存目录内的相对路径：`apk/synlen-<版本>.apk`。
+  ///
+  /// 这是落点的唯一声明：下载按它写文件，application 把它交给 presentation 拼
+  /// content URI，Android 侧 `file_paths.xml` 的 `apk_cache` 映射覆盖同一棵缓存
+  /// 目录。三者必须对齐，`test/features/settings/update_install_uri_test.dart`
+  /// 把这条契约钉住。
+  static String apkRelativePath(String versionLabel) =>
+      'apk/synlen-$versionLabel.apk';
+
   /// 下载 [manifest] 的 APK 到缓存目录并校验完整性，返回安装包路径。
   ///
   /// 直链由远端 version.json 下发，只允许 HTTPS，防止被降级为明文篡改；
@@ -79,9 +88,8 @@ class UpdateService {
     }
 
     final cacheDir = await _cacheDirectory();
-    final apkDir = Directory('${cacheDir.path}/apk');
-    await apkDir.create(recursive: true);
-    final apkPath = '${apkDir.path}/synlen-${manifest.versionLabel}.apk';
+    final apkPath = '${cacheDir.path}/${apkRelativePath(manifest.versionLabel)}';
+    await File(apkPath).parent.create(recursive: true);
     // 删除可能存在的旧文件，避免覆盖安装校验失败
     final oldFile = File(apkPath);
     if (oldFile.existsSync()) {
