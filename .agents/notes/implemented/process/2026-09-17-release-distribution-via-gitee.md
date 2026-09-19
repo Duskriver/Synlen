@@ -9,7 +9,7 @@ OSS 默认域名拒绝 APK 下载，而大陆 bucket 的自定义域名需要备
 ## Decision
 
 - GitHub 主仓库与 Gitee 镜像以 MIT 公开自有代码，保留上游及第三方许可。Gitee `Tang_Lei789/synlen` 的 `main` 与标签由 GitHub 单向同步，`updates` 分支承载 `version.json`，Release 附件承载 APK。账号需绑定手机，客户端匿名读取，无 Gitee Token。
-- 保持客户端清单协议与 SHA-256 校验策略；`AppInfo.versionEndpoint` 默认指向 Gitee raw 地址，仍支持 `SYNLEN_VERSION_URL`。客户端直接切换到 Gitee，不镜像 OSS 清单。清单里的 `githubUrl` 是已安装客户端读取的键名（不能改），值一律指向 Gitee 发行页——更新弹窗的外部下载按钮读它，国内用户从 Gitee 取包比 GitHub 可靠。
+- 保持客户端清单协议与 SHA-256 校验策略；`AppInfo.versionEndpoint` 默认指向 Gitee raw 地址，仍支持 `SYNLEN_VERSION_URL`。客户端直接切换到 Gitee，不镜像 OSS 清单。清单里的 `githubUrl` 是已安装客户端读取的键名（不能改），值给 Gitee 附件直链：实测 `/releases/tag/<tag>` 会 302 到源码 zip（`repository/blazearchive/<tag>.zip`），Gitee 网页端下载附件还常要求登录，而附件直链匿名可用——更新弹窗的外部下载按钮读它，直接拿到 APK 最省事。
 - 发布脚本从准确匹配的版本标题提取说明，创建发行版并上传 APK（Gitee 对未创建的发行版返回 HTTP 200 与 `null`，按响应内容判断是否需要创建），匿名下载验证摘要后才更新清单。禁止回退构建号、同版本替换 APK 与覆盖同名附件。清单写入携带上一版文件 SHA；流水线串行发布。
 - `vX.Y.Z` 派生构建号 `X*10000+Y*100+Z`，限制 `Y`、`Z` 小于 100，避免版本映射冲突。正式包必须保持包名和签名一致；统一发布入口自动校验 APK，直接调用底层上传脚本时仍由发布者核对内部版本与签名。
 - 只构建 Android ARM64 APK；GitHub `main` 推送触发源码同步，发布前再次同步源码与标签，使用普通快进推送，不自动覆盖 Gitee 独立提交。Gitee 写令牌来自本地凭据或 GitHub Secret `GITEE_TOKEN`；凭据不进入命令输出、安装包或匿名下载请求。
