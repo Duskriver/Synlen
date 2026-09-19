@@ -28,3 +28,4 @@ Status: implemented
 
 - 升级 Flutter 前先确认 `analyzer` 上限，再决定 generator 与 drift_dev 的版本。
 - 需要 Flutter ≥ 3.38.0、Dart ≥ 3.10.8，见 [开发](../../../../docs/development.md#环境)。
+- pub 侧有和 cargo 侧同源的 Dependabot 盲区：它的解析环境看不到 SDK 钉版，会把 SDK 不允许的版本组合写进 `pubspec.lock`；[lock 漂移门禁](2026-09-19-lock-drift-gate.md)在 CI 拦住它。

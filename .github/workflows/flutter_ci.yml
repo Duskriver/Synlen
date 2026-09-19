@@ -25,6 +25,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # lock 必须等于当前 Flutter 版本下的解析结果。Dependabot 的解析环境看不到
+      # Flutter SDK 的钉版（flutter_localizations / flutter_test），会把 SDK 不
+      # 允许的版本写进 lock，而 pub get 会静默重新解析，测试照常通过——破损只在
+      # 本地工作区变脏、以及 release.sh 要求干净工作区时才暴露。
+      - name: Check pubspec.lock drift
+        run: |
+          if ! git diff --exit-code -- pubspec.lock; then
+            echo '::error::pubspec.lock 与当前 Flutter 版本的解析结果不一致；请用 CI 固定的 Flutter 版本重跑 flutter pub get 并提交结果。'
+            exit 1
+          fi
+
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib test
 
