@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../../l10n/app_localizations.dart';
-
 class ReadiumImageDialog extends StatelessWidget {
   const ReadiumImageDialog({super.key, required this.url, required this.svg});
   final String url;
@@ -23,26 +21,21 @@ class ReadiumImageDialog extends StatelessWidget {
         ? Image.network(url)
         : Image.file(file);
     return Dialog.fullscreen(
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 6,
-              child: Center(child: image),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.of(context).pop(),
+        onLongPress: () {},
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 6,
+          child: Center(
+            child: GestureDetector(
+              // 图片消费点按，命中区域随缩放和平移变化；外部短点才关闭。
+              onTap: () {},
+              child: image,
             ),
           ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                tooltip: AppLocalizations.of(context)!.close,
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
