@@ -1,6 +1,7 @@
 import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' show Rect;
 
 import 'package:archive/archive_io.dart';
@@ -238,6 +239,34 @@ void main() {
     );
   });
 
+  for (final corruption in ['deflate', 'crc', 'short-size', 'long-size']) {
+    test('书籍条目 $corruption 损坏时拒绝整个备份并清理临时文件', () async {
+      await seedLibrary();
+      final zipPath = await exportAndCaptureZip();
+      final bytes = await File(zipPath).readAsBytes();
+      _corruptBookEntry(bytes, corruption);
+      await File(zipPath).writeAsBytes(bytes);
+
+      final unified = UnifiedImportService(cacheManager: ImportCacheManager());
+      await expectLater(
+        unified.processBackupZip(IOSFilePath(zipPath)),
+        throwsA(anything),
+      );
+
+      expect(
+        Directory('${AppStorage.tempPath}import_cache').listSync(),
+        isEmpty,
+      );
+      expect((await shelfRepo.getAllBooks()).single.title, '测试书');
+      expect(
+        await File(
+          '${AppStorage.documentsPath}books/book-a.txt',
+        ).readAsString(),
+        'one\ntwo\n',
+      );
+    });
+  }
+
   test('缺少 shelf.json 的 ZIP 抛出异常且不留解压目录', () async {
     final dir = Directory('${root.path}/incomplete')..create();
     await File('${dir.path}/books/book-a.txt').create(recursive: true);
@@ -260,4 +289,51 @@ void main() {
       isEmpty,
     );
   });
+}
+
+void _corruptBookEntry(Uint8List bytes, String corruption) {
+  final data = ByteData.sublistView(bytes);
+  var patchedLocal = false;
+  var patchedCentral = false;
+  for (var offset = 0; offset + 46 < bytes.length; offset++) {
+    final signature = data.getUint32(offset, Endian.little);
+    final local = signature == 0x04034b50;
+    if (!local && signature != 0x02014b50) continue;
+    final headerSize = local ? 30 : 46;
+    final nameLength = data.getUint16(
+      offset + (local ? 26 : 28),
+      Endian.little,
+    );
+    if (offset + headerSize + nameLength > bytes.length) continue;
+    final name = utf8.decode(
+      bytes.sublist(offset + headerSize, offset + headerSize + nameLength),
+    );
+    if (name != 'books/book-a.txt') continue;
+
+    if (corruption == 'deflate' && local) {
+      expect(data.getUint16(offset + 8, Endian.little), 8);
+      final extraLength = data.getUint16(offset + 28, Endian.little);
+      // DEFLATE 保留的 BTYPE=3 保持中央目录可读，只破坏正文压缩数据。
+      bytes[offset + headerSize + nameLength + extraLength] = 7;
+    } else if (corruption == 'crc') {
+      final crcOffset = offset + (local ? 14 : 16);
+      data.setUint32(
+        crcOffset,
+        data.getUint32(crcOffset, Endian.little) ^ 1,
+        Endian.little,
+      );
+    } else if (corruption.endsWith('-size')) {
+      data.setUint32(
+        offset + (local ? 22 : 24),
+        corruption == 'short-size' ? 7 : 9,
+        Endian.little,
+      );
+    }
+    if (local) {
+      patchedLocal = true;
+    } else {
+      patchedCentral = true;
+    }
+  }
+  expect(patchedLocal && patchedCentral, isTrue);
 }

@@ -1,6 +1,6 @@
 /// 备份 ZIP 解压前的静态校验：条目数、单条目与总解压量上限，以及路径安全。
 ///
-/// 在 `extractArchiveToDisk` 之前对整个 archive 跑一次，挡住 zip bomb 与
+/// 在写盘前对整个 ZIP 目录跑一次，挡住 zip bomb 与
 /// zip-slip 两类恶意备份。纯函数，不触盘，便于单测。
 library;
 

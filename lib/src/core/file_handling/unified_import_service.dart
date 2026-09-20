@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:archive/archive_io.dart';
 import 'package:flutter/services.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
-import 'backup_archive_guard.dart';
+import 'backup_archive_extractor.dart';
 import 'backup_paths.dart';
 import 'native_file_picker.dart';
 import 'platform_path.dart';
@@ -102,12 +101,11 @@ class UnifiedImportService {
     }
   }
 
-  /// Extracts a picked ZIP backup into the import cache and classifies the
-  /// entries into [BackupPaths].
+  /// 将选取的 ZIP 备份解压到导入缓存并分类为 [BackupPaths]。
   ///
   /// ZIP 原始字节不整体进内存：选取的文件先由缓存层落盘，再用
-  /// [InputFileStream] 流式解码并逐条目写盘。返回的 rootPath 是导入缓存区内
-  /// 的解压目录，恢复结束后由调用方负责删除。
+  /// 文件流逐条目解码写盘并校验大小与 CRC。任何条目损坏均中止并清理；
+  /// 返回的 rootPath 是导入缓存区内的解压目录，恢复结束后由调用方负责删除。
   Future<BackupPaths> processBackupZip(PlatformPath zipPath) async {
     final cacheDir = await _cacheManager.getCacheDirectory();
     final extractDir = Directory(
@@ -119,16 +117,7 @@ class UnifiedImportService {
     File? rawZip;
     try {
       rawZip = await _cacheManager.createRawCacheFile(zipPath);
-      final archive = ZipDecoder().decodeStream(InputFileStream(rawZip.path));
-      // 解压前先静态校验整条 archive：数量/大小上限防 zip bomb，路径校验防越界。
-      final violation = validateBackupArchiveEntries(
-        archive.files.map((f) => (name: f.name, size: f.size)),
-      );
-      if (violation != null) {
-        appLogger.w('备份 ZIP 未通过解压前校验: $violation');
-        throw BackupArchiveViolationException(violation);
-      }
-      await extractArchiveToDisk(archive, extractDir.path);
+      await extractVerifiedBackupZip(rawZip, extractDir);
     } catch (_) {
       await _deleteQuietly(extractDir);
       rethrow;

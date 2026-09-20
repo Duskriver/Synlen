@@ -37,13 +37,14 @@
 | `ImportableEpub` | 缓存文件 + 哈希 + 原始文件名 | `lib/src/core/file_handling/importable_epub.dart` |
 | `BackupPaths` / `BackupPathsForBook` / `classifyBackupEntries` / `buildBackupBookPaths` | 备份根目录、`shelf.json` 与按哈希索引的书 / 清单 / 封面路径；分桶与装配是纯函数 | `lib/src/core/file_handling/backup_paths.dart` |
 | `validateBackupArchiveEntries` / `BackupArchiveViolation` | 备份 ZIP 解压前校验：条目数 ≤ 10000、单条目 ≤ 512 MiB、总量 ≤ 4 GiB、拒绝绝对路径与 `..`；纯函数 | `lib/src/core/file_handling/backup_archive_guard.dart` |
+| `extractVerifiedBackupZip` | 流式解压 STORE / DEFLATE / BZIP2；限制实际输出大小并核对 CRC，失败向上传播；拒绝加密条目与符号链接 | `lib/src/core/file_handling/backup_archive_extractor.dart` |
 | `UrlLauncher` | 用系统外部应用打开 URL | `lib/src/core/url_launcher/url_launcher.dart` |
 | `AppInfo` | 应用名、作者、版本检查端点与许可资源路径 | `lib/src/core/config/app_info.dart` |
 
 ## 流程
 
 1. 选书：`UnifiedImportService.pickFiles` / `pickFolder` 经 MethodChannel `com.tanglei.synlen/native_picker` 取平台路径，`processEpub` 落缓存并算哈希；Android 的 SAF 数字文档 ID 另查 `getDisplayName` 兜底文件名。
-2. 备份恢复：`pickBackupZipFile` + `processBackupZip` 把 ZIP 流式解压到导入缓存区，`_classifyBackupFiles` 分桶为 `BackupPaths`；解压前先经 `validateBackupArchiveEntries` 静态校验，违规抛 `BackupArchiveViolationException` 中止恢复。文件夹来源走 `pickBackupFolder`。
+2. 备份恢复：`pickBackupZipFile` + `processBackupZip` 经 `extractVerifiedBackupZip` 校验并解压到导入缓存区，全部条目通过后由 `classifyBackupEntries` 分桶为 `BackupPaths`；失败清理缓存并中止，数据库恢复不会开始。文件夹来源走 `pickBackupFolder`。
 3. 主题：`AppThemeNotifier` 读写 `SharedPreferences`，`AppThemeSettings` 映射为 `ThemeData`，`SynlenThemeExtension` 把当前预设注入 widget 树。
 4. 数据库：`appDatabaseProvider` 为 keepAlive，迁移在 `migration.onUpgrade` 内按版本号追加列。
 
