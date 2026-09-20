@@ -112,7 +112,7 @@ fi
 echo "native-gradle $*" >> "$FIXTURE/events"
 [[ -f gradle/wrapper/gradle-wrapper.jar ]]
 [[ -f local.properties ]]
-[[ "$*" == '--no-daemon :synlen_readium_navigator:testDebugUnitTest :flutter_readium:testDebugUnitTest' ]]
+[[ "$*" == '--no-daemon :synlen_readium_navigator:testDebugUnitTest :flutter_readium:testDebugUnitTest :ota_update:testDebugUnitTest' ]] || exit 23
 [[ "${SCENARIO:-}" != native-test-failure ]] || exit 22
 mkdir -p build/reports/problems
 printf 'Gradle diagnostic report' > build/reports/problems/problems-report.html
