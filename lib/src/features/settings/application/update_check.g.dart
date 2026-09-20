@@ -8,24 +8,15 @@ part of 'update_check.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 更新检查与下载用例：拉取清单、与本地版本比较、下载并校验 APK。
-///
-/// 错误在此捕获并转成类型化状态（[UpdateErrorCode]），用户可读文案由
-/// presentation 按错误码映射 l10n，内部细节只入日志。
+/// 更新检查与安装用例；插件事件和异常只在此转成类型化状态。
 
 @ProviderFor(UpdateCheck)
 final updateCheckProvider = UpdateCheckProvider._();
 
-/// 更新检查与下载用例：拉取清单、与本地版本比较、下载并校验 APK。
-///
-/// 错误在此捕获并转成类型化状态（[UpdateErrorCode]），用户可读文案由
-/// presentation 按错误码映射 l10n，内部细节只入日志。
+/// 更新检查与安装用例；插件事件和异常只在此转成类型化状态。
 final class UpdateCheckProvider
     extends $NotifierProvider<UpdateCheck, AsyncValue<UpdateState>> {
-  /// 更新检查与下载用例：拉取清单、与本地版本比较、下载并校验 APK。
-  ///
-  /// 错误在此捕获并转成类型化状态（[UpdateErrorCode]），用户可读文案由
-  /// presentation 按错误码映射 l10n，内部细节只入日志。
+  /// 更新检查与安装用例；插件事件和异常只在此转成类型化状态。
   UpdateCheckProvider._()
     : super(
         from: null,
@@ -53,12 +44,9 @@ final class UpdateCheckProvider
   }
 }
 
-String _$updateCheckHash() => r'fc8c92b1658cae4b744b128c797b9c009a485961';
+String _$updateCheckHash() => r'5fc22b5633d6370235e90d1a4c6c5f09e395eb06';
 
-/// 更新检查与下载用例：拉取清单、与本地版本比较、下载并校验 APK。
-///
-/// 错误在此捕获并转成类型化状态（[UpdateErrorCode]），用户可读文案由
-/// presentation 按错误码映射 l10n，内部细节只入日志。
+/// 更新检查与安装用例；插件事件和异常只在此转成类型化状态。
 
 abstract class _$UpdateCheck extends $Notifier<AsyncValue<UpdateState>> {
   AsyncValue<UpdateState> build();

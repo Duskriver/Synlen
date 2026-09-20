@@ -81,6 +81,8 @@ dependencies:
   #flutter_markdown: ^0.7.7+1
   flutter_markdown_plus: ^1.0.12
   fast_gbk: ^1.0.0
+  ota_update:
+    path: third_party/ota_update
 dev_dependencies:
   flutter_test:
     sdk: flutter

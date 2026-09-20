@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -22,6 +23,7 @@ UpdateService updateService(Ref ref) {
     dio: dio,
     versionEndpoint: AppInfo.versionEndpoint,
     readPackageInfo: PackageInfo.fromPlatform,
-    cacheDirectory: getApplicationCacheDirectory,
+    createUpdater: OtaUpdate.new,
+    supportDirectory: getApplicationSupportDirectory,
   );
 }

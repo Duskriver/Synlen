@@ -32,7 +32,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 | `BackupExport` | 组合 library 的导出用例，只回传错误字符串 | `lib/src/features/settings/application/backup_export.dart` |
 | `DeepSeekKeyCheck` / `DeepSeekConnectivity` | 密钥连通性检查状态与结果 | `lib/src/features/settings/application/deep_seek_connectivity.dart` |
 | `UpdateCheck` / `UpdateState` | 更新检查与下载的状态流（`AsyncValue`：loading = 检查中，error = `UpdateException`），下载子状态带进度与错误码 | `lib/src/features/settings/application/update_check.dart` |
-| `UpdateService` | 拉取并解析远端 version.json、读本地版本、下载 APK 到缓存并校验 SHA-256；平台依赖全经构造注入 | `lib/src/features/settings/data/services/update_service.dart` |
+| `UpdateService` | 读取远端清单与本地版本，校验下载参数并调用 ota_update；平台依赖经构造注入 | `lib/src/features/settings/data/services/update_service.dart` |
 | `AppVersion` / `VersionManifest` / `UpdateErrorCode` | 版本值类型、远端清单值类型、更新错误码 | `lib/src/features/settings/domain/` |
 
 ## 流程
@@ -43,7 +43,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 4. 音色：`SettingsTtsVoiceSection` → `TtsVoiceNotifier.setVoice` → 持久化 `voiceParam`，学习模块据此取音色与缓存键。
 5. 缓存清理：`CleanCacheTile` → `CacheCleanup.cleanAll` → library 的 `StorageCleanupService`（缓存、孤儿书籍 / 封面、分享文件、孤儿字体）+ learning 的 `LearningCacheCleanupService`。
 6. 备份导出：`BackupTile` → `BackupExport.exportToShareSheet` → `ExportBackupService` 压缩并调系统分享面板。
-7. 更新检查：`CheckUpdateTile` → `UpdateCheck.checkForUpdates` → `UpdateService` 拉 `AppInfo.versionEndpoint` 的 `version.json` 并与本地版本比较；有新版本时弹更新对话框，Android 有直链时 `UpdateCheck.downloadAndInstall` 经 `UpdateService.downloadApk` 应用内下载，iOS 有商店链接时跳转 App Store，另有网盘链接兜底。Android 直链仅允许 HTTPS；`version.json` 提供 `androidApkSha256` 时下载完成后比对 SHA-256，不匹配即删除安装包并中止。拉起系统安装器（FileProvider / Intent）是 UI 侧薄壳，安装包路径来自下载状态。
+7. 更新检查：`CheckUpdateTile` → `UpdateCheck.checkForUpdates` → `UpdateService` 获取 `version.json` 并比较本地版本。有更新时显示版本与日志；Android 经 `ota_update` 下载、校验并拉起系统安装器，iOS 跳转清单中的 App Store 链接，备用链接交外部浏览器。
 
 ## 边界与不变量
 
@@ -52,6 +52,9 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 - `ApiKeyNotifier` 的写入串行化，避免并发覆盖。
 - 字体文件名是 `ReaderSettings.fontFileName` 的取值来源；删除字体必须同时清掉该引用。
 - 缓存清理只删可重建数据，不动图书与阅读进度。
+- 更新直链必须是 HTTPS，摘要必须是 64 位 SHA-256；插件校验失败后删除坏包。APK 位于私有 `files/ota_update/`，使用固定文件名，重试重新下载。
+- 更新下载期间禁止替换清单或直接关闭弹窗；取消回执确认原生写入与校验结束后才关闭；取消期间保留终态，取消通道失败后按终态恢复可关闭、可重试的界面。Provider 释放时取消下载，迟到事件不写状态。`installerOpened` 仅表示已拉起系统安装器，不表示安装成功。
+- 下载前原子记录目标版本和摘要；Android 启动时先回收再开放更新入口。本地版本达到目标时删除包与记录，否则只删摘要不符的残留，保留完整待安装包；无记录的旧包保守保留。取消和下载失败的残留在启动时回收，清理失败保留记录供下次重试。
 - 缓存清理与密钥检查由页面订阅用例，用例订阅服务以覆盖异步等待；退出后释放依赖且忽略迟到结果。清理退出后不启动后续阶段，失败可重试，已删除项不回滚。
 - 阅读器自身的样式面板（字号、边距、翻页动画等）归 [reader.md](reader.md)；settings 只提供其消费的字体列表与全局主题。
 

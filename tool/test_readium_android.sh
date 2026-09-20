@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 只执行 Readium 原生单元测试；调用前先运行 flutter pub get 生成本机配置。
+# 执行 Readium 与 OTA 的原生单元测试；调用前先运行 flutter pub get 生成本机配置。
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -17,4 +17,4 @@ if [[ ! -f android/gradlew || ! -f android/gradle/wrapper/gradle-wrapper.jar ]];
   [[ -f android/gradle/wrapper/gradle-wrapper.jar ]] || cp "$WRAPPER_SOURCE/gradle/wrapper/gradle-wrapper.jar" android/gradle/wrapper/gradle-wrapper.jar
 fi
 cd android
-bash ./gradlew --no-daemon :synlen_readium_navigator:testDebugUnitTest :flutter_readium:testDebugUnitTest
+bash ./gradlew --no-daemon :synlen_readium_navigator:testDebugUnitTest :flutter_readium:testDebugUnitTest :ota_update:testDebugUnitTest

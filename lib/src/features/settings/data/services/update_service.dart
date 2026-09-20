@@ -3,32 +3,36 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/settings/domain/app_version.dart';
 import 'package:synlen/src/features/settings/domain/update_exception.dart';
 import 'package:synlen/src/features/settings/domain/version_manifest.dart';
 
-/// 更新清单与 APK 下载服务：拉取并解析远端 version.json、读取本地版本、
-/// 下载 APK 到缓存目录并做完整性校验。
-///
-/// 平台依赖（HTTP、包信息、缓存目录）全部经构造注入，测试可 fake。
-/// 失败一律抛 [UpdateException]，由 application 层转成状态。
+/// 更新清单与安装服务；原生事件由 application 转成状态与错误码。
 class UpdateService {
   UpdateService({
     required Dio dio,
     required String versionEndpoint,
     required Future<PackageInfo> Function() readPackageInfo,
-    required Future<Directory> Function() cacheDirectory,
+    required OtaUpdate Function() createUpdater,
+    required Future<Directory> Function() supportDirectory,
   }) : _dio = dio,
        _versionEndpoint = versionEndpoint,
        _readPackageInfo = readPackageInfo,
-       _cacheDirectory = cacheDirectory;
+       _createUpdater = createUpdater,
+       _supportDirectory = supportDirectory;
 
   final Dio _dio;
   final String _versionEndpoint;
   final Future<PackageInfo> Function() _readPackageInfo;
-  final Future<Directory> Function() _cacheDirectory;
+  final OtaUpdate Function() _createUpdater;
+  final Future<Directory> Function() _supportDirectory;
+  OtaUpdate? _updater;
+  bool _canceled = false;
+
+  // 固定文件名使插件重试时覆盖同一文件，避免各版本 APK 在私有目录累积。
+  static const apkFilename = 'synlen-update.apk';
 
   /// 拉取并解析远端版本清单。
   Future<VersionManifest> fetchManifest() async {
@@ -52,7 +56,7 @@ class UpdateService {
     }
   }
 
-  /// 本地版本（构建号已按 split APK 约定归一化）。
+  /// 本地版本，构建号按原值比较。
   Future<AppVersion> localVersion() async {
     final info = await _readPackageInfo();
     return AppVersion.parse(
@@ -61,57 +65,103 @@ class UpdateService {
     );
   }
 
-  /// 安装包在缓存目录内的相对路径：`apk/synlen-<版本>.apk`。
-  ///
-  /// 这是落点的唯一声明：下载按它写文件，application 把它交给 presentation 拼
-  /// content URI，Android 侧 `file_paths.xml` 的 `apk_cache` 映射覆盖同一棵缓存
-  /// 目录。三者必须对齐，`test/features/settings/update_install_uri_test.dart`
-  /// 把这条契约钉住。
-  static String apkRelativePath(String versionLabel) =>
-      'apk/synlen-$versionLabel.apk';
-
-  /// 下载 [manifest] 的 APK 到缓存目录并校验完整性，返回安装包路径。
-  ///
-  /// 直链由远端 version.json 下发，只允许 HTTPS，防止被降级为明文篡改；
-  /// 清单提供 androidApkSha256 时比对摘要，不匹配即删除文件并中止。
-  Future<String> downloadApk({
-    required VersionManifest manifest,
-    void Function(double progress)? onProgress,
-  }) async {
+  /// 下载、校验并拉起系统安装器。调用方必须串行执行，并在退出时取消下载。
+  Stream<OtaEvent> downloadAndInstall(VersionManifest manifest) {
     final url = manifest.androidApkUrl;
     if (url.isEmpty) {
       throw const UpdateException(UpdateErrorCode.noUpdateChannel);
     }
     if (Uri.tryParse(url)?.scheme != 'https') {
-      appLogger.w('拦截非 HTTPS 更新直链: $url');
       throw const UpdateException(UpdateErrorCode.insecureUrl);
     }
-
-    final cacheDir = await _cacheDirectory();
-    final apkPath =
-        '${cacheDir.path}/${apkRelativePath(manifest.versionLabel)}';
-    await File(apkPath).parent.create(recursive: true);
-    // 删除可能存在的旧文件，避免覆盖安装校验失败
-    final oldFile = File(apkPath);
-    if (oldFile.existsSync()) {
-      oldFile.deleteSync();
+    final checksum = manifest.androidApkSha256.trim().toLowerCase();
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(checksum)) {
+      throw const UpdateException(UpdateErrorCode.invalidChecksum);
     }
-
-    try {
-      await _dio.download(
-        url,
-        apkPath,
-        onReceiveProgress: (received, total) {
-          if (total > 0) onProgress?.call(received / total);
-        },
-      );
-    } catch (e) {
-      throw UpdateException(UpdateErrorCode.downloadFailed, e);
-    }
-
-    await _verifyChecksum(apkPath, manifest.androidApkSha256);
-    return apkPath;
+    _canceled = false;
+    _updater = null;
+    return _startDownload(manifest, checksum);
   }
+
+  Stream<OtaEvent> _startDownload(
+    VersionManifest manifest,
+    String checksum,
+  ) async* {
+    final directory = await _updateDirectory();
+    await directory.create(recursive: true);
+    final record = File('${directory.path}/pending.json');
+    final temporary = File('${record.path}.tmp');
+    await temporary.writeAsString(
+      jsonEncode({
+        'major': manifest.major,
+        'minor': manifest.minor,
+        'patch': manifest.patch,
+        'build': manifest.build,
+        'sha256': checksum,
+      }),
+      flush: true,
+    );
+    await temporary.rename(record.path);
+    // 记录必须先于原生安装落盘；准备期间取消不得在异步写入后启动插件。
+    if (_canceled) return;
+    // ota_update 会缓存 execute 的流；复用实例会让重试读到已关闭的旧流。
+    final updater = _createUpdater();
+    _updater = updater;
+    yield* updater.execute(
+      manifest.androidApkUrl,
+      destinationFilename: apkFilename,
+      sha256checksum: checksum,
+    );
+  }
+
+  /// 等待原生写入和校验停止；已打开的系统安装器不在取消范围内。
+  Future<void> cancelDownload() async {
+    _canceled = true;
+    await _updater?.cancel();
+  }
+
+  /// 仅在校验失败或启动回收确认可删后调用；先删 APK，再移除回收记录。
+  Future<void> deleteDownloadedApk() async {
+    final directory = await _updateDirectory();
+    final file = File('${directory.path}/$apkFilename');
+    if (await file.exists()) await file.delete();
+    final record = File('${directory.path}/pending.json');
+    if (await record.exists()) await record.delete();
+  }
+
+  /// 仅在 Android 启动、更新入口开放前调用；不能与下载或安装交接并发。
+  /// 无记录的文件保守保留，完整待安装包在本地版本达到目标后才回收。
+  Future<void> cleanupDownloadedApk() async {
+    final directory = await _updateDirectory();
+    final temporary = File('${directory.path}/pending.json.tmp');
+    if (await temporary.exists()) await temporary.delete();
+    final record = File('${directory.path}/pending.json');
+    if (!await record.exists()) return;
+    final data =
+        jsonDecode(await record.readAsString()) as Map<String, dynamic>;
+    final parts = ['major', 'minor', 'patch', 'build'].map((key) => data[key]);
+    if (parts.any((part) => part is! int || part < 0) ||
+        data['sha256'] is! String ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(data['sha256'] as String)) {
+      throw const FormatException('安装包回收记录无效');
+    }
+    final target = AppVersion(
+      data['major'] as int,
+      data['minor'] as int,
+      data['patch'] as int,
+      build: data['build'] as int,
+    );
+    final file = File('${directory.path}/$apkFilename');
+    if (!await file.exists() || !target.isNewerThan(await localVersion())) {
+      await deleteDownloadedApk();
+      return;
+    }
+    final digest = await sha256.bind(file.openRead()).first;
+    if (digest.toString() != data['sha256']) await deleteDownloadedApk();
+  }
+
+  Future<Directory> _updateDirectory() async =>
+      Directory('${(await _supportDirectory()).path}/ota_update');
 
   VersionManifest _parseManifest(Map<String, dynamic> data) {
     return VersionManifest(
@@ -126,26 +176,6 @@ class UpdateService {
       androidApkUrl: data['androidApkUrl'] as String? ?? '',
       androidApkSha256: data['androidApkSha256'] as String? ?? '',
       iosAppStoreUrl: data['iosAppStoreUrl'] as String? ?? '',
-    );
-  }
-
-  /// 清单提供 [expectedSha256] 时校验下载文件摘要；
-  /// 字段缺失时放行（兼容旧的已发布清单），仅记 warning。校验失败删除文件。
-  Future<void> _verifyChecksum(String apkPath, String expectedSha256) async {
-    final expected = expectedSha256.trim().toLowerCase();
-    if (expected.isEmpty) {
-      appLogger.w('version.json 未提供 androidApkSha256，跳过完整性校验');
-      return;
-    }
-    final actual = (await sha256.bind(File(apkPath).openRead()).first)
-        .toString();
-    if (actual == expected) return;
-    appLogger.w('APK 摘要不匹配: 期望 $expected，实际 $actual');
-    final file = File(apkPath);
-    if (file.existsSync()) file.deleteSync();
-    throw UpdateException(
-      UpdateErrorCode.checksumMismatch,
-      '期望 $expected，实际 $actual',
     );
   }
 }

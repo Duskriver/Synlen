@@ -16,8 +16,8 @@ Status: implemented
 
 - Android：新增 `android/app/src/main/res/xml/network_security_config.xml`，`base-config` 关闭明文、只信系统 CA；Manifest 改 `usesCleartextTraffic="false"` 并挂 `networkSecurityConfig`。
 - iOS：删除 `Info.plist` 整段 `NSAppTransportSecurity` / `NSAllowsArbitraryLoads`，回到 ATS 默认。
-- 更新下载链路（现位于 `UpdateService.downloadApk`，见 `lib/src/features/settings/data/services/update_service.dart`）：下载前要求直链 scheme 为 `https`，否则中止并提示 `updateInsecureUrl`；下载完成后若 `version.json` 提供了 `androidApkSha256`，对文件算 SHA-256 比对，不匹配则删除文件并提示 `updateChecksumMismatch`。字段缺失时保持放行（兼容已发布的旧清单），记 warning 日志。两处 `$e` 上屏改为只给 l10n 文案，异常细节入 `appLogger`。
-- `tool/upload_release.sh` 在发布时用 `shasum -a 256` 计算 universal APK 摘要并写入 `version.json` 的 `androidApkSha256`；APK 定位逻辑相应提到清单生成之前。
+- 更新下载链路：`UpdateService.downloadAndInstall` 要求 HTTPS 直链及有效 SHA-256，校验由 `ota_update` 完成；摘要不匹配时用例删除坏包。用户只看 l10n 错误，内部细节入日志。缺失摘要兼容策略已被[插件委托决策](../architecture/2026-09-21-ota-update-installer.md)取代。
+- `tool/upload_release.sh` 在发布时用 `shasum -a 256` 计算 ARM64 APK 摘要并写入 `version.json` 的 `androidApkSha256`；APK 定位逻辑相应提到清单生成之前。
 
 **备份解压上限与完整性**
 
@@ -28,7 +28,7 @@ Status: implemented
 
 ## Alternatives considered
 
-**要求 version.json 必须带摘要、缺失即拒绝下载** —— 放弃：OSS 上已发布的旧清单没有该字段，硬校验会让所有旧版本永久无法应用内更新。放行 + warning 留了迁移窗口；待旧版本占比可忽略后可收紧为强制。
+**要求 version.json 必须带摘要、缺失即拒绝下载** —— 初始决策放弃：OSS 上已发布的旧清单没有该字段，硬校验会让所有旧版本永久无法应用内更新。放行 + warning 留了迁移窗口；待旧版本占比可忽略后可收紧为强制。
 
 **只在解压时流式计数、超限即停** —— 放弃：中央目录能提前拒绝已声明超限的备份；静态校验与实际输出计数共同约束未如实声明大小的条目。
 
@@ -39,7 +39,7 @@ Status: implemented
 ## Consequences
 
 - 已知取舍：Android WebView 加载书内引用的远程 http 图片会被网络策略阻断（https 不受影响）；书内本地资源走自定义 scheme，不受影响。
-- 旧 `version.json` 无 `androidApkSha256` 时更新仍可下载，warning 日志是唯一信号；下次用 `tool/upload_release.sh` 发版后新清单自动带摘要。
+- 清单缺少有效 `androidApkSha256` 时拒绝应用内下载；发布脚本始终生成该字段，外部下载入口仍可用。
 - 单条目 512 MiB / 总量 4 GiB 对正常备份（EPUB 书库）是数量级余量；超限备份恢复被直接拒绝，用户只能换备份文件。
 - 校验只访问缓存文件，失败不会改动现有藏书与数据库；全部条目通过才开始恢复。自行制作的备份不能含符号链接或加密 ZIP 条目。
 - 更新逻辑整体移出 presentation 已由后续重构完成，见[更新检查移出 presentation](../architecture/2026-09-09-update-flow-out-of-presentation.md)。

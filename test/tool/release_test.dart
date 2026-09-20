@@ -326,7 +326,7 @@ esac
         reason: '${result.stdout}\n${result.stderr}',
       );
       final expectedErrors = {
-        'native-test-failure': 'Readium Android 原生回归未通过',
+        'native-test-failure': 'Android 阅读与更新原生回归未通过',
         'native-bootstrap-failure': 'Flutter SDK 缺少 Gradle wrapper',
         'native-source-drift': '原生检查期间源码或提交发生变化',
         'drift': '阅读器学习脚本生成物发生漂移',
@@ -368,7 +368,7 @@ esac
     environment['SCENARIO'] = 'native-test-failure';
     final result = await release(['--apk', 'build/outputs/$apkName']);
     expect(result.exitCode, isNot(0));
-    expect(result.stderr, contains('Readium Android 原生回归未通过'));
+    expect(result.stderr, contains('Android 阅读与更新原生回归未通过'));
     expect(events(), contains('native-gradle --no-daemon'));
     expect(events(), isNot(contains('flutter build')));
     await expectUnpublished();

@@ -578,11 +578,19 @@
   "@downloadFailed": {
     "description": "下载失败提示"
   },
-  "downloadCompleted": "下载完成，请点击安装",
-  "@downloadCompleted": {
-    "description": "下载完成提示"
+  "updateInstallerOpened": "已打开系统安装器，请在系统界面确认更新",
+  "@updateInstallerOpened": {
+    "description": "已拉起系统安装器，尚未确认安装完成"
   },
   "installUnknownSourcesRequired": "需要允许安装未知来源应用，请到系统设置中开启",
+  "updateInvalidChecksum": "更新缺少有效校验信息，请使用备用下载链接",
+  "@updateInvalidChecksum": {
+    "description": "更新清单缺少有效 SHA-256 的提示"
+  },
+  "updateInstallFailed": "无法启动安装，请重试或使用备用下载链接",
+  "@updateInstallFailed": {
+    "description": "插件报告安装请求失败的提示"
+  },
   "@installUnknownSourcesRequired": {
     "description": "安装未知来源权限提示"
   },

@@ -426,11 +426,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadFailed => 'Download failed';
 
   @override
-  String get downloadCompleted => 'Download complete, tap to install';
+  String get updateInstallerOpened =>
+      'Installer opened. Confirm the update in the system dialog.';
 
   @override
   String get installUnknownSourcesRequired =>
       'Installing apps from unknown sources must be enabled in system settings';
+
+  @override
+  String get updateInvalidChecksum =>
+      'The update is missing a valid verification code. Please use the alternative download link.';
+
+  @override
+  String get updateInstallFailed =>
+      'Unable to start installation. Please retry or use the alternative download link.';
 
   @override
   String get noUpdateChannel =>
