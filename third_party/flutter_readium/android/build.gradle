@@ -82,6 +82,13 @@ android {
     )
   }
 
+  buildTypes {
+    // Flutter profile 变体复用本地 Navigator 的 release 实现。
+    profile {
+      matchingFallbacks = ['release']
+    }
+  }
+
   buildFeatures {
     viewBinding = true
     buildConfig = true

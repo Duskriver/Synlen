@@ -59,3 +59,5 @@ Android 普通应用入口的调试 APK 已安装并正常打开空书架，通�
 部分取代：[BookQueries 窄视图](../../implemented/architecture/2026-09-09-book-queries-reader-view.md)继续约束跨 feature 接口，[控制栏拆分](../../implemented/architecture/2026-09-09-reader-control-bar-split.md)继续约束按钮与计时器归属，[脚本剥离](../../implemented/bug-fix/2026-09-09-book-script-stripping.md)的安全承诺继续生效，具体供给路径由出版物准备替代虚拟域。
 
 手势归属与 Android 原生落页判定由[阅读手势修复决策](../bug-fix/2026-09-20-readium-reader-gestures.md)部分补充；出版物供给、排版所有权与完整 Locator 的决策继续有效。
+
+重复打开的文件校验复用和 Android 目录标题的按需解析由[重开成本修复](../bug-fix/2026-09-20-readium-reopen-cost.md)部分补充，首次净化和完整 Locator 的约束继续有效。

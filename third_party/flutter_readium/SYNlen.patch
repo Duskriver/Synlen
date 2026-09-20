@@ -634,7 +634,7 @@
 +++ b/android/build.gradle
 @@ -21,6 +21,11 @@
  version '1.0-SNAPSHOT'
- 
+
  rootProject.allprojects {
 +  configurations.configureEach {
 +    resolutionStrategy.dependencySubstitution {
@@ -644,9 +644,23 @@
    repositories {
      google()
      mavenCentral()
-@@ -109,4 +114,5 @@
+@@ -77,6 +82,13 @@
+     )
+   }
+
++  buildTypes {
++    // Flutter profile 变体复用本地 Navigator 的 release 实现。
++    profile {
++      matchingFallbacks = ['release']
++    }
++  }
++
+   buildFeatures {
+     viewBinding = true
+     buildConfig = true
+@@ -109,4 +121,5 @@
    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
- 
+
    testImplementation 'junit:junit:4.13.2'
 +  testImplementation 'org.robolectric:robolectric:4.16.1'
  }
@@ -655,10 +669,10 @@
 @@ -11,7 +11,7 @@
    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
- 
+
 -  <application android:usesCleartextTraffic="true" tools:targetApi="m">
 +  <application>
- 
+
      <service android:name=".PluginMediaService"
          android:enabled="true"
 --- a/android/src/main/kotlin/dk/nota/flutterreadium/EpubImageTapBridge.kt
@@ -687,7 +701,7 @@
              if (publication.suppressesImageTapEvents(data)) {
 @@ -59,7 +50,7 @@
                  }
- 
+
              PluginLog.d(TAG, "::onImageTapped href=$href")
 -            channel.onImageTapped(result.toString())
 +            onMessage(result.toString())
@@ -695,13 +709,59 @@
              PluginLog.w(TAG, "::onImageTapped. Failed to process event: $e")
          }
 @@ -67,7 +58,6 @@
- 
+
      private fun resolvePublicationHref(srcUrl: String): String? {
          if (srcUrl.isEmpty()) return null
 -        val publication = ReadiumReader.currentPublication ?: return null
          return try {
              val imgPath = URI(srcUrl).path
              val allLinks = publication.readingOrder + publication.resources
+--- /dev/null
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/EpubLocatorToc.kt
+@@ -0,0 +1,43 @@
++package dk.nota.flutterreadium
++
++import org.readium.r2.shared.publication.Locator
++import org.readium.r2.shared.publication.Publication
++import org.readium.r2.shared.publication.html.cssSelector
++import org.readium.r2.shared.util.Url
++
++/** 根据当前位置补充目录归属；正文选择器由当前出版物的缓存提供。 */
++internal suspend fun Publication.enrichLocatorWithTocHref(
++    locator: Locator,
++    loadDocumentCssSelectors: suspend (Url) -> List<String>,
++): Locator {
++    if (!conformsTo(Publication.Profile.EPUB)) return locator
++
++    locator.locations.tocHref?.let { tocHref ->
++        return locator.copy(title = getTitleFromTocHref(tocHref))
++    }
++    val cssSelector = locator.locations.cssSelector ?: return locator
++    val cleanHref = locator.href.cleanHref()
++    val tocLinks =
++        tableOfContents.flattenChildren().filter {
++            it.href
++                .resolve()
++                .cleanHref()
++                .path == cleanHref.path
++        }
++
++    // 无歧义的目录归属不需要解析正文；内容迭代会额外读入下一章才能发现资源边界。
++    if (tocLinks.isEmpty()) return locator
++    tocLinks.singleOrNull()?.let { return locator.copy(title = it.title).copyWithTocHref(it) }
++
++    val documentCssSelectors = loadDocumentCssSelectors(locator.href)
++    val index = documentCssSelectors.indexOf(cssSelector).takeIf { it >= 0 } ?: 0
++    val toc =
++        tocLinks.associateBy {
++            documentCssSelectors.indexOf("#${it.href.resolve().fragment}")
++        }
++    val tocItem =
++        toc.entries.lastOrNull { it.key <= index }?.value
++            ?: toc.entries.firstOrNull()?.value
++            ?: return locator
++    return locator.copy(title = tocItem.title).copyWithTocHref(tocItem)
++}
 --- /dev/null
 +++ b/android/src/main/kotlin/dk/nota/flutterreadium/EpubTextInteractionBridge.kt
 @@ -0,0 +1,11 @@
@@ -729,30 +789,39 @@
 @@ -234,7 +235,8 @@
              </script>
              """
- 
+
 -        val allLines = assetLines + listOf(platformScript) + listOfNotNull(injectStyle)
 +        val fontStyle = extraStyleSheet.takeIf { it.isNotBlank() }?.let { "<style>$it</style>" }
 +        val allLines = assetLines + listOf(platformScript) + listOfNotNull(injectStyle, fontStyle)
          val newBlock = "$INJECT_START_MARKER\n${allLines.joinToString("\n")}\n$INJECT_END_MARKER"
- 
+
          val startIdx = content.indexOf(INJECT_START_MARKER)
 --- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReader.kt
 +++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReader.kt
-@@ -707,6 +707,7 @@
+@@ -53,7 +53,6 @@
+ import org.readium.r2.shared.publication.Locator
+ import org.readium.r2.shared.publication.LocatorCollection
+ import org.readium.r2.shared.publication.Publication
+-import org.readium.r2.shared.publication.html.cssSelector
+ import org.readium.r2.shared.publication.services.content.DefaultContentService
+ import org.readium.r2.shared.publication.services.content.content
+ import org.readium.r2.shared.publication.services.content.contentServiceFactory
+@@ -707,6 +706,7 @@
          // Close previously opened publication to avoid leaks.
          closePublication()
- 
+
 +        val publicationInjections = javaScriptInjections + cssInjections
          val transformingContainerFactory =
              fun(container: Container<Resource>): Container<Resource> {
                  return TransformingContainer(container) { url: Url, resource: Resource ->
-@@ -719,11 +720,14 @@
+@@ -719,11 +719,15 @@
                              .mapNotNull { it.href.resolve().fragment }
                      val epubPreferences =
                          navigator.preferences?.effectiveForLayout(publication.metadata.layout)
 -                    if (url.extension?.value?.endsWith("html", ignoreCase = true) == true) {
-+                    val isHtml = publication.linkWithHref(url)?.mediaType?.isHtml
-+                        ?: (url.extension?.value?.endsWith("html", ignoreCase = true) == true)
++                    val isHtml =
++                        publication.linkWithHref(url)?.mediaType?.isHtml
++                            ?: (url.extension?.value?.endsWith("html", ignoreCase = true) == true)
 +                    if (isHtml) {
                          resource.injectScriptsAndStyles(
                              tocIds,
@@ -763,7 +832,78 @@
                          )
                      } else {
                          resource
-@@ -980,7 +984,7 @@
+@@ -877,9 +881,7 @@
+         }
+     }
+
+-    /**
+-     * Find the current table of content item from a locator.
+-     */
++    /** 根据当前位置补充目录归属。 */
+     suspend fun epubEnrichLocatorWithTocHref(locator: Locator): Locator {
+         val publication =
+             currentPublication ?: run {
+@@ -887,58 +889,7 @@
+                 return locator
+             }
+
+-        if (!publication.conformsTo(Publication.Profile.EPUB)) {
+-            PluginLog.w(TAG, "::epubEnrichLocatorWithTocHref - not an EPUB profile")
+-            return locator
+-        }
+-
+-        // This locator already has a tocHref, add title and return it.
+-        locator.locations.tocHref?.let { tocHref ->
+-            return locator.copy(title = publication.getTitleFromTocHref(tocHref))
+-        }
+-
+-        val cssSelector =
+-            locator.locations.cssSelector ?: run {
+-                PluginLog.w(TAG, "::epubEnrichLocatorWithTocHref - missing cssSelector in locator")
+-                return locator
+-            }
+-
+-        val resultLocator = locator.copy()
+-
+-        val cleanHref = resultLocator.href.cleanHref()
+-        val tocLinks =
+-            publication.tableOfContents.flattenChildren().filter {
+-                it.href
+-                    .resolve()
+-                    .cleanHref()
+-                    .path == cleanHref.path
+-            }
+-
+-        val documentCssSelectors = epubGetAllDocumentCssSelectors(resultLocator.href)
+-        val idx =
+-            documentCssSelectors.indexOf(cssSelector).takeIf { it > -1 } ?: run {
+-                // cssSelector wasn't found in the list of document cssSelectors, best effort is to assume first
+-                PluginLog.d(
+-                    TAG,
+-                    "::epubEnrichLocatorWithTocHref - cssSelector:$cssSelector not found in contentIds, assume idx = 0",
+-                )
+-                0
+-            }
+-
+-        val toc =
+-            tocLinks.associateBy { documentCssSelectors.indexOf("#${it.href.resolve().fragment}") }
+-
+-        val tocItem =
+-            toc.entries.lastOrNull { it.key <= idx }?.value ?: toc.entries.firstOrNull()?.value
+-                ?: run {
+-                    PluginLog.d(TAG, "::epubEnrichLocatorWithTocHref - no tocItem found")
+-                    return resultLocator
+-                }
+-
+-        return resultLocator
+-            .copy(
+-                title = tocItem.title,
+-            ).copyWithTocHref(tocItem)
++        return publication.enrichLocatorWithTocHref(locator, ::epubGetAllDocumentCssSelectors)
+     }
+
+     @OptIn(InternalReadiumApi::class)
+@@ -980,7 +931,7 @@
              EpubNavigator(
                  pub,
                  initialLocator,
@@ -772,8 +912,8 @@
                  initialPreferences,
                  fontFamilyDeclarations = fontFamilyDeclarations,
              ).apply {
-@@ -1189,9 +1193,11 @@
- 
+@@ -1189,9 +1140,11 @@
+
      /** Close the active visual navigator, regardless of type (EPUB or PDF). */
      fun visualClose() {
 -        currentReaderWidget = null
@@ -785,7 +925,7 @@
 +        if (visualNavigator === navigator) visualNavigator = null
 +        if (currentReaderWidget === reader) currentReaderWidget = null
      }
- 
+
      /**
 --- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderChannel.kt
 +++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderChannel.kt
@@ -798,34 +938,34 @@
 +    fun onReaderError(code: String) = launch { invokeMethod("onReaderError", code) }
 +
      fun onReaderReady() = launch { invokeMethod("onReaderReady", null) }
- 
+
      fun onPageChanged(locator: Locator?) =
 --- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderWidget.kt
 +++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderWidget.kt
 @@ -36,8 +36,7 @@
  private const val TAG = "ReadiumReaderView"
  internal const val VIEW_TYPE_CHANNEL_NAME = "dk.nota.flutter_readium/ReadiumReaderWidget"
- 
+
 -// How long locator enrichment (JS page-info + ToC lookup) may take before the raw locator
 -// is emitted instead. Mirrors `locatorEnrichmentTimeoutSeconds` on iOS.
 +// 位置富化必须限时完成；超时报告失败，不能把初始传入位置冒充实际视口回执。
  private const val LOCATOR_ENRICHMENT_TIMEOUT_MS = 5000L
- 
+
  @ExperimentalCoroutinesApi
 @@ -62,6 +61,11 @@
      var hasSentReady = false
- 
+
      private val layout: ViewGroup
 +    private var disposed = false
 +    private var nativeDetached = false
 +    override val handleInternalLinks = creationParams["handleInternalLinks"] as? Boolean ?: true
 +    private val sessionId = creationParams["sessionId"] as? String ?: id.toString()
 +    private val publication = ReadiumReader.currentPublication
- 
+
      // Source the host activity from the plugin's ActivityAware binding (via ReadiumReader),
      // not the PlatformView's view context. The view context is the Activity only under
 @@ -83,15 +87,20 @@
- 
+
      override fun dispose() {
          PluginLog.d(TAG, "::dispose")
 -        ReadiumReader.visualClose()
@@ -838,15 +978,15 @@
 +            ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Closed)
 +        }
          hasSentReady = false
- 
+
          channel.setMethodCallHandler(null)
 +        channel.coroutineContext.cancelChildren()
- 
+
          coroutineContext.cancelChildren()
          layout.removeAllViews()
 +        nativeDetached = true
      }
- 
+
      override fun onFlutterViewAttached(flutterView: View) {
 @@ -112,13 +121,24 @@
          @Suppress("UNCHECKED_CAST")
@@ -874,17 +1014,17 @@
 +            PluginLog.w(TAG, "Cannot load reader font: $error")
 +            emptyList()
 +        }
- 
+
          // Selection actions must be known BEFORE the navigator fragment is built, because
          // EpubReaderFragment decides `selectionActionModeCallback` from
 @@ -164,6 +184,7 @@
- 
+
          channel = ReadiumReaderChannel(messenger, "$VIEW_TYPE_CHANNEL_NAME:$id")
          channel.setMethodCallHandler(this)
 +        if (fontResourceFailed) channel.onReaderError("FontResourceUnavailable")
- 
+
          ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Loading)
- 
+
 @@ -199,6 +220,7 @@
                  throw e
              } catch (e: Exception) {
@@ -896,7 +1036,7 @@
 @@ -208,12 +230,34 @@
          }
      }
- 
+
 +    override fun onReaderError(code: String) {
 +        if (!disposed) channel.onReaderError(code)
 +    }
@@ -921,33 +1061,33 @@
      override fun onPageLoaded() {
          PluginLog.d(TAG, "::onPageLoaded")
      }
- 
+
      // To avoid duplicate onPageChanged events.
      private var lastPageLoadedKey: String? = null
 +    private var locatorRevision = 0L
- 
+
      // Some navigator transitions update currentLocator without a page-changed callback.
      // Mirror those into the text-locator stream once so Flutter can observe progress.
 @@ -237,6 +281,7 @@
          }
- 
+
          lastPageLoadedKey = currentKey
 +        val revision = ++locatorRevision
- 
+
          launch {
              if (!hasSentReady) {
 @@ -245,7 +290,7 @@
                  ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Ready)
              }
- 
+
 -            emitOnPageChanged(pageIndex, totalPages, locator)
 +            emitOnPageChanged(pageIndex, totalPages, locator, revision)
- 
+
              // Re-inject MO column-break CSS for each freshly-loaded spine item.
              if (ReadiumReader.shouldInjectMOColumnBreakCssOnPageChange) {
 @@ -268,6 +313,8 @@
          }
- 
+
          lastVisualLocationKey = currentKey
 +        if (disposed || !hasSentReady) return
 +        // StateFlow 首值可能只是传入的 initialLocator；实际落位由 onPageChanged 回执。
@@ -970,7 +1110,7 @@
                      var emittingLocator = locator
 @@ -320,22 +368,34 @@
                          }
- 
+
                          else -> {
 -                            // EPUB: JS page-info eval + TOC href enrichment.
 -                            try {
@@ -1017,12 +1157,12 @@
 +                                    .copyWithAdditionalLocations(mapOf("cssSelector" to selector))
 +                                    .copy(text = Locator.Text.fromJSON(text))
                              }
- 
+
                              emittingLocator = emittingLocator.addPageNumber(pageIndex, totalPages)
 @@ -345,21 +405,26 @@
                      emittingLocator
                  }
- 
+
 +            if (disposed || revision != locatorRevision || staleResource) return
              if (enriched == null) {
                  PluginLog.w(
@@ -1032,7 +1172,7 @@
 +                    "::emitOnPageChanged - enrichment timed out after ${LOCATOR_ENRICHMENT_TIMEOUT_MS}ms",
                  )
              }
- 
+
 -            val emittingLocator = enriched ?: locator
 -
 +            val emittingLocator = enriched ?: run {
@@ -1049,7 +1189,7 @@
 +            if (!disposed && revision == locatorRevision) channel.onReaderError("LocatorUnavailable")
          }
      }
- 
+
 @@ -371,6 +436,10 @@
          call: MethodCall,
          result: MethodChannel.Result,
@@ -1138,7 +1278,7 @@
 +        PluginLog.w(TAG, "Resource load failed: $href: $error")
 +        lifecycleScope.launch { if (isAdded) listener?.onReaderError("ResourceReadError") }
      }
- 
+
      var listener: Listener? = null
 +    var handleInternalLinks = true
 +    private val injectionAssets = ReadiumReader.javaScriptInjections + ReadiumReader.cssInjections
@@ -1147,13 +1287,13 @@
 +        link: org.readium.r2.shared.publication.Link,
 +        context: org.readium.r2.navigator.HyperlinkNavigator.LinkContext?,
 +    ): Boolean = handleInternalLinks || context is org.readium.r2.navigator.HyperlinkNavigator.FootnoteContext
- 
+
      val started = MutableStateFlow(false)
- 
+
 @@ -610,7 +627,7 @@
              return
          }
- 
+
 -        if (ReadiumReader.currentPublication == null) {
 +        val publication = ReadiumReader.currentPublication ?: run {
              PluginLog.w(TAG, "::attachNavigator() - $instance - missing publication")
@@ -1190,7 +1330,7 @@
                                      addSource(face.asset)
                                      setFontStyle(
 @@ -677,7 +699,18 @@
- 
+
                      // TODO: This is a temporary solution until kotlin-toolkit supports image tap events natively.
                      // Register JS→native bridge for window.onImageTappedCallback(string).
 -                    registerJavascriptInterface("FlutterImageBridge") { _ -> EpubImageTapBridge() }
@@ -1207,22 +1347,22 @@
 +                        }
 +                    }
                  }
- 
+
          val fragmentFactory =
 --- a/android/src/main/kotlin/dk/nota/flutterreadium/navigators/EpubNavigator.kt
 +++ b/android/src/main/kotlin/dk/nota/flutterreadium/navigators/EpubNavigator.kt
 @@ -1,6 +1,7 @@
  package dk.nota.flutterreadium.navigators
- 
+
  import android.os.Bundle
 +import android.view.View
  import android.view.ViewGroup
  import androidx.fragment.app.FragmentManager
  import androidx.fragment.app.commitNow
 @@ -66,6 +67,16 @@
- 
+
      private var fontFamilyDeclarations: List<ReaderFontFamily> = emptyList()
- 
+
 +    /** 本地字体在 HTML 首次排版之前注入，避免加载完成后换字体造成位置漂移。 */
 +    internal fun localFontStyleSheet(): String = fontFamilyDeclarations.flatMap { family ->
 +        family.faces.filter { it.asset.startsWith("data:") }.map { face ->
@@ -1234,7 +1374,7 @@
 +
 +
      val visualListener: VisualListener
- 
+
      private var currentVisualLocator: Locator?
 @@ -78,6 +89,7 @@
       * A VisualListener is used to listen to events from the Visual navigators like EpubNavigator.
@@ -1253,7 +1393,7 @@
 +        fun onImageTapped(json: String) {}
 +        fun onReaderError(code: String) {}
      }
- 
+
      /**
 @@ -136,6 +152,7 @@
      override suspend fun initNavigator() {
@@ -1266,7 +1406,7 @@
 @@ -348,6 +365,18 @@
          visualListener.onExternalLinkActivated(url)
      }
- 
+
 +    override fun onReaderError(code: String) {
 +        visualListener.onReaderError(code)
 +    }
@@ -1285,7 +1425,7 @@
 @@ -355,15 +384,14 @@
      override fun dispose() {
          super.dispose()
- 
+
 -        launch {
 -            epubNavigator?.let { fragment ->
 -                fragment.parentFragmentManager.commitNow { remove(fragment) }
@@ -1305,7 +1445,140 @@
 +        epubNavigator = null
          state.clear()
      }
- 
+
+--- /dev/null
++++ b/android/src/test/kotlin/dk/nota/flutterreadium/EpubLocatorTocTest.kt
+@@ -0,0 +1,130 @@
++package dk.nota.flutterreadium
++
++import kotlinx.coroutines.runBlocking
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertNull
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.readium.r2.shared.publication.Link
++import org.readium.r2.shared.publication.Locator
++import org.readium.r2.shared.publication.Manifest
++import org.readium.r2.shared.publication.Metadata
++import org.readium.r2.shared.publication.Publication
++import org.readium.r2.shared.util.Url
++import org.readium.r2.shared.util.mediatype.MediaType
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.annotation.Config
++
++@RunWith(RobolectricTestRunner::class)
++@Config(sdk = [35])
++class EpubLocatorTocTest {
++    @Test
++    fun `当前资源没有目录项时不读取正文`() =
++        runBlocking {
++            val locator = locator()
++            val result =
++                publication(listOf(link("other.xhtml", "其他章")))
++                    .enrichLocatorWithTocHref(locator) { error("不应读取正文") }
++            assertEquals(locator, result)
++        }
++
++    @Test
++    fun `唯一目录项直接补充归属且保留文字锚点`() =
++        runBlocking {
++            val locator = locator(":root > :nth-child(2) > :nth-child(1)")
++            val chapter = link("chapter.xhtml#heading", "章节")
++            val publication = publication(listOf(link("other.xhtml", "其他章", listOf(chapter))))
++            val result = publication.enrichLocatorWithTocHref(locator) { error("不应读取正文") }
++            assertEquals("章节", result.title)
++            assertEquals("chapter.xhtml#heading", result.locations.tocHref)
++            assertEquals(locator.text, result.text)
++            assertEquals(locator.locations.otherLocations["cssSelector"], result.locations.otherLocations["cssSelector"])
++        }
++
++    @Test
++    fun `多个目录项按原有正文顺序选择且只读取一次`() =
++        runBlocking {
++            val publication = publication(listOf(link("chapter.xhtml#first", "第一节"), link("chapter.xhtml#second", "第二节")))
++            var reads = 0
++            val result =
++                publication.enrichLocatorWithTocHref(locator("#current")) { href ->
++                    assertEquals("chapter.xhtml", href.toString())
++                    reads++
++                    listOf("#first", "#before", "#second", "#current")
++                }
++            assertEquals(1, reads)
++            assertEquals("第二节", result.title)
++            assertEquals("chapter.xhtml#second", result.locations.tocHref)
++        }
++
++    @Test
++    fun `多个目录项保留未知选择器的首位置回退`() =
++        runBlocking {
++            val publication = publication(listOf(link("chapter.xhtml#first", "第一节"), link("chapter.xhtml#second", "第二节")))
++            val result =
++                publication.enrichLocatorWithTocHref(locator("#missing")) {
++                    listOf("#first", "#second")
++                }
++            assertEquals("chapter.xhtml#first", result.locations.tocHref)
++        }
++
++    @Test
++    fun `已有目录归属只更新标题而不读取正文`() =
++        runBlocking {
++            val publication = publication(listOf(link("chapter.xhtml#first", "新标题")))
++            val locator = locator().copyWithTocHref(Url("chapter.xhtml#first")!!)
++            val result = publication.enrichLocatorWithTocHref(locator) { error("不应读取正文") }
++            assertEquals("新标题", result.title)
++            assertEquals(locator.locations, result.locations)
++        }
++
++    @Test
++    fun `无正文选择器时保留原位置`() =
++        runBlocking {
++            val locator = locator(null)
++            val result =
++                publication(listOf(link("chapter.xhtml", "章节")))
++                    .enrichLocatorWithTocHref(locator) { error("不应读取正文") }
++            assertEquals(locator, result)
++            assertNull(result.locations.tocHref)
++        }
++
++    @Test
++    fun `非EPUB出版物不读取正文或补充目录`() =
++        runBlocking {
++            val locator = locator()
++            val publication = Publication(Manifest(metadata = Metadata(), readingOrder = listOf(link("chapter.xhtml", "章节"))))
++            assertEquals(locator, publication.enrichLocatorWithTocHref(locator) { error("不应读取正文") })
++        }
++
++    private fun locator(selector: String? = "#current") =
++        Locator(
++            href = Url("chapter.xhtml")!!,
++            mediaType = MediaType.XHTML,
++            title = "原标题",
++            locations = Locator.Locations(otherLocations = selector?.let { mapOf("cssSelector" to it) } ?: emptyMap()),
++            text = Locator.Text(before = "before ", highlight = "word", after = " after"),
++        )
++
++    private fun link(
++        href: String,
++        title: String,
++        children: List<Link> = emptyList(),
++    ) = Link(
++        href =
++            org.readium.r2.shared.publication
++                .Href(href)!!,
++        mediaType = MediaType.XHTML,
++        title = title,
++        children = children,
++    )
++
++    private fun publication(toc: List<Link>) =
++        Publication(
++            Manifest(
++                metadata = Metadata(conformsTo = setOf(Publication.Profile.EPUB)),
++                readingOrder = listOf(link("chapter.xhtml", "章节")),
++                tableOfContents = toc,
++            ),
++        )
++}
 --- /dev/null
 +++ b/android/src/test/kotlin/dk/nota/flutterreadium/ReadiumWordAnchorTest.kt
 @@ -0,0 +1,71 @@
@@ -1395,7 +1668,7 @@
 +  s.dependency 'ReadiumNavigator', '3.11.0'
 +  s.dependency 'ReadiumOPDS', '3.11.0'
    # s.dependency 'ReadiumLCP', '~> 3.5.0'
- 
+
    s.platform = :ios, '15.0'
 --- a/ios/flutter_readium/Package.swift
 +++ b/ios/flutter_readium/Package.swift
@@ -1413,13 +1686,13 @@
 @@ -3,7 +3,6 @@
  import Flutter
  import WebKit
- 
+
 -private var userScripts: [WKUserScript] = []
  private let jsonEncoder = JSONEncoder()
- 
+
  /// Breaks the `WKUserContentController → message-handler → EPUBReaderView` retain cycle.
 @@ -23,13 +22,15 @@
- 
+
    // implements EPUBNavigatorDelegate::navigator:setupUserScripts
    public func navigator(_ navigator: EPUBNavigatorViewController, setupUserScripts userContentController: WKUserContentController) {
 -    Log.reader.debug("setupUserScripts: adding \(userScripts.count) scripts")
@@ -1432,7 +1705,7 @@
      userContentController.add(WeakScriptHandler(self), name: "narrationSync")
 +    userContentController.add(WeakScriptHandler(self), name: "flutterReadiumText")
 +    addCustomUserScripts(to: userContentController)
- 
+
      /// Custom preferences added dynamically for each WebView, to make sure changes to preferences are respected.
      if let preferencesStylesheet = self.preferences.map(effectivePreferences)?.toInjectableStyleSheet() {
 @@ -69,6 +70,35 @@
@@ -1474,7 +1747,7 @@
 @@ -105,12 +135,43 @@
      return data
    }
- 
+
 -  /// Builds the shared `userScripts` list on first use. Safe to call from every
 -  /// `EPUBReaderView` instance — the list is shared across webviews and only needs
 -  /// building once per process.
@@ -1516,7 +1789,7 @@
 +      controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
 +    }
    }
- 
+
    func initUserScripts(registrar: FlutterPluginRegistrar) {
 --- a/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+MethodChannel.swift
 +++ b/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+MethodChannel.swift
@@ -1533,14 +1806,14 @@
 +++ b/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+Selection.swift
 @@ -5,6 +5,7 @@
  extension EPUBReaderView {
- 
+
    public func navigator(_ navigator: SelectableNavigator, shouldShowMenuForSelection selection: Selection) -> Bool {
 +    guard !isDisposed else { return false }
      Log.reader.debug("shouldShowMenuForSelection: \(selection.locator)")
      let locator = selection.locator
      let selectedText = locator.text.highlight
 @@ -19,6 +20,7 @@
- 
+
    /// Called by `EPUBContainerView` when a configured action slot fires via the responder chain.
    func handleSelectionAction(actionId: String) {
 +    guard !isDisposed else { return }
@@ -1554,20 +1827,20 @@
  import Flutter
  import UIKit
 +import WebKit
- 
+
  /// Core class declaration, stored state, lifecycle, and the base `Navigator`/
  /// `EPUBNavigatorDelegate` callbacks that don't have a more specific home.
 @@ -20,15 +21,21 @@
  /// only ever be declared here, never added by an extension.
  public class EPUBReaderView: NSObject, FlutterPlatformView, ReadiumReaderView, EPUBNavigatorDelegate, VisualNavigatorDelegate, SelectableNavigatorDelegate {
- 
+
 -  /// How long locator enrichment (JS page-info + ToC lookup) may take before the raw locator
 -  /// is emitted instead. Generous for a healthy webview, short enough that a stalled one
 -  /// doesn't silently freeze the text-locator stream.
 -  private static let locatorEnrichmentTimeoutSeconds: UInt64 = 5
 +  /// 包含 SDK 等待 spreadLoaded 及 WebKit 首次布局；超时不能用传入位置冒充回执。
 +  private static let locatorEnrichmentTimeoutSeconds: UInt64 = 15
- 
+
    let channel: ReadiumReaderChannel
    let containerView: EPUBContainerView
    let readiumViewController: EPUBNavigatorViewController
@@ -1591,7 +1864,7 @@
 +    self.handleInternalLinks = creationParams["handleInternalLinks"] as? Bool ?? true
 +    self.customJavaScriptInjections = FlutterReadiumPlugin.instance?.javaScriptInjections ?? []
 +    self.customCssInjections = FlutterReadiumPlugin.instance?.cssInjections ?? []
- 
+
      let publication = FlutterReadiumPlugin.instance!.getCurrentPublication()!
      self.publication = publication
 @@ -293,9 +304,14 @@
@@ -1618,18 +1891,18 @@
      Log.reader.error("Should present error: \(error)")
 +    if !isDisposed { channel.invokeMethod("onReaderError", arguments: "NavigatorError") }
    }
- 
+
    // implements EPUBNavigatorDelegate::navigator:didFailToLoadResourceAt
 @@ -341,6 +358,7 @@
      Log.reader.warn("didFailToLoadResourceAt: \(href). err: \(error)")
- 
+
      // TODO: Should we send resource-load error like this?
 +    if !isDisposed { channel.invokeMethod("onReaderError", arguments: "ResourceReadError") }
      emitReaderStatusChanged(status: ReadiumReaderStatusError)
- 
+
      let payload = FlutterReadiumError(message: error.localizedDescription, code: "ResourceReadError", data: ["href": href.string])
 @@ -358,6 +376,7 @@
- 
+
    // implements NavigatorDelegate::navigator:locationDidChange
    public func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
 +    guard !isDisposed else { return }
@@ -1647,7 +1920,7 @@
 +    pendingFootnoteHref = nil
 +    return !isDisposed && (handleInternalLinks || isFootnote)
    }
- 
+
    /// Called when the user taps on a link referring to a note.
 @@ -391,6 +416,7 @@
    /// note yourself, using its `content`. `link.type` contains information about the
@@ -1658,12 +1931,12 @@
      return true
    }
 @@ -430,30 +456,64 @@
- 
+
    private func emitOnPageChanged(locator: Locator) -> Void {
      Log.reader.debug("emitOnPageChanged, locator: \(locator)")
 +    locatorRevision += 1
 +    let revision = locatorRevision
- 
+
      Task.detached(priority: .high) { [locator] in
 -      /// Enrich Locator with PageInformation and ToC — bounded, because upstream's
 -      /// `EPUBSpreadView.evaluateScript` awaits `spreadLoaded()` with no timeout, so a stalled
@@ -1718,7 +1991,7 @@
 -        Log.reader.warn("emitOnPageChanged: enrichment timed out after \(Self.locatorEnrichmentTimeoutSeconds)s; emitting un-enriched locator")
 +        return (resultLocator, resourceHref)
        }
- 
+
        /// Immutable ref, so that we can use it on the main thread
 -      let finalLocator = enriched ?? locator
        await MainActor.run() {
@@ -1801,7 +2074,7 @@
 +    // ignore: invalid_use_of_protected_member
 +    await _platform.currentReaderWidget?.goBackward(animated: animated);
 +  });
- 
+
    /// Navigates forward in the publication, such as to the next page or section.
    ///
    /// The exact behavior may depend on the publication's format and if audio or TTS is enabled.
@@ -1810,7 +2083,7 @@
 +    // ignore: invalid_use_of_protected_member
 +    await _platform.currentReaderWidget?.goForward(animated: animated);
 +  });
- 
+
    /// Skips to the next chapter in the publication's (flattened) table of contents.
    ///
 @@ -206,7 +212,13 @@
@@ -1825,7 +2098,7 @@
 +    await reader.go(locator, animated: animated, isAudioBookWithText: false);
 +    return true;
 +  });
- 
+
    /// Navigates the reader to a specific progression in the current resource, where 0.0 is the start and 1.0 is the end.
    ///
 --- a/lib/reader_channel.dart
@@ -1841,25 +2114,25 @@
      this.onImageTapped,
 @@ -37,6 +39,7 @@
    }
- 
+
    static final _log = ReadiumLog.tag('ReaderChannel');
 +  bool _disposed = false;
- 
+
    /// Called once when the native reader first reports content on screen.
    ///
 @@ -55,6 +58,9 @@
    /// Called when the user selects text in the reader.
    void Function(TextSelectionEvent)? onTextSelected;
- 
+
 +  void Function(String)? onTextInteraction;
 +  void Function(String)? onReaderError;
 +
    /// Called when the user taps a configured editing action on selected text.
    void Function(SelectionActionEvent)? onSelectionAction;
- 
+
 @@ -73,7 +79,8 @@
      _log.d('$name: $locator, $animated');
- 
+
      return _invokeMethod(_ReaderChannelMethodInvoke.go, [
 -      json.encode(locator.toTextLocator()),
 +      // 目录锚点、CFI、扩展位置及媒体类型须原样交给原生导航。
@@ -1868,7 +2141,7 @@
        isAudioBookWithText,
      ]);
 @@ -132,17 +139,19 @@
- 
+
    /// Tears down the method channel handler and signals the native side to clean up.
    Future<void> dispose() async {
 +    _disposed = true;
@@ -1884,7 +2157,7 @@
 -
 -    setMethodCallHandler(null);
    }
- 
+
    /// Handles method calls from the native platform.
    Future<dynamic> onMethodCall(final MethodCall call) async {
 +    if (_disposed) return null;
@@ -1894,7 +2167,7 @@
 @@ -169,6 +178,16 @@
            _log.d('onExternalLinkActivated $link');
            onExternalLinkActivated?.call(link);
- 
+
 +          return null;
 +        case 'onTextInteraction':
 +          final payload = call.arguments;
@@ -2150,14 +2423,14 @@
  import 'package:flutter/rendering.dart';
 -import 'package:flutter/services.dart';
  import 'package:wakelock_plus/wakelock_plus.dart';
- 
+
  import 'flutter_readium.dart';
  import 'reader_channel.dart';
 +import 'reader_orientation_alignment.dart';
 +import 'reader_platform_view.dart';
- 
+
  const _viewType = 'dk.nota.flutter_readium/ReadiumReaderWidget';
- 
+
 @@ -22,6 +23,14 @@
      this.shouldShowControls,
      this.onExternalLinkActivated,
@@ -2176,7 +2449,7 @@
 @@ -57,6 +66,26 @@
    /// Callback invoked when the user selects text in the reader.
    final ValueChanged<TextSelectionEvent>? onTextSelected;
- 
+
 +  /// 原生视口绑定的文字事件；身份字段由原生覆盖，宿主校验内容协议。
 +  final ValueChanged<String>? onTextInteraction;
 +
@@ -2199,17 +2472,17 @@
 +
    /// Callback invoked when the user taps a configured editing action on selected text.
    final ValueChanged<SelectionActionEvent>? onSelectionAction;
- 
+
 @@ -117,12 +146,19 @@
- 
+
    Timer? _wakelockTimer;
    ReadiumReaderChannel? _channel;
 +  ReaderPlatformViewLifecycle? _platformLifecycle;
    bool wasDestroyed = false;
    bool isReady = false;
- 
+
    final _readium = FlutterReadiumPlatform.instance;
- 
+
    mq.Orientation? _lastOrientation;
 +  late final _orientationAlignment = ReaderOrientationAlignment(
 +    onError: (error, stack) {
@@ -2218,7 +2491,7 @@
 +    },
 +  );
    late Widget _readerWidget;
- 
+
    EPUBPreferences? get _defaultPreferences => _readium.defaultPreferences;
 @@ -147,13 +183,26 @@
    @override
@@ -2244,10 +2517,10 @@
 +      widget.onReaderDisposed?.call();
 +    }
      _lastOrientation = null;
- 
+
      _disableWakelock();
 -    wasDestroyed = true;
- 
+
      super.dispose();
    }
 @@ -210,7 +259,7 @@
@@ -2258,7 +2531,7 @@
 +              if (!widget.handlePointerControls || userSwipe) {
                  return;
                }
- 
+
 @@ -221,6 +270,7 @@
                }
              },
@@ -2269,7 +2542,7 @@
                  await Future.delayed(const Duration(seconds: 1));
 @@ -265,14 +315,14 @@
    }
- 
+
    @override
 -  Future<void> goBackward({final bool animated = true}) async => _channel?.goBackward();
 -
@@ -2279,16 +2552,16 @@
 +
 +  @override
 +  Future<void> goForward({final bool animated = true}) async => _channel?.goForward(animated: animated);
- 
+
    @override
    Future<void> setEPUBPreferences(EPUBPreferences preferences) async {
 -    _channel?.setEPUBPreferences(preferences);
 +    await _channel?.setEPUBPreferences(preferences);
- 
+
      _scrollMode = preferences.scroll ?? false;
    }
 @@ -299,6 +349,8 @@
- 
+
      final creationParams = <String, dynamic>{
        'pubIdentifier': publication.identifier,
 +      'sessionId': widget.sessionId,
@@ -2297,9 +2570,9 @@
        'initialLocator': widget.initialLocator == null ? null : json.encode(widget.initialLocator),
        'preloadPreviousPositionCount': widget.preloadPreviousPositionCount,
 @@ -312,33 +364,25 @@
- 
+
      _log.d('creationParams=$creationParams');
- 
+
 -    if (Platform.isAndroid) {
 -      return PlatformViewLink(
 +    if (Platform.isAndroid || Platform.isIOS) {
@@ -2357,10 +2630,10 @@
 +      _readium.currentReaderWidget = null;
 +    }
    }
- 
+
    Locator? _currentLocator;
 +  bool _reportedInitialLocator = false;
- 
+
    void _onPlatformViewCreated(final int id) {
 +    if (wasDestroyed || !mounted) return;
      _channel = ReadiumReaderChannel(
@@ -2405,7 +2678,7 @@
 +        if (mounted && !wasDestroyed) widget.onImageTapped?.call(event);
 +      },
      );
- 
+
      if (widget.selectionActions.isNotEmpty) {
 @@ -418,7 +489,7 @@
    /// TODO: Remove this workaround, if the underlying issue is completely fixed in Readium.
@@ -2415,10 +2688,10 @@
 +  void _onOrientationChangeWorkaround(final mq.Orientation orientation) {
      if (_lastOrientation == null) {
        _lastOrientation = orientation;
- 
+
 @@ -430,17 +501,18 @@
      }
- 
+
      if (orientation != _lastOrientation) {
 -      // Remove domRange/cssSelector, so it navigates to a progression, which will always
 -      // trigger scrolling to the nearest page.
@@ -2553,7 +2826,7 @@
 @@ -57,5 +55,4 @@
  #   flutter_readium_platform_interface:
  #     path: ../flutter_readium_platform_interface
- 
+
 -executables:
 -  copy_js_file:
 +publish_to: none
@@ -2576,11 +2849,11 @@
 +  @override
 +  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
  }
- 
+
  // ---------------------------------------------------------------------------
 @@ -292,12 +304,33 @@
    });
- 
+
    group('goToLocator', () {
 -    test('returns true on success', () async {
 -      final locator = Locator(
@@ -2613,7 +2886,7 @@
 +      expect(await reader.goToLocator(locator), isFalse);
      });
    });
- 
+
 --- /dev/null
 +++ b/test/publication_frame_matcher_test.swift
 @@ -0,0 +1,14 @@

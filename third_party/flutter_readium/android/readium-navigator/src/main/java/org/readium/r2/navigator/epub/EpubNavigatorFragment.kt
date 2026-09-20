@@ -783,6 +783,10 @@ public class EpubNavigatorFragment internal constructor(
         override fun onPageLoaded(webView: R2BasicWebView, link: Link) {
             paginationListener?.onPageLoaded()
 
+            val currentPage = currentReflowablePageFragment
+            // 邻章预加载不能重置当前页的位置回执，也不能提前结束恢复定位。
+            if (currentPage != null && currentPage.webView !== webView) return
+
             val href = link.url()
             if (state is State.Initializing || (state as? State.Loading)?.initialResourceHref?.isEquivalent(
                     href
@@ -791,7 +795,8 @@ public class EpubNavigatorFragment internal constructor(
                 state = State.Ready
             }
 
-            notifyCurrentLocation()
+            // 当前页已完成视觉状态确认与 pendingLocator 恢复，无需等待滚动防抖。
+            notifyCurrentLocation(debounce = currentPage == null)
         }
 
         override fun javascriptInterfacesForResource(link: Link, webView: R2BasicWebView): Map<String, Any?> =
@@ -1054,13 +1059,13 @@ public class EpubNavigatorFragment internal constructor(
         fulfill(publication.tableOfContents).toMap()
     }
 
-    private fun notifyCurrentLocation() {
+    private fun notifyCurrentLocation(debounce: Boolean = true) {
         // Make sure viewLifecycleOwner is accessible.
         view ?: return
 
         debounceLocationNotificationJob?.cancel()
         debounceLocationNotificationJob = viewLifecycleOwner.lifecycleScope.launch {
-            delay(100L)
+            if (debounce) delay(100L)
 
             // We don't want to notify the current location if the navigator is still loading a
             // locator, to avoid notifying intermediate locations.

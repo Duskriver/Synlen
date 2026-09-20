@@ -72,6 +72,13 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
+
+        maybeCreate("profile").apply {
+            // 性能采样包与正式版并存，保留用户的藏书和阅读设置。
+            applicationIdSuffix = ".profile"
+            matchingFallbacks.clear()
+            matchingFallbacks.add("release")
+        }
     }
 }
 

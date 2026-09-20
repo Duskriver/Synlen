@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <application>
+        <!-- 仅性能采样包允许 adb 采集原生 CPU 与系统跟踪。 -->
+        <profileable android:shell="true"/>
+    </application>
 </manifest>

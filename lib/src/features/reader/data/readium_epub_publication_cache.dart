@@ -9,6 +9,9 @@ import 'package:xml/xml.dart';
 
 import '../../../core/file_handling/backup_archive_extractor.dart';
 
+// 净化规则改变时递增版本，源索引、通过标记和副本共同失效。
+const _cacheVersion = 'epub-v1';
+
 /// 书内脚本不能进入拥有应用桥接能力的原生 WebView。
 /// 无活动内容时保留原包；需要净化时生成保留路径、标识符和字体字节的副本。
 class ReadiumEpubPublicationCache {
@@ -31,9 +34,56 @@ class ReadiumEpubPublicationCache {
 Future<String> _prepare(String sourcePath, String cacheDirectory) async {
   final source = File(sourcePath);
   final before = await source.stat();
+  // 源文件位于应用私有目录；ctime 也参与失效，覆盖等长改写后恢复 mtime 的情况。
+  final stamp = _sourceStamp(before);
+  final sourceKey = sha256.convert(utf8.encode(source.absolute.path));
+  final receipt = File(
+    p.join(cacheDirectory, '$_cacheVersion-source-$sourceKey'),
+  );
+  if (await receipt.exists()) {
+    final lines = utf8
+        .decode(await receipt.readAsBytes(), allowMalformed: true)
+        .split('\n');
+    if (lines.length == 2 &&
+        lines.first == stamp &&
+        RegExp(r'^[a-f0-9]{64}$').hasMatch(lines.last)) {
+      final cached = await _cached(sourcePath, cacheDirectory, lines.last);
+      if (cached != null && _sourceStamp(await source.stat()) == stamp) {
+        return cached;
+      }
+    }
+  }
+
   final digest = await sha256.bind(source.openRead()).first;
-  // 净化规则改变时递增版本，旧的通过标记和副本均失效。
-  final key = 'epub-v1-$digest';
+  final result = await _prepareDigest(
+    source,
+    cacheDirectory,
+    digest.toString(),
+    before,
+  );
+  if (_sourceStamp(await source.stat()) != stamp) {
+    throw StateError('准备阅读文件时 EPUB 源文件发生变化');
+  }
+  final temporary = await Directory(cacheDirectory).createTemp('.receipt-');
+  try {
+    final staged = File(p.join(temporary.path, 'receipt'));
+    await staged.writeAsString('$stamp\n$digest', flush: true);
+    await staged.rename(receipt.path);
+  } finally {
+    await temporary.delete(recursive: true);
+  }
+  return result;
+}
+
+String _sourceStamp(FileStat stat) =>
+    '${stat.size}:${stat.modified.microsecondsSinceEpoch}:${stat.changed.microsecondsSinceEpoch}';
+
+Future<String?> _cached(
+  String sourcePath,
+  String cacheDirectory,
+  String digest,
+) async {
+  final key = '$_cacheVersion-$digest';
   final clean = File(p.join(cacheDirectory, '$key.clean'));
   final prepared = File(p.join(cacheDirectory, '$key.epub'));
   if (await clean.exists() && await clean.readAsString() == 'clean') {
@@ -42,6 +92,21 @@ Future<String> _prepare(String sourcePath, String cacheDirectory) async {
   if (await prepared.exists() && await prepared.length() > 0) {
     return prepared.path;
   }
+  return null;
+}
+
+Future<String> _prepareDigest(
+  File source,
+  String cacheDirectory,
+  String digest,
+  FileStat before,
+) async {
+  final sourcePath = source.path;
+  final cached = await _cached(sourcePath, cacheDirectory, digest);
+  if (cached != null) return cached;
+  final key = '$_cacheVersion-$digest';
+  final clean = File(p.join(cacheDirectory, '$key.clean'));
+  final prepared = File(p.join(cacheDirectory, '$key.epub'));
 
   await Directory(cacheDirectory).create(recursive: true);
   final temporary = await Directory(cacheDirectory).createTemp('.prepare-');
@@ -65,7 +130,7 @@ Future<String> _prepare(String sourcePath, String cacheDirectory) async {
       }
     }
     final after = await source.stat();
-    if (before.size != after.size || before.modified != after.modified) {
+    if (_sourceStamp(before) != _sourceStamp(after)) {
       throw StateError('准备阅读文件时 EPUB 源文件发生变化');
     }
     if (!changed) {

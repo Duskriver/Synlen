@@ -2,7 +2,7 @@
 +++ b/build.gradle.kts
 @@ -5,51 +5,61 @@
   */
- 
+
  plugins {
 -    id("readium.library-conventions")
 -    alias(libs.plugins.kotlin.serialization)
@@ -14,7 +14,7 @@
 +
 +group = "org.readium.kotlin-toolkit"
 +version = "3.3.0-synlen"
- 
+
  android {
      namespace = "org.readium.r2.navigator"
 -
@@ -31,7 +31,7 @@
 +    }
 +    testOptions { unitTests.isIncludeAndroidResources = true }
  }
- 
+
  kotlin {
      compilerOptions {
 +        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
@@ -41,7 +41,7 @@
 +        freeCompilerArgs.addAll("-Xconsistent-data-class-copy-visibility", "-Xannotation-default-target=param-property")
      }
  }
- 
+
  dependencies {
 -    api(project(":readium:readium-shared"))
 -
@@ -96,14 +96,14 @@
 +++ b/src/main/java/org/readium/r2/navigator/R2BasicWebView.kt
 @@ -83,6 +83,10 @@
          fun javascriptInterfacesForResource(link: Link): Map<String, Any?> = emptyMap()
- 
+
          @InternalReadiumApi
 +        fun javascriptInterfacesForResource(link: Link, webView: R2BasicWebView): Map<String, Any?> =
 +            javascriptInterfacesForResource(link)
 +
 +        @InternalReadiumApi
          fun shouldOverrideUrlLoading(webView: WebView, request: WebResourceRequest): Boolean = false
- 
+
          @InternalReadiumApi
 --- a/src/main/java/org/readium/r2/navigator/R2WebView.kt
 +++ b/src/main/java/org/readium/r2/navigator/R2WebView.kt
@@ -115,13 +115,13 @@
 +    // 位移落页只接收当前单指手势；图表自身横滚不算外层阅读页的拖动。
 +    private var mDistanceDragEligible = false
 +    private var mHorizontalBoundaryDragged = false
- 
+
      /**
       * Returns the current velocity of the active pointer.
 @@ -690,6 +694,11 @@
          }
      }
- 
+
 +    override fun onOverScrolled(scrollX: Int, scrollY: Int, clampedX: Boolean, clampedY: Boolean) {
 +        if (mIsBeingDragged && clampedX) mHorizontalBoundaryDragged = true
 +        super.onOverScrolled(scrollX, scrollY, clampedX, clampedY)
@@ -147,12 +147,12 @@
 +                            deltaX = totalDelta,
 +                            deltaY = (y - mInitialMotionY).toInt()
                          )
- 
+
                          when {
 @@ -791,11 +803,15 @@
                  }
              }
- 
+
 -            MotionEvent.ACTION_CANCEL -> if (mIsBeingDragged) {
 -                mIsBeingDragged = false
 -                scrollToItem(mCurItem, true, 0, false)
@@ -198,13 +198,13 @@
 +            if (pageMoved || pulledBoundary) currentPage - deltaX.sign else currentPage
          }
      }
- 
+
 --- a/src/main/java/org/readium/r2/navigator/epub/EpubNavigatorFragment.kt
 +++ b/src/main/java/org/readium/r2/navigator/epub/EpubNavigatorFragment.kt
 @@ -102,6 +102,9 @@
   */
  public typealias JavascriptInterfaceFactory = (resource: Link) -> Any?
- 
+
 +/** 将桥绑定到实际发送消息的 WebView，供宿主转换文档坐标。 */
 +public typealias ViewJavascriptInterfaceFactory = (resource: Link, webView: WebView) -> Any?
 +
@@ -213,7 +213,7 @@
   *
 @@ -208,7 +211,7 @@
          var disableSelectionWhenProtected: Boolean,
- 
+
          internal var fontFamilyDeclarations: List<FontFamilyDeclaration>,
 -        internal var javascriptInterfaces: Map<String, JavascriptInterfaceFactory>,
 +        internal var javascriptInterfaces: Map<String, ViewJavascriptInterfaceFactory>,
@@ -230,22 +230,56 @@
 +        public fun registerJavascriptInterfaceWithWebView(name: String, factory: ViewJavascriptInterfaceFactory) {
              javascriptInterfaces += name to factory
          }
- 
-@@ -787,8 +794,8 @@
-             notifyCurrentLocation()
-         }
- 
+
+@@ -776,6 +783,10 @@
+         override fun onPageLoaded(webView: R2BasicWebView, link: Link) {
+             paginationListener?.onPageLoaded()
+
++            val currentPage = currentReflowablePageFragment
++            // 邻章预加载不能重置当前页的位置回执，也不能提前结束恢复定位。
++            if (currentPage != null && currentPage.webView !== webView) return
++
+             val href = link.url()
+             if (state is State.Initializing || (state as? State.Loading)?.initialResourceHref?.isEquivalent(
+                     href
+@@ -784,11 +795,12 @@
+                 state = State.Ready
+             }
+
+-            notifyCurrentLocation()
+-        }
+-
 -        override fun javascriptInterfacesForResource(link: Link): Map<String, Any?> =
 -            config.javascriptInterfaces.mapValues { (_, factory) -> factory(link) }
++            // 当前页已完成视觉状态确认与 pendingLocator 恢复，无需等待滚动防抖。
++            notifyCurrentLocation(debounce = currentPage == null)
++        }
++
 +        override fun javascriptInterfacesForResource(link: Link, webView: R2BasicWebView): Map<String, Any?> =
 +            config.javascriptInterfaces.mapValues { (_, factory) -> factory(link, webView) }
- 
+
          override fun onTap(point: PointF): Boolean =
              inputListener.onTap(TapEvent(point))
+@@ -1047,13 +1059,13 @@
+         fulfill(publication.tableOfContents).toMap()
+     }
+
+-    private fun notifyCurrentLocation() {
++    private fun notifyCurrentLocation(debounce: Boolean = true) {
+         // Make sure viewLifecycleOwner is accessible.
+         view ?: return
+
+         debounceLocationNotificationJob?.cancel()
+         debounceLocationNotificationJob = viewLifecycleOwner.lifecycleScope.launch {
+-            delay(100L)
++            if (debounce) delay(100L)
+
+             // We don't want to notify the current location if the navigator is still loading a
+             // locator, to avoid notifying intermediate locations.
 --- a/src/main/java/org/readium/r2/navigator/pager/R2EpubPageFragment.kt
 +++ b/src/main/java/org/readium/r2/navigator/pager/R2EpubPageFragment.kt
 @@ -151,7 +151,7 @@
- 
+
              link?.let { link ->
                  // Setup custom Javascript interfaces.
 -                for ((name, obj) in listener.javascriptInterfacesForResource(link)) {
@@ -480,4 +514,153 @@
 +    @Implementation
 +    protected fun computeHorizontalScrollRange(): Int = R2WebViewDragTest.WIDTH * 13
 +
++}
+--- /dev/null
++++ b/src/test/java/org/readium/r2/navigator/epub/EpubNavigatorLocationTest.kt
+@@ -0,0 +1,146 @@
++package org.readium.r2.navigator.epub
++
++import android.os.Looper
++import android.view.View
++import android.widget.FrameLayout
++import androidx.fragment.app.FragmentActivity
++import java.time.Duration
++import org.junit.After
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertTrue
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.readium.r2.navigator.pager.R2EpubPageFragment
++import org.readium.r2.shared.ExperimentalReadiumApi
++import org.readium.r2.shared.InternalReadiumApi
++import org.readium.r2.shared.publication.Link
++import org.readium.r2.shared.publication.Locator
++import org.readium.r2.shared.publication.Manifest
++import org.readium.r2.shared.publication.Metadata
++import org.readium.r2.shared.publication.Publication
++import org.readium.r2.shared.util.Url
++import org.readium.r2.shared.util.mediatype.MediaType
++import org.robolectric.Robolectric
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.Shadows.shadowOf
++import org.robolectric.annotation.Config
++import org.robolectric.util.ReflectionHelpers
++
++/** 排版由 WebView 回执替代，位置调度经过真实 Navigator 与视图生命周期。 */
++@OptIn(ExperimentalReadiumApi::class, InternalReadiumApi::class)
++@RunWith(RobolectricTestRunner::class)
++@Config(sdk = [35])
++class EpubNavigatorLocationTest {
++    private val activityController = Robolectric.buildActivity(FragmentActivity::class.java)
++    private val locations = mutableListOf<Locator>()
++    private val links = (0..1).map { Link(Url("chapter$it.xhtml")!!, MediaType.XHTML) }
++
++    @After
++    fun close() {
++        activityController.pause().stop().destroy()
++    }
++
++    @Test
++    fun `loaded current page reports its position without a scroll debounce`() {
++        val navigator = reader()
++        finishCurrentPage(navigator)
++        shadowOf(Looper.getMainLooper()).idle()
++        assertEquals(listOf(links[0].url()), locations.map { it.href })
++    }
++
++    @Test
++    fun `preloaded page does not postpone an already loaded current page`() {
++        val navigator = reader()
++        finishCurrentPage(navigator)
++        shadowOf(Looper.getMainLooper()).idle()
++        finishNextPage(navigator)
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(150))
++        assertEquals(1, locations.size)
++    }
++
++    @Test
++    fun `scroll changes remain debounced and collapse to one position`() {
++        val navigator = reader()
++        finishCurrentPage(navigator)
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(150))
++        locations.clear()
++        repeat(3) { navigator.webViewListener.onProgressionChanged() }
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(99))
++        assertTrue(locations.isEmpty())
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1))
++        assertEquals(1, locations.size)
++    }
++
++    @Test
++    fun `preloaded page cannot report an unfinished current page`() {
++        val navigator = reader()
++        finishNextPage(navigator)
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(150))
++        assertTrue(locations.isEmpty())
++    }
++
++    @Test
++    fun `preload completion does not restart an active scroll debounce`() {
++        val navigator = reader()
++        finishCurrentPage(navigator)
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(150))
++        locations.clear()
++        navigator.webViewListener.onProgressionChanged()
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(50))
++        finishNextPage(navigator)
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(50))
++        assertEquals(1, locations.size)
++    }
++
++    @Test
++    fun `destroyed viewport cancels its pending location`() {
++        val navigator = reader()
++        finishCurrentPage(navigator)
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(150))
++        locations.clear()
++        navigator.webViewListener.onProgressionChanged()
++        activityController.get().supportFragmentManager.beginTransaction().remove(navigator).commitNow()
++        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(150))
++        assertTrue(locations.isEmpty())
++    }
++
++    private fun currentPage(navigator: EpubNavigatorFragment) =
++        navigator.adapter.getCurrentFragment() as R2EpubPageFragment
++
++    private fun finishCurrentPage(navigator: EpubNavigatorFragment) {
++        // Chromium 不在 Robolectric 中排版；从实际页面完成入口重放回执。
++        ReflectionHelpers.callInstanceMethod<Unit>(currentPage(navigator), "onLoadPage")
++    }
++
++    private fun finishNextPage(navigator: EpubNavigatorFragment) {
++        val next = navigator.adapter.getNextFragment() as R2EpubPageFragment
++        ReflectionHelpers.callInstanceMethod<Unit>(next, "onLoadPage")
++    }
++
++    private fun reader(): EpubNavigatorFragment {
++        val activity = activityController.get()
++        activity.setTheme(androidx.appcompat.R.style.Theme_AppCompat)
++        activityController.setup()
++        val container = FrameLayout(activity).apply { id = View.generateViewId() }
++        activity.setContentView(container)
++        val publication = Publication(Manifest(
++            metadata = Metadata(languages = listOf("en")),
++            readingOrder = links,
++        ))
++        val factory = EpubNavigatorFactory(publication).createFragmentFactory(
++            initialLocator = null,
++            paginationListener = object : EpubNavigatorFragment.PaginationListener {
++                override fun onPageChanged(pageIndex: Int, totalPages: Int, locator: Locator) {
++                    locations.add(locator)
++                }
++            },
++        )
++        val navigator = factory.instantiate(activity.classLoader, EpubNavigatorFragment::class.java.name) as EpubNavigatorFragment
++        activity.supportFragmentManager.beginTransaction().add(container.id, navigator).commitNow()
++        val size = View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY)
++        container.measure(size, size)
++        container.layout(0, 0, 1080, 1080)
++        shadowOf(Looper.getMainLooper()).idle()
++        return navigator
++    }
 +}

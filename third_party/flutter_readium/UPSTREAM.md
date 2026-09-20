@@ -10,7 +10,7 @@
 
 单词消息携带可见 CSS 词矩形 `wordRect` 与 CSS 视口尺寸 `viewport`。原生层丢弃消息自带的 `anchorRect`，从实际发送消息的 WebView 转换到 Flutter 平台视口内的逻辑坐标，再写入 `anchorRect: {x, y, width, height}`。Android 包含祖先滚动、原生页面偏移和视图变换，只在输出时换算一次屏幕密度；iOS 经 WebView 到容器的 UIKit 坐标转换。无效、不可见或不属于该视口的词矩形不转发；句子与空白点击不要求矩形。
 
-`onReaderReady` 在首个原生落位回调完成可见位置查询后调用。查询通过应用脚本的 `window.synlenReadiumBridge.getVisibleLocator()` 取得 `locations.cssSelector` 与当前页短文本 `text`；无可唯一定位的文字时可返回 `null`，保留原生 Locator。资源身份或导航版本不符的异步结果丢弃，查询异常及超时通过 `LocatorUnavailable` 报告。字号、字体、行距等布局变化通过保存完整 Locator、移除视口、等待 `onReaderDisposed`、关闭出版物，再用新偏好和旧 Locator 创建视口来恢复位置。
+`onReaderReady` 报告原生页面就绪；Android 的此回执可能早于可见位置查询，宿主须同时等待有效 Locator 才结束加载。位置查询通过应用脚本的 `window.synlenReadiumBridge.getVisibleLocator()` 取得 `locations.cssSelector` 与当前页短文本 `text`；无可唯一定位的文字时可返回 `null`，保留原生 Locator。资源身份或导航版本不符的异步结果丢弃，查询异常及超时通过 `LocatorUnavailable` 报告。字号、字体、行距等布局变化通过保存完整 Locator、移除视口、等待 `onReaderDisposed`、关闭出版物，再用新偏好和旧 Locator 创建视口来恢复位置。
 
 拆除异常在内部重试一次；持续失败通过 `ReaderDisposalFailed` 报告，不能据此继续复用旧资源。销毁会等待在途平台视图创建，再等待所属阅读通道和平台视图拆除；只有从未开始创建的视口可以直接发出销毁回执。
 
@@ -27,6 +27,7 @@
 - Android 文字与图片桥绑定所属 fragment、navigator 和 widget；重复销毁不关闭新视口，EPUB 视口在关闭回包前同步拆除。
 - iOS 注入列表、脚本和目录信息属于各自视口；文字身份由 WebKit 实际 frame URL 与出版物 reading order 匹配，关闭后丢弃异步回执。
 - 两端补齐应用 JS/CSS 注入、本地字体、普通内部链接开关及视口回执；Dart 补齐外链回调、偏好更新等待和动画参数。
+- Android 补充 Locator 目录标题时，当前资源没有目录项或只有一个目录项便直接返回；只有多个目录锚点需要扫描正文选择器。
 
 本分支只支持应用串行打开单个活动出版物，不支持同一插件同时展示多本书。Readium 的页面 JavaScript 处于启用状态；书内脚本过滤由词镜准备出版物的流程承担，桥接身份字段不构成对书内脚本的隔离。
 
@@ -34,7 +35,7 @@ Android Navigator 使用固定 3.3.0 的本地源码模块，补充分页拖动�
 
 在仓库根目录执行 `bash tool/test_readium_android.sh`，同时验证插件 `flutter_readium` 与本地 Navigator `synlen_readium_navigator` 的单元测试。词锚点测试覆盖原生页偏移、缩放、祖先滚动、屏幕密度及无效来源；两端还须在设备验证分页、重排和词卡位置。
 
-Android 构建使用 JDK 21、compile SDK 36、min SDK 24，并开启 core library desugaring；iOS 最低版本为 15。JDK 路径由构建环境配置，不写入仓库。
+Android 构建使用 JDK 21、compile SDK 36、min SDK 24，并开启 core library desugaring；profile 变体对本地 Navigator 使用 release 回退。iOS 最低版本为 15。JDK 路径由构建环境配置，不写入仓库。
 
 ## Dev Note
 

@@ -22,6 +22,52 @@ void main() {
   });
   tearDown(() async => directory.delete(recursive: true));
 
+  test('重建缓存实例后仍能复用校验结果，损坏的索引可重建', () async {
+    await source.writeAsBytes(testEpubBytes());
+    await cache.prepare(source.path);
+    final reopened = ReadiumEpubPublicationCache(
+      cacheDirectory: cache.cacheDirectory,
+    );
+
+    expect(await reopened.prepare(source.path), source.path);
+    final index = Directory(cache.cacheDirectory)
+        .listSync()
+        .whereType<File>()
+        .singleWhere((file) => p.basename(file.path).contains('-source-'));
+    for (final bytes in [
+      utf8.encode('incomplete'),
+      [0xff],
+    ]) {
+      await index.writeAsBytes(bytes);
+      expect(await reopened.prepare(source.path), source.path);
+      expect(await index.readAsBytes(), isNot(bytes));
+    }
+  });
+
+  test('源文件等长改写且恢复修改时间，也不能复用旧校验结果', () async {
+    final original = testEpubBytes();
+    await source.writeAsBytes(original);
+    await cache.prepare(source.path);
+    final modified = await source.lastModified();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    original[_find(original, utf8.encode('application/epub+zip'))] ^= 1;
+    await source.writeAsBytes(original);
+    await source.setLastModified(modified);
+
+    await expectLater(cache.prepare(source.path), throwsFormatException);
+  });
+
+  test('净化副本被清理后重新生成，不返回失效的缓存路径', () async {
+    await source.writeAsBytes(
+      testEpubBytes(chapter: '<html><body onload="bad()">正文</body></html>'),
+    );
+    final prepared = await cache.prepare(source.path);
+    await File(prepared).delete();
+
+    expect(await cache.prepare(source.path), prepared);
+    expect(await File(prepared).exists(), isTrue);
+  });
+
   test('普通 EPUB 直接保留原文件，缓存检查结果随源内容变化失效', () async {
     final original = testEpubBytes();
     await source.writeAsBytes(original);

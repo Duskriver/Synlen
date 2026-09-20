@@ -53,7 +53,6 @@ import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.LocatorCollection
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.html.cssSelector
 import org.readium.r2.shared.publication.services.content.DefaultContentService
 import org.readium.r2.shared.publication.services.content.content
 import org.readium.r2.shared.publication.services.content.contentServiceFactory
@@ -720,8 +719,9 @@ object ReadiumReader :
                             .mapNotNull { it.href.resolve().fragment }
                     val epubPreferences =
                         navigator.preferences?.effectiveForLayout(publication.metadata.layout)
-                    val isHtml = publication.linkWithHref(url)?.mediaType?.isHtml
-                        ?: (url.extension?.value?.endsWith("html", ignoreCase = true) == true)
+                    val isHtml =
+                        publication.linkWithHref(url)?.mediaType?.isHtml
+                            ?: (url.extension?.value?.endsWith("html", ignoreCase = true) == true)
                     if (isHtml) {
                         resource.injectScriptsAndStyles(
                             tocIds,
@@ -881,9 +881,7 @@ object ReadiumReader :
         }
     }
 
-    /**
-     * Find the current table of content item from a locator.
-     */
+    /** 根据当前位置补充目录归属。 */
     suspend fun epubEnrichLocatorWithTocHref(locator: Locator): Locator {
         val publication =
             currentPublication ?: run {
@@ -891,58 +889,7 @@ object ReadiumReader :
                 return locator
             }
 
-        if (!publication.conformsTo(Publication.Profile.EPUB)) {
-            PluginLog.w(TAG, "::epubEnrichLocatorWithTocHref - not an EPUB profile")
-            return locator
-        }
-
-        // This locator already has a tocHref, add title and return it.
-        locator.locations.tocHref?.let { tocHref ->
-            return locator.copy(title = publication.getTitleFromTocHref(tocHref))
-        }
-
-        val cssSelector =
-            locator.locations.cssSelector ?: run {
-                PluginLog.w(TAG, "::epubEnrichLocatorWithTocHref - missing cssSelector in locator")
-                return locator
-            }
-
-        val resultLocator = locator.copy()
-
-        val cleanHref = resultLocator.href.cleanHref()
-        val tocLinks =
-            publication.tableOfContents.flattenChildren().filter {
-                it.href
-                    .resolve()
-                    .cleanHref()
-                    .path == cleanHref.path
-            }
-
-        val documentCssSelectors = epubGetAllDocumentCssSelectors(resultLocator.href)
-        val idx =
-            documentCssSelectors.indexOf(cssSelector).takeIf { it > -1 } ?: run {
-                // cssSelector wasn't found in the list of document cssSelectors, best effort is to assume first
-                PluginLog.d(
-                    TAG,
-                    "::epubEnrichLocatorWithTocHref - cssSelector:$cssSelector not found in contentIds, assume idx = 0",
-                )
-                0
-            }
-
-        val toc =
-            tocLinks.associateBy { documentCssSelectors.indexOf("#${it.href.resolve().fragment}") }
-
-        val tocItem =
-            toc.entries.lastOrNull { it.key <= idx }?.value ?: toc.entries.firstOrNull()?.value
-                ?: run {
-                    PluginLog.d(TAG, "::epubEnrichLocatorWithTocHref - no tocItem found")
-                    return resultLocator
-                }
-
-        return resultLocator
-            .copy(
-                title = tocItem.title,
-            ).copyWithTocHref(tocItem)
+        return publication.enrichLocatorWithTocHref(locator, ::epubGetAllDocumentCssSelectors)
     }
 
     @OptIn(InternalReadiumApi::class)
