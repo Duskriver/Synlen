@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- FileProvider 路径映射：仅暴露应用缓存目录（更新 APK 下载位置） -->
-<paths>
-    <cache-path name="apk_cache" path="." />
-</paths>

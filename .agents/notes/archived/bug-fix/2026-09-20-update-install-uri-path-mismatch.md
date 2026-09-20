@@ -1,6 +1,7 @@
 # Agent Note: 安装 URI 与下载落点对齐
 
 Status: implemented
+Archived: 2026-09-21
 
 ## Problem
 

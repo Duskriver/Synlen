@@ -854,17 +854,29 @@ abstract class AppLocalizations {
   /// **'Download failed'**
   String get downloadFailed;
 
-  /// Download completed message
+  /// 已拉起系统安装器，尚未确认安装完成
   ///
   /// In en, this message translates to:
-  /// **'Download complete, tap to install'**
-  String get downloadCompleted;
+  /// **'Installer opened. Confirm the update in the system dialog.'**
+  String get updateInstallerOpened;
 
   /// Unknown sources permission message
   ///
   /// In en, this message translates to:
   /// **'Installing apps from unknown sources must be enabled in system settings'**
   String get installUnknownSourcesRequired;
+
+  /// 更新清单缺少有效 SHA-256 的提示
+  ///
+  /// In en, this message translates to:
+  /// **'The update is missing a valid verification code. Please use the alternative download link.'**
+  String get updateInvalidChecksum;
+
+  /// 插件报告安装请求失败的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to start installation. Please retry or use the alternative download link.'**
+  String get updateInstallFailed;
 
   /// No update channel message
   ///

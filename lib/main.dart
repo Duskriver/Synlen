@@ -6,6 +6,7 @@ import 'package:synlen/src/core/config/app_info.dart';
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/application/library_consistency_repair.dart';
+import 'package:synlen/src/features/settings/application/update_apk_cleanup.dart';
 import 'package:synlen/src/rust/frb_generated.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'src/app.dart';
@@ -66,6 +67,11 @@ void main() async {
   // 启动一致性修复：清理孤儿 DB 记录；fire-and-forget，不阻塞首屏，
   // 失败只在提供器内部记日志
   container.read(libraryConsistencyRepairProvider.future).ignore();
+
+  // 回收只读本地文件；完成后才开放更新入口，避免与新下载操作同一 APK。
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    await container.read(updateApkCleanupProvider.future);
+  }
 
   runApp(
     UncontrolledProviderScope(

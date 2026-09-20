@@ -1,489 +1,478 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:synlen/src/features/settings/application/update_check.dart';
 import 'package:synlen/src/features/settings/data/services/update_service.dart';
 import 'package:synlen/src/features/settings/data/services/update_service_provider.dart';
 import 'package:synlen/src/features/settings/domain/update_exception.dart';
 
-/// 更新检查用例：清单比较、错误码映射与下载 / 校验路径。
-/// HTTP 与下载经注入的 Dio adapter fake，缓存目录用临时目录。
 void main() {
-  late Directory cacheDir;
-
-  /// 默认本地版本：1.1.0+10。
-  final defaultLocal = PackageInfo(
-    appName: 'Synlen',
-    packageName: 'com.synlen.app',
-    version: '1.1.0',
-    buildNumber: '10',
-  );
+  late Directory directory;
+  late _ManifestAdapter adapter;
+  late Future<Directory> Function() supportDirectory;
+  late List<_FakeUpdater> updaters;
+  late ProviderContainer container;
+  late ProviderSubscription<AsyncValue<UpdateState>> subscription;
 
   setUp(() async {
-    cacheDir = await Directory.systemTemp.createTemp('update_check_test');
-  });
-
-  tearDown(() async {
-    if (cacheDir.existsSync()) await cacheDir.delete(recursive: true);
-  });
-
-  PackageInfo localInfo(String version, String buildNumber) => PackageInfo(
-    appName: 'Synlen',
-    packageName: 'com.synlen.app',
-    version: version,
-    buildNumber: buildNumber,
-  );
-
-  ProviderContainer containerWith({
-    required HttpClientAdapter adapter,
-    PackageInfo? packageInfo,
-  }) {
-    final dio = Dio()..httpClientAdapter = adapter;
-    addTearDown(() => dio.close(force: true));
-    final container = ProviderContainer(
+    directory = await Directory.systemTemp.createTemp('update_check');
+    adapter = _ManifestAdapter();
+    supportDirectory = () async => directory;
+    updaters = [];
+    container = ProviderContainer.test(
       overrides: [
         updateServiceProvider.overrideWith((ref) {
+          final dio = Dio()..httpClientAdapter = adapter;
           ref.onDispose(() => dio.close(force: true));
           return UpdateService(
             dio: dio,
             versionEndpoint: 'https://updates.example.com/version.json',
-            readPackageInfo: () async => packageInfo ?? defaultLocal,
-            cacheDirectory: () async => cacheDir,
-          );
-        }),
-      ],
-    );
-    addTearDown(container.dispose);
-    // updateCheckProvider 是 autoDispose：常驻订阅防止异步方法中途被销毁。
-    final keepAlive = container.listen(updateCheckProvider, (_, _) {});
-    addTearDown(keepAlive.close);
-    return container;
-  }
-
-  String manifestJson({
-    int major = 1,
-    int minor = 1,
-    int patch = 0,
-    int build = 10,
-    String androidApkUrl = 'https://cdn.example.com/synlen.apk',
-    String? androidApkSha256,
-  }) {
-    final sha = androidApkSha256 == null
-        ? ''
-        : ',"androidApkSha256": "$androidApkSha256"';
-    return '{"code": 200, "data": {'
-        '"majorNumber": $major, "minorNumber": $minor, "patchNumber": $patch,'
-        '"buildNumber": $build, "updateLog": "修复若干问题",'
-        '"androidApkUrl": "$androidApkUrl"$sha}}';
-  }
-
-  Future<AsyncValue<UpdateState>> check(
-    String manifestBody, {
-    PackageInfo? packageInfo,
-  }) async {
-    final container = containerWith(
-      adapter: _StubAdapter(manifestBody: manifestBody),
-      packageInfo: packageInfo,
-    );
-    await container.read(updateCheckProvider.notifier).checkForUpdates();
-    return container.read(updateCheckProvider);
-  }
-
-  group('checkForUpdates', () {
-    test('清单响应跨过自动释放时机仍能完成检查', () async {
-      final adapter = _PendingAdapter();
-      final container = containerWith(adapter: adapter);
-      final checking = container
-          .read(updateCheckProvider.notifier)
-          .checkForUpdates();
-
-      await adapter.started.future;
-      await container.pump();
-      adapter.respond(ResponseBody.fromString(manifestJson(), 200));
-      await checking;
-
-      final state = container.read(updateCheckProvider);
-      expect(
-        state.asData?.value.checkStatus,
-        UpdateCheckStatus.upToDate,
-        reason: '${state.error}',
-      );
-      expect(adapter.isClosed, isFalse);
-    });
-
-    test('远端版本更高 → updateAvailable，清单含 sha256 字段', () async {
-      final state = await check(
-        manifestJson(major: 1, minor: 2, androidApkSha256: 'ab' * 32),
-      );
-
-      final data = state.asData!.value;
-      expect(data.checkStatus, UpdateCheckStatus.updateAvailable);
-      expect(data.manifest?.versionLabel, 'v1.2.0+10');
-      expect(data.manifest?.updateLog, '修复若干问题');
-      expect(data.manifest?.androidApkSha256, 'ab' * 32);
-    });
-
-    test('远端与本地完全相同 → upToDate', () async {
-      final state = await check(manifestJson());
-
-      expect(
-        state.asData!.value.checkStatus,
-        UpdateCheckStatus.upToDate,
-        reason: '本地 1.1.0+10，远端 1.1.0+10',
-      );
-    });
-
-    test('远端语义版本更低时构建号再高也不算新版本（边界）', () async {
-      final state = await check(manifestJson(minor: 0, build: 99));
-
-      expect(
-        state.asData!.value.checkStatus,
-        UpdateCheckStatus.upToDate,
-        reason: '远端 1.0.0+99 低于本地 1.1.0+10',
-      );
-    });
-
-    test('构建号与清单同口径直接比较，五位数不被截断', () async {
-      // v1.0.0 的构建号派生为 10000。此前的取余归一化会把它截成 0，
-      // 使已是最新的用户被反复提示更新——这个用例守住不再归一化。
-      final same = await check(
-        manifestJson(major: 1, minor: 0, build: 10000),
-        packageInfo: localInfo('1.0.0', '10000'),
-      );
-      expect(same.asData!.value.checkStatus, UpdateCheckStatus.upToDate);
-
-      // 构建号前进一位 → 真有更新
-      final newer = await check(
-        manifestJson(major: 1, minor: 0, build: 10001),
-        packageInfo: localInfo('1.0.0', '10000'),
-      );
-      expect(
-        newer.asData!.value.checkStatus,
-        UpdateCheckStatus.updateAvailable,
-      );
-    });
-
-    test('网络失败 → AsyncValue error，携带 checkFailed 错误码', () async {
-      final container = containerWith(
-        adapter: _StubAdapter(
-          manifestBody: '',
-          failManifestWith: DioException.connectionError(
-            requestOptions: RequestOptions(),
-            reason: 'offline',
-          ),
-        ),
-      );
-      await container.read(updateCheckProvider.notifier).checkForUpdates();
-      final state = container.read(updateCheckProvider);
-
-      expect(state.hasError, isTrue);
-      expect(state.error, isA<UpdateException>());
-      expect(
-        (state.error! as UpdateException).code,
-        UpdateErrorCode.checkFailed,
-      );
-    });
-
-    test('清单 code 非 200 → checkFailed', () async {
-      final state = await check('{"code": 500}');
-
-      expect(state.hasError, isTrue);
-      expect(
-        (state.error! as UpdateException).code,
-        UpdateErrorCode.checkFailed,
-      );
-    });
-  });
-
-  group('downloadAndInstall', () {
-    final apkBytes = Uint8List.fromList(List.generate(256, (i) => i % 251));
-
-    Future<ProviderContainer> checkedContainerWithApk({
-      required String androidApkUrl,
-      String? sha256,
-      HttpClientAdapter? adapter,
-      bool failDownload = false,
-    }) async {
-      final container = containerWith(
-        adapter:
-            adapter ??
-            _StubAdapter(
-              manifestBody: manifestJson(
-                minor: 2,
-                androidApkUrl: androidApkUrl,
-                androidApkSha256: sha256,
-              ),
-              apkBytes: apkBytes,
-              failDownload: failDownload,
+            readPackageInfo: () async => PackageInfo(
+              appName: 'Synlen',
+              packageName: 'com.tanglei.synlen',
+              version: '1.0.0',
+              buildNumber: '10000',
             ),
-      );
-      await container.read(updateCheckProvider.notifier).checkForUpdates();
-      return container;
-    }
-
-    UpdateDownloadState downloadStateOf(ProviderContainer container) =>
-        container.read(updateCheckProvider).asData!.value.download;
-
-    test('非 HTTPS 直链被拒绝，不发起下载请求', () async {
-      var downloadRequested = false;
-      final adapter = _StubAdapter(
-        manifestBody: manifestJson(
-          minor: 2,
-          androidApkUrl: 'http://cdn.example.com/x.apk',
-        ),
-        apkBytes: apkBytes,
-        onDownload: () => downloadRequested = true,
-      );
-      final container = await checkedContainerWithApk(
-        androidApkUrl: 'http://cdn.example.com/x.apk',
-        adapter: adapter,
-      );
-
-      await container.read(updateCheckProvider.notifier).downloadAndInstall();
-
-      final download = downloadStateOf(container);
-      expect(download.status, UpdateDownloadStatus.failed);
-      expect(download.errorCode, UpdateErrorCode.insecureUrl);
-      expect(downloadRequested, isFalse, reason: '拦截后不得发起下载');
-    });
-
-    test('sha256 匹配 → completed，返回安装包路径', () async {
-      final container = await checkedContainerWithApk(
-        androidApkUrl: 'https://cdn.example.com/synlen.apk',
-        sha256: sha256.convert(apkBytes).toString(),
-      );
-
-      await container.read(updateCheckProvider.notifier).downloadAndInstall();
-
-      final download = downloadStateOf(container);
-      expect(download.status, UpdateDownloadStatus.completed);
-      expect(download.progress, 1);
-      expect(download.apkPath, isNotNull);
-      expect(File(download.apkPath!).existsSync(), isTrue);
-      expect(download.apkRelativePath, isNotNull);
-      expect(
-        File('${cacheDir.path}/${download.apkRelativePath!}').path,
-        download.apkPath,
-        reason: '安装 URI 拼的相对路径必须与下载落点一致',
-      );
-    });
-
-    test('sha256 不匹配 → checksumMismatch，安装包被删除', () async {
-      final container = await checkedContainerWithApk(
-        androidApkUrl: 'https://cdn.example.com/synlen.apk',
-        sha256: 'ff' * 32,
-      );
-
-      await container.read(updateCheckProvider.notifier).downloadAndInstall();
-
-      final download = downloadStateOf(container);
-      expect(download.status, UpdateDownloadStatus.failed);
-      expect(download.errorCode, UpdateErrorCode.checksumMismatch);
-      expect(
-        Directory('${cacheDir.path}/apk').listSync(),
-        isEmpty,
-        reason: '校验失败的安装包必须删除',
-      );
-    });
-
-    test('清单未提供 sha256 → 放行下载（兼容旧清单）', () async {
-      final container = await checkedContainerWithApk(
-        androidApkUrl: 'https://cdn.example.com/synlen.apk',
-      );
-
-      await container.read(updateCheckProvider.notifier).downloadAndInstall();
-
-      expect(downloadStateOf(container).status, UpdateDownloadStatus.completed);
-    });
-
-    test('下载网络失败 → downloadFailed', () async {
-      final container = await checkedContainerWithApk(
-        androidApkUrl: 'https://cdn.example.com/synlen.apk',
-        failDownload: true,
-      );
-
-      await container.read(updateCheckProvider.notifier).downloadAndInstall();
-
-      final download = downloadStateOf(container);
-      expect(download.status, UpdateDownloadStatus.failed);
-      expect(download.errorCode, UpdateErrorCode.downloadFailed);
-    });
-
-    test('APK 响应跨过自动释放时机仍能完成下载与校验', () async {
-      final adapter = _PendingAdapter(
-        manifestBody: manifestJson(
-          minor: 2,
-          androidApkSha256: sha256.convert(apkBytes).toString(),
-        ),
-      );
-      final container = containerWith(adapter: adapter);
-      await container.read(updateCheckProvider.notifier).checkForUpdates();
-      final downloading = container
-          .read(updateCheckProvider.notifier)
-          .downloadAndInstall();
-
-      await Future.any([adapter.started.future, downloading]);
-      await container.pump();
-      adapter.respond(ResponseBody.fromBytes(apkBytes, 200));
-      await downloading;
-
-      final download = downloadStateOf(container);
-      expect(
-        download.status,
-        UpdateDownloadStatus.completed,
-        reason: '${download.errorCode}',
-      );
-      expect(File(download.apkPath!).readAsBytesSync(), apkBytes);
-      expect(adapter.isClosed, isFalse);
-    });
-  });
-
-  test('更新入口关闭后释放服务，重新进入可再次检查', () async {
-    var created = 0;
-    var disposed = 0;
-    final container = ProviderContainer.test(
-      overrides: [
-        updateServiceProvider.overrideWith((ref) {
-          created++;
-          final dio = Dio()
-            ..httpClientAdapter = _StubAdapter(manifestBody: manifestJson());
-          ref.onDispose(() {
-            disposed++;
-            dio.close(force: true);
-          });
-          return UpdateService(
-            dio: dio,
-            versionEndpoint: 'https://updates.example.com/version.json',
-            readPackageInfo: () async => defaultLocal,
-            cacheDirectory: () async => cacheDir,
+            supportDirectory: () => supportDirectory(),
+            createUpdater: () {
+              final updater = _FakeUpdater();
+              updaters.add(updater);
+              return updater;
+            },
           );
         }),
       ],
     );
-
-    for (var visit = 1; visit <= 2; visit++) {
-      final subscription = container.listen(updateCheckProvider, (_, _) {});
-      await container.read(updateCheckProvider.notifier).checkForUpdates();
-      await container.pump();
-      expect(created, visit);
-      expect(disposed, visit - 1);
-      expect(
-        container.read(updateCheckProvider).asData?.value.checkStatus,
-        UpdateCheckStatus.upToDate,
-      );
-
-      subscription.close();
-      await container.pump();
-      expect(disposed, visit);
-    }
+    subscription = container.listen(updateCheckProvider, (_, _) {});
   });
 
-  for (final downloading in [false, true]) {
-    test('${downloading ? '下载' : '检查'}期间销毁检查器会关闭连接且不再写状态', () async {
-      final adapter = _PendingAdapter(
-        manifestBody: downloading ? manifestJson(minor: 2) : null,
-      );
-      final container = containerWith(adapter: adapter);
-      final notifier = container.read(updateCheckProvider.notifier);
-      if (downloading) await notifier.checkForUpdates();
-      final operation = downloading
-          ? notifier.downloadAndInstall()
-          : notifier.checkForUpdates();
-      await adapter.started.future;
+  tearDown(() async {
+    for (final updater in updaters) {
+      await updater.events.close();
+    }
+    await directory.delete(recursive: true);
+  });
 
-      container.dispose();
+  UpdateCheck notifier() => container.read(updateCheckProvider.notifier);
+  UpdateState state() => container.read(updateCheckProvider).asData!.value;
+  Future<void> check() => notifier().checkForUpdates();
+  Future<void> tick() => Future<void>.delayed(Duration.zero);
+  Future<void> waitForUpdater([int count = 1]) async {
+    while (updaters.length < count) {
+      await tick();
+    }
+  }
 
-      await expectLater(operation, completes);
-      expect(adapter.isClosed, isTrue);
+  Future<void> emit(OtaStatus status, [String? value]) async {
+    updaters.last.events.add(OtaEvent(status, value));
+    await tick();
+  }
+
+  Future<void> finish(OtaStatus status, [String? value]) async {
+    await emit(status, value);
+    await updaters.last.events.close();
+  }
+
+  test('高版本保留清单和更新说明；相同或较低版本不提示更新', () async {
+    await check();
+    expect(state().checkStatus, UpdateCheckStatus.updateAvailable);
+    expect(state().manifest!.updateLog, '修复问题');
+    expect(state().manifest!.androidApkSha256, 'ab' * 32);
+    adapter.build = 10000;
+    await check();
+    expect(state().checkStatus, UpdateCheckStatus.upToDate);
+    adapter.major = 0;
+    adapter.build = 99999;
+    await check();
+    expect(state().checkStatus, UpdateCheckStatus.upToDate);
+  });
+
+  for (final body in ['{"code":500}', 'bad json', '{"code":200,"data":{}}']) {
+    test('无效清单转为检查错误：$body', () async {
+      adapter.body = body;
+      await check();
+      final error =
+          container.read(updateCheckProvider).error as UpdateException;
+      expect(error.code, UpdateErrorCode.checkFailed);
     });
+  }
+
+  test('网络失败可重新检查', () async {
+    adapter.fail = true;
+    await check();
+    expect(container.read(updateCheckProvider).hasError, isTrue);
+    adapter.fail = false;
+    await check();
+    expect(state().checkStatus, UpdateCheckStatus.updateAvailable);
+  });
+
+  test('检查等待期间服务保持存活，重复检查不发请求', () async {
+    adapter.pending = Completer<ResponseBody>();
+    final checking = check();
+    await adapter.started.future;
+    await check();
+    await container.pump();
+    expect(adapter.requests, 1);
+    expect(adapter.closed, isFalse);
+    adapter.pending!.complete(ResponseBody.fromString(adapter.json, 200));
+    await checking;
+    expect(state().checkStatus, UpdateCheckStatus.updateAvailable);
+  });
+
+  test('退出释放服务；检查中的迟到结果不写状态', () async {
+    adapter.pending = Completer<ResponseBody>();
+    final checking = check();
+    await adapter.started.future;
+    subscription.close();
+    await container.pump();
+    expect(adapter.closed, isTrue);
+    await expectLater(checking, completes);
+  });
+
+  for (final (url, hash, code) in [
+    ('', 'ab' * 32, UpdateErrorCode.noUpdateChannel),
+    ('http://cdn.example.com/a.apk', 'ab' * 32, UpdateErrorCode.insecureUrl),
+    ('https://cdn.example.com/a.apk', '', UpdateErrorCode.invalidChecksum),
+    (
+      'https://cdn.example.com/a.apk',
+      'not-a-hash',
+      UpdateErrorCode.invalidChecksum,
+    ),
+  ]) {
+    test('下载前拒绝无效渠道或摘要：$code $hash', () async {
+      adapter.url = url;
+      adapter.checksum = hash;
+      await check();
+      await notifier().downloadAndInstall();
+      expect(state().download.errorCode, code);
+      expect(updaters, isEmpty);
+    });
+  }
+
+  test('向插件传直链、固定文件名、规范摘要，下载期间阻止重新检查和重复下载', () async {
+    adapter.checksum = '  ${'AB' * 32}  ';
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    await notifier().downloadAndInstall();
+    await check();
+    expect(adapter.requests, 1);
+    expect(updaters, hasLength(1));
+    final updater = updaters.single;
+    expect(updater.url, adapter.url);
+    expect(updater.filename, 'synlen-update.apk');
+    expect(updater.checksum, 'ab' * 32);
+    expect(updater.packageInstaller, isFalse);
+    expect(state().download.progress, isNull);
+    await emit(OtaStatus.DOWNLOADING, '42');
+    expect(state().download.progress, .42);
+    await emit(OtaStatus.DOWNLOADING, 'NaN');
+    expect(state().download.progress, isNull);
+    await emit(OtaStatus.DOWNLOADING, '120');
+    expect(state().download.progress, 1);
+    await finish(OtaStatus.INSTALLING);
+    await operation;
+    expect(state().download.status, UpdateDownloadStatus.installerOpened);
+  });
+
+  for (final (event, code) in [
+    (OtaStatus.DOWNLOAD_ERROR, UpdateErrorCode.downloadFailed),
+    (OtaStatus.INTERNAL_ERROR, UpdateErrorCode.downloadFailed),
+    (OtaStatus.INSTALLATION_ERROR, UpdateErrorCode.installFailed),
+    (OtaStatus.ALREADY_RUNNING_ERROR, UpdateErrorCode.installFailed),
+    (
+      OtaStatus.PERMISSION_NOT_GRANTED_ERROR,
+      UpdateErrorCode.installPermissionDenied,
+    ),
+  ]) {
+    test('$event 保留清单并转为 $code，重试使用新实例', () async {
+      await check();
+      final manifest = state().manifest;
+      final operation = notifier().downloadAndInstall();
+      await waitForUpdater();
+      await finish(event, '内部错误细节');
+      await operation;
+      expect(state().download.status, UpdateDownloadStatus.failed);
+      expect(state().download.errorCode, code);
+      expect(state().manifest, same(manifest));
+      final retry = notifier().downloadAndInstall();
+      await waitForUpdater(2);
+      expect(updaters, hasLength(2));
+      await finish(OtaStatus.INSTALLING);
+      await retry;
+      expect(state().download.status, UpdateDownloadStatus.installerOpened);
+    });
+  }
+
+  test('插件报告摘要失败时删除私有目录内的坏包', () async {
+    await check();
+    final file = File('${directory.path}/ota_update/synlen-update.apk');
+    await file.parent.create();
+    await file.writeAsString('invalid apk');
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    await finish(OtaStatus.CHECKSUM_ERROR);
+    await operation;
+    expect(state().download.errorCode, UpdateErrorCode.checksumMismatch);
+    expect(await file.exists(), isFalse);
+  });
+
+  test('流意外结束不误报安装成功', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    await updaters.single.events.close();
+    await operation;
+    expect(state().download.errorCode, UpdateErrorCode.downloadFailed);
+  });
+
+  test('流异常转成下载失败', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    updaters.single.events.addError(StateError('channel failure'));
+    await operation;
+    expect(state().download.errorCode, UpdateErrorCode.downloadFailed);
+  });
+
+  test('取消等待原生确认，忽略迟到事件，结束后允许新实例重试', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    final updater = updaters.single;
+    updater.cancellation = Completer<void>();
+    final cancel = notifier().cancelDownload();
+    expect(state().download.status, UpdateDownloadStatus.canceling);
+    await notifier().downloadAndInstall();
+    await check();
+    expect(updaters, hasLength(1));
+    await emit(OtaStatus.DOWNLOAD_ERROR, 'canceled socket');
+    updater.cancellation!.complete();
+    await cancel;
+    await operation;
+    expect(updater.cancelCount, 1);
+    expect(state().download.status, UpdateDownloadStatus.canceled);
+    final retry = notifier().downloadAndInstall();
+    await waitForUpdater(2);
+    await finish(OtaStatus.INSTALLING);
+    await retry;
+    expect(updaters, hasLength(2));
+  });
+
+  test('准备记录期间取消不会在异步写入后启动插件', () async {
+    await check();
+    final preparing = Completer<Directory>();
+    supportDirectory = () => preparing.future;
+    final operation = notifier().downloadAndInstall();
+    final cancel = notifier().cancelDownload();
+    preparing.complete(directory);
+    await cancel;
+    await operation;
+    expect(updaters, isEmpty);
+    expect(state().download.status, UpdateDownloadStatus.canceled);
+  });
+
+  test('坏包清理失败保留原始校验错误和记录，启动回收可重试', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    final file = File('${directory.path}/ota_update/synlen-update.apk');
+    final record = File('${directory.path}/ota_update/pending.json');
+    await file.writeAsString('bad APK');
+    supportDirectory = () => Future.error(FileSystemException('unavailable'));
+    await finish(OtaStatus.CHECKSUM_ERROR);
+    await operation;
+    expect(state().download.errorCode, UpdateErrorCode.checksumMismatch);
+    expect(await file.exists(), isTrue);
+    expect(await record.exists(), isTrue);
+    supportDirectory = () async => directory;
+    await container.read(updateServiceProvider).cleanupDownloadedApk();
+    expect(await file.exists(), isFalse);
+    expect(await record.exists(), isFalse);
+  });
+
+  test('取消等待中释放 provider 不重复取消原生任务', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    final updater = updaters.single;
+    updater.cancellation = Completer<void>();
+    final cancel = notifier().cancelDownload();
+    subscription.close();
+    await container.pump();
+    updater.cancellation!.complete();
+    await cancel;
+    await operation;
+    expect(updater.cancelCount, 1);
+    expect(updater.events.hasListener, isFalse);
+  });
+
+  test('记录写入失败不得开始下载', () async {
+    await check();
+    await File('${directory.path}/ota_update').writeAsString('blocked');
+    await notifier().downloadAndInstall();
+    expect(updaters, isEmpty);
+    expect(state().download.errorCode, UpdateErrorCode.downloadFailed);
+  });
+
+  test('取消失败不删除 APK，确认取消后保留记录供启动回收', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    final file = File('${directory.path}/ota_update/synlen-update.apk');
+    final record = File('${directory.path}/ota_update/pending.json');
+    await file.writeAsString('partial');
+    updaters.single.cancelFails = true;
+    await notifier().cancelDownload();
+    expect(await file.exists(), isTrue);
+    expect(await record.exists(), isTrue);
+    updaters.single.cancelFails = false;
+    await notifier().cancelDownload();
+    await operation;
+    expect(await file.exists(), isTrue);
+    expect(await record.exists(), isTrue);
+  });
+
+  test('安装器打开后退出页面保留 APK 和记录，不再取消原生任务', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    final file = File('${directory.path}/ota_update/synlen-update.apk');
+    await file.writeAsString('complete');
+    await finish(OtaStatus.INSTALLING);
+    await operation;
+    subscription.close();
+    await container.pump();
+    expect(await file.exists(), isTrue);
+    expect(
+      await File('${directory.path}/ota_update/pending.json').exists(),
+      isTrue,
+    );
+    expect(updaters.single.cancelCount, 0);
+  });
+
+  test('下载期间释放 provider 取消原生下载和事件订阅', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    subscription.close();
+    await container.pump();
+    await operation;
+    expect(updaters.single.cancelCount, 1);
+    expect(updaters.single.events.hasListener, isFalse);
+    expect(adapter.closed, isTrue);
+  });
+
+  test('取消调用失败时保留下载，允许再次取消', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    updaters.single.cancelFails = true;
+    await notifier().cancelDownload();
+    expect(state().download.isBusy, isTrue);
+    updaters.single.cancelFails = false;
+    await notifier().cancelDownload();
+    await operation;
+    expect(state().download.status, UpdateDownloadStatus.canceled);
+  });
+
+  test('释放时即使原生取消失败也关闭 Dart 订阅', () async {
+    await check();
+    final operation = notifier().downloadAndInstall();
+    await waitForUpdater();
+    updaters.single.cancelFails = true;
+    subscription.close();
+    await container.pump();
+    await operation;
+    expect(updaters.single.events.hasListener, isFalse);
+  });
+}
+
+class _FakeUpdater extends OtaUpdate {
+  final events = StreamController<OtaEvent>();
+  String? url;
+  String? filename;
+  String? checksum;
+  bool? packageInstaller;
+  int cancelCount = 0;
+  bool cancelFails = false;
+  Completer<void>? cancellation;
+
+  @override
+  Stream<OtaEvent> execute(
+    String url, {
+    Map<String, String> headers = const {},
+    String? androidProviderAuthority,
+    String? destinationFilename,
+    String? sha256checksum,
+    bool usePackageInstaller = false,
+  }) {
+    this.url = url;
+    filename = destinationFilename;
+    checksum = sha256checksum;
+    packageInstaller = usePackageInstaller;
+    return events.stream;
+  }
+
+  @override
+  Future<void> cancel() async {
+    cancelCount++;
+    if (cancelFails) throw StateError('cancel failed');
+    await cancellation?.future;
   }
 }
 
-/// 延迟响应越过 provider 释放时机；强制关闭时中断请求，与真实 Dio 一致。
-class _PendingAdapter implements HttpClientAdapter {
-  _PendingAdapter({this.manifestBody});
-
-  final String? manifestBody;
+class _ManifestAdapter implements HttpClientAdapter {
   final started = Completer<void>();
-  final _response = Completer<ResponseBody>();
-  bool isClosed = false;
+  int major = 1;
+  int build = 10001;
+  int requests = 0;
+  String url = 'https://cdn.example.com/synlen.apk';
+  String checksum = 'ab' * 32;
+  String? body;
+  bool fail = false;
+  bool closed = false;
+  Completer<ResponseBody>? pending;
 
-  void respond(ResponseBody response) {
-    if (!_response.isCompleted) _response.complete(response);
-  }
+  String get json => jsonEncode({
+    'code': 200,
+    'data': {
+      'majorNumber': major,
+      'minorNumber': 0,
+      'patchNumber': 0,
+      'buildNumber': build,
+      'updateLog': '修复问题',
+      'androidApkUrl': url,
+      'androidApkSha256': checksum,
+    },
+  });
 
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
-  ) {
-    if (isClosed) {
-      if (!started.isCompleted) started.complete();
-      return Future.error(StateError('HTTP adapter closed before request'));
-    }
-    final manifest = manifestBody;
-    if (manifest != null && options.uri.path.endsWith('version.json')) {
-      return Future.value(ResponseBody.fromString(manifest, 200));
-    }
-    started.complete();
-    return _response.future;
+  ) async {
+    requests++;
+    if (!started.isCompleted) started.complete();
+    if (fail) throw StateError('offline');
+    if (pending case final response?) return response.future;
+    return ResponseBody.fromString(body ?? json, 200);
   }
 
   @override
   void close({bool force = false}) {
-    isClosed = true;
-    if (force && !_response.isCompleted && started.isCompleted) {
-      _response.completeError(StateError('HTTP adapter closed during request'));
+    closed = true;
+    final response = pending;
+    if (response != null && !response.isCompleted) {
+      response.completeError(StateError('closed'));
     }
   }
-}
-
-/// 固定响应清单与 APK 字节的 HttpClientAdapter。
-class _StubAdapter implements HttpClientAdapter {
-  _StubAdapter({
-    required this.manifestBody,
-    this.apkBytes,
-    this.failManifestWith,
-    this.failDownload = false,
-    this.onDownload,
-  });
-
-  final String manifestBody;
-  final Uint8List? apkBytes;
-  final DioException? failManifestWith;
-  final bool failDownload;
-  final void Function()? onDownload;
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) {
-    if (options.uri.path.endsWith('version.json')) {
-      final failure = failManifestWith;
-      if (failure != null) return Future.error(failure);
-      return Future.value(ResponseBody.fromString(manifestBody, 200));
-    }
-    onDownload?.call();
-    if (failDownload) {
-      return Future.error(
-        DioException.connectionError(
-          requestOptions: options,
-          reason: 'offline',
-        ),
-      );
-    }
-    return Future.value(ResponseBody.fromBytes(apkBytes ?? Uint8List(0), 200));
-  }
-
-  @override
-  void close({bool force = false}) {}
 }

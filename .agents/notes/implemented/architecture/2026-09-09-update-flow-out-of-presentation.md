@@ -13,11 +13,11 @@ Status: implemented
 按既有分层落点拆成四层：
 
 - **domain**：`AppVersion`（语义化版本与原始构建号逐段比较）、`VersionManifest`（远端清单值类型，含 `androidApkSha256`）、`UpdateException` / `UpdateErrorCode`（`checkFailed`、`noUpdateChannel`、`insecureUrl`、`downloadFailed`、`checksumMismatch`），参照 `LearningErrorCode` 范式，`details` 仅入日志不上屏。
-- **data**：`UpdateService`（`lib/src/features/settings/data/services/update_service.dart`）负责清单拉取与解析、本地版本读取、HTTPS scheme 校验、Dio 下载到缓存目录、sha256 比对（不匹配删文件、字段缺失放行记 warning——P0 行为原样保留），产物是安装包路径。Dio、清单端点、`PackageInfo` 读取、缓存目录解析全部经构造注入，测试用 stub `HttpClientAdapter` 替换。
-- **application**：`UpdateCheck` notifier 暴露 `AsyncValue<UpdateState>`：检查阶段占满三态（loading = 检查中、error = `UpdateException`、data 带 `idle / upToDate / updateAvailable`），下载作为 data 内的子状态（进度、产物路径、失败错误码），保证下载失败不丢已渲染的清单。错误只在此捕获并转成错误码。`build()` 订阅更新服务，使服务随检查器存活；检查器销毁后关闭连接，异步返回先检查 `ref.mounted`，不再读写已销毁的状态。
+- **data**：`UpdateService` 负责清单解析、本地版本读取、下载参数检查与 `ota_update` 调用。Dio、包信息读取、插件工厂与私有目录均经构造注入。下载安装委托决策见[接入 ota_update](2026-09-21-ota-update-installer.md)。
+- **application**：`UpdateCheck` notifier 暴露 `AsyncValue<UpdateState>`：检查阶段占满三态（loading = 检查中、error = `UpdateException`、data 带 `idle / upToDate / updateAvailable`），下载作为 data 内的子状态（进度、安装器已打开、取消、失败错误码），保证下载失败不丢已渲染的清单。错误只在此捕获并转成错误码。`build()` 订阅更新服务，使服务随检查器存活；检查器销毁后关闭清单连接并取消插件下载，异步返回先检查 `ref.mounted`，不再读写已销毁的状态。
 - **presentation**：`check_update_tile.dart` 负责 UI、状态订阅与按错误码映射 l10n。
 
-**安装留在 UI 侧薄壳**：`android_intent_plus` 的 `canResolveActivity` / `launch` 没有可注入 seam，副作用只是拉起系统界面，与 `UrlLauncher` 同类；薄壳只消费 application 给出的安装包路径，不含判断逻辑。
+安装由 data 层的 `ota_update` 承担，presentation 只渲染用例状态。此处的初始分工已被[插件委托决策](2026-09-21-ota-update-installer.md)部分取代。
 
 ## Alternatives considered
 
@@ -33,8 +33,8 @@ Status: implemented
 
 - presentation 不再 import `dio` / `crypto` / `path_provider`；分层门禁把守着 presentation → data 的边界。
 - 更新测试覆盖版本比较、HTTPS 拒绝、SHA-256 校验与网络失败；服务替身保留 `onDispose` 关闭 Dio 的行为，并用延迟响应覆盖检查与下载的自动释放时机、退出后释放、再次进入及请求中途销毁，见[更新检查测试](../../../../test/features/settings/application/update_check_test.dart)与[版本比较测试](../../../../test/features/settings/domain/app_version_test.dart)。
-- 新增错误码时要同步 presentation 的 `_updateErrorMessage` 映射与双语 l10n；现有五个码均复用既有文案。
-- 真机行为（FileProvider 安装、系统未知来源引导）当时未重复验证，「不受本次重构影响」的判断是错的：本次重构把下载落点移进缓存 `apk/` 子目录，安装侧仍只带文件名拼 URI，v0.3.0–v0.3.4 的应用内安装因此全部失败，见[安装 URI 与下载落点对齐](../bug-fix/2026-09-20-update-install-uri-path-mismatch.md)。
+- 新增错误码时要同步 presentation 的 `_updateErrorMessage` 映射与双语 l10n；插件原始错误只入日志。
+- 真机行为（FileProvider 安装、系统未知来源引导）当时未重复验证，「不受本次重构影响」的判断是错的：本次重构把下载落点移进缓存 `apk/` 子目录，安装侧仍只带文件名拼 URI，v0.3.0–v0.3.4 的应用内安装因此全部失败，见[安装 URI 与下载落点对齐](../../archived/bug-fix/2026-09-20-update-install-uri-path-mismatch.md)。
 
 ## Testing
 
@@ -42,6 +42,6 @@ Status: implemented
 
 ## Related
 
-- [更新下载链路与备份解压加固](../bug-fix/2026-09-09-update-backup-hardening.md)：HTTPS 与 sha256 校验的决策来源，本次只搬家不改行为。
-- [安装 URI 与下载落点对齐](../bug-fix/2026-09-20-update-install-uri-path-mismatch.md)：本次重构引入的安装失败及其修复。
+- [更新下载链路与备份解压加固](../bug-fix/2026-09-09-update-backup-hardening.md)：HTTPS 与 SHA-256 校验的决策来源。
+- [安装 URI 与下载落点对齐](../../archived/bug-fix/2026-09-20-update-install-uri-path-mismatch.md)：本次重构引入的安装失败及其修复。
 - [组合面跨 feature 依赖](2026-09-08-composition-surface-cross-feature.md)：settings 作为组合面的分层依据。

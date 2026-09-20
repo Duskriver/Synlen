@@ -411,10 +411,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadFailed => '下载失败';
 
   @override
-  String get downloadCompleted => '下载完成，请点击安装';
+  String get updateInstallerOpened => '已打开系统安装器，请在系统界面确认更新';
 
   @override
   String get installUnknownSourcesRequired => '需要允许安装未知来源应用，请到系统设置中开启';
+
+  @override
+  String get updateInvalidChecksum => '更新缺少有效校验信息，请使用备用下载链接';
+
+  @override
+  String get updateInstallFailed => '无法启动安装，请重试或使用备用下载链接';
 
   @override
   String get noUpdateChannel => '当前平台暂无更新渠道，请留意 GitHub Releases';

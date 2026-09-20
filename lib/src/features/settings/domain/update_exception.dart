@@ -14,6 +14,15 @@ enum UpdateErrorCode {
 
   /// 更新包 SHA-256 校验不匹配
   checksumMismatch,
+
+  /// 清单未提供有效的 APK SHA-256。
+  invalidChecksum,
+
+  /// 系统安装器无法启动或安装请求失败。
+  installFailed,
+
+  /// 系统未授予安装所需权限。
+  installPermissionDenied,
 }
 
 /// 更新模块领域异常。

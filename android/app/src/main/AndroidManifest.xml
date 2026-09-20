@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Storage permissions for file picker -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -7,6 +8,9 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <!-- 允许安装从应用内下载的更新 APK（API 26+ 生效） -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!-- ota_update 的旧权限声明不适用于普通应用的私有目录下载。 -->
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" tools:node="remove"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
     
     <application
         android:label="词镜"
@@ -114,15 +118,15 @@
             </intent-filter>
         </provider>
 
-        <!-- FileProvider for exposing downloaded update APK to the system installer -->
+        <!-- ota_update 根据实际 APK 文件生成 URI，仅暴露插件私有目录。 -->
         <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
+            android:name="sk.fourq.otaupdate.OtaUpdateFileProvider"
+            android:authorities="${applicationId}.ota_update_provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+                android:resource="@xml/ota_update_paths" />
         </provider>
     </application>
     <!-- Required to query activities that can process text, see:
@@ -137,4 +141,3 @@
         </intent>
     </queries>
 </manifest>
-

@@ -570,11 +570,19 @@
   "@downloadFailed": {
     "description": "Download failed toast"
   },
-  "downloadCompleted": "Download complete, tap to install",
-  "@downloadCompleted": {
-    "description": "Download completed message"
+  "updateInstallerOpened": "Installer opened. Confirm the update in the system dialog.",
+  "@updateInstallerOpened": {
+    "description": "已拉起系统安装器，尚未确认安装完成"
   },
   "installUnknownSourcesRequired": "Installing apps from unknown sources must be enabled in system settings",
+  "updateInvalidChecksum": "The update is missing a valid verification code. Please use the alternative download link.",
+  "@updateInvalidChecksum": {
+    "description": "更新清单缺少有效 SHA-256 的提示"
+  },
+  "updateInstallFailed": "Unable to start installation. Please retry or use the alternative download link.",
+  "@updateInstallFailed": {
+    "description": "插件报告安装请求失败的提示"
+  },
   "@installUnknownSourcesRequired": {
     "description": "Unknown sources permission message"
   },

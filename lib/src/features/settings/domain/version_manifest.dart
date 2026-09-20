@@ -34,7 +34,7 @@ class VersionManifest {
   /// Android：APK 的 HTTPS 下载地址
   final String androidApkUrl;
 
-  /// Android：清单下发的 APK SHA-256（十六进制）；为空跳过校验（兼容旧清单）
+  /// Android：清单下发的 APK SHA-256；下载前必须为 64 位十六进制。
   final String androidApkSha256;
 
   /// iOS：App Store 链接（上架后由服务端下发）
