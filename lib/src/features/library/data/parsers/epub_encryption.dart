@@ -104,26 +104,32 @@ Map<String, String> _manifestMediaTypes(String opfContent, String opfDir) {
     final mediaType = item.getAttribute('media-type');
     if (href != null && mediaType != null) {
       final joined = opfDir.isEmpty ? href : '$opfDir/$href';
-      result[_normalizeEncryptionUri(joined)] = mediaType;
+      final path = _normalizeEncryptionUri(joined);
+      if (path != null) result[path] = mediaType;
     }
   }
   return result;
 }
 
 /// 归一化 encryption.xml URI / manifest href 供比较：
-/// 百分号解码、去前导 `/` 与 `./`、压缩重复斜杠。
-String _normalizeEncryptionUri(String uri) {
+/// 百分号解码并消解路径段；越过容器根时返回 null。
+String? _normalizeEncryptionUri(String uri) {
   var s = uri.trim();
   try {
     s = Uri.decodeFull(s);
   } catch (_) {
     // 非法百分号序列按原样比较
   }
-  while (s.startsWith('/')) {
-    s = s.substring(1);
+  s = s.replaceAll('\\', '/');
+  final segments = <String>[];
+  for (final segment in s.split('/')) {
+    if (segment.isEmpty || segment == '.') continue;
+    if (segment == '..') {
+      if (segments.isEmpty) return null;
+      segments.removeLast();
+    } else {
+      segments.add(segment);
+    }
   }
-  while (s.startsWith('./')) {
-    s = s.substring(2);
-  }
-  return s.replaceAll(RegExp(r'/+'), '/');
+  return segments.join('/');
 }

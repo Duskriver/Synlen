@@ -22,8 +22,6 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 use sha1::{Digest, Sha1};
 
-use crate::api::epub::normalize_path;
-
 /// IDPF 字体混淆算法标识（EPUB 3 标准）。
 pub const IDPF_ALGORITHM: &str = "http://www.idpf.org/2008/embedding";
 /// Adobe 字体混淆算法标识（EPUB 2 常见）。
@@ -201,20 +199,19 @@ pub fn find_rootfile_path(container_xml: &str) -> Option<String> {
 /// 优先 package@unique-identifier 指向的 dc:identifier，缺席时取第一个 dc:identifier。
 pub fn unique_identifier(opf_xml: &str) -> Option<String> {
     let mut reader = Reader::from_str(opf_xml);
-    reader.config_mut().trim_text(true);
 
     let mut wanted_id: Option<String> = None;
     let mut first_identifier: Option<String> = None;
     let mut by_id: Vec<(String, String)> = Vec::new();
-    // 当前位于 dc:identifier 元素内时，其 id 属性值
-    let mut current_identifier_id: Option<Option<String>> = None;
+    // 到闭合标签才提交，避免实体或 CDATA 将同一 identifier 拆成多段。
+    let mut current_identifier: Option<(Option<String>, String)> = None;
 
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => match local_name(e.name().as_ref()) {
                 "package" => wanted_id = attr_value(&e, "unique-identifier"),
                 "identifier" => {
-                    current_identifier_id = Some(attr_value(&e, "id"));
+                    current_identifier = Some((attr_value(&e, "id"), String::new()));
                 }
                 _ => {}
             },
@@ -224,21 +221,36 @@ pub fn unique_identifier(opf_xml: &str) -> Option<String> {
                 }
             }
             Ok(Event::Text(t)) => {
-                if let Some(id) = current_identifier_id.take() {
-                    let text = t.trim().to_owned();
-                    if !text.is_empty() {
-                        if first_identifier.is_none() {
-                            first_identifier = Some(text.clone());
-                        }
-                        if let Some(id) = id {
-                            by_id.push((id, text));
-                        }
-                    }
+                if let Some((_, text)) = current_identifier.as_mut() {
+                    text.push_str(&t.xml10_content());
+                }
+            }
+            Ok(Event::CData(t)) => {
+                if let Some((_, text)) = current_identifier.as_mut() {
+                    text.push_str(&t.xml10_content());
+                }
+            }
+            Ok(Event::GeneralRef(reference)) => {
+                if let Some((_, text)) = current_identifier.as_mut() {
+                    match reference.resolve_char_ref().ok()? {
+                        Some(character) => text.push(character),
+                        None => text.push_str(quick_xml::escape::resolve_xml_entity(&reference)?),
+                    };
                 }
             }
             Ok(Event::End(e)) => {
                 if local_name(e.name().as_ref()) == "identifier" {
-                    current_identifier_id = None;
+                    if let Some((id, text)) = current_identifier.take() {
+                        let text = text.trim().to_owned();
+                        if !text.is_empty() {
+                            if first_identifier.is_none() {
+                                first_identifier = Some(text.clone());
+                            }
+                            if let Some(id) = id {
+                                by_id.push((id, text));
+                            }
+                        }
+                    }
                 }
             }
             Ok(Event::Eof) => break,
@@ -263,10 +275,9 @@ pub fn manifest_media_types(opf_xml: &str) -> Vec<(String, String)> {
         match reader.read_event() {
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
                 if local_name(e.name().as_ref()) == "item" {
-                    if let (Some(href), Some(media_type)) = (
-                        attr_value(&e, "href"),
-                        attr_value(&e, "media-type"),
-                    ) {
+                    if let (Some(href), Some(media_type)) =
+                        (attr_value(&e, "href"), attr_value(&e, "media-type"))
+                    {
                         items.push((href, media_type));
                     }
                 }
@@ -316,13 +327,13 @@ pub fn build_obfuscation_map(
     let font_paths: Vec<String> = manifest_media_types(opf_xml)
         .into_iter()
         .filter(|(_, media_type)| is_font_media_type(media_type))
-        .map(|(href, _)| {
+        .filter_map(|(href, _)| {
             let joined = if opf_dir.is_empty() {
                 href
             } else {
                 format!("{opf_dir}/{href}")
             };
-            percent_decode(&normalize_path(&joined))
+            normalized_resource_path(&joined)
         })
         .collect();
 
@@ -330,7 +341,9 @@ pub fn build_obfuscation_map(
         let Some(method) = ObfuscationMethod::from_algorithm(&entry.algorithm) else {
             continue;
         };
-        let uri = percent_decode(&normalize_path(&entry.uri));
+        let Some(uri) = normalized_resource_path(&entry.uri) else {
+            continue;
+        };
         if !font_paths.iter().any(|p| *p == uri) {
             continue;
         }
@@ -346,6 +359,22 @@ pub fn build_obfuscation_map(
         );
     }
     map
+}
+
+/// 路径相对容器根消解点段；越过根目录的引用无效。
+fn normalized_resource_path(path: &str) -> Option<String> {
+    let decoded = percent_decode(path.trim()).replace('\\', "/");
+    let mut segments = Vec::new();
+    for segment in decoded.split('/') {
+        match segment {
+            "" | "." => {}
+            ".." => {
+                segments.pop()?;
+            }
+            _ => segments.push(segment),
+        }
+    }
+    Some(segments.join("/"))
 }
 
 /// 取限定名的本地部分（去掉命名空间前缀）。
@@ -630,6 +659,69 @@ mod tests {
   </metadata>
 </package>"#;
         assert_eq!(unique_identifier(opf).as_deref(), Some("fallback-id"));
+    }
+
+    #[test]
+    fn unique_identifier_combines_text_cdata_and_references() {
+        let opf = r#"<package unique-identifier="id"><metadata>
+<identifier id="other">fallback</identifier>
+<identifier id="id">urn:<![CDATA[test]]>:a&amp;b&#x2F;&#49;&lt;&gt;&quot;&apos;</identifier>
+</metadata></package>"#;
+        assert_eq!(
+            unique_identifier(opf).as_deref(),
+            Some("urn:test:a&b/1<>\"'")
+        );
+    }
+
+    fn encryption_for(uri: &str) -> String {
+        format!(
+            r#"<encryption><EncryptedData>
+<EncryptionMethod Algorithm="{IDPF_ALGORITHM}"/>
+<CipherData><CipherReference URI="{uri}"/></CipherData>
+</EncryptedData></encryption>"#
+        )
+    }
+
+    #[test]
+    fn xml_identifier_encodings_restore_the_same_font_bytes() {
+        let identifier = "urn:test:a&b";
+        let original = vec![0x5a; 1200];
+        let obfuscation = FontObfuscation {
+            key: idpf_key(identifier),
+            prefix_len: 1040,
+        };
+        for encoded in ["urn:test:a&amp;b", "<![CDATA[urn:test:a&b]]>"] {
+            let opf = sample_opf().replace(IDENTIFIER, encoded);
+            let map =
+                build_obfuscation_map(&encryption_for("OEBPS/fonts/serif.otf"), &opf, "OEBPS");
+            let mut bytes = original.clone();
+            deobfuscate(&mut bytes, &obfuscation);
+            deobfuscate(
+                &mut bytes,
+                map.get("OEBPS/fonts/serif.otf").expect("字体映射缺失"),
+            );
+            assert_eq!(bytes, original, "identifier 编码为 {encoded}");
+        }
+    }
+
+    #[test]
+    fn font_paths_resolve_dot_segments_relative_to_the_package() {
+        for (href, target) in [
+            ("./fonts/serif.otf", "OEBPS/fonts/serif.otf"),
+            ("../fonts/serif.otf", "fonts/serif.otf"),
+            ("fonts/sub/../serif.otf", "OEBPS/fonts/serif.otf"),
+        ] {
+            let opf = sample_opf().replace("fonts/serif.otf", href);
+            let map = build_obfuscation_map(&encryption_for(target), &opf, "OEBPS");
+            assert!(map.contains_key(target), "href={href}");
+        }
+    }
+
+    #[test]
+    fn font_paths_cannot_escape_the_container() {
+        let opf = sample_opf().replace("fonts/serif.otf", "../fonts/serif.otf");
+        let map = build_obfuscation_map(&encryption_for("../fonts/serif.otf"), &opf, "");
+        assert!(map.is_empty());
     }
 
     #[test]

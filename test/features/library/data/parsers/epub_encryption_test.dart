@@ -43,6 +43,59 @@ void main() {
       expect(result.isRight(), true);
     });
 
+    for (final (href, target) in [
+      ('./fonts/serif.otf', 'OEBPS/fonts/serif.otf'),
+      ('../fonts/serif.otf', 'fonts/serif.otf'),
+      ('fonts/../serif.otf', 'OEBPS/serif.otf'),
+      ('fonts/serif.otf', './OEBPS/fonts/../fonts/serif.otf'),
+      ('%2e%2e/fonts/serif.otf', 'fonts/serif.otf'),
+      (r'..\fonts\serif.otf', 'fonts/serif.otf'),
+    ]) {
+      test('字体路径 $href 与容器路径 $target 指向同一资源时放行', () {
+        final result = parser.parseFromBytes(
+          _createEncryptedEpub(
+            algorithm: 'http://www.idpf.org/2008/embedding',
+            targetUri: target,
+            targetMediaType: 'font/otf',
+            fontHref: href,
+          ),
+        );
+
+        expect(result.isRight(), isTrue);
+      });
+    }
+
+    test('CipherReference 从容器根解析，不相对于 OPF 目录', () {
+      final result = parser.parseFromBytes(
+        _createEncryptedEpub(
+          algorithm: 'http://www.idpf.org/2008/embedding',
+          targetUri: 'fonts/serif.otf',
+          targetMediaType: 'font/otf',
+        ),
+      );
+
+      expect(
+        result.getLeft().toNullable()!.code,
+        LibraryErrorCode.drmProtected,
+      );
+    });
+
+    test('越过容器根的字体路径不能匹配根内资源', () {
+      final result = parser.parseFromBytes(
+        _createEncryptedEpub(
+          algorithm: 'http://www.idpf.org/2008/embedding',
+          targetUri: 'fonts/serif.otf',
+          targetMediaType: 'font/otf',
+          fontHref: '../../fonts/serif.otf',
+        ),
+      );
+
+      expect(
+        result.getLeft().toNullable()!.code,
+        LibraryErrorCode.drmProtected,
+      );
+    });
+
     test('encryption.xml 含未知算法 → 拒绝且错误信息可区分', () {
       // Arrange：LCP 算法，目标仍是字体
       final epubBytes = _createEncryptedEpub(
@@ -110,6 +163,7 @@ Uint8List _createEncryptedEpub({
   required String algorithm,
   required String targetUri,
   required String targetMediaType,
+  String fontHref = 'fonts/serif.otf',
   String? rawEncryptionXml,
 }) {
   final archive = Archive();
@@ -160,7 +214,7 @@ Uint8List _createEncryptedEpub({
   </metadata>
   <manifest>
     <item id="chapter0" href="chapter0.xhtml" media-type="application/xhtml+xml"/>
-    <item id="font1" href="fonts/serif.otf" media-type="$targetMediaType"/>
+    <item id="font1" href="$fontHref" media-type="$targetMediaType"/>
   </manifest>
   <spine>
     <itemref idref="chapter0"/>

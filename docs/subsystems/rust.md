@@ -38,7 +38,7 @@
 - 读锁只在 `Arc::clone` 期间持有，不跨 I/O 与解压。
 - 条目缺失返回 `Ok(None)`，调用方按 404 处理；I/O 错误、解压失败与 zip 炸弹返回 `Err(msg)`。
 - 音视频条目（`mp4` / `mp3` / `wav` 等扩展名）返回空字节，不解压以省内存。
-- 混淆字体只收录「算法是 IDPF（前 1040 字节）或 Adobe（前 1024 字节）且 OPF manifest media-type 是字体」的条目；映射构建失败退化为空映射，不阻断打开。
+- 混淆字体只收录「算法是 IDPF（前 1040 字节）或 Adobe（前 1024 字节）且 OPF manifest media-type 是字体」的条目；资源路径消解点段且不得越过容器根，identifier 合并文本、CDATA 与字符引用后派生密钥；映射构建失败退化为空映射，不阻断打开。
 - 缓存无自动淘汰，书籍关闭时必须调 `close_epub`。
 - `frb_generated.rs` 与 `lib/src/rust/**` 是生成物，不手改。
 - `rust/build.rs` 只向 Android 动态库注入 16 KB 链接参数，覆盖调试与发布构建；产物检查见[测试策略](../testing.md#最小证据)。
