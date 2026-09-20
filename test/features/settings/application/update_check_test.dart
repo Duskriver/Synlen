@@ -80,6 +80,51 @@ void main() {
     await updaters.last.events.close();
   }
 
+  for (final cancelFails in [true, false]) {
+    for (final terminal in [
+      OtaStatus.INSTALLING,
+      OtaStatus.DOWNLOAD_ERROR,
+      OtaStatus.CANCELED,
+      null,
+    ]) {
+      test('取消回执失败=$cancelFails，流以 $terminal 结束后仍可关闭或重试', () async {
+        await check();
+        final operation = notifier().downloadAndInstall();
+        await waitForUpdater();
+        final updater = updaters.single;
+        updater.cancellation = Completer<void>();
+        final cancel = notifier().cancelDownload();
+        if (terminal != null) await emit(terminal);
+        await updater.events.close();
+        await operation;
+        // 原生取消尚未完成，即使流结束也不能开放新的下载。
+        expect(state().download.status, UpdateDownloadStatus.canceling);
+        await notifier().downloadAndInstall();
+        expect(updaters, hasLength(1));
+        if (cancelFails) {
+          updater.cancellation!.completeError(
+            StateError('cancel channel failed'),
+          );
+        } else {
+          updater.cancellation!.complete();
+        }
+        await cancel;
+        final expected = terminal == OtaStatus.INSTALLING
+            ? UpdateDownloadStatus.installerOpened
+            : !cancelFails || terminal == OtaStatus.CANCELED
+            ? UpdateDownloadStatus.canceled
+            : UpdateDownloadStatus.failed;
+        expect(state().download.status, expected);
+        await notifier().cancelDownload();
+        expect(state().download.isBusy, isFalse);
+        final retry = notifier().downloadAndInstall();
+        await waitForUpdater(2);
+        await finish(OtaStatus.INSTALLING);
+        await retry;
+      });
+    }
+  }
+
   test('高版本保留清单和更新说明；相同或较低版本不提示更新', () async {
     await check();
     expect(state().checkStatus, UpdateCheckStatus.updateAvailable);

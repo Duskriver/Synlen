@@ -44,7 +44,7 @@ final class UpdateCheckProvider
   }
 }
 
-String _$updateCheckHash() => r'60b99d9e81635842b4743d71264a5fead6ca72dc';
+String _$updateCheckHash() => r'5fc22b5633d6370235e90d1a4c6c5f09e395eb06';
 
 /// 更新检查与安装用例；插件事件和异常只在此转成类型化状态。
 

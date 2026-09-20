@@ -65,6 +65,7 @@ class UpdateState {
 class UpdateCheck extends _$UpdateCheck {
   StreamIterator<OtaEvent>? _events;
   Future<void>? _canceling;
+  UpdateDownloadState? _cancelOutcome;
 
   @override
   AsyncValue<UpdateState> build() {
@@ -119,10 +120,10 @@ class UpdateCheck extends _$UpdateCheck {
       _events = events;
       while (await events.moveNext()) {
         if (!ref.mounted) break;
-        if (_canceling != null) continue;
         final event = events.current;
         switch (event.status) {
           case OtaStatus.DOWNLOADING:
+            if (_canceling != null) continue;
             final percent = double.tryParse(event.value ?? '');
             _emit(
               UpdateDownloadState(
@@ -133,14 +134,14 @@ class UpdateCheck extends _$UpdateCheck {
               ),
             );
           case OtaStatus.INSTALLING || OtaStatus.INSTALLATION_DONE:
-            _emit(
+            _emitOutcome(
               const UpdateDownloadState(
                 status: UpdateDownloadStatus.installerOpened,
                 progress: 1,
               ),
             );
           case OtaStatus.CANCELED:
-            _emit(
+            _emitOutcome(
               const UpdateDownloadState(status: UpdateDownloadStatus.canceled),
             );
           case OtaStatus.CHECKSUM_ERROR:
@@ -167,18 +168,19 @@ class UpdateCheck extends _$UpdateCheck {
         }
       }
       if (ref.mounted &&
-          _canceling == null &&
-          state.asData?.value.download.status ==
-              UpdateDownloadStatus.downloading) {
+          (_canceling != null
+              ? _cancelOutcome == null
+              : state.asData?.value.download.status ==
+                    UpdateDownloadStatus.downloading)) {
         throw const UpdateException(
           UpdateErrorCode.downloadFailed,
           '插件流结束但未拉起安装器',
         );
       }
     } catch (e, st) {
-      if (ref.mounted && _canceling == null) {
+      if (ref.mounted) {
         appLogger.e('更新下载安装失败', error: e, stackTrace: st);
-        _emit(
+        _emitOutcome(
           UpdateDownloadState(
             status: UpdateDownloadStatus.failed,
             errorCode: e is UpdateException
@@ -199,6 +201,7 @@ class UpdateCheck extends _$UpdateCheck {
     if (pending != null) return pending;
     final events = _events;
     if (events == null) return Future.value();
+    _cancelOutcome = null;
     _emit(const UpdateDownloadState(status: UpdateDownloadStatus.canceling));
     return _canceling = _cancel(
       ref.read(updateServiceProvider),
@@ -214,17 +217,39 @@ class UpdateCheck extends _$UpdateCheck {
       await service.cancelDownload();
       await events.cancel();
       if (identical(_events, events)) _events = null;
-      _emit(const UpdateDownloadState(status: UpdateDownloadStatus.canceled));
+      // 系统安装器若已启动，取消网络请求不能把安装交接改成已取消。
+      _emit(
+        _cancelOutcome?.status == UpdateDownloadStatus.installerOpened
+            ? _cancelOutcome!
+            : const UpdateDownloadState(status: UpdateDownloadStatus.canceled),
+      );
     } catch (e, st) {
       appLogger.e('取消更新下载失败', error: e, stackTrace: st);
       if (!ref.mounted) {
         await events.cancel();
         return;
       }
-      // 取消未确认时保留下载状态，不能让 UI 关闭后原生继续安装。
+      // 终态优先；只有仍存在的订阅才可恢复下载，空流不能留下永久 busy。
       _emit(
-        const UpdateDownloadState(status: UpdateDownloadStatus.downloading),
+        _cancelOutcome ??
+            (_events == null
+                ? const UpdateDownloadState(
+                    status: UpdateDownloadStatus.failed,
+                    errorCode: UpdateErrorCode.downloadFailed,
+                  )
+                : const UpdateDownloadState(
+                    status: UpdateDownloadStatus.downloading,
+                  )),
       );
+    }
+  }
+
+  void _emitOutcome(UpdateDownloadState outcome) {
+    if (_canceling != null) {
+      // 等待取消回执期间保持弹窗锁定，随后以真实终态恢复 UI。
+      _cancelOutcome = outcome;
+    } else {
+      _emit(outcome);
     }
   }
 

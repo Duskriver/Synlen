@@ -114,6 +114,7 @@ class UpdateService {
     );
   }
 
+  /// 等待原生写入和校验停止；已打开的系统安装器不在取消范围内。
   Future<void> cancelDownload() async {
     _canceled = true;
     await _updater?.cancel();

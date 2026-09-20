@@ -1,0 +1,767 @@
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,6 @@
++.dart_tool/
++.packages
++pubspec.lock
++build/
++android/.gradle/
++android/.kotlin/
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -37,12 +37,15 @@
+         minSdk 23
+         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+     }
++    testOptions { unitTests.includeAndroidResources = true }
+     lintOptions {
+         disable 'InvalidPackage'
+     }
+ }
+ 
+ dependencies {
++    testImplementation "junit:junit:4.13.2"
++    testImplementation "org.robolectric:robolectric:4.16.1"
+     implementation "androidx.core:core:1.16.0"
+     // https://mvnrepository.com/artifact/commons-codec/commons-codec
+     implementation group: 'commons-codec', name: 'commons-codec', version: '1.14'
+--- a/android/src/main/java/sk/fourq/otaupdate/OtaUpdatePlugin.java
++++ b/android/src/main/java/sk/fourq/otaupdate/OtaUpdatePlugin.java
+@@ -8,10 +8,8 @@
+ import android.content.pm.PackageManager;
+ import android.net.Uri;
+ import android.os.Build;
+-import android.os.Bundle;
+ import android.os.Handler;
+ import android.os.Looper;
+-import android.os.Message;
+ import android.util.Log;
+ import androidx.core.content.FileProvider;
+ import io.flutter.embedding.engine.plugins.FlutterPlugin;
+@@ -29,7 +27,6 @@
+ import okhttp3.OkHttpClient;
+ import okhttp3.Request;
+ import okhttp3.Response;
+-import okhttp3.internal.http2.StreamResetException;
+ import okio.BufferedSink;
+ import okio.Okio;
+ import org.jetbrains.annotations.NotNull;
+@@ -55,13 +52,9 @@
+         ActivityAware,
+         EventChannel.StreamHandler,
+         MethodCallHandler,
+-        PluginRegistry.RequestPermissionsResultListener,
+-        ProgressListener {
++        PluginRegistry.RequestPermissionsResultListener {
+ 
+     //CONSTANTS
+-    private static final String BYTES_DOWNLOADED = "BYTES_DOWNLOADED";
+-    private static final String BYTES_TOTAL = "BYTES_TOTAL";
+-    private static final String ERROR = "ERROR";
+     private static final String ARG_URL = "url";
+     private static final String ARG_USE_PACKAGE_INSTALLER = "usePackageInstaller";
+     private static final String ARG_HEADERS = "headers";
+@@ -92,7 +85,21 @@
+     private InstallSessionCallback installSessionCallback;
+ 
+     //DOWNLOAD SPECIFIC PLUGIN STATE. PLUGIN SUPPORT ONLY ONE DOWNLOAD AT A TIME
+-    private Call currentCall;
++    // 所有权只在主线程移交；工作线程只读取本任务的取消标记和参数。
++    private DownloadOperation activeDownload;
++
++    private static final class DownloadOperation {
++        final Call call;
++        final String checksum;
++        final List<Result> cancellations = new ArrayList<>();
++        volatile boolean canceled;
++        boolean installationStarted;
++
++        DownloadOperation(Call call, String checksum) {
++            this.call = call;
++            this.checksum = checksum;
++        }
++    }
+     private String downloadUrl;
+     private JSONObject headers;
+     private String filename;
+@@ -109,6 +116,8 @@
+     @Override
+     public void onDetachedFromEngine(FlutterPluginBinding binding) {
+         Log.d(TAG, "onDetachedFromEngine");
++        cancelActiveDownload();
++        closeSink();
+         context = null;
+         messanger = null;
+         OtaUpdatePlugin.instance = null;
+@@ -144,12 +153,14 @@
+         if (call.method.equals("getAbi")) {
+             result.success(Build.SUPPORTED_ABIS[0]);
+         } else if (call.method.equals("cancel")) {
+-            if (currentCall != null) {
+-                currentCall.cancel();
+-                currentCall = null;
+-                reportStatus(true, OtaStatus.CANCELED, "Call was canceled using cancel()", null, null);
+-            }
+-            result.success(null);
++            final DownloadOperation operation = activeDownload;
++            if (operation == null || operation.installationStarted) {
++                // 已交给系统的安装界面不能撤回；其终态继续通过事件流传递。
++                result.success(null);
++            } else {
++                operation.cancellations.add(result);
++                cancelActiveDownload();
++            }
+         } else {
+             result.notImplemented();
+         }
+@@ -158,8 +169,11 @@
+     //STREAM LISTENER
+     @Override
+     public void onListen(Object arguments, EventChannel.EventSink events) {
+-        if (progressSink != null) {
+-            progressSink.error("" + OtaStatus.ALREADY_RUNNING_ERROR.ordinal(), "Method call was cancelled. One method call is already running!", null);
++        if (activeDownload != null) {
++            // 拒绝新监听不能关闭仍在写盘或校验的旧任务。
++            events.error("" + OtaStatus.ALREADY_RUNNING_ERROR.ordinal(), "Another update is still running", null);
++            events.endOfStream();
++            return;
+         }
+         Log.d(TAG, "STREAM OPENED");
+         progressSink = events;
+@@ -209,6 +223,7 @@
+     @Override
+     public void onCancel(Object o) {
+         Log.d(TAG, "STREAM CLOSED");
++        cancelActiveDownload();
+         closeSink();
+     }
+ 
+@@ -235,113 +250,117 @@
+      * or from onRequestPermissionsResult if user had to grant permissions.
+      */
+     private void executeDownload() {
++        DownloadOperation operation = null;
+         try {
+-            if (currentCall != null) {
+-                reportStatus(true, OtaStatus.ALREADY_RUNNING_ERROR, "Another download (call) is already running", null, null);
+-                return;
+-            }
+-
+-            String dataDir = context.getApplicationInfo().dataDir + "/files/ota_update";
+-            //PREPARE URLS
+-            final String destination = dataDir + "/" + filename;
+-            final Uri fileUri = Uri.parse("file://" + destination);
+-
+-            //DELETE APK FILE IF IT ALREADY EXISTS
+-            final File file = new File(destination);
+-            if (file.exists()) {
+-                if (!file.delete()) {
+-                    Log.e(TAG, "WARNING: unable to delete old apk file before starting OTA");
+-                }
+-            } else if (file.getParentFile() != null && !file.getParentFile().exists()) {
+-                if (!file.getParentFile().mkdirs()) {
+-                    reportStatus(true, OtaStatus.INTERNAL_ERROR, "unable to create ota_update folder in internal storage", null, null);
+-                }
+-            }
+-
+-            Log.d(TAG, "DOWNLOAD STARTING");
+-            Request.Builder request = new Request.Builder()
+-                    .url(downloadUrl);
++            if (activeDownload != null) return;
++            final File file = new File(context.getFilesDir(), "ota_update/" + filename);
++            if (file.exists() && !file.delete()) {
++                throw new IOException("Unable to remove previous APK");
++            }
++            final File parent = file.getParentFile();
++            if (parent != null && !parent.exists() && !parent.mkdirs()) {
++                throw new IOException("Unable to create APK directory");
++            }
++            final Request.Builder request = new Request.Builder().url(downloadUrl);
+             if (headers != null) {
+-                Iterator<String> jsonKeys = headers.keys();
+-                while (jsonKeys.hasNext()) {
+-                    String headerName = jsonKeys.next();
+-                    String headerValue = headers.getString(headerName);
+-                    request.addHeader(headerName, headerValue);
+-                }
+-            }
+-
+-            currentCall = client.newCall(request.build());
+-            currentCall.enqueue(new Callback() {
+-                @Override
+-                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+-                    reportStatus(true, OtaStatus.DOWNLOAD_ERROR, e.getMessage(), e, null);
+-                    currentCall = null;
+-                }
+-
+-                @Override
+-                public void onResponse(@NotNull Call call, @NotNull Response response) {
+-                    if (!response.isSuccessful()) {
+-                        reportStatus(true, OtaStatus.DOWNLOAD_ERROR, "Http request finished with status " + response.code(), null, null);
++                Iterator<String> keys = headers.keys();
++                while (keys.hasNext()) {
++                    String key = keys.next();
++                    request.addHeader(key, headers.getString(key));
++                }
++            }
++            operation = new DownloadOperation(client.newCall(request.build()), checksum);
++            activeDownload = operation;
++            final DownloadOperation owner = operation;
++            owner.call.enqueue(new Callback() {
++                @Override public void onFailure(@NotNull Call call, @NotNull IOException error) {
++                    finishDownload(owner, file, OtaStatus.DOWNLOAD_ERROR, error.getMessage(), error);
++                }
++
++                @Override public void onResponse(@NotNull Call call, @NotNull Response response) {
++                    OtaStatus failure = null;
++                    String message = null;
++                    Exception error = null;
++                    // 响应体和输出文件先关闭，终态及取消确认才允许对外发布。
++                    try (Response bodyOwner = response) {
++                        if (!response.isSuccessful()) {
++                            throw new IOException("HTTP status " + response.code());
++                        }
++                        if (response.body() == null) throw new IOException("Missing response body");
++                        try (ProgressResponseBody body = new ProgressResponseBody(response.body(),
++                                (read, total, done) -> reportDownloadProgress(owner, read, total, done));
++                             BufferedSink output = Okio.buffer(Okio.sink(file))) {
++                            output.writeAll(body.source());
++                        }
++                        if (!owner.canceled && owner.checksum != null) {
++                            try {
++                                if (!validateChecksum(owner.checksum, file)) {
++                                    failure = OtaStatus.CHECKSUM_ERROR;
++                                    message = "Checksum verification failed";
++                                }
++                            } catch (RuntimeException exception) {
++                                failure = OtaStatus.CHECKSUM_ERROR;
++                                message = exception.getMessage();
++                                error = exception;
++                            }
++                        }
++                    } catch (IOException | RuntimeException exception) {
++                        failure = OtaStatus.DOWNLOAD_ERROR;
++                        message = exception.getMessage();
++                        error = exception;
+                     }
+-                    try {
+-                        BufferedSink sink = Okio.buffer(Okio.sink(file));
+-                        if (response.body() != null) {
+-                            sink.writeAll(response.body().source());
+-                        }
+-                        sink.close();
+-                    } catch (StreamResetException ex) {
+-                        // Thrown when the call was canceled using 'cancel()'
+-                        currentCall = null;
+-                        return;
+-                    } catch (IOException | RuntimeException ex) {
+-                        reportStatus(true, OtaStatus.DOWNLOAD_ERROR, ex.getMessage(), ex, null);
+-                        currentCall = null;
+-                        return;
+-                    }
+-                    onDownloadComplete(destination, fileUri);
+-                    currentCall = null;
++                    finishDownload(owner, file, failure, message, error);
+                 }
+             });
+-        } catch (Exception e) {
+-            reportStatus(true, OtaStatus.INTERNAL_ERROR, e.getMessage(), e, null);
+-            currentCall = null;
+-        }
+-    }
+-
+-    /**
+-     * Download has been completed
+-     * <p>
+-     * 1. Check if file exists
+-     * 2. If checksum was provided, compute downloaded file checksum and compare with provided value
+-     * 3. If checks above pass, trigger installation
+-     *
+-     * @param destination Destination path
+-     * @param fileUri     Uri to file
+-     */
+-    private void onDownloadComplete(final String destination, final Uri fileUri) {
+-        //DOWNLOAD IS COMPLETE, UNREGISTER RECEIVER AND CLOSE PROGRESS SINK
+-        final File downloadedFile = new File(destination);
+-        if (!downloadedFile.exists()) {
+-            reportStatus(true, OtaStatus.DOWNLOAD_ERROR, "File was not downloaded", null, null);
+-            return;
+-        }
+-        if (checksum != null) {
+-            //IF the user provided checksum verify file integrity
+-            try {
+-                if (!Sha256ChecksumValidator.validateChecksum(checksum, downloadedFile)) {
+-                    //SEND CHECKSUM ERROR EVENT
+-                    reportStatus(true, OtaStatus.CHECKSUM_ERROR, "Checksum verification failed", null, null);
+-                    return;
+-                }
+-            } catch (RuntimeException ex) {
+-                //SEND CHECKSUM ERROR EVENT
+-                reportStatus(true, OtaStatus.CHECKSUM_ERROR, ex.getMessage(), ex, null);
+-                return;
+-            }
+-        }
+-        //TRIGGER APK INSTALLATION
+-        handler.post(() -> executeInstallation(fileUri, downloadedFile)
+-        );
++        } catch (Exception error) {
++            if (operation != null) {
++                finishDownload(operation, null, OtaStatus.INTERNAL_ERROR, error.getMessage(), error);
++            } else {
++                reportStatus(true, OtaStatus.INTERNAL_ERROR, error.getMessage(), error, null);
++            }
++        }
++    }
++
++    private void cancelActiveDownload() {
++        final DownloadOperation operation = activeDownload;
++        if (operation == null || operation.installationStarted) return;
++        operation.canceled = true;
++        operation.call.cancel();
++    }
++
++    private void finishDownload(DownloadOperation operation, File file,
++                                OtaStatus failure, String message, Exception error) {
++        handler.post(() -> {
++            // 工作结束前保留所有权；重复或迟到回调不能释放另一任务或关闭它的流。
++            if (activeDownload != operation || operation.installationStarted) return;
++            if (operation.canceled) {
++                reportStatus(true, OtaStatus.CANCELED, "Download canceled", null, null);
++            } else if (failure != null) {
++                reportStatus(true, failure, message, error, null);
++            } else {
++                // 与取消在同一主线程决胜：安装尚未启动时，取消总能阻止交接。
++                operation.installationStarted = true;
++                try {
++                    executeInstallation(Uri.fromFile(file), file);
++                } catch (RuntimeException exception) {
++                    reportStatus(true, OtaStatus.INSTALLATION_ERROR, exception.getMessage(), exception, null);
++                }
++            }
++            if (operation.canceled || failure != null) {
++                if (activeDownload == operation) activeDownload = null;
++            }
++            for (Result result : operation.cancellations) result.success(null);
++            operation.cancellations.clear();
++        });
++    }
++
++    private void reportDownloadProgress(DownloadOperation operation, long read, long total, boolean done) {
++        if (done || total < 1) return;
++        handler.post(() -> {
++            if (activeDownload != operation || operation.canceled || operation.installationStarted) return;
++            contentLength = total;
++            reportStatus(false, OtaStatus.DOWNLOADING, "", null, "" + ((read * 100) / total));
++        });
+     }
+ 
+     /**
+@@ -359,6 +378,10 @@
+         }
+     }
+ 
++    boolean validateChecksum(String expected, File file) {
++        return Sha256ChecksumValidator.validateChecksum(expected, file);
++    }
++
+     /**
+      * Execute installation
+      * <p>
+@@ -369,7 +392,7 @@
+      * @param fileUri        Uri for file path
+      * @param downloadedFile Downloaded file
+      */
+-    private void executeInstallation(Uri fileUri, File downloadedFile) {
++    void executeInstallation(Uri fileUri, File downloadedFile) {
+         // Try silent installation for system apps first
+         if (hasInstallPackagesPermission()) {
+             Log.d(TAG, "App has INSTALL_PACKAGES, using package installer");
+@@ -496,10 +519,9 @@
+                     }
+                     progressSink.success(responseArgs);
+                 }
+-                if (closeSink) {
+-                    closeSink();
+-                }
+-            }
++                if (closeSink) closeSink();
++            }
++            if (closeSink) activeDownload = null;
+         } else {
+             //REPORT ERROR ON UI THREAD
+             handler.post(new Runnable() {
+@@ -520,22 +542,7 @@
+     private void initialize(Context context, BinaryMessenger messanger) {
+         this.context = context;
+         OtaUpdatePlugin.instance = this;
+-        handler = new Handler(context.getMainLooper()) {
+-            @Override
+-            public void handleMessage(Message msg) {
+-                super.handleMessage(msg);
+-                if (progressSink != null) {
+-                    Bundle data = msg.getData();
+-                    if (data.containsKey(ERROR)) {
+-                        reportStatus(true, OtaStatus.DOWNLOAD_ERROR, data.getString(ERROR), null, null);
+-                    } else {
+-                        long bytesDownloaded = data.getLong(BYTES_DOWNLOADED);
+-                        long bytesTotal = data.getLong(BYTES_TOTAL);
+-                        reportStatus(false, OtaStatus.DOWNLOADING, "", null, "" + ((bytesDownloaded * 100) / bytesTotal));
+-                    }
+-                }
+-            }
+-        };
++        handler = new Handler(context.getMainLooper());
+         installSessionCallback = new InstallSessionCallback();
+         final EventChannel progressChannel = new EventChannel(messanger, STREAM_CHANNEL);
+         progressChannel.setStreamHandler(this);
+@@ -543,35 +550,7 @@
+         final MethodChannel methodChannel = new MethodChannel(messanger, METHOD_CHANNEL);
+         methodChannel.setMethodCallHandler(this);
+ 
+-        client = new OkHttpClient.Builder()
+-                .addNetworkInterceptor(chain -> {
+-                    Response originalResponse = chain.proceed(chain.request());
+-                    return originalResponse.newBuilder()
+-                            .body(new ProgressResponseBody(originalResponse.body(), OtaUpdatePlugin.this))
+-                            .build();
+-                })
+-                .build();
+-    }
+-
+-    @Override
+-    public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {
+-        if (done) {
+-            Log.d(TAG, "Download is complete");
+-        } else {
+-            if (contentLength < 1) {
+-                Log.d(TAG, "Content-length header is missing. Cannot compute progress.");
+-            } else {
+-                if (progressSink != null) {
+-                    Message message = new Message();
+-                    Bundle data = new Bundle();
+-                    data.putLong(BYTES_DOWNLOADED, bytesRead);
+-                    data.putLong(BYTES_TOTAL, contentLength);
+-                    message.setData(data);
+-                    handler.sendMessage(message);
+-                    this.contentLength = contentLength;
+-                }
+-            }
+-        }
++        client = new OkHttpClient();
+     }
+ 
+     public void onInstallSuccess(String message) {
+@@ -593,8 +572,9 @@
+         progressSink = null;
+         contentLength = null;
+         try {
+-            PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+-            packageInstaller.unregisterSessionCallback(installSessionCallback);
++            if (context != null && installSessionCallback != null) {
++                context.getPackageManager().getPackageInstaller().unregisterSessionCallback(installSessionCallback);
++            }
+         } catch (RuntimeException e) {
+             Log.e(TAG, "Error unregistering session callback", e);
+         }
+--- /dev/null
++++ b/android/src/test/java/sk/fourq/otaupdate/OtaCancellationTest.java
+@@ -0,0 +1,299 @@
++package sk.fourq.otaupdate;
++
++import android.net.Uri;
++import android.os.Handler;
++import android.os.Looper;
++import io.flutter.plugin.common.EventChannel;
++import io.flutter.plugin.common.MethodCall;
++import io.flutter.plugin.common.MethodChannel;
++import java.io.File;
++import java.io.IOException;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
++import java.util.concurrent.Future;
++import java.util.concurrent.TimeUnit;
++import okhttp3.Call;
++import okhttp3.Callback;
++import okhttp3.MediaType;
++import okhttp3.OkHttpClient;
++import okhttp3.Protocol;
++import okhttp3.Request;
++import okhttp3.Response;
++import okhttp3.ResponseBody;
++import okio.Timeout;
++import okio.Buffer;
++import okio.BufferedSource;
++import okio.ForwardingSource;
++import okio.Okio;
++import org.junit.After;
++import org.junit.Before;
++import org.junit.Test;
++import org.junit.runner.RunWith;
++import org.robolectric.RobolectricTestRunner;
++import org.robolectric.RuntimeEnvironment;
++import org.robolectric.Shadows;
++import org.robolectric.annotation.Config;
++import org.robolectric.annotation.LooperMode;
++import org.robolectric.util.ReflectionHelpers;
++
++import static org.junit.Assert.*;
++
++/** 手动推进真实下载回调和主线程队列，固定取消与校验、安装交接的顺序。 */
++@RunWith(RobolectricTestRunner.class)
++@Config(sdk = 35)
++@LooperMode(LooperMode.Mode.PAUSED)
++public class OtaCancellationTest {
++    private final ExecutorService worker = Executors.newSingleThreadExecutor();
++    private final List<FakeCall> calls = new ArrayList<>();
++    private TestPlugin plugin;
++
++    @Before public void setUp() {
++        plugin = new TestPlugin();
++        ReflectionHelpers.setField(plugin, "context", RuntimeEnvironment.getApplication());
++        ReflectionHelpers.setField(plugin, "handler", new Handler(Looper.getMainLooper()));
++        ReflectionHelpers.setField(plugin, "client", new OkHttpClient() {
++            @Override public Call newCall(Request request) {
++                FakeCall call = new FakeCall(request);
++                calls.add(call);
++                return call;
++            }
++        });
++    }
++
++    @After public void tearDown() throws Exception {
++        plugin.checksumRelease.countDown();
++        worker.shutdown();
++        assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
++        idle();
++    }
++
++    private Sink start() {
++        Map<String, String> args = new HashMap<>();
++        args.put("url", "https://example.com/update.apk");
++        args.put("filename", "synlen-update.apk");
++        args.put("checksum", "ab".repeat(32));
++        args.put("usePackageInstaller", "false");
++        Sink sink = new Sink();
++        plugin.onListen(args, sink);
++        return sink;
++    }
++
++    private Result cancel() {
++        Result result = new Result();
++        plugin.onMethodCall(new MethodCall("cancel", null), result);
++        return result;
++    }
++
++    private Future<?> respond(FakeCall call, int status) {
++        return respond(call, status, ResponseBody.create("APK fixture", MediaType.get("application/octet-stream")));
++    }
++
++    private Future<?> respond(FakeCall call, int status, ResponseBody body) {
++        return worker.submit(() -> {
++            Response response = new Response.Builder().request(call.request)
++                .protocol(Protocol.HTTP_1_1).code(status).message("fixture")
++                .body(body)
++                .build();
++            call.callback.onResponse(call, response);
++            return null;
++        });
++    }
++
++    private void idle() { Shadows.shadowOf(Looper.getMainLooper()).idle(); }
++
++    @Test public void cancellationWaitsForChecksumAndBlocksRetry() throws Exception {
++        plugin.blockChecksum = true;
++        Sink first = start();
++        Future<?> callback = respond(calls.get(0), 200);
++        assertTrue(plugin.checksumEntered.await(5, TimeUnit.SECONDS));
++        Result canceled = cancel();
++        try {
++            assertEquals("校验未结束时不能确认取消", 0, canceled.completions);
++            Sink rejected = start();
++            assertEquals("旧任务未释放时不能创建新网络请求", 1, calls.size());
++            assertEquals(List.of("4"), rejected.errors);
++        } finally {
++            plugin.checksumRelease.countDown();
++        }
++        callback.get(5, TimeUnit.SECONDS);
++        idle();
++        assertEquals(1, canceled.completions);
++        assertEquals(List.of("9"), first.errors);
++        assertEquals(0, plugin.installations);
++    }
++
++    @Test public void cancellationBeforeQueuedInstallationSuppressesInstaller() throws Exception {
++        Sink sink = start();
++        respond(calls.get(0), 200).get(5, TimeUnit.SECONDS);
++        Result canceled = cancel();
++        idle();
++        assertEquals("已排队但未交给系统的安装仍须取消", 0, plugin.installations);
++        assertEquals(List.of("9"), sink.errors);
++        assertEquals(1, canceled.completions);
++    }
++
++    @Test public void lateFailureCannotCloseRetryOrClearItsCall() throws Exception {
++        start();
++        FakeCall old = calls.get(0);
++        Result canceled = cancel();
++        old.callback.onFailure(old, new IOException("canceled"));
++        idle();
++        assertEquals(1, canceled.completions);
++        Sink retry = start();
++        FakeCall current = calls.get(1);
++        old.callback.onFailure(old, new IOException("late callback"));
++        idle();
++        assertTrue("迟到回调不能终结重试流", retry.errors.isEmpty());
++        assertEquals(0, retry.closed);
++        Result retryCancel = cancel();
++        assertTrue("取消必须仍指向重试请求", current.canceled);
++        current.callback.onFailure(current, new IOException("canceled"));
++        idle();
++        assertEquals(1, retryCancel.completions);
++    }
++
++    @Test public void failedHttpResponseNeverReachesInstaller() throws Exception {
++        Sink sink = start();
++        respond(calls.get(0), 404).get(5, TimeUnit.SECONDS);
++        idle();
++        assertEquals(List.of("7"), sink.errors);
++        assertEquals(0, plugin.installations);
++        assertEquals(1, sink.closed);
++    }
++
++    @Test public void repeatedCancellationWaitsForBodyCloseAndDropsQueuedProgress() throws Exception {
++        Sink sink = start();
++        BlockingBody body = new BlockingBody();
++        Future<?> callback = respond(calls.get(0), 200, body);
++        assertTrue(body.entered.await(5, TimeUnit.SECONDS));
++        Result first = cancel();
++        Result second = cancel();
++        try {
++            assertEquals(0, first.completions);
++            assertEquals(0, second.completions);
++            assertFalse(body.closed);
++        } finally {
++            body.release.countDown();
++        }
++        callback.get(5, TimeUnit.SECONDS);
++        idle();
++        assertTrue(body.closed);
++        assertEquals(1, first.completions);
++        assertEquals(1, second.completions);
++        assertEquals(0, plugin.installations);
++        assertTrue("取消期间排队的进度不得覆盖终态", sink.values.isEmpty());
++        assertEquals(List.of("9"), sink.errors);
++    }
++
++    @Test public void streamDetachmentCancelsWorkBeforeNewListen() throws Exception {
++        start();
++        FakeCall old = calls.get(0);
++        plugin.onCancel(null);
++        assertTrue(old.canceled);
++        Sink rejected = start();
++        assertEquals(List.of("4"), rejected.errors);
++        old.callback.onFailure(old, new IOException("canceled"));
++        idle();
++        start();
++        assertEquals(2, calls.size());
++        respond(calls.get(1), 200).get(5, TimeUnit.SECONDS);
++        idle();
++        assertEquals(1, plugin.installations);
++    }
++
++    @Test public void checksumFailureClosesStreamAndAllowsRetry() throws Exception {
++        plugin.validChecksum = false;
++        Sink first = start();
++        respond(calls.get(0), 200).get(5, TimeUnit.SECONDS);
++        idle();
++        assertEquals(List.of("8"), first.errors);
++        assertEquals(0, plugin.installations);
++        plugin.validChecksum = true;
++        Sink retry = start();
++        respond(calls.get(1), 200).get(5, TimeUnit.SECONDS);
++        idle();
++        assertEquals(1, plugin.installations);
++        assertEquals(1, retry.closed);
++        assertTrue(retry.errors.isEmpty());
++        assertEquals(1, cancel().completions);
++    }
++
++    private static class TestPlugin extends OtaUpdatePlugin {
++        boolean blockChecksum;
++        boolean validChecksum = true;
++        int installations;
++        final CountDownLatch checksumEntered = new CountDownLatch(1);
++        final CountDownLatch checksumRelease = new CountDownLatch(1);
++        @Override boolean validateChecksum(String expected, File file) {
++            checksumEntered.countDown();
++            if (blockChecksum) {
++                try {
++                    if (!checksumRelease.await(5, TimeUnit.SECONDS)) throw new AssertionError("校验等待超时");
++                } catch (InterruptedException e) { throw new AssertionError(e); }
++            }
++            return validChecksum;
++        }
++        @Override void executeInstallation(Uri uri, File file) {
++            installations++;
++            onInstallSuccess("installed");
++        }
++    }
++
++    private static class Sink implements EventChannel.EventSink {
++        final List<String> errors = new ArrayList<>();
++        final List<Object> values = new ArrayList<>();
++        int closed;
++        @Override public void success(Object value) { values.add(value); }
++        @Override public void error(String code, String message, Object details) { errors.add(code); }
++        @Override public void endOfStream() { closed++; }
++    }
++
++    private static class BlockingBody extends ResponseBody {
++        final CountDownLatch entered = new CountDownLatch(1);
++        final CountDownLatch release = new CountDownLatch(1);
++        volatile boolean closed;
++        final BufferedSource source = Okio.buffer(new ForwardingSource(new Buffer().writeUtf8("APK fixture")) {
++            @Override public long read(Buffer sink, long count) throws IOException {
++                entered.countDown();
++                try {
++                    if (!release.await(5, TimeUnit.SECONDS)) throw new AssertionError("响应体等待超时");
++                } catch (InterruptedException e) { throw new AssertionError(e); }
++                return super.read(sink, count);
++            }
++            @Override public void close() throws IOException {
++                closed = true;
++                super.close();
++            }
++        });
++        @Override public MediaType contentType() { return MediaType.get("application/octet-stream"); }
++        @Override public long contentLength() { return 11; }
++        @Override public BufferedSource source() { return source; }
++    }
++
++    private static class Result implements MethodChannel.Result {
++        int completions;
++        @Override public void success(Object value) { completions++; }
++        @Override public void error(String code, String message, Object details) { fail(message); }
++        @Override public void notImplemented() { fail("未实现取消"); }
++    }
++
++    private static class FakeCall implements Call {
++        final Request request;
++        Callback callback;
++        boolean canceled;
++        FakeCall(Request request) { this.request = request; }
++        @Override public Request request() { return request; }
++        @Override public Response execute() { throw new UnsupportedOperationException(); }
++        @Override public void enqueue(Callback callback) { this.callback = callback; }
++        @Override public void cancel() { canceled = true; }
++        @Override public boolean isExecuted() { return callback != null; }
++        @Override public boolean isCanceled() { return canceled; }
++        @Override public Timeout timeout() { return Timeout.NONE; }
++        @Override public Call clone() { return new FakeCall(request); }
++    }
++}
