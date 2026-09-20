@@ -80,9 +80,10 @@ int _emitSanitizedTag(String source, int lt, StringBuffer out) {
   while (i < source.length && _isNameChar(source.codeUnitAt(i))) {
     i++;
   }
-  final localName = _localName(source.substring(nameStart, i));
+  final qualifiedName = source.substring(nameStart, i).toLowerCase();
+  final localName = _localName(qualifiedName);
   if (localName == 'script') {
-    return _skipScriptElement(source, i);
+    return _skipScriptElement(source, i, qualifiedName);
   }
 
   // segStart 之后的内容尚未写出；丢弃属性时先写 [segStart, wsStart)，
@@ -159,8 +160,8 @@ int _emitSanitizedTag(String source, int lt, StringBuffer out) {
 }
 
 /// 丢弃 `<script` 开标签的剩余部分（[i] 位于标签名之后）及其内容，
-/// 直到配对的 `</script>`；自闭合或未闭合时直接返回。
-int _skipScriptElement(String source, int i) {
+/// 直到带相同命名空间前缀的闭合标签；自闭合或未闭合时直接返回。
+int _skipScriptElement(String source, int i, String qualifiedName) {
   var selfClosing = false;
   var tagClosed = false;
   while (i < source.length) {
@@ -187,8 +188,7 @@ int _skipScriptElement(String source, int i) {
   }
   if (!tagClosed || selfClosing) return i;
 
-  // 与浏览器一致：脚本内容在第一个 </script 处结束
-  final close = _indexOfClosingTag(source, i, 'script');
+  final close = _indexOfClosingTag(source, i, qualifiedName);
   if (close < 0) return source.length;
   final gt = source.indexOf('>', close);
   return gt < 0 ? source.length : gt + 1;

@@ -58,6 +58,28 @@ void main() {
       );
     });
 
+    test('带前缀的 script 闭合后保留 SVG 元素与正文', () {
+      const before =
+          '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+          '<svg:svg xmlns:svg="http://www.w3.org/2000/svg">';
+      const after =
+          '<svg:rect width="10" height="10"/></svg:svg>'
+          '<p>正文应保留</p></body></html>';
+      expect(
+        sanitizeBookXhtml('$before<svg:script>void 0</svg:script>$after'),
+        '$before$after',
+      );
+    });
+
+    test('带前缀的 script 按完整标签名闭合且支持大小写混杂', () {
+      expect(
+        sanitizeBookXhtml(
+          '<SVG:ScRiPt>"</script>"; void 0</svg:sCrIpT><p>正文</p>',
+        ),
+        '<p>正文</p>',
+      );
+    });
+
     test('未闭合的 script 丢弃到文末', () {
       expect(sanitizeBookXhtml('<p>a</p><script>alert(1)'), '<p>a</p>');
     });

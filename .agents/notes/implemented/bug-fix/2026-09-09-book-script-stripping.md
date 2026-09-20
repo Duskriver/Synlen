@@ -10,9 +10,9 @@ Status: implemented
 
 在供给层剥离，方案 (a)：`BookWebViewHandler._readFileFromEpub` 供给 XHTML/HTML/XML/SVG 前调用纯函数 `sanitizeBookXhtml`（`lib/src/features/reader/domain/xhtml_sanitizer.dart`），剥掉 `<script>` 元素（含 SVG 内、带命名空间前缀如 `<svg:script>`、大小写混杂、自闭合形态）与所有元素上的 `on*` 内联事件属性。剥进入缓存之前，内存缓存存的是剥离后字节。TXT 章节内容在 `TxtContentService.buildChapterHtml` 已整体转义，无脚本面，不再重复剥离。
 
-实现选型是标签级扫描而非解析往返：注释、CDATA、DOCTYPE、处理指令原样保留；属性解析引号感知；无引号属性值在紧邻 `>` 的 `/` 前停止以保住自闭合斜杠（XHTML 按 XML 解析，丢斜杠即 malformed）；`style` 按 raw text 元素处理，CSS 文本里的 `<script>` 字样不误伤。无脚本内容时输出与输入逐字节一致。
+实现选型是标签级扫描而非解析往返：注释、CDATA、DOCTYPE、处理指令原样保留；属性解析引号感知；无引号属性值在紧邻 `>` 的 `/` 前停止以保住自闭合斜杠（XHTML 按 XML 解析，丢斜杠即 malformed）；`style` 按 raw text 元素处理，CSS 文本里的 `<script>` 字样不误伤。脚本闭合匹配使用开标签的限定名（含命名空间前缀），避免找不到 `</svg:script>` 而丢弃后续正文。无脚本内容时输出与输入逐字节一致。
 
-同批加固了分页 CSS（`web_assets/pagination.css/main.css`）：`table { display: block; overflow: auto }` 防宽表被全局 `max-width` 规则压坏；`math` 元素超宽横向滚动、禁止跨栏断裂。
+分页 CSS 保留原生表格布局，使长表格参与跨栏分页。`math` 元素超宽横向滚动、禁止跨栏断裂。
 
 ## Alternatives considered
 
@@ -24,16 +24,17 @@ Status: implemented
 
 **`javascript:` href 一并剥离** —— 放弃。链接点击经 `shouldOverrideUrlLoading` 已只放行 `book://` 与 `data:`，其余一律 CANCEL，已有等价防线。
 
+**表格块级化并设 `overflow: auto`** —— 放弃。Chromium 将滚动容器视为不可跨栏拆分的整体，100 行表格只报告 1 页，其余行在视口下方；阅读器禁止原生触摸滚动，表内滚动无法让用户访问这些行。原生表格布局同时保留跨页能力与书籍的 `border-collapse` 样式。
+
 ## Consequences
 
 - 已知取舍：依赖书内脚本的交互内容（内嵌小部件、脚本驱动的 quiz 等）从此静默失效，不给用户提示；有声书/脚本增强型 EPUB 属于主动放弃的能力。
 - 剥离按 UTF-8 有损解码再编码：本就非法的字节序列会变成 U+FFFD（此前是 WebView 端容错，差异极小）；合法 UTF-8 且无脚本的内容逐字节不变。
-- 表格块级化的代价：书籍自设在 `table` 元素上的 `border-collapse` 不再生效（该属性只作用于 table 盒），边框可能呈现为分离双线。
+- 不引入表内横向滚动；超宽表格仍依赖书籍排版和单元格换行适应页宽。
 - MathML 依赖 WebView 原生 MathML Core，低端旧 WebView 可能不渲染公式；这是记录在 [reader 子系统文档](../../../../docs/subsystems/reader.md#已知限制与待办) 的已知限制，不引入 MathJax。
 
 ## Testing
 
-- `test/features/reader/domain/xhtml_sanitizer_test.dart` 25 例：成对/自闭合/带属性/大小写混杂的 `<script>`、SVG 内与命名空间前缀 script、`on*` 属性的三种引号形态与大小写、自闭合斜杠保留、转义 `&lt;script&gt;` / 注释 / CDATA / style 内容 / 属性值中的 `<script>` 字样不误伤、无脚本内容逐字节一致、MIME 判定。
-- `flutter analyze` 零 error 零 warning；`dart run tool/layer_gates.dart` 通过；`test/features/reader` 全绿。
-- `npm run typecheck --prefix web_assets/controller.js` 与 `npm test`（chromium + webkit 各 24 例）全绿；`dart run tool/build_web_assets.dart` 重新生成 `lib/src/web/web_assets.dart`。
-- 真机验证未做：恶意 EPUB 在旧 Android System WebView 上的实际拦截效果需在下次发版窗口确认。
+- `test/features/reader/domain/xhtml_sanitizer_test.dart` 覆盖脚本剥离、内联事件属性剥离与保留区，包括带前缀脚本之后的 SVG 元素和正文完整保留。
+- `web_assets/controller.js/tests/reader_lifecycle.spec.cjs` 在 Chromium 与 WebKit 的真实三 iframe 中验证 100 行长表格可翻到末页，并断言末行文字全部位于可视区域。
+- 浏览器回归不替代 Android / iOS 真机对旧 WebView 的脚本拦截与分页体验验收。

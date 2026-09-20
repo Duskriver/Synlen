@@ -8,11 +8,11 @@ const paginationCss = buildSync({ entryPoints: [path.join(__dirname, '../../pagi
   write: false }).outputFiles[0].text;
 const skeletonCss = fs.readFileSync(path.join(__dirname, '../../skeleton.css'), 'utf8');
 
-async function setup(page) {
+async function setup(page, chapterBody) {
   await page.route('http://reader.test/**', route => {
     const chapter = new URL(route.request().url()).pathname;
     const paragraphs = Array.from({ length: 80 }, (_, i) => `<p id="p${i}">${chapter}: Reading keeps a clear record of every chapter. ${'A quiet morning by the sea. '.repeat(12)}</p>`).join('');
-    route.fulfill({ contentType: 'text/html', body: `<html><body>${paragraphs}</body></html>` });
+    route.fulfill({ contentType: 'text/html', body: `<html><body>${chapterBody ?? paragraphs}</body></html>` });
   });
   await page.goto('http://reader.test/host');
   await page.setContent(`<style>${skeletonCss}</style><div id="frame-container"><iframe id="frame-prev"></iframe><iframe id="frame-curr"></iframe><iframe id="frame-next"></iframe></div>`);
@@ -82,4 +82,30 @@ test('同一章节重新定位只完成一次，不在回执后被重复加载�
   await command(page, 32, 'waitForRender', []);
   expect((await position(page)).index).toBe(target.index);
   expect(await page.evaluate(() => window.events.filter(e => e[0] === 'onEventFinished' && e[1] === 30).length)).toBe(1);
+});
+
+test('长表格跨页后可翻到末行，正文不落入不可滚动的表内区域', async ({ page }) => {
+  await page.setViewportSize({ width: 600, height: 700 });
+  const rows = Array.from({ length: 100 }, (_, i) =>
+    `<tr id="row${i}"><td>Row ${i}</td><td>Some text to be read.</td></tr>`).join('');
+  await setup(page, `<table>${rows}</table>`);
+  const { count } = await position(page);
+  expect(count).toBeGreaterThan(1);
+  await command(page, 40, 'jumpToPage', [count - 1]);
+  expect((await position(page)).index).toBe(count - 1);
+  const lastRow = await page.evaluate(() => {
+    const doc = document.querySelector('#frame-curr').contentDocument;
+    const range = doc.createRange();
+    range.selectNodeContents(doc.querySelector('#row99'));
+    return [...range.getClientRects()].map(rect => ({
+      left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+    }));
+  });
+  expect(lastRow.length).toBeGreaterThan(0);
+  for (const rect of lastRow) {
+    expect(rect.left).toBeGreaterThanOrEqual(0);
+    expect(rect.right).toBeLessThanOrEqual(600);
+    expect(rect.top).toBeGreaterThanOrEqual(0);
+    expect(rect.bottom).toBeLessThanOrEqual(700);
+  }
 });

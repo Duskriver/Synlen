@@ -61,7 +61,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 - 图片、脚注、外链确认和系统主题解析留在展示层；它们依赖 Flutter 上下文，验证需 widget 或设备测试。
 - 阅读会话与桥接协议可独立单测；真实 WebView 的验证入口见[测试现状](../testing.md#现状)。
 - `BookWebViewHandler` 同时服务 EPUB 与 TXT，虚拟域格式中立（`book://`）。
-- 超宽表格在分页 CSS 里块级化后横向滚动（`table { display: block; overflow: auto }`）；代价是书籍自设在 `table` 元素上的 `border-collapse` 不再生效（该属性只作用于 table 盒）。
+- 表格保留原生布局并跨栏分页，不提供表内横向滚动；超宽表格依赖书籍排版和单元格换行适应页宽。
 - MathML 不做重型引入（不引入 MathJax）：分页 CSS 只保证 `math` 不被列宽规则压坏（超宽公式横向滚动、禁止跨栏断裂），渲染依赖 WebView 原生 MathML Core（Android System WebView Chromium 109+ / 现代 WKWebView），低端旧 WebView 可能不渲染公式。
 - 超 400 行文件：`reader_screen.dart`。复现：
 
