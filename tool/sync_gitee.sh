@@ -12,7 +12,11 @@ case "$1" in
 esac
 ASKPASS
 chmod 700 "$WORK/askpass"
-# checkout 必须 fetch-depth: 0，让 origin/main 和所有标签都可见。
+# 从远端独立取引用，避免开发工作区的未发布标签进入公开镜像。
+SOURCE_URL="$(git remote get-url origin)"
+git init --quiet --bare "$WORK/source.git"
+GIT_TERMINAL_PROMPT=0 git -C "$WORK/source.git" fetch --quiet --no-tags "$SOURCE_URL" \
+  'refs/heads/main:refs/heads/main' 'refs/tags/*:refs/tags/*'
 GIT_TERMINAL_PROMPT=0 GIT_ASKPASS="$WORK/askpass" \
-  git -c credential.helper= push https://gitee.com/Tang_Lei789/synlen.git \
-    refs/remotes/origin/main:refs/heads/main 'refs/tags/*:refs/tags/*'
+  git -C "$WORK/source.git" -c credential.helper= push https://gitee.com/Tang_Lei789/synlen.git \
+    refs/heads/main:refs/heads/main 'refs/tags/*:refs/tags/*'
