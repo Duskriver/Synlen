@@ -17,7 +17,12 @@ class ReadiumViewport extends StatefulWidget {
     required this.handleInternalLinks,
   });
   final ReadiumSession session;
-  final void Function(ReadiumInteraction event, Rect? anchorRect) onInteraction;
+  final void Function(
+    ReadiumInteraction event,
+    Rect? anchorRect,
+    List<Rect>? wordRects,
+  )
+  onInteraction;
   final ValueChanged<String> onExternalLink;
   final ValueChanged<ImageTapEvent> onImage;
   final ValueNotifier<bool> controls;
@@ -58,23 +63,34 @@ class _ReadiumViewportState extends State<ReadiumViewport> {
         final event = session.interaction(_id, payload);
         if (event == null) return;
         Rect? globalAnchor;
+        List<Rect>? globalWords;
         final anchor = event.anchorRect;
         if (anchor != null) {
           final box = context.findRenderObject();
           if (box is! RenderBox || !box.hasSize) return;
-          final local = Rect.fromLTWH(
-            anchor.x,
-            anchor.y,
-            anchor.width,
-            anchor.height,
-          ).intersect(Offset.zero & box.size);
-          if (local.isEmpty) return;
-          globalAnchor = Rect.fromPoints(
-            box.localToGlobal(local.topLeft),
-            box.localToGlobal(local.bottomRight),
-          );
+          Rect? toGlobal(ReadiumWordRect rect) {
+            final local = Rect.fromLTWH(
+              rect.x,
+              rect.y,
+              rect.width,
+              rect.height,
+            ).intersect(Offset.zero & box.size);
+            if (local.isEmpty) return null;
+            return Rect.fromPoints(
+              box.localToGlobal(local.topLeft),
+              box.localToGlobal(local.bottomRight),
+            );
+          }
+
+          globalAnchor = toGlobal(anchor);
+          if (globalAnchor == null) return;
+          globalWords = event.wordRects
+              ?.map(toGlobal)
+              .whereType<Rect>()
+              .toList();
+          if (globalWords != null && globalWords.isEmpty) return;
         }
-        widget.onInteraction(event, globalAnchor);
+        widget.onInteraction(event, globalAnchor, globalWords);
       },
       onExternalLinkActivated: (url) {
         if (mounted && _id == session.sessionId && session.ready) {

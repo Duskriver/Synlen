@@ -88,11 +88,18 @@ extension EPUBReaderView {
       if payload["kind"] as? String == "word" {
         guard let webView = message.webView,
               webView.isDescendant(of: containerView),
-              let localRect = ReadiumWordAnchor.webViewRect(payload: payload, size: webView.bounds.size) else { return }
+              let localRect = ReadiumWordAnchor.webViewRect(payload: payload, size: webView.bounds.size),
+              let localWords = ReadiumWordAnchor.webViewRects(payload: payload, size: webView.bounds.size) else { return }
         // UIKit 的视图变换已包含原生页偏移，结果为 Flutter 平台视口内的逻辑点。
         let rect = webView.convert(localRect, to: containerView).intersection(containerView.bounds)
         guard !rect.isNull, rect.width > 0, rect.height > 0 else { return }
+        let words = localWords.map { webView.convert($0, to: containerView).intersection(containerView.bounds) }
+          .filter { !$0.isNull && $0.width > 0 && $0.height > 0 }
+        guard !words.isEmpty else { return }
         payload["anchorRect"] = ["x": rect.minX, "y": rect.minY, "width": rect.width, "height": rect.height]
+        payload["wordRects"] = words.map { ["x": $0.minX, "y": $0.minY, "width": $0.width, "height": $0.height] }
+      } else {
+        payload.removeValue(forKey: "wordRects")
       }
       guard let result = try? JSONSerialization.data(withJSONObject: payload),
             let resultJson = String(data: result, encoding: .utf8) else { return }

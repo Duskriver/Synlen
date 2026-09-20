@@ -1,9 +1,9 @@
-import { extractLearningText, LearningWordRect } from './learning_text';
+import { extractLearningText, LearningWordRect, wordBounds } from './learning_text';
 import { getVisibleLocator, VisibleLocator } from './visible_locator';
 
 interface Point { x: number; y: number }
 interface Gesture extends Point { pointerId: number; cancelled: boolean; sentenceSent: boolean; tapSent: boolean }
-interface WordAnchor { wordRect: LearningWordRect; viewport: { width: number; height: number } }
+interface WordAnchor { wordRect: LearningWordRect; wordRects: LearningWordRect[]; viewport: { width: number; height: number } }
 export type LearningMessage =
   | ({ version: 1; href: string; kind: 'word'; word: string; sentence: string } & WordAnchor)
   | { version: 1; href: string; kind: 'sentence'; sentence: string }
@@ -30,9 +30,9 @@ const movementLimit = 10;
 const holdDelay = 550;
 
 /** 将书内 frame 的可见词矩形提升到所属 WebView 的 CSS 视口，原生层再转换单位和位置。 */
-function wordAnchor(window: Window, bounds: LearningWordRect | null): WordAnchor | null {
-  if (!bounds) return null;
-  let rect = { ...bounds };
+function wordAnchor(window: Window, fragments: LearningWordRect[]): WordAnchor | null {
+  if (!fragments.length) return null;
+  let rects = fragments;
   let view = window;
   try {
     while (view !== view.parent) {
@@ -43,23 +43,27 @@ function wordAnchor(window: Window, bounds: LearningWordRect | null): WordAnchor
       const scaleY = box.height / frame.offsetHeight;
       const contentWidth = frame.clientWidth * scaleX;
       const contentHeight = frame.clientHeight * scaleY;
-      rect = {
+      rects = rects.map(rect => ({
         x: box.left + frame.clientLeft * scaleX + rect.x * contentWidth / view.innerWidth,
         y: box.top + frame.clientTop * scaleY + rect.y * contentHeight / view.innerHeight,
         width: rect.width * contentWidth / view.innerWidth,
         height: rect.height * contentHeight / view.innerHeight,
-      };
+      }));
       view = view.parent;
     }
     const viewport = view.visualViewport;
     const width = viewport?.width ?? view.innerWidth;
     const height = viewport?.height ?? view.innerHeight;
-    const x = Math.max(0, rect.x - (viewport?.offsetLeft ?? 0));
-    const y = Math.max(0, rect.y - (viewport?.offsetTop ?? 0));
-    const right = Math.min(width, rect.x + rect.width - (viewport?.offsetLeft ?? 0));
-    const bottom = Math.min(height, rect.y + rect.height - (viewport?.offsetTop ?? 0));
-    if (right <= x || bottom <= y || width <= 0 || height <= 0) return null;
-    return { wordRect: { x, y, width: right - x, height: bottom - y }, viewport: { width, height } };
+    if (width <= 0 || height <= 0) return null;
+    rects = rects.map(rect => {
+      const x = Math.max(0, rect.x - (viewport?.offsetLeft ?? 0));
+      const y = Math.max(0, rect.y - (viewport?.offsetTop ?? 0));
+      const right = Math.min(width, rect.x + rect.width - (viewport?.offsetLeft ?? 0));
+      const bottom = Math.min(height, rect.y + rect.height - (viewport?.offsetTop ?? 0));
+      return { x, y, width: right - x, height: bottom - y };
+    }).filter(rect => rect.width > 0 && rect.height > 0);
+    const wordRect = wordBounds(rects);
+    return wordRect ? { wordRect, wordRects: rects, viewport: { width, height } } : null;
   } catch {
     return null;
   }
@@ -171,7 +175,7 @@ export function installLearningBridge(window: BridgeWindow): { dispose(): void; 
     // 原生阅读器可能抑制兼容 click；短点在抬手时完成，随后 click 只去重。
     if (!gesture.cancelled && !gesture.sentenceSent && eligible(event)) {
       const text = extract({ x: event.clientX, y: event.clientY });
-      const anchor = wordAnchor(window, text?.wordRect ?? null);
+      const anchor = wordAnchor(window, text?.wordRects ?? []);
       gesture.tapSent = emit(text?.word && anchor
         ? { kind: 'word', word: text.word, sentence: text.sentence, ...anchor }
         : { kind: 'controls' });

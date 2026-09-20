@@ -8,7 +8,7 @@
 
 `ReadiumReaderWidget` 增加 `sessionId`、`onTextInteraction`、`onLocatorChanged`、`onReaderReady`、`onReaderError`、`onReaderDisposed`、`handlePointerControls` 和 `handleInternalLinks`。应用为每次创建提供新的 `sessionId`。文字回执是最多 65536 个 UTF-16 单元的 JSON 字符串，原生层覆盖 `sessionId` 和 `resourceHref`；宿主仍负责校验版本、事件类型、正文长度和当前章节。学习提取逻辑属于应用资源。
 
-单词消息携带可见 CSS 词矩形 `wordRect` 与 CSS 视口尺寸 `viewport`。原生层丢弃消息自带的 `anchorRect`，从实际发送消息的 WebView 转换到 Flutter 平台视口内的逻辑坐标，再写入 `anchorRect: {x, y, width, height}`。Android 包含祖先滚动、原生页面偏移和视图变换，只在输出时换算一次屏幕密度；iOS 经 WebView 到容器的 UIKit 坐标转换。无效、不可见或不属于该视口的词矩形不转发；句子与空白点击不要求矩形。
+单词消息携带可见 CSS 词包围矩形 `wordRect`、逐片段矩形 `wordRects` 与 CSS 视口尺寸 `viewport`。原生层丢弃消息自带的 `anchorRect`，从实际发送消息的 WebView 转换到 Flutter 平台视口内的逻辑坐标，再写入 `anchorRect: {x, y, width, height}` 并替换 `wordRects`。包围矩形用于定位卡片，逐片段矩形用于着色；未携带片段的旧消息退回包围矩形。Android 包含祖先滚动、原生页面偏移和视图变换，只在输出时换算一次屏幕密度；iOS 经 WebView 到容器的 UIKit 坐标转换。无效、不可见或不属于该视口的词矩形不转发；句子与空白点击不要求矩形。
 
 `onReaderReady` 报告原生页面就绪；Android 的此回执可能早于可见位置查询，宿主须同时等待有效 Locator 才结束加载。位置查询通过应用脚本的 `window.synlenReadiumBridge.getVisibleLocator()` 取得 `locations.cssSelector` 与当前页短文本 `text`；无可唯一定位的文字时可返回 `null`，保留原生 Locator。资源身份或导航版本不符的异步结果丢弃，查询异常及超时通过 `LocatorUnavailable` 报告。字号、字体、行距等布局变化通过保存完整 Locator、移除视口、等待 `onReaderDisposed`、关闭出版物，再用新偏好和旧 Locator 创建视口来恢复位置。
 

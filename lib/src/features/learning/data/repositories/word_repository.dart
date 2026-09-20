@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-import '../services/learning_http_request.dart';
 import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
-import 'package:dio/dio.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/data/services/aliyun_tts_service.dart';
@@ -41,53 +39,33 @@ class WordRepository implements LearningRepository {
     return _cacheStore.getPronunciation(word);
   }
 
-  /// 获取单词的发音音频字节流结果（包含流和格式）
-  ///
-  /// 业务逻辑：
-  /// 1. 首先尝试从免费词典 API 获取 URL (返回 mp3)
-  /// 2. 如果成功，流式下载该 URL 的内容
-  /// 3. 如果失败，降级调用阿里云 TTS 流式接口 (返回 pcm)
+  /// 优先获取完整词典 MP3，失败时回退阿里云 PCM 流。
   @override
   Stream<AudioStreamResult> getPronunciationStream(
     String word, {
     LearningCancellation? cancellation,
   }) async* {
-    final request = LearningHttpRequest(cancellation);
-    var responseTransferred = false;
     try {
       cancellation?.throwIfCancelled();
-      // 1. 尝试免费词典
-      final dictionaryAudioUrl = await _freeDictionaryService
-          .getPronunciationUrl(word, cancellation: cancellation);
+      final dictionaryAudio = await _freeDictionaryService
+          .getPronunciationAudio(word, cancellation: cancellation);
       cancellation?.throwIfCancelled();
-      if (dictionaryAudioUrl != null && dictionaryAudioUrl.isNotEmpty) {
-        final response = await _freeDictionaryService.dio.get<ResponseBody>(
-          dictionaryAudioUrl,
-          cancelToken: request.cancelToken,
-          options: Options(responseType: ResponseType.stream),
+      if (dictionaryAudio != null && dictionaryAudio.isNotEmpty) {
+        yield AudioStreamResult(
+          stream: Stream.value(dictionaryAudio),
+          format: AudioFormat.mp3,
+          cacheByVoice: false,
         );
-        if (response.statusCode == 200 && response.data != null) {
-          responseTransferred = true;
-          yield AudioStreamResult(
-            stream: request.bind(response.data!.stream.cast<List<int>>()),
-            format: AudioFormat.mp3,
-            cacheByVoice: false,
-            playbackUri: dictionaryAudioUrl,
-          );
-          return;
-        }
+        return;
       }
     } catch (e) {
       cancellation?.throwIfCancelled();
       appLogger.w(
         'Free Dictionary Audio error, falling back to Aliyun TTS: $e',
       );
-    } finally {
-      if (!responseTransferred) request.dispose();
     }
 
     cancellation?.throwIfCancelled();
-    // 2. 降级到阿里云 TTS 流式 (PCM)
     yield AudioStreamResult(
       stream: _aliyunTTSService.generateAudioStream(
         word,

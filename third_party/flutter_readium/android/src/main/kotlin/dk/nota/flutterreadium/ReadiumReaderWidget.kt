@@ -124,21 +124,22 @@ class ReadiumReaderWidget(
         val locatorString = creationParams["initialLocator"] as String?
         val allowScreenReaderNavigation = creationParams["allowScreenReaderNavigation"] as Boolean?
         var fontResourceFailed = false
-        val fontFamilyDeclarations = runCatching {
-            ReaderFontFamily.fromList(creationParams["fontFamilyDeclarations"]) { asset ->
-                if (asset.startsWith("file:")) {
-                    val file = java.io.File(java.net.URI(asset))
-                    require(file.isFile && file.length() in 1..(32L * 1024 * 1024)) { "Invalid local font" }
-                    "data:font/ttf;base64," + android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
-                } else {
-                    FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
+        val fontFamilyDeclarations =
+            runCatching {
+                ReaderFontFamily.fromList(creationParams["fontFamilyDeclarations"]) { asset ->
+                    if (asset.startsWith("file:")) {
+                        val file = java.io.File(java.net.URI(asset))
+                        require(file.isFile && file.length() in 1..(32L * 1024 * 1024)) { "Invalid local font" }
+                        "data:font/ttf;base64," + android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
+                    } else {
+                        FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
+                    }
                 }
+            }.getOrElse { error ->
+                fontResourceFailed = true
+                PluginLog.w(TAG, "Cannot load reader font: $error")
+                emptyList()
             }
-        }.getOrElse { error ->
-            fontResourceFailed = true
-            PluginLog.w(TAG, "Cannot load reader font: $error")
-            emptyList()
-        }
 
         // Selection actions must be known BEFORE the navigator fragment is built, because
         // EpubReaderFragment decides `selectionActionModeCallback` from
@@ -238,7 +239,11 @@ class ReadiumReaderWidget(
         if (!disposed) channel.onImageTapped(json)
     }
 
-    override fun onTextInteraction(json: String, resourceHref: String, sourceView: View) {
+    override fun onTextInteraction(
+        json: String,
+        resourceHref: String,
+        sourceView: View,
+    ) {
         if (disposed) return
         val payload = runCatching { JSONObject(json) }.getOrNull() ?: return
         payload.put("sessionId", sessionId)
@@ -246,7 +251,11 @@ class ReadiumReaderWidget(
         payload.remove("anchorRect")
         if (payload.optString("kind") == "word") {
             val anchor = ReadiumWordAnchor.inReader(payload, sourceView, layout) ?: return
+            val words = ReadiumWordAnchor.wordRectsInReader(payload, sourceView, layout) ?: return
             payload.put("anchorRect", anchor)
+            payload.put("wordRects", words)
+        } else {
+            payload.remove("wordRects")
         }
         channel.onTextInteraction(payload.toString())
     }
@@ -368,24 +377,29 @@ class ReadiumReaderWidget(
                         }
 
                         else -> {
-                            val script = """
+                            val script =
+                                """
                                 (() => ({revision: $revision, href: document.URL,
                                   pageInformation: window.flutterReadium.getPageInformation(),
                                   anchor: window.synlenReadiumBridge.getVisibleLocator()}))()
-                            """.trimIndent()
-                            val snapshot = evaluateJavascript(script)?.let { jsonDecode(it) as? JSONObject }
-                                ?: error("Visible locator query failed")
-                            val expectedUrl = (publication?.baseUrl ?: AbsoluteUrl("https://readium_package/")!!)
-                                .resolve(locator.href).cleanHref()
+                                """.trimIndent()
+                            val snapshot =
+                                evaluateJavascript(script)?.let { jsonDecode(it) as? JSONObject }
+                                    ?: error("Visible locator query failed")
+                            val expectedUrl =
+                                (publication?.baseUrl ?: AbsoluteUrl("https://readium_package/")!!)
+                                    .resolve(locator.href)
+                                    .cleanHref()
                             val actualUrl = AbsoluteUrl(snapshot.optString("href"))?.cleanHref()
                             if (snapshot.optLong("revision") != revision || actualUrl != expectedUrl) {
                                 staleResource = true
                                 return@withTimeoutOrNull null
                             }
                             snapshot.optJSONObject("pageInformation")?.let { pageInfo ->
-                                emittingLocator = emittingLocator.copyWithAdditionalLocations(
-                                    PageInformation.fromJson(pageInfo, locator.href).otherLocations,
-                                )
+                                emittingLocator =
+                                    emittingLocator.copyWithAdditionalLocations(
+                                        PageInformation.fromJson(pageInfo, locator.href).otherLocations,
+                                    )
                             }
                             // null 表示图页或无法唯一定位；有效短文本优先于段落起点和比例。
                             snapshot.optJSONObject("anchor")?.let { anchor ->
@@ -393,9 +407,10 @@ class ReadiumReaderWidget(
                                 val text = anchor.optJSONObject("text")
                                 val highlight = text?.optString("highlight")
                                 require(!selector.isNullOrBlank() && !highlight.isNullOrBlank() && highlight.length <= 512)
-                                emittingLocator = emittingLocator
-                                    .copyWithAdditionalLocations(mapOf("cssSelector" to selector))
-                                    .copy(text = Locator.Text.fromJSON(text))
+                                emittingLocator =
+                                    emittingLocator
+                                        .copyWithAdditionalLocations(mapOf("cssSelector" to selector))
+                                        .copy(text = Locator.Text.fromJSON(text))
                             }
 
                             emittingLocator = emittingLocator.addPageNumber(pageIndex, totalPages)
@@ -413,10 +428,11 @@ class ReadiumReaderWidget(
                 )
             }
 
-            val emittingLocator = enriched ?: run {
-                channel.onReaderError("LocatorUnavailable")
-                return
-            }
+            val emittingLocator =
+                enriched ?: run {
+                    channel.onReaderError("LocatorUnavailable")
+                    return
+                }
             channel.onPageChanged(emittingLocator)
             ReadiumReader.emitTextLocatorUpdate(emittingLocator)
             PluginLog.d(TAG, "::emitOnPageChanged: emitted $emittingLocator")

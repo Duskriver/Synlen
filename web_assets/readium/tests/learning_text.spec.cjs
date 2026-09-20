@@ -88,6 +88,8 @@ test('跨内联节点与软连字符换行的词矩形包含全部可见片段',
   expect(result.extracted.word).toBe('dictionary');
   expect(result.lines).toBeGreaterThan(1);
   expect(result.extracted.wordRect).toEqual(result.expected);
+  expect(new Set(result.extracted.wordRects.map(rect => rect.y)).size).toBeGreaterThan(1);
+  expect(new Set(result.extracted.wordRects.map(rect => JSON.stringify(rect))).size).toBe(result.extracted.wordRects.length);
 });
 
 test('分页滚动后只返回本页可见词片段，不把排版留白和页外部分计入锚点', async ({ page }) => {
@@ -109,4 +111,10 @@ test('分页滚动后只返回本页可见词片段，不把排版留白和页�
   expect(rect.x + rect.width).toBeLessThanOrEqual(result.bounds.right);
   expect(rect.y + rect.height).toBeLessThanOrEqual(result.bounds.bottom);
   expect(rect.width).toBeGreaterThan(0);
+  for (const fragment of result.extracted.wordRects) {
+    expect(fragment.x).toBeGreaterThanOrEqual(result.bounds.left);
+    expect(fragment.y).toBeGreaterThanOrEqual(result.bounds.top);
+    expect(fragment.x + fragment.width).toBeLessThanOrEqual(result.bounds.right);
+    expect(fragment.y + fragment.height).toBeLessThanOrEqual(result.bounds.bottom);
+  }
 });

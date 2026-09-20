@@ -7,6 +7,7 @@ export interface LearningText {
   word: string | null;
   sentence: string;
   wordRect: LearningWordRect | null;
+  wordRects: LearningWordRect[];
 }
 
 const letters = 'A-Za-zÀ-ÖØ-öø-ÿ';
@@ -73,12 +74,12 @@ function containsPoint(range: Range | null, point: Point): boolean {
     point.y >= rect.top && point.y <= rect.bottom);
 }
 
-/** 只合并当前视口中可见的词片段，避免跨栏或换行的 Range 包围页外内容。 */
-function visibleWordRect(range: Range | null): LearningWordRect | null {
-  if (!range) return null;
+/** 保留各行的可见词片段；包围框只用于浮卡定位，不能用于选词着色。 */
+function visibleWordRects(range: Range | null): LearningWordRect[] {
+  if (!range) return [];
   const doc = range.startContainer.ownerDocument!;
   const view = doc.defaultView;
-  if (!view) return null;
+  if (!view) return [];
   let left = 0, top = 0, right = view.innerWidth, bottom = view.innerHeight;
   let element = range.commonAncestorContainer.nodeType === 1
     ? range.commonAncestorContainer as Element : range.commonAncestorContainer.parentElement;
@@ -96,11 +97,18 @@ function visibleWordRect(range: Range | null): LearningWordRect | null {
     left: Math.max(left, rect.left), top: Math.max(top, rect.top),
     right: Math.min(right, rect.right), bottom: Math.min(bottom, rect.bottom),
   })).filter(rect => rect.right > rect.left && rect.bottom > rect.top);
-  if (!fragments.length) return null;
-  const x = Math.min(...fragments.map(rect => rect.left));
-  const y = Math.min(...fragments.map(rect => rect.top));
-  return { x, y, width: Math.max(...fragments.map(rect => rect.right)) - x,
-    height: Math.max(...fragments.map(rect => rect.bottom)) - y };
+  return fragments.filter((rect, index) => !fragments.some((other, otherIndex) =>
+    otherIndex < index && rect.left === other.left && rect.top === other.top &&
+    rect.right === other.right && rect.bottom === other.bottom))
+    .map(rect => ({ x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top }));
+}
+
+export function wordBounds(rects: LearningWordRect[]): LearningWordRect | null {
+  if (!rects.length) return null;
+  const x = Math.min(...rects.map(rect => rect.x));
+  const y = Math.min(...rects.map(rect => rect.y));
+  return { x, y, width: Math.max(...rects.map(rect => rect.x + rect.width)) - x,
+    height: Math.max(...rects.map(rect => rect.y + rect.height)) - y };
 }
 
 function sentenceBounds(text: string, offset: number): Bounds {
@@ -158,14 +166,14 @@ export function extractLearningText(caret: Range, point?: Point): LearningText |
   wordPattern.lastIndex = 0;
   let match: RegExpExecArray | null;
   let word: string | null = null;
-  let wordRect: LearningWordRect | null = null;
+  let wordRects: LearningWordRect[] = [];
   while ((match = wordPattern.exec(mapped.text))) {
     const end = match.index + match[0].length;
     if (target >= match.index && (target < end || (!point && target === end))) {
       word = match[0].replace(/\u00ad/g, '');
-      wordRect = visibleWordRect(domRange(mapped.spans, { start: match.index, end }));
+      wordRects = visibleWordRects(domRange(mapped.spans, { start: match.index, end }));
       break;
     }
   }
-  return { word, sentence, wordRect };
+  return { word, sentence, wordRect: wordBounds(wordRects), wordRects };
 }

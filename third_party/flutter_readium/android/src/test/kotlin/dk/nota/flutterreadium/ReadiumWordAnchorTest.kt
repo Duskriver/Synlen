@@ -3,6 +3,7 @@ package dk.nota.flutterreadium
 import android.app.Activity
 import android.view.View
 import android.widget.FrameLayout
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -65,7 +66,87 @@ class ReadiumWordAnchorTest {
         assertNull(ReadiumWordAnchor.inReader(payload(), source, reader))
     }
 
-    private fun payload(): JSONObject = JSONObject()
-        .put("wordRect", JSONObject().put("x", 20).put("y", 40).put("width", 60).put("height", 24))
-        .put("viewport", JSONObject().put("width", 400).put("height", 600))
+    private fun payload(): JSONObject =
+        JSONObject()
+            .put(
+                "wordRect",
+                JSONObject()
+                    .put("x", 20)
+                    .put("y", 40)
+                    .put("width", 60)
+                    .put("height", 24),
+            ).put("viewport", JSONObject().put("width", 400).put("height", 600))
+
+    @Test
+    fun `跨行片段逐个转换并裁掉原生视口外片段`() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val reader = FrameLayout(activity)
+        val source = View(activity)
+        reader.addView(source)
+        activity.setContentView(reader)
+        reader.layout(0, 0, 1000, 1600)
+        source.layout(60, 90, 860, 1290)
+        val words =
+            JSONArray()
+                .put(
+                    JSONObject()
+                        .put("x", 80)
+                        .put("y", 40)
+                        .put("width", 20)
+                        .put("height", 24),
+                ).put(
+                    JSONObject()
+                        .put("x", 20)
+                        .put("y", 80)
+                        .put("width", 60)
+                        .put("height", 24),
+                )
+        val message = payload().put("wordRects", words)
+        val rects = ReadiumWordAnchor.wordRectsInReader(message, source, reader)!!
+        assertEquals(2, rects.length())
+        assertEquals(220.0 / 3, rects.getJSONObject(0).getDouble("x"), 0.001)
+        assertEquals(170.0 / 3, rects.getJSONObject(0).getDouble("y"), 0.001)
+        assertEquals(100.0 / 3, rects.getJSONObject(1).getDouble("x"), 0.001)
+        assertEquals(250.0 / 3, rects.getJSONObject(1).getDouble("y"), 0.001)
+        assertEquals(1, ReadiumWordAnchor.wordRectsInReader(payload(), source, reader)!!.length())
+        source.translationY = -230f
+        val clipped = ReadiumWordAnchor.wordRectsInReader(message, source, reader)!!
+        assertEquals(1, clipped.length())
+        assertEquals(20.0 / 3, clipped.getJSONObject(0).getDouble("y"), 0.001)
+        assertNull(ReadiumWordAnchor.wordRectsInReader(payload(), source, reader))
+    }
+
+    @Test
+    fun `旧消息回退包围矩形且无效片段数组不穿透桥接`() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val reader = FrameLayout(activity)
+        val source = View(activity)
+        reader.addView(source)
+        activity.setContentView(reader)
+        reader.layout(0, 0, 1000, 1600)
+        source.layout(0, 0, 800, 1200)
+        assertEquals(1, ReadiumWordAnchor.wordRectsInReader(payload(), source, reader)!!.length())
+        for (invalid in listOf(
+            JSONArray(),
+            JSONObject(),
+            JSONArray().put(payload().getJSONObject("wordRect")).put("invalid"),
+            JSONArray().put(
+                JSONObject()
+                    .put("x", true)
+                    .put("y", 20)
+                    .put("width", 30)
+                    .put("height", 20),
+            ),
+            JSONArray().put(
+                JSONObject()
+                    .put("x", 390)
+                    .put("y", 20)
+                    .put("width", 30)
+                    .put("height", 20),
+            ),
+            JSONArray(List(513) { payload().getJSONObject("wordRect") }),
+        )) {
+            assertNull(ReadiumWordAnchor.wordRectsInReader(payload().put("wordRects", invalid), source, reader))
+        }
+    }
 }

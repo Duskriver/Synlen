@@ -50,6 +50,29 @@ void main() {
       isNull,
     );
   });
+  test('跨行词片段保留各自行矩形，旧消息仍兼容', () {
+    expect(parse(valid)?.wordRects, isNull);
+    final words = [
+      {'x': 100, 'y': 20, 'width': 30, 'height': 18},
+      {'x': 10, 'y': 40, 'width': 60, 'height': 18},
+    ];
+    expect(parse({...valid, 'wordRects': words})?.wordRects, [
+      (x: 100.0, y: 20.0, width: 30.0, height: 18.0),
+      (x: 10.0, y: 40.0, width: 60.0, height: 18.0),
+    ]);
+    for (final invalid in <Object>[
+      {},
+      [],
+      [
+        words.first,
+        {'x': 10, 'y': 40, 'width': 0, 'height': 18},
+      ],
+      [words.first, 'invalid'],
+      List.filled(513, words.first),
+    ]) {
+      expect(parse({...valid, 'wordRects': invalid}), isNull);
+    }
+  });
   test('部分超出视口的矩形交展示层裁剪，句子和controls不要求矩形', () {
     expect(
       parse({

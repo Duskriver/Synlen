@@ -10,11 +10,13 @@ class ReadiumInteraction {
     this.word,
     this.sentence,
     this.anchorRect,
+    this.wordRects,
   });
   final String kind;
   final String? word;
   final String? sentence;
   final ReadiumWordRect? anchorRect;
+  final List<ReadiumWordRect>? wordRects;
 
   static ReadiumInteraction? parse(
     String payload, {
@@ -55,7 +57,29 @@ class ReadiumInteraction {
         word.length > 512) {
       return null;
     }
-    final rect = decoded['anchorRect'];
+    final anchor = _rect(decoded['anchorRect']);
+    if (anchor == null) return null;
+    List<ReadiumWordRect>? words;
+    if (decoded.containsKey('wordRects')) {
+      final raw = decoded['wordRects'];
+      if (raw is! List || raw.isEmpty || raw.length > 512) return null;
+      words = [];
+      for (final value in raw) {
+        final rect = _rect(value);
+        if (rect == null) return null;
+        words.add(rect);
+      }
+    }
+    return ReadiumInteraction(
+      kind: 'word',
+      word: word,
+      sentence: sentence,
+      anchorRect: anchor,
+      wordRects: words == null ? null : List.unmodifiable(words),
+    );
+  }
+
+  static ReadiumWordRect? _rect(Object? rect) {
     if (rect is! Map<String, dynamic>) return null;
     final x = rect['x'];
     final y = rect['y'];
@@ -77,16 +101,11 @@ class ReadiumInteraction {
         height <= 0) {
       return null;
     }
-    return ReadiumInteraction(
-      kind: 'word',
-      word: word,
-      sentence: sentence,
-      anchorRect: (
-        x: x.toDouble(),
-        y: y.toDouble(),
-        width: width.toDouble(),
-        height: height.toDouble(),
-      ),
+    return (
+      x: x.toDouble(),
+      y: y.toDouble(),
+      width: width.toDouble(),
+      height: height.toDouble(),
     );
   }
 }

@@ -6,43 +6,40 @@ class FreeDictionaryService {
   FreeDictionaryService({required this.dio});
 
   final Dio dio;
+  static const _requestTimeout = Duration(seconds: 2);
 
-  /// 获取单词发音 URL
-  ///
-  /// [word] 要查询的单词
-  /// 未找到或请求失败返回 null；查询取消向调用方传播。
-  Future<String?> getPronunciationUrl(
+  /// 获取原词的有道美音 MP3；两秒内未完整下载或响应无效时返回 null。
+  /// 查询取消向调用方传播，不触发 TTS 回退。
+  Future<List<int>?> getPronunciationAudio(
     String word, {
     LearningCancellation? cancellation,
   }) async {
     final request = LearningHttpRequest(cancellation);
     try {
       cancellation?.throwIfCancelled();
-      final response = await dio.get(
-        'https://api.dictionaryapi.dev/api/v2/entries/en/${Uri.encodeComponent(word)}',
-        cancelToken: request.cancelToken,
-      );
-
-      if (response.statusCode == 200 && response.data is List) {
-        final List<dynamic> entries = response.data;
-
-        for (var entry in entries) {
-          final List<dynamic>? phonetics = entry['phonetics'];
-          if (phonetics != null) {
-            for (var phonetic in phonetics) {
-              var audio = phonetic['audio'];
-              if (audio != null && audio is String && audio.isNotEmpty) {
-                // 确保使用 https 协议，并处理 protocol-relative 链接
-                if (audio.startsWith('//')) {
-                  audio = 'https:$audio';
-                } else if (audio.startsWith('http:')) {
-                  audio = audio.replaceFirst('http:', 'https:');
-                }
-                return audio;
-              }
-            }
-          }
-        }
+      final response = await dio
+          .get<List<int>>(
+            Uri.https('dict.youdao.com', '/dictvoice', {
+              'audio': word,
+              'type': '2',
+            }).toString(),
+            cancelToken: request.cancelToken,
+            options: Options(responseType: ResponseType.bytes),
+          )
+          .timeout(_requestTimeout);
+      cancellation?.throwIfCancelled();
+      final type = response.headers
+          .value(Headers.contentTypeHeader)
+          ?.split(';')
+          .first
+          .trim()
+          .toLowerCase();
+      final bytes = response.data;
+      if (response.statusCode == 200 &&
+          (type == 'audio/mpeg' || type == 'audio/mp3') &&
+          bytes != null &&
+          bytes.isNotEmpty) {
+        return bytes;
       }
       return null;
     } catch (e) {

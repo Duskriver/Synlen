@@ -231,13 +231,30 @@ void main() {
     controls.onNextPage();
     expect(session.turns, [true]);
 
-    await openWord(tester);
+    await openWord(
+      tester,
+      changes: {
+        'wordRects': [
+          {'x': 60, 'y': 30, 'width': 34, 'height': 12},
+          {'x': 30, 'y': 42, 'width': 40, 'height': 12},
+        ],
+      },
+    );
     expect(find.byType(WordDefinitionDialog), findsOneWidget);
     expect(
       tester
           .widget<WordDefinitionPopover>(find.byType(WordDefinitionPopover))
           .anchorRect,
       Rect.fromLTWH(viewport.left + 30, viewport.top + 30, 64, 24),
+    );
+    expect(
+      tester
+          .widget<WordDefinitionPopover>(find.byType(WordDefinitionPopover))
+          .wordRects,
+      [
+        Rect.fromLTWH(viewport.left + 60, viewport.top + 30, 34, 12),
+        Rect.fromLTWH(viewport.left + 30, viewport.top + 42, 40, 12),
+      ],
     );
     expect(find.text('sort'), findsOneWidget);
     expect(find.text('sorted'), findsOneWidget);

@@ -1,12 +1,12 @@
 # learning
 
-learning 模块负责点词释义、长句分析与 TTS 发音：内容来自 DeepSeek，语音来自阿里云 TTS，密钥由用户自填。本页 owns 这些类型、语义与边界；学习数据流见 [architecture.md](../architecture.md#数据流)。
+learning 模块负责点词释义、长句分析与发音：内容来自 DeepSeek，单词发音优先取有道音频，其余语音由阿里云 TTS 生成；AI 服务密钥由用户自填。本页定义这些类型、语义与边界；学习数据流见 [architecture.md](../architecture.md#数据流)。
 
 ## 职责
 
 - 学习入口：`LearningEntry` 是宿主（阅读器）唯一依赖的 application 接口。
 - 用例编排：点词与长句共用 controller，按查询类型处理内容并转换错误。
-- 内容获取：DeepSeek 释义 / 句子分析，英文单词发音优先走免费词典。
+- 内容获取：DeepSeek 释义 / 句子分析，英文单词发音优先直取有道美音 MP3。
 - 语音：阿里云 DashScope 流式 PCM，按音色区分缓存。
 - 缓存：四张学习缓存表 + 音频文件缓存，均为可重建数据。
 
@@ -14,7 +14,7 @@ learning 模块负责点词释义、长句分析与 TTS 发音：内容来自 De
 
 | 类型 | 语义 | 位置 |
 |---|---|---|
-| `LearningEntry` | 宿主唯一入口：`showWord` 接收全局逻辑坐标锚点与阅读主题，`dismissWord` 只关闭自有词卡；`showSentence` 打开底部面板 | `lib/src/features/learning/application/learning_entry.dart` |
+| `LearningEntry` | 宿主唯一入口：`showWord` 接收全局逻辑坐标锚点、可见词片段与阅读主题，`dismissWord` 只关闭自有词卡；`showSentence` 打开底部面板 | `lib/src/features/learning/application/learning_entry.dart` |
 | `LearningController` / `LearningQuery` | 点词与长句共用的用例编排：按查询类型选仓库，读缓存 → 并行取正文与发音 → 状态机 | `lib/src/features/learning/application/learning_controller.dart` |
 | `LearningRepository` / `LearningInfo` | 词/句学习仓库的 domain 抽象：查询信息、正文流、发音流与音频持久化；词正文流逐条输出已校验的 NDJSON，句正文流输出 Markdown 片段 | `lib/src/features/learning/domain/learning_repository.dart` |
 | `WordLearningQuery` / `SentenceLearningQuery` | `LearningQuery` 的两个子类：词侧带上下文，句侧只有整句 | `lib/src/features/learning/domain/learning_query.dart` |
@@ -24,10 +24,10 @@ learning 模块负责点词释义、长句分析与 TTS 发音：内容来自 De
 | `WordDefinitionParser` | 按简义、解释、近义词、构词顺序校验四条 NDJSON；格式错误不改变已有快照 | `lib/src/features/learning/domain/word_definition_parser.dart` |
 | `LearningAudioCoordinator` | 音频生命周期：初始化、播放本地 / 远程 / PCM 流、缓存与错误上报；一个页面一个实例 | `lib/src/features/learning/application/learning_audio_coordinator.dart` |
 | `LearningAudioPlayer` / `LearningStreamingAudioSession` | 播放器 seam 与流式播放会话 | `lib/src/features/learning/application/` |
-| `WordRepository` / `SentenceRepository` | `LearningRepository` 的两个实现：查缓存 → 缺什么补什么 → 落库；词侧保留免费词典 mp3 降级 | `lib/src/features/learning/data/repositories/` |
+| `WordRepository` / `SentenceRepository` | `LearningRepository` 的两个实现：查缓存 → 缺什么补什么 → 落库；词侧直取发音失败后转 TTS | `lib/src/features/learning/data/repositories/` |
 | `DeepSeekService` | 释义与句子分析，密钥在运行时从安全存储读取 | `lib/src/features/learning/data/services/deep_seek_service.dart` |
 | `AliyunTTSService` | 阿里云 DashScope 流式语音，输出 24 kHz 单声道 16 bit PCM | `lib/src/features/learning/data/services/aliyun_tts_service.dart` |
-| `FreeDictionaryService` | 英文单词发音 URL（mp3），失败时降级到 TTS | `lib/src/features/learning/data/services/free_dictionary_service.dart` |
+| `FreeDictionaryService` | `getPronunciationAudio` 获取有道美音的完整 MP3 字节；失败返回 null，取消继续向上传播 | `lib/src/features/learning/data/services/free_dictionary_service.dart` |
 | `LearningCacheCleanupService` | 清空四张学习缓存表与全部音频缓存 | `lib/src/features/learning/data/services/learning_cache_cleanup_service.dart` |
 | `WordLearningCacheStore` / `SentenceLearningCacheStore` / `SentencePronunciationCacheStore` | 文本与发音缓存表读写 | `lib/src/features/learning/data/stores/` |
 | `LearningAudioFileStore` | 音频文件命名（含音色键）与按容量预算清退最旧文件 | `lib/src/features/learning/data/stores/learning_audio_file_store.dart` |
@@ -49,13 +49,15 @@ learning 模块负责点词释义、长句分析与 TTS 发音：内容来自 De
 
 - 密钥只从 `FlutterSecureStorage` 读；未配置时抛 `LearningErrorCode.noDeepSeekApiKey` 或 `noAliyunTtsApiKey`。
 - `LearningException.details` 不上屏；用户可见文案一律经 `resolveLearningErrorText` 映射。
-- 发音按音色区分缓存；切换音色后旧音色的音频文件不会被命中。
+- TTS 发音按音色区分缓存；切换音色后旧音色的 TTS 文件不会被命中。有道音频不依赖所选音色，以 `cacheByVoice: false` 缓存。
+- 单词直连发音从请求到完整下载共用两秒预算，仅接受成功、非空且类型为 MP3 的响应；失败或超时转阿里云 TTS，查询取消不触发回退。数据去向与发送范围见[隐私说明](../user/privacy.md#离开设备的数据)。
 - `build()` 中创建的音频协调器必须在 `ref.onDispose` 释放，`LearningControllerSession.dispose` 幂等。
 - 音频缓存超过容量预算时按修改时间最旧优先清退。
 - 学习缓存可重建，删除不影响用户图书与阅读进度。
 - 请求取消经 `LearningCancellation` 传播，被取消的请求不写缓存。
-- 词卡的透明屏障消费外部点击；返回键或外部点击关闭词卡。入口在展示期间保活并阻止重复打开，关闭时释放词条请求与音频会话。
-- 词卡宽度为可用屏宽的 84%，上限 380 逻辑像素；优先向下展开，空间不足时向上，两侧均不足则选择较大空间并内部滚动。锚点从全局坐标转换到根导航器 overlay，阅读主题随入口传入。
+- 词卡的遮罩消费外部点击；返回键或外部点击关闭词卡。入口在展示期间保活并阻止重复打开，打开与关闭各触发一次触觉反馈；关闭时释放词条请求与音频会话。
+- 词卡宽度为可用屏宽的 84%，上限 380 逻辑像素；高度固定为安全视口的 35%，流式内容与切换标签不改变高度，超出部分内部滚动。优先向下，空间不足时向上；极小视口两侧均不足才缩到较大一侧的可用高度。
+- 锚点与可见词片段从全局坐标转换到根导航器 overlay；包围框只定位卡片，各词片段分别着色，避免跨行包围框误标邻词。未传 `wordRects` 的调用沿用锚点标记，显式空列表不绘制标记。词卡与原词标记共用阅读主题和路由生命周期；阴影、描边与遮罩区分浮层和正文，坐标有效期由宿主控制。设计理由见[词卡反馈与直连发音](../../.agents/notes/implemented/bug-fix/2026-09-20-word-popover-feedback-and-pronunciation.md)。
 - 简义包含原形、原词音标、词性与中英定义；原形只用于标题，朗读对象始终是被点击的词形。解释正文为中文，标签与加载、失败、空内容提示走 l10n。
 - 词正文每条有效记录立即发布，不经过句子 Markdown 的节流缓冲；后续失败保留已验证内容并允许重试。只有四部分齐全且流成功结束才写入现有文本列；损坏缓存由 application 当作未命中重取。
 

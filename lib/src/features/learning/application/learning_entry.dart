@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
@@ -20,11 +23,13 @@ class LearningEntry extends _$LearningEntry {
     ref.onDispose(dismissWord);
   }
 
-  /// [anchorRect] 为 Flutter 全局逻辑坐标；同时只允许一张词卡。
+  /// [anchorRect] 与 [wordRects] 均为全局逻辑坐标；同时只允许一张词卡。
+  /// 词片段只用于标记，包围框用于定位；省略片段时沿用锚点标记。
   Future<void> showWord({
     required String word,
     String? context,
     required Rect anchorRect,
+    List<Rect>? wordRects,
     required ThemeData theme,
   }) async {
     if (_wordRoute != null) return;
@@ -41,10 +46,21 @@ class LearningEntry extends _$LearningEntry {
       overlayBox.globalToLocal(anchorRect.topLeft),
       overlayBox.globalToLocal(anchorRect.bottomRight),
     );
+    final localWordRects = wordRects
+        ?.where((rect) => rect.isFinite && !rect.isEmpty)
+        .map(
+          (rect) => Rect.fromPoints(
+            overlayBox.globalToLocal(rect.topLeft),
+            overlayBox.globalToLocal(rect.bottomRight),
+          ),
+        )
+        .toList();
     final keepAlive = ref.keepAlive();
     final route = RawDialogRoute<void>(
       barrierDismissible: true,
-      barrierColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.22 : 0.12,
+      ),
       barrierLabel: MaterialLocalizations.of(
         navigator.context,
       ).modalBarrierDismissLabel,
@@ -60,6 +76,7 @@ class LearningEntry extends _$LearningEntry {
           label: word,
           child: WordDefinitionPopover(
             anchorRect: localAnchor,
+            wordRects: localWordRects,
             child: WordDefinitionDialog(word: word, context: context ?? ''),
           ),
         ),
@@ -72,7 +89,9 @@ class LearningEntry extends _$LearningEntry {
     );
     _wordRoute = route;
     try {
+      unawaited(HapticFeedback.lightImpact());
       await navigator.push(route);
+      unawaited(HapticFeedback.selectionClick());
       await route.completed;
     } finally {
       if (identical(_wordRoute, route)) {

@@ -51,9 +51,13 @@ async function expectedWordMessage(page) {
     range.setStart(prefix, prefix.textContent.lastIndexOf('un'));
     range.setEnd(target.firstChild, target.textContent.length);
     const box = range.getBoundingClientRect();
+    const wordRects = Array.from(range.getClientRects()).filter(rect => rect.width > 0 && rect.height > 0)
+      .map(rect => ({ x: rect.x, y: rect.y, width: rect.width, height: rect.height }))
+      .filter((rect, index, all) => all.findIndex(other => JSON.stringify(other) === JSON.stringify(rect)) === index);
     return { version: 1, href: 'about:blank', kind: 'word', word: 'unhurried',
       sentence: 'Dr. Rivers called it an unhurried afternoon.',
       wordRect: { x: box.x, y: box.y, width: box.width, height: box.height },
+      wordRects,
       viewport: { width: innerWidth, height: innerHeight } };
   });
 }
@@ -261,5 +265,22 @@ test('嵌套书内 frame 的词矩形包含 frame 偏移、边框和缩放', asy
   expect(result.messages[0]).toMatchObject({kind: 'word', word: 'reading', viewport: {width: 800, height: 700}});
   for (const key of ['x', 'y', 'width', 'height']) {
     expect(result.messages[0].wordRect[key]).toBeCloseTo(result.expected[key], 4);
+    expect(result.messages[0].wordRects[0][key]).toBeCloseTo(result.expected[key], 4);
   }
+});
+
+test('软连字符换行后的着色片段不覆盖相邻词，包围框继续用于定位', async ({ page }) => {
+  await setup(page, '<p style="width:180px;font:24px/2 monospace"><span id="before">hello</span> <span id="target">dic\u00adtionary</span> now.</p>');
+  const target = await point(page);
+  await page.mouse.click(target.x, target.y);
+  const result = await page.evaluate(() => {
+    const neighbor = document.querySelector('#before').getBoundingClientRect();
+    return { message: window.messages[0], point: { x: neighbor.x + neighbor.width / 2, y: neighbor.y + neighbor.height / 2 } };
+  });
+  const contains = rect => result.point.x >= rect.x && result.point.x <= rect.x + rect.width &&
+    result.point.y >= rect.y && result.point.y <= rect.y + rect.height;
+  expect(result.message.word).toBe('dictionary');
+  expect(result.message.wordRects.length).toBeGreaterThan(1);
+  expect(contains(result.message.wordRect)).toBe(true);
+  expect(result.message.wordRects.some(contains)).toBe(false);
 });

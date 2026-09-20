@@ -4,6 +4,19 @@ import CoreFoundation
 
 /// JS 提供顶层 WebView 的可见 CSS 矩形；这里仅转换到该原生视图的局部单位。
 enum ReadiumWordAnchor {
+  static func webViewRects(payload: [String: Any], size: CGSize) -> [CGRect]? {
+    guard let raw = payload["wordRects"] else {
+      return webViewRect(payload: payload, size: size).map { [$0] }
+    }
+    guard let words = raw as? [[String: Any]], !words.isEmpty, words.count <= 512 else { return nil }
+    var result: [CGRect] = []
+    for word in words {
+      guard let rect = webViewRect(payload: ["wordRect": word, "viewport": payload["viewport"] as Any], size: size) else { return nil }
+      result.append(rect)
+    }
+    return result
+  }
+
   static func webViewRect(payload: [String: Any], size: CGSize) -> CGRect? {
     guard let word = payload["wordRect"] as? [String: Any],
           let viewport = payload["viewport"] as? [String: Any],

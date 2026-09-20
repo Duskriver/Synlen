@@ -988,36 +988,35 @@
      }
 
      override fun onFlutterViewAttached(flutterView: View) {
-@@ -112,13 +121,24 @@
+@@ -112,12 +121,24 @@
          @Suppress("UNCHECKED_CAST")
          val initPrefsMap =
              creationParams["preferences"] as Map<String, String>?
 -        val publication = ReadiumReader.currentPublication
          val locatorString = creationParams["initialLocator"] as String?
          val allowScreenReaderNavigation = creationParams["allowScreenReaderNavigation"] as Boolean?
--        val fontFamilyDeclarations =
 +        var fontResourceFailed = false
-+        val fontFamilyDeclarations = runCatching {
-             ReaderFontFamily.fromList(creationParams["fontFamilyDeclarations"]) { asset ->
+         val fontFamilyDeclarations =
+-            ReaderFontFamily.fromList(creationParams["fontFamilyDeclarations"]) { asset ->
 -                FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
--            }
-+                if (asset.startsWith("file:")) {
-+                    val file = java.io.File(java.net.URI(asset))
-+                    require(file.isFile && file.length() in 1..(32L * 1024 * 1024)) { "Invalid local font" }
-+                    "data:font/ttf;base64," + android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
-+                } else {
-+                    FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
++            runCatching {
++                ReaderFontFamily.fromList(creationParams["fontFamilyDeclarations"]) { asset ->
++                    if (asset.startsWith("file:")) {
++                        val file = java.io.File(java.net.URI(asset))
++                        require(file.isFile && file.length() in 1..(32L * 1024 * 1024)) { "Invalid local font" }
++                        "data:font/ttf;base64," + android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
++                    } else {
++                        FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
++                    }
 +                }
-+            }
-+        }.getOrElse { error ->
-+            fontResourceFailed = true
-+            PluginLog.w(TAG, "Cannot load reader font: $error")
-+            emptyList()
-+        }
++            }.getOrElse { error ->
++                fontResourceFailed = true
++                PluginLog.w(TAG, "Cannot load reader font: $error")
++                emptyList()
+             }
 
          // Selection actions must be known BEFORE the navigator fragment is built, because
-         // EpubReaderFragment decides `selectionActionModeCallback` from
-@@ -164,6 +184,7 @@
+@@ -164,6 +185,7 @@
 
          channel = ReadiumReaderChannel(messenger, "$VIEW_TYPE_CHANNEL_NAME:$id")
          channel.setMethodCallHandler(this)
@@ -1025,7 +1024,7 @@
 
          ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Loading)
 
-@@ -199,6 +220,7 @@
+@@ -199,6 +221,7 @@
                  throw e
              } catch (e: Exception) {
                  PluginLog.e(TAG, "::init - visualEnable failed: ${e.message}", e)
@@ -1033,7 +1032,7 @@
                  ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Error)
                  // Heterogeneous failure surface (fragment/navigator-creation errors from
                  // kotlin-toolkit) with no single vocabulary code that fits - "unknown" is
-@@ -208,12 +230,34 @@
+@@ -208,12 +231,42 @@
          }
      }
 
@@ -1045,7 +1044,11 @@
 +        if (!disposed) channel.onImageTapped(json)
 +    }
 +
-+    override fun onTextInteraction(json: String, resourceHref: String, sourceView: View) {
++    override fun onTextInteraction(
++        json: String,
++        resourceHref: String,
++        sourceView: View,
++    ) {
 +        if (disposed) return
 +        val payload = runCatching { JSONObject(json) }.getOrNull() ?: return
 +        payload.put("sessionId", sessionId)
@@ -1053,7 +1056,11 @@
 +        payload.remove("anchorRect")
 +        if (payload.optString("kind") == "word") {
 +            val anchor = ReadiumWordAnchor.inReader(payload, sourceView, layout) ?: return
++            val words = ReadiumWordAnchor.wordRectsInReader(payload, sourceView, layout) ?: return
 +            payload.put("anchorRect", anchor)
++            payload.put("wordRects", words)
++        } else {
++            payload.remove("wordRects")
 +        }
 +        channel.onTextInteraction(payload.toString())
 +    }
@@ -1068,7 +1075,7 @@
 
      // Some navigator transitions update currentLocator without a page-changed callback.
      // Mirror those into the text-locator stream once so Flutter can observe progress.
-@@ -237,6 +281,7 @@
+@@ -237,6 +290,7 @@
          }
 
          lastPageLoadedKey = currentKey
@@ -1076,7 +1083,7 @@
 
          launch {
              if (!hasSentReady) {
-@@ -245,7 +290,7 @@
+@@ -245,7 +299,7 @@
                  ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Ready)
              }
 
@@ -1085,7 +1092,7 @@
 
              // Re-inject MO column-break CSS for each freshly-loaded spine item.
              if (ReadiumReader.shouldInjectMOColumnBreakCssOnPageChange) {
-@@ -268,6 +313,8 @@
+@@ -268,6 +322,8 @@
          }
 
          lastVisualLocationKey = currentKey
@@ -1094,7 +1101,7 @@
          ReadiumReader.emitTextLocatorUpdate(locator)
          PluginLog.d(TAG, "::onVisualCurrentLocationChanged emitted text locator update")
      }
-@@ -300,10 +347,11 @@
+@@ -300,10 +356,11 @@
          pageIndex: Int,
          totalPages: Int,
          locator: Locator,
@@ -1108,7 +1115,7 @@
              val enriched =
                  withTimeoutOrNull(LOCATOR_ENRICHMENT_TIMEOUT_MS) {
                      var emittingLocator = locator
-@@ -320,22 +368,34 @@
+@@ -320,22 +377,40 @@
                          }
 
                          else -> {
@@ -1128,24 +1135,29 @@
 -                                }
 -                            } catch (e: Error) {
 -                                PluginLog.d(TAG, "::emitOnPageChanged - pageInformation error: $e")
-+                            val script = """
++                            val script =
++                                """
 +                                (() => ({revision: $revision, href: document.URL,
 +                                  pageInformation: window.flutterReadium.getPageInformation(),
 +                                  anchor: window.synlenReadiumBridge.getVisibleLocator()}))()
-+                            """.trimIndent()
-+                            val snapshot = evaluateJavascript(script)?.let { jsonDecode(it) as? JSONObject }
-+                                ?: error("Visible locator query failed")
-+                            val expectedUrl = (publication?.baseUrl ?: AbsoluteUrl("https://readium_package/")!!)
-+                                .resolve(locator.href).cleanHref()
++                                """.trimIndent()
++                            val snapshot =
++                                evaluateJavascript(script)?.let { jsonDecode(it) as? JSONObject }
++                                    ?: error("Visible locator query failed")
++                            val expectedUrl =
++                                (publication?.baseUrl ?: AbsoluteUrl("https://readium_package/")!!)
++                                    .resolve(locator.href)
++                                    .cleanHref()
 +                            val actualUrl = AbsoluteUrl(snapshot.optString("href"))?.cleanHref()
 +                            if (snapshot.optLong("revision") != revision || actualUrl != expectedUrl) {
 +                                staleResource = true
 +                                return@withTimeoutOrNull null
 +                            }
 +                            snapshot.optJSONObject("pageInformation")?.let { pageInfo ->
-+                                emittingLocator = emittingLocator.copyWithAdditionalLocations(
-+                                    PageInformation.fromJson(pageInfo, locator.href).otherLocations,
-+                                )
++                                emittingLocator =
++                                    emittingLocator.copyWithAdditionalLocations(
++                                        PageInformation.fromJson(pageInfo, locator.href).otherLocations,
++                                    )
 +                            }
 +                            // null 表示图页或无法唯一定位；有效短文本优先于段落起点和比例。
 +                            snapshot.optJSONObject("anchor")?.let { anchor ->
@@ -1153,13 +1165,14 @@
 +                                val text = anchor.optJSONObject("text")
 +                                val highlight = text?.optString("highlight")
 +                                require(!selector.isNullOrBlank() && !highlight.isNullOrBlank() && highlight.length <= 512)
-+                                emittingLocator = emittingLocator
-+                                    .copyWithAdditionalLocations(mapOf("cssSelector" to selector))
-+                                    .copy(text = Locator.Text.fromJSON(text))
++                                emittingLocator =
++                                    emittingLocator
++                                        .copyWithAdditionalLocations(mapOf("cssSelector" to selector))
++                                        .copy(text = Locator.Text.fromJSON(text))
                              }
 
                              emittingLocator = emittingLocator.addPageNumber(pageIndex, totalPages)
-@@ -345,21 +405,26 @@
+@@ -345,21 +420,27 @@
                      emittingLocator
                  }
 
@@ -1175,10 +1188,11 @@
 
 -            val emittingLocator = enriched ?: locator
 -
-+            val emittingLocator = enriched ?: run {
-+                channel.onReaderError("LocatorUnavailable")
-+                return
-+            }
++            val emittingLocator =
++                enriched ?: run {
++                    channel.onReaderError("LocatorUnavailable")
++                    return
++                }
              channel.onPageChanged(emittingLocator)
              ReadiumReader.emitTextLocatorUpdate(emittingLocator)
              PluginLog.d(TAG, "::emitOnPageChanged: emitted $emittingLocator")
@@ -1190,7 +1204,7 @@
          }
      }
 
-@@ -371,6 +436,10 @@
+@@ -371,6 +452,10 @@
          call: MethodCall,
          result: MethodChannel.Result,
      ) {
@@ -1203,20 +1217,54 @@
          // when affecting readerView or returning a result.
 --- /dev/null
 +++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumWordAnchor.kt
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,104 @@
 +package dk.nota.flutterreadium
 +
 +import android.graphics.Matrix
 +import android.graphics.RectF
 +import android.view.View
 +import android.view.ViewGroup
++import org.json.JSONArray
 +import org.json.JSONObject
 +
 +/** 把实际消息来源的 CSS 词矩形转换到 Flutter 平台视口内的逻辑坐标。 */
 +internal object ReadiumWordAnchor {
-+    fun inReader(payload: JSONObject, source: View, reader: ViewGroup): JSONObject? {
++    fun inReader(
++        payload: JSONObject,
++        source: View,
++        reader: ViewGroup,
++    ): JSONObject? {
 +        val word = payload.optJSONObject("wordRect") ?: return null
 +        val viewport = payload.optJSONObject("viewport") ?: return null
++        val rect = inSource(word, viewport, source) ?: return null
++        return inReader(rect, source, reader)
++    }
++
++    fun wordRectsInReader(
++        payload: JSONObject,
++        source: View,
++        reader: ViewGroup,
++    ): JSONArray? {
++        if (!payload.has("wordRects")) {
++            return inReader(payload, source, reader)?.let { JSONArray().put(it) }
++        }
++        val words = payload.optJSONArray("wordRects") ?: return null
++        val viewport = payload.optJSONObject("viewport") ?: return null
++        if (words.length() !in 1..512) return null
++        val result = JSONArray()
++        for (index in 0 until words.length()) {
++            val word = words.optJSONObject(index) ?: return null
++            val rect = inSource(word, viewport, source) ?: return null
++            inReader(rect, source, reader)?.let(result::put)
++        }
++        return result.takeIf { it.length() > 0 }
++    }
++
++    private fun inSource(
++        word: JSONObject,
++        viewport: JSONObject,
++        source: View,
++    ): RectF? {
 +        val x = word.number("x") ?: return null
 +        val y = word.number("y") ?: return null
 +        val width = word.number("width") ?: return null
@@ -1227,23 +1275,43 @@
 +            x < 0 || y < 0 || width <= 0 || height <= 0 || viewportWidth <= 0 || viewportHeight <= 0 ||
 +            x + width > viewportWidth + 0.5 || y + height > viewportHeight + 0.5 ||
 +            source.width <= 0 || source.height <= 0 || !source.isShown
-+        ) return null
++        ) {
++            return null
++        }
 +        val scaleX = source.width / viewportWidth
 +        val scaleY = source.height / viewportHeight
-+        val rect = RectF((x * scaleX).toFloat(), (y * scaleY).toFloat(),
-+            ((x + width) * scaleX).toFloat(), ((y + height) * scaleY).toFloat())
++        return RectF(
++            (x * scaleX).toFloat(),
++            (y * scaleY).toFloat(),
++            ((x + width) * scaleX).toFloat(),
++            ((y + height) * scaleY).toFloat(),
++        )
++    }
++
++    private fun inReader(
++        rect: RectF,
++        source: View,
++        reader: ViewGroup,
++    ): JSONObject? {
 +        val transform = Matrix()
 +        if (!sourceToAncestor(source, reader, transform)) return null
 +        transform.mapRect(rect)
 +        if (!rect.intersect(0f, 0f, reader.width.toFloat(), reader.height.toFloat())) return null
 +        val density = reader.resources.displayMetrics.density
-+        return JSONObject().put("x", rect.left / density).put("y", rect.top / density)
-+            .put("width", rect.width() / density).put("height", rect.height() / density)
++        return JSONObject()
++            .put("x", rect.left / density)
++            .put("y", rect.top / density)
++            .put("width", rect.width() / density)
++            .put("height", rect.height() / density)
 +    }
 +
 +    private fun JSONObject.number(key: String): Double? = (opt(key) as? Number)?.toDouble()
 +
-+    private fun sourceToAncestor(view: View, ancestor: View, transform: Matrix): Boolean {
++    private fun sourceToAncestor(
++        view: View,
++        ancestor: View,
++        transform: Matrix,
++    ): Boolean {
 +        if (view === ancestor) return true
 +        val parent = view.parent as? View ?: return false
 +        if (!sourceToAncestor(parent, ancestor, transform)) return false
@@ -1581,12 +1649,13 @@
 +}
 --- /dev/null
 +++ b/android/src/test/kotlin/dk/nota/flutterreadium/ReadiumWordAnchorTest.kt
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,152 @@
 +package dk.nota.flutterreadium
 +
 +import android.app.Activity
 +import android.view.View
 +import android.widget.FrameLayout
++import org.json.JSONArray
 +import org.json.JSONObject
 +import org.junit.Assert.assertEquals
 +import org.junit.Assert.assertNull
@@ -1649,9 +1718,89 @@
 +        assertNull(ReadiumWordAnchor.inReader(payload(), source, reader))
 +    }
 +
-+    private fun payload(): JSONObject = JSONObject()
-+        .put("wordRect", JSONObject().put("x", 20).put("y", 40).put("width", 60).put("height", 24))
-+        .put("viewport", JSONObject().put("width", 400).put("height", 600))
++    private fun payload(): JSONObject =
++        JSONObject()
++            .put(
++                "wordRect",
++                JSONObject()
++                    .put("x", 20)
++                    .put("y", 40)
++                    .put("width", 60)
++                    .put("height", 24),
++            ).put("viewport", JSONObject().put("width", 400).put("height", 600))
++
++    @Test
++    fun `跨行片段逐个转换并裁掉原生视口外片段`() {
++        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
++        val reader = FrameLayout(activity)
++        val source = View(activity)
++        reader.addView(source)
++        activity.setContentView(reader)
++        reader.layout(0, 0, 1000, 1600)
++        source.layout(60, 90, 860, 1290)
++        val words =
++            JSONArray()
++                .put(
++                    JSONObject()
++                        .put("x", 80)
++                        .put("y", 40)
++                        .put("width", 20)
++                        .put("height", 24),
++                ).put(
++                    JSONObject()
++                        .put("x", 20)
++                        .put("y", 80)
++                        .put("width", 60)
++                        .put("height", 24),
++                )
++        val message = payload().put("wordRects", words)
++        val rects = ReadiumWordAnchor.wordRectsInReader(message, source, reader)!!
++        assertEquals(2, rects.length())
++        assertEquals(220.0 / 3, rects.getJSONObject(0).getDouble("x"), 0.001)
++        assertEquals(170.0 / 3, rects.getJSONObject(0).getDouble("y"), 0.001)
++        assertEquals(100.0 / 3, rects.getJSONObject(1).getDouble("x"), 0.001)
++        assertEquals(250.0 / 3, rects.getJSONObject(1).getDouble("y"), 0.001)
++        assertEquals(1, ReadiumWordAnchor.wordRectsInReader(payload(), source, reader)!!.length())
++        source.translationY = -230f
++        val clipped = ReadiumWordAnchor.wordRectsInReader(message, source, reader)!!
++        assertEquals(1, clipped.length())
++        assertEquals(20.0 / 3, clipped.getJSONObject(0).getDouble("y"), 0.001)
++        assertNull(ReadiumWordAnchor.wordRectsInReader(payload(), source, reader))
++    }
++
++    @Test
++    fun `旧消息回退包围矩形且无效片段数组不穿透桥接`() {
++        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
++        val reader = FrameLayout(activity)
++        val source = View(activity)
++        reader.addView(source)
++        activity.setContentView(reader)
++        reader.layout(0, 0, 1000, 1600)
++        source.layout(0, 0, 800, 1200)
++        assertEquals(1, ReadiumWordAnchor.wordRectsInReader(payload(), source, reader)!!.length())
++        for (invalid in listOf(
++            JSONArray(),
++            JSONObject(),
++            JSONArray().put(payload().getJSONObject("wordRect")).put("invalid"),
++            JSONArray().put(
++                JSONObject()
++                    .put("x", true)
++                    .put("y", 20)
++                    .put("width", 30)
++                    .put("height", 20),
++            ),
++            JSONArray().put(
++                JSONObject()
++                    .put("x", 390)
++                    .put("y", 20)
++                    .put("width", 30)
++                    .put("height", 20),
++            ),
++            JSONArray(List(513) { payload().getJSONObject("wordRect") }),
++        )) {
++            assertNull(ReadiumWordAnchor.wordRectsInReader(payload().put("wordRects", invalid), source, reader))
++        }
++    }
 +}
 --- a/ios/flutter_readium.podspec
 +++ b/ios/flutter_readium.podspec
@@ -1708,7 +1857,7 @@
 
      /// Custom preferences added dynamically for each WebView, to make sure changes to preferences are respected.
      if let preferencesStylesheet = self.preferences.map(effectivePreferences)?.toInjectableStyleSheet() {
-@@ -69,6 +70,35 @@
+@@ -69,6 +70,42 @@
    /// Receives messages from the `window.updateNarrationSync(bool)` bridge injected
    /// by the iOS platform shim (bootstrap script in `initUserScripts`).
    func handleScriptMessage(_ message: WKScriptMessage) {
@@ -1730,11 +1879,18 @@
 +      if payload["kind"] as? String == "word" {
 +        guard let webView = message.webView,
 +              webView.isDescendant(of: containerView),
-+              let localRect = ReadiumWordAnchor.webViewRect(payload: payload, size: webView.bounds.size) else { return }
++              let localRect = ReadiumWordAnchor.webViewRect(payload: payload, size: webView.bounds.size),
++              let localWords = ReadiumWordAnchor.webViewRects(payload: payload, size: webView.bounds.size) else { return }
 +        // UIKit 的视图变换已包含原生页偏移，结果为 Flutter 平台视口内的逻辑点。
 +        let rect = webView.convert(localRect, to: containerView).intersection(containerView.bounds)
 +        guard !rect.isNull, rect.width > 0, rect.height > 0 else { return }
++        let words = localWords.map { webView.convert($0, to: containerView).intersection(containerView.bounds) }
++          .filter { !$0.isNull && $0.width > 0 && $0.height > 0 }
++        guard !words.isEmpty else { return }
 +        payload["anchorRect"] = ["x": rect.minX, "y": rect.minY, "width": rect.width, "height": rect.height]
++        payload["wordRects"] = words.map { ["x": $0.minX, "y": $0.minY, "width": $0.width, "height": $0.height] }
++      } else {
++        payload.removeValue(forKey: "wordRects")
 +      }
 +      guard let result = try? JSONSerialization.data(withJSONObject: payload),
 +            let resultJson = String(data: result, encoding: .utf8) else { return }
@@ -1744,7 +1900,7 @@
      guard message.name == "narrationSync", let enabled = message.body as? Bool else { return }
      Log.reader.debug("handleScriptMessage: narrationSync=\(enabled)")
      Task { @MainActor in
-@@ -105,12 +135,43 @@
+@@ -105,12 +142,43 @@
      return data
    }
 
@@ -2029,13 +2185,26 @@
 +}
 --- /dev/null
 +++ b/ios/flutter_readium/Sources/flutter_readium/reader/ReadiumWordAnchor.swift
-@@ -0,0 +1,33 @@
+@@ -0,0 +1,46 @@
 +import Foundation
 +import CoreGraphics
 +import CoreFoundation
 +
 +/// JS 提供顶层 WebView 的可见 CSS 矩形；这里仅转换到该原生视图的局部单位。
 +enum ReadiumWordAnchor {
++  static func webViewRects(payload: [String: Any], size: CGSize) -> [CGRect]? {
++    guard let raw = payload["wordRects"] else {
++      return webViewRect(payload: payload, size: size).map { [$0] }
++    }
++    guard let words = raw as? [[String: Any]], !words.isEmpty, words.count <= 512 else { return nil }
++    var result: [CGRect] = []
++    for word in words {
++      guard let rect = webViewRect(payload: ["wordRect": word, "viewport": payload["viewport"] as Any], size: size) else { return nil }
++      result.append(rect)
++    }
++    return result
++  }
++
 +  static func webViewRect(payload: [String: Any], size: CGSize) -> CGRect? {
 +    guard let word = payload["wordRect"] as? [String: Any],
 +          let viewport = payload["viewport"] as? [String: Any],
@@ -2958,7 +3127,7 @@
 +}
 --- /dev/null
 +++ b/test/readium_word_anchor_test.swift
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,69 @@
 +import Foundation
 +import CoreGraphics
 +
@@ -2987,6 +3156,45 @@
 +      invalid["wordRect"] = ["x": invalidX, "y": 40, "width": 60, "height": 24]
 +      precondition(ReadiumWordAnchor.webViewRect(payload: invalid, size: CGSize(width: 400, height: 800)) == nil)
 +    }
++
++    let size = CGSize(width: 200, height: 200)
++    precondition(ReadiumWordAnchor.webViewRects(payload: payload, size: size) == [CGRect(x: 10, y: 10, width: 30, height: 6)])
++
++    let first: [String: Any] = ["x": 160.0, "y": 40.0, "width": 40.0, "height": 24.0]
++    let second: [String: Any] = ["x": 20.0, "y": 100.0, "width": 70.0, "height": 24.0]
++    var wrapped = payload
++    wrapped["wordRect"] = ["x": 20.0, "y": 40.0, "width": 180.0, "height": 84.0]
++    wrapped["wordRects"] = [first, second]
++    precondition(ReadiumWordAnchor.webViewRects(payload: wrapped, size: size) == [
++      CGRect(x: 80, y: 10, width: 20, height: 6),
++      CGRect(x: 10, y: 25, width: 35, height: 6),
++    ])
++    precondition(ReadiumWordAnchor.webViewRects(payload: wrapped, size: .zero) == nil)
++
++    for invalidRects: Any in [[], NSNull(), first, [first, "invalid"], Array(repeating: first, count: 513)] {
++      var invalid = wrapped
++      invalid["wordRects"] = invalidRects
++      precondition(ReadiumWordAnchor.webViewRects(payload: invalid, size: size) == nil)
++    }
++    for invalidRect: [String: Any] in [
++      ["x": true, "y": 40, "width": 40, "height": 24],
++      ["x": "160", "y": 40, "width": 40, "height": 24],
++      ["x": Double.infinity, "y": 40, "width": 40, "height": 24],
++      ["x": -1, "y": 40, "width": 40, "height": 24],
++      ["x": 380, "y": 40, "width": 40, "height": 24],
++      ["x": 160, "y": 40, "width": 0, "height": 24],
++      [:],
++    ] {
++      var invalid = wrapped
++      invalid["wordRects"] = [first, invalidRect, second]
++      precondition(ReadiumWordAnchor.webViewRects(payload: invalid, size: size) == nil)
++    }
++    var maximum = wrapped
++    maximum["wordRects"] = Array(repeating: first, count: 512)
++    precondition(ReadiumWordAnchor.webViewRects(payload: maximum, size: size)?.count == 512)
++    var missingViewport = wrapped
++    missingViewport.removeValue(forKey: "viewport")
++    precondition(ReadiumWordAnchor.webViewRects(payload: missingViewport, size: size) == nil)
 +  }
 +}
 --- /dev/null

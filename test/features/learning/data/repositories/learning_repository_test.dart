@@ -156,39 +156,15 @@ class InMemorySentencePronunciationStore implements SentencePronunciationStore {
 }
 
 class FakeFreeDictionaryService extends FreeDictionaryService {
-  FakeFreeDictionaryService({
-    required this.pronunciationUrl,
-    required this.audioBytes,
-  }) : super(dio: testDio()) {
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          handler.resolve(
-            Response<ResponseBody>(
-              requestOptions: options,
-              statusCode: 200,
-              data: ResponseBody.fromBytes(
-                audioBytes,
-                200,
-                headers: {
-                  Headers.contentTypeHeader: const <String>['audio/mpeg'],
-                },
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  FakeFreeDictionaryService({required this.audioBytes}) : super(dio: testDio());
 
-  final String pronunciationUrl;
   final List<int> audioBytes;
 
   @override
-  Future<String?> getPronunciationUrl(
+  Future<List<int>?> getPronunciationAudio(
     String word, {
     LearningCancellation? cancellation,
-  }) async => pronunciationUrl;
+  }) async => audioBytes;
 }
 
 class ThrowingFreeDictionaryService extends FreeDictionaryService {
@@ -197,7 +173,7 @@ class ThrowingFreeDictionaryService extends FreeDictionaryService {
   final Object error;
 
   @override
-  Future<String?> getPronunciationUrl(
+  Future<List<int>?> getPronunciationAudio(
     String word, {
     LearningCancellation? cancellation,
   }) async {
@@ -383,35 +359,28 @@ void main() {
       },
     );
 
-    test(
-      'dictionary mp3 exposes playback uri before caching completes',
-      () async {
-        const word = 'clarity';
-        const url = 'https://example.com/audio/clarity.mp3';
+    test('完整词典 MP3 使用本地缓存播放且不绑定 TTS 音色', () async {
+      const word = 'clarity';
+      final repository = WordRepository(
+        FakeFreeDictionaryService(audioBytes: const <int>[1, 2, 3, 4]),
+        DeepSeekService(dio: testDio()),
+        AliyunTTSService(dio: testDio()),
+        cacheStore,
+        InMemoryAudioFileStore(),
+      );
 
-        final repository = WordRepository(
-          FakeFreeDictionaryService(
-            pronunciationUrl: url,
-            audioBytes: const <int>[1, 2, 3, 4],
-          ),
-          DeepSeekService(dio: testDio()),
-          AliyunTTSService(dio: testDio()),
-          cacheStore,
-          InMemoryAudioFileStore(),
-        );
+      final result = await repository.getPronunciationStream(word).first;
 
-        final result = await repository.getPronunciationStream(word).first;
-
-        expect(result.format, AudioFormat.mp3);
-        expect(result.playbackUri, url);
-        expect(await result.stream.expand((chunk) => chunk).toList(), <int>[
-          1,
-          2,
-          3,
-          4,
-        ]);
-      },
-    );
+      expect(result.format, AudioFormat.mp3);
+      expect(result.playbackUri, isNull);
+      expect(result.cacheByVoice, isFalse);
+      expect(await result.stream.expand((chunk) => chunk).toList(), <int>[
+        1,
+        2,
+        3,
+        4,
+      ]);
+    });
 
     test('falls back to aliyun pcm when dictionary lookup fails', () async {
       const word = 'clarity';

@@ -310,6 +310,7 @@ class _RecordingLearningEntry extends LearningEntry {
     required String word,
     String? context,
     required Rect anchorRect,
+    List<Rect>? wordRects,
     required ThemeData theme,
   }) async {
     events.add({'kind': 'word', 'word': word, 'sentence': context});

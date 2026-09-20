@@ -12,7 +12,7 @@ Status: implemented
 
 - 删 `importCacheManagerProvider`（原 `lib/src/core/providers/unified_import_service_provider.dart:16`）。`ImportCacheManager` 类本身保留：`lib/src/core/file_handling/unified_import_service.dart:40` 与 `lib/src/core/file_handling/storage_cleanup_service.dart:82` 直接 new，死的只是这层 provider 包装。
 - 删 `BookWebViewHandler.getFontUrl`（`lib/src/features/reader/application/book_webview_handler.dart:351`），同步删 `test/features/reader/application/book_webview_handler_test.dart:35-37` 的对应测试。原有虚拟域字体供给后续由 [Readium 引擎决策](../../implemented/architecture/2026-09-20-readium-reader-engine.md)替代，字体由 `ReadiumLayout` 转为原生注册参数。
-- 删 `FreeDictionaryService.getWordEntries`（`lib/src/features/learning/data/services/free_dictionary_service.dart:60`）。同类的 `getPronunciationUrl` 有生产调用方（`lib/src/features/learning/data/repositories/word_repository.dart:76`），类保留、只删这个方法。
+- 删 `FreeDictionaryService.getWordEntries`（原 `lib/src/features/learning/data/services/free_dictionary_service.dart:60`），保留生产使用的发音能力；当前 `getPronunciationAudio` 由 `WordRepository` 调用。发音获取接口由[词卡反馈与直连发音](../bug-fix/2026-09-20-word-popover-feedback-and-pronunciation.md)取代，未使用的词典正文接口仍不保留。
 - 删公开的 `LibraryActionsMixin.importPaths`（`lib/src/features/library/presentation/mixins/library_actions_mixin.dart:75`），保留私有 `_importPaths`；`handleScanFolder` 与 `handleImportFiles` 走私有版。
 - 删 `AppThemeSettings.presetFor` 与 `AppThemeSettings.resolvedColorScheme`（`lib/src/core/theme/app_theme_settings.dart`）。
 - 删 `ShelfBookRepository.updateBookGroup`（`lib/src/features/library/data/shelf_book_repository.dart:222`）；批量移动走 `moveBooksToGroup`（同文件 :244）。删除后重新生成 mocks：`dart run build_runner build --delete-conflicting-outputs`。

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/l10n/app_localizations.dart';
@@ -41,6 +42,23 @@ void main() {
   late ProviderContainer container;
   late _CachedRepository repository;
   var underlyingTaps = 0;
+  final haptics = <String>[];
+
+  setUp(() {
+    haptics.clear();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            haptics.add(call.arguments as String);
+          }
+          return null;
+        });
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
 
   Future<void> mount(
     WidgetTester tester, {
@@ -81,27 +99,41 @@ void main() {
     );
   }
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(
+    WidgetTester tester, {
+    Rect anchorRect = const Rect.fromLTWH(300, 100, 60, 24),
+    List<Rect>? wordRects,
+  }) async {
     final entry = container.read(learningEntryProvider.notifier);
     // 不 await 路由 Future：只等待卡片完成首帧。
     entry.showWord(
       word: query.word,
       context: query.context,
-      anchorRect: const Rect.fromLTWH(300, 100, 60, 24),
+      anchorRect: anchorRect,
+      wordRects: wordRects,
       theme: ThemeData.light(),
     );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('透明屏障点击只关闭词卡，自动释放查询且下次点击恢复', (tester) async {
+  testWidgets('遮罩点击只关闭词卡，自动释放查询且下次点击恢复', (tester) async {
     await mount(tester);
     await open(tester);
     expect(find.byType(WordDefinitionDialog), findsOneWidget);
     final barrier = tester.widget<ModalBarrier>(find.byType(ModalBarrier).last);
-    expect(barrier.color?.a ?? 0, 0);
+    expect(barrier.color!.a, closeTo(0.12, 0.01));
+    expect(haptics, ['HapticFeedbackType.lightImpact']);
     await tester.tapAt(const Offset(20, 20));
     await tester.pumpAndSettle();
     expect(find.byType(WordDefinitionDialog), findsNothing);
+    expect(
+      find.byKey(const ValueKey('word-selection-highlight')),
+      findsNothing,
+    );
+    expect(haptics, [
+      'HapticFeedbackType.lightImpact',
+      'HapticFeedbackType.selectionClick',
+    ]);
     expect(repository.cancellation!.isCancelled, isTrue);
     expect(underlyingTaps, 0);
     await tester.tapAt(const Offset(20, 20));
@@ -116,9 +148,11 @@ void main() {
     expect(container.read(learningEntryProvider.notifier), same(first));
     await open(tester);
     expect(find.byType(WordDefinitionDialog), findsOneWidget);
+    expect(haptics, ['HapticFeedbackType.lightImpact']);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(WordDefinitionDialog), findsNothing);
+    expect(haptics.last, 'HapticFeedbackType.selectionClick');
     expect(ToastService.navigatorKey.currentState!.canPop(), isFalse);
   });
 
@@ -128,6 +162,10 @@ void main() {
     final card = tester.getRect(find.byKey(const ValueKey('word-popover')));
     expect(card.top, 138);
     expect(card.center.dx, closeTo(330, 0.1));
+    expect(
+      tester.getRect(find.byKey(const ValueKey('word-selection-highlight'))),
+      const Rect.fromLTWH(298, 98, 64, 28),
+    );
     final entry = container.read(learningEntryProvider.notifier);
     final navigator = ToastService.navigatorKey.currentState!;
     navigator.push(
@@ -144,5 +182,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(WordDefinitionDialog), findsNothing);
     expect(repository.cancellation!.isCancelled, isTrue);
+    expect(haptics, [
+      'HapticFeedbackType.lightImpact',
+      'HapticFeedbackType.selectionClick',
+    ]);
+  });
+
+  testWidgets('跨行词逐片段着色，非零 overlay 原点不会误标包围框内的邻词', (tester) async {
+    await mount(tester, inset: const EdgeInsets.only(left: 40, top: 30));
+    const fragments = [
+      Rect.fromLTWH(260, 100, 40, 20),
+      Rect.fromLTWH(100, 130, 90, 20),
+    ];
+    await open(
+      tester,
+      anchorRect: const Rect.fromLTWH(100, 100, 200, 50),
+      wordRects: fragments,
+    );
+    final highlights = find.byKey(const ValueKey('word-selection-highlight'));
+    expect(highlights, findsNWidgets(2));
+    final bounds = [
+      tester.getRect(highlights.at(0)),
+      tester.getRect(highlights.at(1)),
+    ];
+    expect(bounds, fragments.map((rect) => rect.inflate(2)).toList());
+    expect(
+      bounds.any((rect) => rect.contains(const Offset(150, 110))),
+      isFalse,
+    );
+    expect(tester.getRect(find.byKey(const ValueKey('word-popover'))).top, 164);
+    await tester.tapAt(const Offset(70, 70));
+    await tester.pumpAndSettle();
+    expect(highlights, findsNothing);
   });
 }

@@ -205,7 +205,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  Future<void> _interaction(ReadiumInteraction event, Rect? anchorRect) async {
+  Future<void> _interaction(
+    ReadiumInteraction event,
+    Rect? anchorRect,
+    List<Rect>? wordRects,
+  ) async {
     if (_overlayOpen ||
         _drawerOpen ||
         _leaving ||
@@ -231,6 +235,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             word: event.word!,
             context: event.sentence!,
             anchorRect: anchorRect,
+            wordRects: wordRects,
             theme: ref
                 .read(readerSettingsProvider)
                 .toEpubTheme(context)

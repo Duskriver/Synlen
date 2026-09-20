@@ -18,7 +18,7 @@ domain 新增统一抽象，词/句各保留一个实现，controller 合并为�
 
 保留的真实差异：
 
-- 词侧免费词典 mp3 降级路径（`WordRepository.getPronunciationStream` 先词典后 TTS）原样保留；词典结果的 `cacheByVoice: false` 不变（词侧词典音频不按音色缓存）。
+- 词侧 `WordRepository.getPronunciationStream` 先取单词音频、失败后转 TTS；词典音频使用 `cacheByVoice: false`，不按音色缓存。来源与等待预算由[词卡反馈与直连发音](../bug-fix/2026-09-20-word-popover-feedback-and-pronunciation.md)持有；词句共享接口与生命周期仍由本笔记持有。
 - `saveAudioFile` 两侧签名相同（`cacheByVoice` 形参两侧都有；提案原文误记为仅词侧）。句侧实现多一条 `assert(cacheByVoice)` 不变量——句侧音频永远按音色缓存，合并后原样保留。
 
 ## Alternatives considered
