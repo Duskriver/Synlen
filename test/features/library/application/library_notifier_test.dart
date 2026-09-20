@@ -44,7 +44,7 @@ void main() {
       format: BookFormat.txt,
       importDate: 0,
       direction: 0,
-      currentChapterIndex: 0,
+
       readingProgress: 0,
       isFinished: false,
       isDeleted: false,

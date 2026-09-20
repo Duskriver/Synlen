@@ -1,6 +1,6 @@
 # rust
 
-`rust/` 是 EPUB 读取后端：解析 ZIP 中央目录并解压单个条目，经 flutter_rust_bridge 暴露给 Dart。本页 owns 这些接口、缓存语义与 codegen 流程；调用方见 [reader.md](reader.md)。
+`rust/` 是 EPUB 读取后端：解析 ZIP 中央目录并解压单个条目，经 flutter_rust_bridge 暴露给 Dart。本页 owns 这些接口、缓存语义与 codegen 流程；生产调用方是 [library](library.md) 的封面提取；[reader](reader.md) 的出版物资源由 Readium 加载。
 
 ## 职责
 
@@ -26,17 +26,17 @@
 
 ## 流程
 
-1. 打开：`EpubStreamService.openBook` → `loadEpub`；同一路径重复打开复用缓存，切换书籍时先关掉旧缓存。
-2. 读取：`readEpubFile` 在读锁内只做 `Arc::clone`（微秒级），随后在私有文件句柄上顺序解压，多个 WebView 拦截请求可并行。
-3. 关闭：阅读侧 `EpubStreamService.dispose` 与导入侧 `BookImportService` 提取封面后的 `finally` 都调 `closeEpub`。
+1. 打开：`BookImportService` 提取 EPUB 封面前调用 `loadEpub`；同一路径重复打开复用缓存。
+2. 读取：`readEpubFile` 在读锁内只做 `Arc::clone`（微秒级），随后在私有文件句柄上顺序解压，并发读取不共享解压游标。
+3. 关闭：`BookImportService` 提取封面后的 `finally` 调用 `closeEpub`。
 4. codegen：改 `rust/src/api/` 后重跑 flutter_rust_bridge codegen，重新生成 `rust/src/frb_generated.rs`、`lib/src/rust/frb_generated.dart` 与 `lib/src/rust/api/*.dart`，生成物提交入库、不手改。
-5. 验证：`cargo test --locked --manifest-path rust/Cargo.toml`（CI 的 rust 任务同此命令），再跑 analyze 与阅读器冒烟测试。
+5. 验证：`cargo test --locked --manifest-path rust/Cargo.toml`（CI 的 rust 任务同此命令），再跑 analyze 与 EPUB 导入冒烟测试。
 
 ## 边界与不变量
 
 - 缓存按 EPUB 绝对路径索引；同一路径重复 `load_epub` 是幂等空操作。
 - 读锁只在 `Arc::clone` 期间持有，不跨 I/O 与解压。
-- 条目缺失返回 `Ok(None)`，调用方按 404 处理；I/O 错误、解压失败与 zip 炸弹返回 `Err(msg)`。
+- 条目缺失返回 `Ok(None)`，调用方按资源缺失处理；I/O 错误、解压失败与 zip 炸弹返回 `Err(msg)`。
 - 音视频条目（`mp4` / `mp3` / `wav` 等扩展名）返回空字节，不解压以省内存。
 - 混淆字体只收录「算法是 IDPF（前 1040 字节）或 Adobe（前 1024 字节）且 OPF manifest media-type 是字体」的条目；资源路径消解点段且不得越过容器根，identifier 合并文本、CDATA 与字符引用后派生密钥；映射构建失败退化为空映射，不阻断打开。
 - 缓存无自动淘汰，书籍关闭时必须调 `close_epub`。
@@ -45,8 +45,8 @@
 
 ## 已知限制与待办
 
-- `api/epub.rs` 与 `font_obfuscation` 都有单元测试：中央目录解析、读取幂等、条目缺失、zip-bomb 守卫与字体混淆接线都在 Rust 侧有直接证据；Dart 侧导入与阅读测试仍覆盖端到端。
-- 缓存无容量上限：`EpubStreamService` 为 keepAlive，切换书籍时关闭上一本、自身销毁时关闭当前书；同一会话内不会累积多本缓存条目。
+- `api/epub.rs` 与 `font_obfuscation` 都有单元测试：中央目录解析、读取幂等、条目缺失、zip-bomb 守卫与字体混淆接线都在 Rust 侧有直接证据；Dart 侧导入测试覆盖封面读取端到端。
+- 缓存无容量上限；导入任务必须在 `finally` 关闭所打开的 EPUB。
 - 该后端只服务 EPUB；TXT 内容不经 Rust（见 [reader.md](reader.md)）。
 
 ## Dev Note

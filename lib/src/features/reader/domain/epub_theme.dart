@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 
-/// 将颜色序列化为不含 alpha 的十六进制字符串（如 `#RRGGBB`），供 WebView 注入样式使用。
-String colorToHex(Color color) {
-  final argb = color.toARGB32();
-  return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
-}
-
 class EpubTheme {
   final double zoom;
   final bool shouldOverrideTextColor;
@@ -14,10 +8,10 @@ class EpubTheme {
   final Color? overridePrimaryColor;
   final EdgeInsets padding;
 
-  /// File name (with extension) of the custom font, or null for epub default.
+  /// 导入字体文件名；null 表示使用书籍字体。
   final String? fontFileName;
 
-  /// When true, force the custom font on top of the epub's own font rules.
+  /// 是否用导入字体覆盖出版者指定的字体。
   final bool overrideFontFamily;
 
   EpubTheme({
@@ -60,34 +54,6 @@ class EpubTheme {
   }
 
   static const Object _kUnset = Object();
-
-  Map<String, dynamic> toMap() {
-    return {
-      'zoom': zoom,
-      'shouldOverrideTextColor': shouldOverrideTextColor,
-
-      'primaryColor': colorToHex(colorScheme.primary),
-      'onPrimaryColor': colorToHex(colorScheme.onPrimary),
-      'secondaryColor': colorToHex(colorScheme.secondary),
-      'onSecondaryColor': colorToHex(colorScheme.onSecondary),
-      'errorColor': colorToHex(colorScheme.error),
-      'onErrorColor': colorToHex(colorScheme.onError),
-      'surfaceColor': colorToHex(colorScheme.surface),
-      'onSurfaceColor': colorToHex(colorScheme.onSurface),
-      'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
-      'onSurfaceVariantColor': colorToHex(colorScheme.onSurfaceVariant),
-      'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
-      'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
-      'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
-
-      'overridePrimaryColor': overridePrimaryColor != null
-          ? colorToHex(overridePrimaryColor!)
-          : null,
-      'padding': {'top': padding.top, 'left': padding.left},
-      'fontFileName': fontFileName,
-      'overrideFontFamily': overrideFontFamily,
-    };
-  }
 
   @override
   bool operator ==(Object other) {

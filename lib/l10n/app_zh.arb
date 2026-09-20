@@ -626,7 +626,7 @@
   "@tipLongPressNextTrack": {
     "description": "长按上/下一页按钮的提示"
   },
-  "longPressToViewImage": "长按图片查看原图",
+  "longPressToViewImage": "点击图片查看大图",
   "@longPressToViewImage": {
     "description": "长按图片查看原图的提示"
   },
@@ -858,7 +858,7 @@
   "@readerHandleIntraLink": {
     "description": "是否跟随书内（book://）链接跳转的开关标签"
   },
-  "readerPageAnimationSection": "翻页",
+  "readerPageAnimationSection": "按钮翻页动画",
   "@readerPageAnimationSection": {
     "description": "阅读器样式面板翻页动画区块标题"
   },
@@ -1094,6 +1094,9 @@
   "deepSeekCheckFailed": "无法连接 DeepSeek，请检查网络",
   "readerLoadFailed": "无法打开这本书，请重试。",
   "readerRenderFailed": "阅读排版更新失败，请重试。",
+  "readerControls": "阅读菜单",
+  "readerLinkFailed": "无法打开这个链接。",
+  "readerImageFailed": "无法打开这张图片。",
   "wordTabExplanation": "解释",
   "wordTabSynonyms": "近义词",
   "wordTabFormation": "构词",

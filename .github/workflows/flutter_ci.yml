@@ -48,6 +48,38 @@ jobs:
       - name: Run layer gates
         run: dart run tool/layer_gates.dart
 
+  android-reader:
+    name: Readium Android native tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.44.9'
+          channel: 'stable'
+          cache: true
+
+      # universal 缓存含 wrapper；pub get 生成本机配置与插件清单，不构建 APK。
+      - name: Prepare Android project
+        run: |
+          flutter precache --universal
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+
+      - name: Run native reader regressions
+        run: bash tool/test_readium_android.sh
+
   docs:
     name: Documentation gates
     runs-on: ubuntu-latest
@@ -66,13 +98,13 @@ jobs:
         run: dart tool/doc_gates.dart
 
   web-assets:
-    name: Reader typecheck · Playwright tests · assets drift
+    name: Reader lock · typecheck · Playwright tests · assets drift
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # build_web_assets 是纯 Dart 脚本，用 setup-dart 即可；Dart 版本与 Flutter 3.44.9 自带 Dart 锁步，flutter-version 升级时同步改
+      # 构建学习脚本只需 Dart；版本与 Flutter 自带 Dart 锁步。
       - name: Setup Dart
         uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
@@ -85,16 +117,19 @@ jobs:
 
       # 安装 lockfile 锁定的 typescript / esbuild（构建脚本使用本地 .bin/esbuild）
       - name: Install web toolchain
-        working-directory: web_assets/controller.js
+        working-directory: web_assets/readium
         run: npm ci
 
+      - name: Check reader package lock drift
+        run: git diff --exit-code -- web_assets/readium/package-lock.json
+
       - name: Typecheck reader TypeScript
-        working-directory: web_assets/controller.js
+        working-directory: web_assets/readium
         run: npm run typecheck
 
       # 浏览器集与 playwright.config.cjs 的 projects 保持一致：chromium + webkit
       - name: Install Playwright browsers
-        working-directory: web_assets/controller.js
+        working-directory: web_assets/readium
         run: |
           # runner 镜像预置的 google-chrome apt 源偶发索引哈希不匹配，会让
           # --with-deps 里的 apt-get update 直接失败；Playwright 自带浏览器构建，
@@ -103,14 +138,14 @@ jobs:
           npx playwright install --with-deps chromium webkit
 
       - name: Run reader Playwright tests
-        working-directory: web_assets/controller.js
+        working-directory: web_assets/readium
         run: npm test
 
-      # 重新生成 web_assets.dart 并检测漂移：TS/CSS 源码改动必须同步生成物
+      # 学习脚本源码与 Flutter 加载的生成资产必须同步提交。
       - name: Detect generated assets drift
         run: |
-          dart tool/build_web_assets.dart
-          git diff --exit-code lib/src/web/web_assets.dart
+          dart tool/build_readium_assets.dart
+          git diff --exit-code -- assets/reader/readium_learning.js
 
   rust:
     name: Rust compile & test

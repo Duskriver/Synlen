@@ -40,7 +40,7 @@ lib/src/
 | 模块 | 职责 | 入口 |
 |---|---|---|
 | [library](subsystems/library.md) | 藏书：导入（EPUB / TXT）、书架、分组、排序、备份恢复、详情 | `BookQueries`、`BookActions`、`BookshelfNotifier` |
-| [reader](subsystems/reader.md) | 阅读：内容供给、分页、章节与页码导航、脚注、图片、主题 | `ReaderSessionFactory`、`ReaderWorkflow`、`ReaderNavigator` |
+| [reader](subsystems/reader.md) | 阅读：出版物供给、Readium 会话、定位、学习手势与主题 | `ReaderSessionFactory`、`ReadiumSession`、`ReadiumPublicationSource` |
 | [learning](subsystems/learning.md) | 学习：点词释义、长句分析、TTS 发音与缓存 | `LearningEntry` |
 | [settings](subsystems/settings.md) | 设置：主题、字体、AI 密钥、音色、缓存清理、备份导出、更新检查 | 组合面（唯一允许跨 feature 编排的模块） |
 | [core](subsystems/core.md) | 跨模块能力：数据库、路由、主题、存储、日志、导入编排、文件处理 | provider 与 service |
@@ -53,8 +53,9 @@ lib/src/
   → EPUB：EpubZipParser + BookImportService（压缩存盘）
   → TXT ：解码（BOM → UTF-8 → GBK）→ 归一化为 UTF-8 → 虚拟章节
   → ShelfBook + BookManifest 落库（drift）
-阅读：ReaderScreen → ReaderSessionFactory → ReaderWorkflow → BookSession / ReaderNavigator → 内容供给（book:// 虚拟域 / TXT 章节）
-      进度：ReadingProgressController → 防抖落库 ShelfBook.progress
+阅读：ReaderScreen → ReaderSessionFactory → ReadiumSession → Readium 原生视口
+      供给：ReadiumPublicationSource → EPUB 文件 / TXT 派生 EPUB 缓存
+      进度：完整 Locator → BookProgress → ReadingProgressController → 防抖落库
 学习：点词 / 长按 → LearningEntry → LearningController（按 LearningQuery 选词/句仓库）
       → DeepSeek（释义、分析）+ 阿里云 TTS（发音）→ 缓存表（按音色区分）
 ```

@@ -929,7 +929,7 @@ abstract class AppLocalizations {
   /// Tip for long pressing image to view original
   ///
   /// In en, this message translates to:
-  /// **'Long press on image to view original'**
+  /// **'Tap an image to view it full screen'**
   String get longPressToViewImage;
 
   /// Import from folder option label
@@ -1223,7 +1223,7 @@ abstract class AppLocalizations {
   /// Reader style sheet section title for page-turning animation
   ///
   /// In en, this message translates to:
-  /// **'Pagination'**
+  /// **'Button page-turn animation'**
   String get readerPageAnimationSection;
 
   /// Page animation option: no animation
@@ -1567,6 +1567,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not update the reading layout. Please try again.'**
   String get readerRenderFailed;
+
+  /// No description provided for @readerControls.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading controls'**
+  String get readerControls;
+
+  /// No description provided for @readerLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open this link.'**
+  String get readerLinkFailed;
+
+  /// No description provided for @readerImageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open this image.'**
+  String get readerImageFailed;
 
   /// No description provided for @wordTabExplanation.
   ///

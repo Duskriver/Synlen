@@ -36,32 +36,6 @@ void main() {
     });
   });
 
-  group('EpubTheme.toMap', () {
-    test('should serialise colors as hex without alpha and keep padding', () {
-      final theme = EpubTheme(
-        zoom: 1.1,
-        shouldOverrideTextColor: true,
-        colorScheme: ColorScheme.light(),
-        overridePrimaryColor: const Color(0xFF112233),
-        padding: const EdgeInsets.only(top: 12, left: 20),
-      );
-
-      final map = theme.toMap();
-
-      expect(map['zoom'], 1.1);
-      expect(map['shouldOverrideTextColor'], isTrue);
-      expect(map['overridePrimaryColor'], '#112233');
-      expect(map['padding'], {'top': 12.0, 'left': 20.0});
-      expect(map['fontFileName'], isNull);
-    });
-
-    test('should serialise a custom font file name', () {
-      final map = buildTheme(fontFileName: 'song.ttf').toMap();
-      expect(map['fontFileName'], 'song.ttf');
-      expect(map['overrideFontFamily'], isFalse);
-    });
-  });
-
   group('EpubTheme 相等性', () {
     test('should treat identical values as equal', () {
       final a = buildTheme(fontFileName: 'song.ttf');

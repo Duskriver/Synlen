@@ -1,19 +1,19 @@
 # 改数据库 schema
 
-给 drift 表加表、加列或改列时走这套步骤。数据库定义在 `lib/src/core/database/app_database.dart`，迁移不可回退，存量用户的库必须能原地升级。
+给 drift 表加表、加列或改列时走这套步骤。数据库定义在 `lib/src/core/database/app_database.dart`。当前没有已发布用户，schema 3 不接收旧开发库；重置方式见[开发环境](../development.md)。正式发布后，结构变更必须提供保留用户数据的向前迁移。
 
 ## 步骤
 
 1. 改 `app_database.dart` 里的表定义（`ShelfBooks`、`BookManifests`、`WordExplanations` 等）。
-2. 把 `schemaVersion` 加 1。
-3. 在 `migration.onUpgrade` 里为新版本加一个 `if (from < N)` 分支，用 migrator 的 `addColumn` / `createTable` / `alterTable` 描述升级动作。新列必须给默认值或允许为空，否则存量行无法升级。
+2. 把 `schemaVersion` 加 1，并明确本次支持的起始版本。当前的 `migration.onUpgrade` 明确拒绝升级，不把旧章节比例转换为 Locator，也不自动删库。
+3. 若已有需要保留的用户数据，在 `migration.onUpgrade` 为受支持版本实现升级动作。新增列必须提供默认值或允许为空；改列类型使用可验证的数据转换，不静默丢弃旧值。
 4. 重新生成 drift 产物：
 
    ```sh
    dart run build_runner build --delete-conflicting-outputs
    ```
 
-5. 在 `test/database/migration_test.dart` 里补一段迁移测试，模式是：用原生 SQL 按**旧版本结构**建库并写入存量数据、把 `user_version` 设为旧版本、用 `AppDatabase` 打开触发迁移、断言存量行的新列取值与迁移后能正常读写。v1 → v2（`format` 列）的现有测试就是模板。
+5. 在 `test/database/migration_test.dart` 补测试：新库可创建并往返受影响字段；被拒绝的旧库版本与数据保持原样。有迁移路径时，以旧 SQL 结构写入样本、设置旧 `user_version`，再打开 `AppDatabase` 验证保留数据和新结构读写。
 6. 更新受影响的 [subsystems 页](../subsystems/README.md)与 [glossary](../glossary.md)（表名或列语义变了的话），并在同一次改动里加一篇 [Agent Note](../../.agents/notes/README.md)。
 
 ## 验证
@@ -21,14 +21,14 @@
 1. `dart run build_runner build --delete-conflicting-outputs` 无冲突输出。
 2. `flutter analyze` 零 error 零 warning。
 3. `flutter test test/database/migration_test.dart` 全绿。
-4. `dart run tool/doc_gates.dart` 通过（文档引用与术语同步）。
-5. 真机或模拟器上跑一次：用升级前的库启动，确认书架与阅读进度都在。
+4. `dart run tool/doc_gates.dart` 通过。
+5. 真机或模拟器验证新安装；支持升级时，再用升级前的库确认书架与进度完整保留。
 
 ## 约束
 
-- 迁移只做向前兼容，不写降级分支。
-- 每个 schema 版本一个 `from < N` 分支，不合并、不重排。
-- 改列类型属于破坏性变更：新建列 + 拷贝数据 + 删旧列，分两个版本完成。
+- 不写降级分支；迁移按版本前进，避免依赖执行顺序不明的隐式默认值。
+- 开发库重置不等于用户数据迁移；发布前需重新确认适用范围，不能沿用“无用户”的假设。
+- 不用重新计算的百分比伪造完整 Locator。
 
 ## Dev Note
 

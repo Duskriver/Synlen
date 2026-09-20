@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/book_views.dart';
+import '../domain/book_progress.dart';
 import '../data/book_manifest_repository.dart';
 import '../data/repositories/book_manifest_repository_provider.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
@@ -22,9 +23,7 @@ abstract interface class BookQueries {
   /// 写入阅读进度；书籍已不存在或写入失败时抛 [StateError]。
   Future<void> saveProgress({
     required int bookId,
-    required int chapterIndex,
-    required double progress,
-    required double? scrollPosition,
+    required BookProgress progress,
   });
 }
 
@@ -56,15 +55,11 @@ class RepositoryBookQueries implements BookQueries {
   @override
   Future<void> saveProgress({
     required int bookId,
-    required int chapterIndex,
-    required double progress,
-    required double? scrollPosition,
+    required BookProgress progress,
   }) async {
     final result = await _shelfBookRepository.updateProgress(
       bookId: bookId,
-      currentChapterIndex: chapterIndex,
       progress: progress,
-      scrollPosition: scrollPosition,
     );
     result.fold((error) => throw StateError(error), (updated) {
       if (!updated) throw StateError('保存进度时书籍已不存在');

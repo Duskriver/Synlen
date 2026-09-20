@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:archive/archive.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -32,16 +30,25 @@ import 'package:synlen/src/features/library/data/services/book_import_service.da
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/reader/application/reader_settings_notifier.dart';
 import 'package:synlen/src/features/reader/presentation/reader_screen.dart';
-import 'package:synlen/src/features/reader/presentation/reader_webview.dart';
-import 'package:synlen/src/features/reader/presentation/widgets/reader_stage.dart';
+import 'package:synlen/src/features/reader/presentation/readium_viewport.dart';
 import 'package:synlen/src/rust/frb_generated.dart';
 
-/// 真实 TXT / EPUB 与 WebView，学习内容和音频在 provider 边界替换，无需密钥。
+import '../test/helpers/epub_fixture.dart';
+import 'native_touch_driver.dart';
+
+final _nativeTouch = NativeTouchDriver();
+
+/// 真实 TXT / EPUB 与 Readium 原生视口，学习内容和音频在 provider 边界替换，无需密钥。
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
+  binding.shouldPropagateDevicePointerEvents = const bool.fromEnvironment(
+    'SYNLEN_NATIVE_GESTURE_PROBE',
+  );
 
   testWidgets('点词浮卡逐步展示，关闭不翻页，重排和旋转释放会话', (tester) async {
+    await _nativeTouch.start();
+    addTearDown(() => _nativeTouch.close(tester));
     const volumeChannel = MethodChannel('synlen/volume_control');
     var volumeIntercepted = false;
     if (Platform.isAndroid) {
@@ -161,26 +168,17 @@ void main() {
     await _until(tester, () => _content('explanation').evaluate().isNotEmpty);
     _expectCardInsideScreen(tester);
 
-    final before = _stage(tester).navigator.state.value;
+    final before = _location(tester);
     if (Platform.isAndroid) {
       expect(volumeIntercepted, isFalse);
       // 放开原生拦截后，已经发出的音量事件仍不能穿过词卡翻页。
       await _volumeDown(binding);
       await tester.pump(const Duration(milliseconds: 400));
-      expect(
-        _stage(tester).navigator.state.value.spineIndex,
-        before.spineIndex,
-      );
-      expect(
-        _stage(tester).navigator.state.value.pageInChapter,
-        before.pageInChapter,
-      );
+      expect(_location(tester), before);
       expect(find.byType(WordDefinitionDialog), findsOneWidget);
     }
     await _dismissOutside(tester);
-    final after = _stage(tester).navigator.state.value;
-    expect(after.spineIndex, before.spineIndex);
-    expect(after.pageInChapter, before.pageInChapter);
+    expect(_location(tester), before);
     await _until(
       tester,
       () => first.cancellation.isCancelled && players.last.closed,
@@ -191,21 +189,23 @@ void main() {
       await _until(
         tester,
         () =>
-            !_stage(tester).navigator.state.value.isBusy &&
-            _stage(tester).navigator.state.value.pageInChapter ==
-                before.pageInChapter + 1,
+            _viewport(tester).session.ready &&
+            _location(tester).$1 == before.$1 &&
+            _location(tester).$2 > before.$2,
       );
     }
 
     await _openWord(tester, verticalFraction: 0.25);
     final reflow = repository.requests.last;
+    final previousSession = _viewport(tester).session.sessionId;
     await container.read(readerSettingsProvider.notifier).setZoom(1.3);
     await _until(
       tester,
       () => find.byType(WordDefinitionDialog).evaluate().isEmpty,
     );
     await _until(tester, () => reflow.cancellation.isCancelled);
-    await _readerReady(tester);
+    await _readerReady(tester, previousSession: previousSession);
+    expect(_viewport(tester).session.layout!.theme.zoom, 1.3);
 
     await _openWord(tester, verticalFraction: 0.75);
     final rotation = repository.requests.last;
@@ -252,7 +252,7 @@ void main() {
       () => epub.cancellation.isCancelled && players.last.closed,
     );
     if (Platform.isAndroid) expect(volumeIntercepted, isFalse);
-  });
+  }, skip: Platform.isIOS && !NativeTouchDriver.enabled);
 }
 
 Finder _content(String section) => find.byKey(ValueKey('word-$section'));
@@ -262,30 +262,57 @@ Future<void> _selectTab(WidgetTester tester, String section) async {
   await tester.tap(_tab(section));
 }
 
-ReaderStage _stage(WidgetTester tester) =>
-    tester.widget<ReaderStage>(find.byType(ReaderStage));
+ReadiumViewport _viewport(WidgetTester tester) =>
+    tester.widget<ReadiumViewport>(find.byType(ReadiumViewport));
 
-Future<void> _readerReady(WidgetTester tester) => _until(
-  tester,
-  () =>
-      find.byType(ReaderStage).evaluate().isNotEmpty &&
-      _stage(tester).shouldShowWebView &&
-      !_stage(tester).navigator.state.value.isBusy &&
-      _stage(tester).navigator.state.value.totalPagesInChapter > 1,
-);
+(String, double) _location(WidgetTester tester) {
+  final locator = _viewport(tester).session.locator!;
+  return (locator.href, locator.locations?.progression ?? 0);
+}
+
+Future<void> _readerReady(WidgetTester tester, {String? previousSession}) =>
+    _until(
+      tester,
+      () =>
+          find.byType(ReadiumViewport).evaluate().isNotEmpty &&
+          _viewport(tester).session.ready &&
+          _viewport(tester).session.locator != null &&
+          _viewport(tester).session.sessionId != previousSession,
+    );
 
 Future<void> _openWord(
   WidgetTester tester, {
   double verticalFraction = 0.5,
 }) async {
-  final point = await _visibleWordPoint(tester, verticalFraction);
-  expect(_stage(tester).showControls, isFalse);
-  await tester.tapAt(point);
-  await _until(
-    tester,
-    () => find.byType(WordDefinitionDialog).evaluate().isNotEmpty,
-  );
-  await _until(tester, () => _content('summary').evaluate().isNotEmpty);
+  await _readerReady(tester);
+  final dialog = find.byType(WordDefinitionDialog);
+  // Readium 不暴露 DOM 查询通道；真实触摸扫描相邻字形，命中即停止。
+  for (final dx in [0.0, 12.0, -12.0]) {
+    for (final dy in [0.0, 5.0, -5.0, 10.0, -10.0, 15.0, -15.0]) {
+      final viewport = _viewport(tester);
+      // 扫描行间空白可能打开控件；复位后继续，避免下一次触摸命中工具栏。
+      viewport.controls.value = false;
+      await tester.pump();
+      final bounds = tester.getRect(find.byType(ReadiumViewport));
+      await _nativeTouch.tap(
+        tester,
+        Offset(
+          bounds.center.dx + dx,
+          bounds.top + bounds.height * verticalFraction + dy,
+        ),
+      );
+      final deadline = DateTime.now().add(const Duration(seconds: 1));
+      while (DateTime.now().isBefore(deadline)) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (dialog.evaluate().isNotEmpty) {
+          expect(tester.widget<WordDefinitionDialog>(dialog).word, 'sorted');
+          await _until(tester, () => _content('summary').evaluate().isNotEmpty);
+          return;
+        }
+      }
+    }
+  }
+  fail('Readium 可见正文的真实触摸未产生词卡');
 }
 
 Future<void> _volumeDown(IntegrationTestWidgetsFlutterBinding binding) async {
@@ -296,93 +323,6 @@ Future<void> _volumeDown(IntegrationTestWidgetsFlutterBinding binding) async {
   );
 }
 
-// 只读 DOM 定位完整可见的 fixture 单词，点击仍经过 Flutter 手势与正式取词桥接。
-Future<Offset> _visibleWordPoint(
-  WidgetTester tester,
-  double verticalFraction,
-) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 30));
-  Object? lastDiagnostic;
-  while (DateTime.now().isBefore(deadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
-    final finder = find.byType(InAppWebView);
-    final webView = tester.widget<InAppWebView>(finder);
-    final controller =
-        webView.platform.params.headlessWebView?.webViewController;
-    final bounds = tester.getRect(finder);
-    final padding = tester
-        .widget<ReaderWebView>(find.byType(ReaderWebView))
-        .initializeTheme
-        .padding;
-    final safeWidth = (bounds.width - padding.horizontal).floor();
-    final safeHeight = (bounds.height - padding.vertical).floor();
-    final result = await controller?.evaluateJavascript(
-      source:
-          '''
-(() => {
-  if (Math.abs(innerWidth - ${bounds.width}) > 1 ||
-      Math.abs(innerHeight - ${bounds.height}) > 1) {
-    return {diagnostic: [innerWidth, innerHeight, ${bounds.width}, ${bounds.height}]};
-  }
-  const frame = document.getElementById('frame-curr');
-  const doc = frame?.contentDocument;
-  if (!doc?.body) return {diagnostic: 'missing frame body'};
-  const style = doc.defaultView.getComputedStyle(doc.documentElement);
-  const safe = [parseFloat(style.getPropertyValue('--synlen-safe-width')),
-    parseFloat(style.getPropertyValue('--synlen-safe-height'))];
-  if (safe[0] !== $safeWidth || safe[1] !== $safeHeight) {
-    return {diagnostic: ['pagination pending', ...safe, $safeWidth, $safeHeight]};
-  }
-  const offset = frame.getBoundingClientRect();
-  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  const candidates = [];
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    let left = 0, top = 0, right = frame.clientWidth, bottom = frame.clientHeight;
-    for (let element = node.parentElement; element; element = element.parentElement) {
-      const style = doc.defaultView.getComputedStyle(element);
-      const bounds = element.getBoundingClientRect();
-      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)) {
-        left = Math.max(left, bounds.left); right = Math.min(right, bounds.right);
-      }
-      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)) {
-        top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom);
-      }
-    }
-    for (const match of node.textContent.matchAll(/sorted/g)) {
-      const range = doc.createRange();
-      range.setStart(node, match.index);
-      range.setEnd(node, match.index + match[0].length);
-      for (const rect of range.getClientRects()) {
-        if (rect.width <= 0 || rect.height <= 0 || rect.left < left ||
-            rect.top < top || rect.right > right || rect.bottom > bottom) continue;
-        const x = offset.left + frame.clientLeft + rect.x + rect.width / 2;
-        const y = offset.top + frame.clientTop + rect.y + rect.height / 2;
-        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;
-        candidates.push({x, y, distance: Math.abs(x - innerWidth / 2) +
-          Math.abs(y - innerHeight * $verticalFraction) * 2});
-      }
-    }
-  }
-  candidates.sort((a, b) => a.distance - b.distance);
-  return candidates[0] ?? {diagnostic: [frame.clientWidth, frame.clientHeight,
-    doc.body.innerText.slice(0, 120), doc.body.getBoundingClientRect().toJSON()]};
-})()
-''',
-    );
-    if (result is Map &&
-        result.containsKey('x') &&
-        !_stage(tester).navigator.state.value.isBusy) {
-      return bounds.topLeft +
-          Offset(
-            (result['x'] as num).toDouble(),
-            (result['y'] as num).toDouble(),
-          );
-    }
-    lastDiagnostic = 'controller=${controller != null} result=$result';
-  }
-  fail('正文未提供与当前视口匹配的可见单词：$lastDiagnostic');
-}
-
 Future<void> _dismissOutside(WidgetTester tester) async {
   final bounds = tester.getRect(find.byKey(const ValueKey('word-popover')));
   final size = tester.view.physicalSize / tester.view.devicePixelRatio;
@@ -391,7 +331,7 @@ Future<void> _dismissOutside(WidgetTester tester) async {
     Offset(size.width / 2, size.height * 0.85),
     Offset(12, size.height / 2),
   ].firstWhere((point) => !bounds.contains(point));
-  await tester.tapAt(outside);
+  await _nativeTouch.tap(tester, outside);
   await _until(
     tester,
     () => find.byType(WordDefinitionDialog).evaluate().isEmpty,
@@ -426,28 +366,12 @@ Future<File> _source(Directory root, String extension) async {
   );
   final file = File('${root.path}/source.$extension');
   if (extension == 'txt') return file.writeAsString(paragraphs.join('\n\n'));
-  final archive = Archive()
-    ..addFile(ArchiveFile.string('mimetype', 'application/epub+zip'))
-    ..addFile(
-      ArchiveFile.string(
-        'META-INF/container.xml',
-        '<container><rootfiles><rootfile full-path="content.opf"/></rootfiles></container>',
-      ),
-    )
-    ..addFile(
-      ArchiveFile.string('content.opf', '''
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
-<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">word</dc:identifier><dc:title>词卡验收</dc:title><dc:language>en</dc:language></metadata>
-<manifest><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/></manifest>
-<spine><itemref idref="chapter"/></spine></package>'''),
-    )
-    ..addFile(
-      ArchiveFile.string(
-        'chapter.xhtml',
-        '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Words</title></head><body>${paragraphs.map((text) => '<p>$text</p>').join()}</body></html>',
-      ),
-    );
-  return file.writeAsBytes(ZipEncoder().encode(archive));
+  return file.writeAsBytes(
+    testEpubBytes(
+      chapter:
+          '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Words</title></head><body>${paragraphs.map((text) => '<p>$text</p>').join()}</body></html>',
+    ),
+  );
 }
 
 class _WordRepository implements LearningRepository {

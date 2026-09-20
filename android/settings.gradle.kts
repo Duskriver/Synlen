@@ -19,8 +19,11 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.11.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    id("com.android.application") version "8.13.2" apply false
+    id("org.jetbrains.kotlin.android") version "2.3.21" apply false
 }
 
 include(":app")
+
+include(":synlen_readium_navigator")
+project(":synlen_readium_navigator").projectDir = file("../third_party/flutter_readium/android/readium-navigator")

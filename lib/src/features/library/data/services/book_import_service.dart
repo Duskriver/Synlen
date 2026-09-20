@@ -212,7 +212,6 @@ class BookImportService {
       importDate: now,
       updatedAt: now,
       direction: parseData.readDirection,
-      currentChapterIndex: 0,
       readingProgress: 0.0,
       isFinished: false,
       isDeleted: false,

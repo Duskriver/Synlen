@@ -1,0 +1,2990 @@
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,7 @@
++.dart_tool/
++.packages
++pubspec.lock
++build/
++android/.gradle/
++ios/.build/
++ios/Pods/
+--- /dev/null
++++ b/NOTICES
+@@ -0,0 +1,619 @@
++flutter_readium
++
++BSD 3-Clause License
++
++Copyright (c) 2026, Royal Danish Library
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are met:
++
++1. Redistributions of source code must retain the above copyright notice, this
++   list of conditions and the following disclaimer.
++
++2. Redistributions in binary form must reproduce the above copyright notice,
++   this list of conditions and the following disclaimer in the documentation
++   and/or other materials provided with the distribution.
++
++3. Neither the name of the copyright holder nor the names of its
++   contributors may be used to endorse or promote products derived from
++   this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
++FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++--------------------------------------------------------------------------------
++Readium Kotlin Toolkit
++
++BSD 3-Clause License
++
++Copyright (c) 2017, Readium
++All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are met:
++
++* Redistributions of source code must retain the above copyright notice, this
++  list of conditions and the following disclaimer.
++
++* Redistributions in binary form must reproduce the above copyright notice,
++  this list of conditions and the following disclaimer in the documentation
++  and/or other materials provided with the distribution.
++
++* Neither the name of the copyright holder nor the names of its
++  contributors may be used to endorse or promote products derived from
++  this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
++FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++--------------------------------------------------------------------------------
++PhotoView
++
++Copyright 2011, 2012 Chris Banes.
++https://github.com/Baseflow/PhotoView/tree/2.3.0
++
++
++                                 Apache License
++                           Version 2.0, January 2004
++                        http://www.apache.org/licenses/
++
++   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
++
++   1. Definitions.
++
++      "License" shall mean the terms and conditions for use, reproduction,
++      and distribution as defined by Sections 1 through 9 of this document.
++
++      "Licensor" shall mean the copyright owner or entity authorized by
++      the copyright owner that is granting the License.
++
++      "Legal Entity" shall mean the union of the acting entity and all
++      other entities that control, are controlled by, or are under common
++      control with that entity. For the purposes of this definition,
++      "control" means (i) the power, direct or indirect, to cause the
++      direction or management of such entity, whether by contract or
++      otherwise, or (ii) ownership of fifty percent (50%) or more of the
++      outstanding shares, or (iii) beneficial ownership of such entity.
++
++      "You" (or "Your") shall mean an individual or Legal Entity
++      exercising permissions granted by this License.
++
++      "Source" form shall mean the preferred form for making modifications,
++      including but not limited to software source code, documentation
++      source, and configuration files.
++
++      "Object" form shall mean any form resulting from mechanical
++      transformation or translation of a Source form, including but
++      not limited to compiled object code, generated documentation,
++      and conversions to other media types.
++
++      "Work" shall mean the work of authorship, whether in Source or
++      Object form, made available under the License, as indicated by a
++      copyright notice that is included in or attached to the work
++      (an example is provided in the Appendix below).
++
++      "Derivative Works" shall mean any work, whether in Source or Object
++      form, that is based on (or derived from) the Work and for which the
++      editorial revisions, annotations, elaborations, or other modifications
++      represent, as a whole, an original work of authorship. For the purposes
++      of this License, Derivative Works shall not include works that remain
++      separable from, or merely link (or bind by name) to the interfaces of,
++      the Work and Derivative Works thereof.
++
++      "Contribution" shall mean any work of authorship, including
++      the original version of the Work and any modifications or additions
++      to that Work or Derivative Works thereof, that is intentionally
++      submitted to Licensor for inclusion in the Work by the copyright owner
++      or by an individual or Legal Entity authorized to submit on behalf of
++      the copyright owner. For the purposes of this definition, "submitted"
++      means any form of electronic, verbal, or written communication sent
++      to the Licensor or its representatives, including but not limited to
++      communication on electronic mailing lists, source code control systems,
++      and issue tracking systems that are managed by, or on behalf of, the
++      Licensor for the purpose of discussing and improving the Work, but
++      excluding communication that is conspicuously marked or otherwise
++      designated in writing by the copyright owner as "Not a Contribution."
++
++      "Contributor" shall mean Licensor and any individual or Legal Entity
++      on behalf of whom a Contribution has been received by Licensor and
++      subsequently incorporated within the Work.
++
++   2. Grant of Copyright License. Subject to the terms and conditions of
++      this License, each Contributor hereby grants to You a perpetual,
++      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
++      copyright license to reproduce, prepare Derivative Works of,
++      publicly display, publicly perform, sublicense, and distribute the
++      Work and such Derivative Works in Source or Object form.
++
++   3. Grant of Patent License. Subject to the terms and conditions of
++      this License, each Contributor hereby grants to You a perpetual,
++      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
++      (except as stated in this section) patent license to make, have made,
++      use, offer to sell, sell, import, and otherwise transfer the Work,
++      where such license applies only to those patent claims licensable
++      by such Contributor that are necessarily infringed by their
++      Contribution(s) alone or by combination of their Contribution(s)
++      with the Work to which such Contribution(s) was submitted. If You
++      institute patent litigation against any entity (including a
++      cross-claim or counterclaim in a lawsuit) alleging that the Work
++      or a Contribution incorporated within the Work constitutes direct
++      or contributory patent infringement, then any patent licenses
++      granted to You under this License for that Work shall terminate
++      as of the date such litigation is filed.
++
++   4. Redistribution. You may reproduce and distribute copies of the
++      Work or Derivative Works thereof in any medium, with or without
++      modifications, and in Source or Object form, provided that You
++      meet the following conditions:
++
++      (a) You must give any other recipients of the Work or
++          Derivative Works a copy of this License; and
++
++      (b) You must cause any modified files to carry prominent notices
++          stating that You changed the files; and
++
++      (c) You must retain, in the Source form of any Derivative Works
++          that You distribute, all copyright, patent, trademark, and
++          attribution notices from the Source form of the Work,
++          excluding those notices that do not pertain to any part of
++          the Derivative Works; and
++
++      (d) If the Work includes a "NOTICE" text file as part of its
++          distribution, then any Derivative Works that You distribute must
++          include a readable copy of the attribution notices contained
++          within such NOTICE file, excluding those notices that do not
++          pertain to any part of the Derivative Works, in at least one
++          of the following places: within a NOTICE text file distributed
++          as part of the Derivative Works; within the Source form or
++          documentation, if provided along with the Derivative Works; or,
++          within a display generated by the Derivative Works, if and
++          wherever such third-party notices normally appear. The contents
++          of the NOTICE file are for informational purposes only and
++          do not modify the License. You may add Your own attribution
++          notices within Derivative Works that You distribute, alongside
++          or as an addendum to the NOTICE text from the Work, provided
++          that such additional attribution notices cannot be construed
++          as modifying the License.
++
++      You may add Your own copyright statement to Your modifications and
++      may provide additional or different license terms and conditions
++      for use, reproduction, or distribution of Your modifications, or
++      for any such Derivative Works as a whole, provided Your use,
++      reproduction, and distribution of the Work otherwise complies with
++      the conditions stated in this License.
++
++   5. Submission of Contributions. Unless You explicitly state otherwise,
++      any Contribution intentionally submitted for inclusion in the Work
++      by You to the Licensor shall be under the terms and conditions of
++      this License, without any additional terms or conditions.
++      Notwithstanding the above, nothing herein shall supersede or modify
++      the terms of any separate license agreement you may have executed
++      with Licensor regarding such Contributions.
++
++   6. Trademarks. This License does not grant permission to use the trade
++      names, trademarks, service marks, or product names of the Licensor,
++      except as required for reasonable and customary use in describing the
++      origin of the Work and reproducing the content of the NOTICE file.
++
++   7. Disclaimer of Warranty. Unless required by applicable law or
++      agreed to in writing, Licensor provides the Work (and each
++      Contributor provides its Contributions) on an "AS IS" BASIS,
++      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
++      implied, including, without limitation, any warranties or conditions
++      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
++      PARTICULAR PURPOSE. You are solely responsible for determining the
++      appropriateness of using or redistributing the Work and assume any
++      risks associated with Your exercise of permissions under this License.
++
++   8. Limitation of Liability. In no event and under no legal theory,
++      whether in tort (including negligence), contract, or otherwise,
++      unless required by applicable law (such as deliberate and grossly
++      negligent acts) or agreed to in writing, shall any Contributor be
++      liable to You for damages, including any direct, indirect, special,
++      incidental, or consequential damages of any character arising as a
++      result of this License or out of the use or inability to use the
++      Work (including but not limited to damages for loss of goodwill,
++      work stoppage, computer failure or malfunction, or any and all
++      other commercial damages or losses), even if such Contributor
++      has been advised of the possibility of such damages.
++
++   9. Accepting Warranty or Additional Liability. While redistributing
++      the Work or Derivative Works thereof, You may choose to offer,
++      and charge a fee for, acceptance of support, warranty, indemnity,
++      or other liability obligations and/or rights consistent with this
++      License. However, in accepting such obligations, You may act only
++      on Your own behalf and on Your sole responsibility, not on behalf
++      of any other Contributor, and only if You agree to indemnify,
++      defend, and hold each Contributor harmless for any liability
++      incurred by, or claims asserted against, such Contributor by reason
++      of your accepting any such warranty or additional liability.
++
++   END OF TERMS AND CONDITIONS
++
++   APPENDIX: How to apply the Apache License to your work.
++
++      To apply the Apache License to your work, attach the following
++      boilerplate notice, with the fields enclosed by brackets "[]"
++      replaced with your own identifying information. (Don't include
++      the brackets!)  The text should be enclosed in the appropriate
++      comment syntax for the file format. We also recommend that a
++      file or class name and description of purpose be included on the
++      same "printed page" as the copyright notice for easier
++      identification within third-party archives.
++
++   Copyright [yyyy] [name of copyright owner]
++
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
++
++--------------------------------------------------------------------------------
++OpenDyslexic
++
++Original Fonts are © Bitstream. OpenDyslexic changes and additional glyphs by Abelardo Gonzalez are licensed under a Creative Commons Attribution 3.0 Unported License.
++Based on a work at http://dyslexicfonts.com.
++©2012 by Abelardo Gonzalez. Copying is an act of love. Please copy.
++Bitstream license available here: http://opendyslexic.org/legal/
++Creative Commons Attribution 3.0 Unported License: https://creativecommons.org/licenses/by/3.0/
++
++Bitstream Vera Fonts Copyright
++
++The fonts have a generous copyright, allowing derivative works (as
++long as "Bitstream" or "Vera" are not in the names), and full
++redistribution (so long as they are not *sold* by themselves). They
++can be be bundled, redistributed and sold with any software.
++
++The fonts are distributed under the following copyright:
++
++Copyright
++=========
++
++Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream
++Vera is a trademark of Bitstream, Inc.
++
++Permission is hereby granted, free of charge, to any person obtaining
++a copy of the fonts accompanying this license ("Fonts") and associated
++documentation files (the "Font Software"), to reproduce and distribute
++the Font Software, including without limitation the rights to use,
++copy, merge, publish, distribute, and/or sell copies of the Font
++Software, and to permit persons to whom the Font Software is furnished
++to do so, subject to the following conditions:
++
++The above copyright and trademark notices and this permission notice
++shall be included in all copies of one or more of the Font Software
++typefaces.
++
++The Font Software may be modified, altered, or added to, and in
++particular the designs of glyphs or characters in the Fonts may be
++modified and additional glyphs or characters may be added to the
++Fonts, only if the fonts are renamed to names not containing either
++the words "Bitstream" or the word "Vera".
++
++This License becomes null and void to the extent applicable to Fonts
++or Font Software that has been modified and is distributed under the
++"Bitstream Vera" names.
++
++The Font Software may be sold as part of a larger software package but
++no copy of one or more of the Font Software typefaces may be sold by
++itself.
++
++THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
++OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL
++BITSTREAM OR THE GNOME FOUNDATION BE LIABLE FOR ANY CLAIM, DAMAGES OR
++OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL,
++OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR
++OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT
++SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.
++
++Except as contained in this notice, the names of Gnome, the Gnome
++Foundation, and Bitstream Inc., shall not be used in advertising or
++otherwise to promote the sale, use or other dealings in this Font
++Software without prior written authorization from the Gnome Foundation
++or Bitstream Inc., respectively. For further information, contact:
++fonts at gnome dot org.
++
++Copyright FAQ
++=============
++
++   1. I don't understand the resale restriction... What gives?
++
++      Bitstream is giving away these fonts, but wishes to ensure its
++      competitors can't just drop the fonts as is into a font sale system
++      and sell them as is. It seems fair that if Bitstream can't make money
++      from the Bitstream Vera fonts, their competitors should not be able to
++      do so either. You can sell the fonts as part of any software package,
++      however.
++
++   2. I want to package these fonts separately for distribution and
++      sale as part of a larger software package or system.  Can I do so?
++
++      Yes. A RPM or Debian package is a "larger software package" to begin 
++      with, and you aren't selling them independently by themselves. 
++      See 1. above.
++
++   3. Are derivative works allowed?
++      Yes!
++
++   4. Can I change or add to the font(s)?
++      Yes, but you must change the name(s) of the font(s).
++
++   5. Under what terms are derivative works allowed?
++
++      You must change the name(s) of the fonts. This is to ensure the
++      quality of the fonts, both to protect Bitstream and Gnome. We want to
++      ensure that if an application has opened a font specifically of these
++      names, it gets what it expects (though of course, using fontconfig,
++      substitutions could still could have occurred during font
++      opening). You must include the Bitstream copyright. Additional
++      copyrights can be added, as per copyright law. Happy Font Hacking!
++
++   6. If I have improvements for Bitstream Vera, is it possible they might get 
++       adopted in future versions?
++
++      Yes. The contract between the Gnome Foundation and Bitstream has
++      provisions for working with Bitstream to ensure quality additions to
++      the Bitstream Vera font family. Please contact us if you have such
++      additions. Note, that in general, we will want such additions for the
++      entire family, not just a single font, and that you'll have to keep
++      both Gnome and Jim Lyles, Vera's designer, happy! To make sense to add
++      glyphs to the font, they must be stylistically in keeping with Vera's
++      design. Vera cannot become a "ransom note" font. Jim Lyles will be
++      providing a document describing the design elements used in Vera, as a
++      guide and aid for people interested in contributing to Vera.
++
++   7. I want to sell a software package that uses these fonts: Can I do so?
++
++      Sure. Bundle the fonts with your software and sell your software
++      with the fonts. That is the intent of the copyright.
++
++   8. If applications have built the names "Bitstream Vera" into them, 
++      can I override this somehow to use fonts of my choosing?
++
++      This depends on exact details of the software. Most open source
++      systems and software (e.g., Gnome, KDE, etc.) are now converting to
++      use fontconfig (see www.fontconfig.org) to handle font configuration,
++      selection and substitution; it has provisions for overriding font
++      names and subsituting alternatives. An example is provided by the
++      supplied local.conf file, which chooses the family Bitstream Vera for
++      "sans", "serif" and "monospace".  Other software (e.g., the XFree86
++      core server) has other mechanisms for font substitution.
++
++
++--------------------------------------------------------------------------------
++Accessible-DFA
++
++Copyright (c) Orange 2015, www.orange.com
++with Reserved Font Name Accessible-Dfa.
++
++This Font Software is licensed under the SIL Open Font License, Version 1.1.
++This license is copied below, and is also available with a FAQ at:
++http://scripts.sil.org/OFL
++
++
++-----------------------------------------------------------
++SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
++-----------------------------------------------------------
++
++PREAMBLE
++The goals of the Open Font License (OFL) are to stimulate worldwide
++development of collaborative font projects, to support the font creation
++efforts of academic and linguistic communities, and to provide a free and
++open framework in which fonts may be shared and improved in partnership
++with others.
++
++The OFL allows the licensed fonts to be used, studied, modified and
++redistributed freely as long as they are not sold by themselves. The
++fonts, including any derivative works, can be bundled, embedded, 
++redistributed and/or sold with any software provided that any reserved
++names are not used by derivative works. The fonts and derivatives,
++however, cannot be released under any other type of license. The
++requirement for fonts to remain under this license does not apply
++to any document created using the fonts or their derivatives.
++
++DEFINITIONS
++"Font Software" refers to the set of files released by the Copyright
++Holder(s) under this license and clearly marked as such. This may
++include source files, build scripts and documentation.
++
++"Reserved Font Name" refers to any names specified as such after the
++copyright statement(s).
++
++"Original Version" refers to the collection of Font Software components as
++distributed by the Copyright Holder(s).
++
++"Modified Version" refers to any derivative made by adding to, deleting,
++or substituting -- in part or in whole -- any of the components of the
++Original Version, by changing formats or by porting the Font Software to a
++new environment.
++
++"Author" refers to any designer, engineer, programmer, technical
++writer or other person who contributed to the Font Software.
++
++PERMISSION & CONDITIONS
++Permission is hereby granted, free of charge, to any person obtaining
++a copy of the Font Software, to use, study, copy, merge, embed, modify,
++redistribute, and sell modified and unmodified copies of the Font
++Software, subject to the following conditions:
++
++1) Neither the Font Software nor any of its individual components,
++in Original or Modified Versions, may be sold by itself.
++
++2) Original or Modified Versions of the Font Software may be bundled,
++redistributed and/or sold with any software, provided that each copy
++contains the above copyright notice and this license. These can be
++included either as stand-alone text files, human-readable headers or
++in the appropriate machine-readable metadata fields within text or
++binary files as long as those fields can be easily viewed by the user.
++
++3) No Modified Version of the Font Software may use the Reserved Font
++Name(s) unless explicit written permission is granted by the corresponding
++Copyright Holder. This restriction only applies to the primary font name as
++presented to the users.
++
++4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
++Software shall not be used to promote, endorse or advertise any
++Modified Version, except to acknowledge the contribution(s) of the
++Copyright Holder(s) and the Author(s) or with their explicit written
++permission.
++
++5) The Font Software, modified or unmodified, in part or in whole,
++must be distributed entirely under this license, and must not be
++distributed under any other license. The requirement for fonts to
++remain under this license does not apply to any document created
++using the Font Software.
++
++TERMINATION
++This license becomes null and void if any of the above conditions are
++not met.
++
++DISCLAIMER
++THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
++OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
++COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
++DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
++OTHER DEALINGS IN THE FONT SOFTWARE.
++
++
++--------------------------------------------------------------------------------
++iA Writer Duospace
++
++# IBM Plex Typeface
++
++Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
++
++This Font Software is licensed under the SIL Open Font License, Version 1.1.
++This license is copied below, and is also available with a FAQ at:
++http://scripts.sil.org/OFL
++
++-----------------------------------------------------------
++SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
++-----------------------------------------------------------
++
++PREAMBLE
++The goals of the Open Font License (OFL) are to stimulate worldwide
++development of collaborative font projects, to support the font creation
++efforts of academic and linguistic communities, and to provide a free and
++open framework in which fonts may be shared and improved in partnership
++with others.
++
++The OFL allows the licensed fonts to be used, studied, modified and
++redistributed freely as long as they are not sold by themselves. The
++fonts, including any derivative works, can be bundled, embedded, 
++redistributed and/or sold with any software provided that any reserved
++names are not used by derivative works. The fonts and derivatives,
++however, cannot be released under any other type of license. The
++requirement for fonts to remain under this license does not apply
++to any document created using the fonts or their derivatives.
++
++DEFINITIONS
++"Font Software" refers to the set of files released by the Copyright
++Holder(s) under this license and clearly marked as such. This may
++include source files, build scripts and documentation.
++
++"Reserved Font Name" refers to any names specified as such after the
++copyright statement(s).
++
++"Original Version" refers to the collection of Font Software components as
++distributed by the Copyright Holder(s).
++
++"Modified Version" refers to any derivative made by adding to, deleting,
++or substituting -- in part or in whole -- any of the components of the
++Original Version, by changing formats or by porting the Font Software to a
++new environment.
++
++"Author" refers to any designer, engineer, programmer, technical
++writer or other person who contributed to the Font Software.
++
++PERMISSION & CONDITIONS
++Permission is hereby granted, free of charge, to any person obtaining
++a copy of the Font Software, to use, study, copy, merge, embed, modify,
++redistribute, and sell modified and unmodified copies of the Font
++Software, subject to the following conditions:
++
++1) Neither the Font Software nor any of its individual components,
++in Original or Modified Versions, may be sold by itself.
++
++2) Original or Modified Versions of the Font Software may be bundled,
++redistributed and/or sold with any software, provided that each copy
++contains the above copyright notice and this license. These can be
++included either as stand-alone text files, human-readable headers or
++in the appropriate machine-readable metadata fields within text or
++binary files as long as those fields can be easily viewed by the user.
++
++3) No Modified Version of the Font Software may use the Reserved Font
++Name(s) unless explicit written permission is granted by the corresponding
++Copyright Holder. This restriction only applies to the primary font name as
++presented to the users.
++
++4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
++Software shall not be used to promote, endorse or advertise any
++Modified Version, except to acknowledge the contribution(s) of the
++Copyright Holder(s) and the Author(s) or with their explicit written
++permission.
++
++5) The Font Software, modified or unmodified, in part or in whole,
++must be distributed entirely under this license, and must not be
++distributed under any other license. The requirement for fonts to
++remain under this license does not apply to any document created
++using the Font Software.
++
++TERMINATION
++This license becomes null and void if any of the above conditions are
++not met.
++
++DISCLAIMER
++THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
++OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
++COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
++DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
++OTHER DEALINGS IN THE FONT SOFTWARE.
++
++
++# IBM Type Code
++
++Copyright 2017 IBM
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -21,6 +21,11 @@
+ version '1.0-SNAPSHOT'
+ 
+ rootProject.allprojects {
++  configurations.configureEach {
++    resolutionStrategy.dependencySubstitution {
++      substitute module('org.readium.kotlin-toolkit:readium-navigator') using project(':synlen_readium_navigator')
++    }
++  }
+   repositories {
+     google()
+     mavenCentral()
+@@ -109,4 +114,5 @@
+   implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+ 
+   testImplementation 'junit:junit:4.13.2'
++  testImplementation 'org.robolectric:robolectric:4.16.1'
+ }
+--- a/android/src/main/AndroidManifest.xml
++++ b/android/src/main/AndroidManifest.xml
+@@ -11,7 +11,7 @@
+   <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+ 
+-  <application android:usesCleartextTraffic="true" tools:targetApi="m">
++  <application>
+ 
+     <service android:name=".PluginMediaService"
+         android:enabled="true"
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/EpubImageTapBridge.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/EpubImageTapBridge.kt
+@@ -19,19 +19,10 @@
+  * URL by suffix-matching the path component against all known publication links.
+  */
+ @OptIn(ExperimentalCoroutinesApi::class)
+-class EpubImageTapBridge {
++class EpubImageTapBridge(private val publication: Publication, private val onMessage: (String) -> Unit) {
+     @JavascriptInterface
+     fun onImageTapped(json: String) {
+-        val publication =
+-            ReadiumReader.currentPublication ?: run {
+-                PluginLog.w(TAG, "::onImageTapped. No publication available.")
+-                return
+-            }
+-        val channel =
+-            ReadiumReader.currentReaderWidget?.channel ?: run {
+-                PluginLog.w(TAG, "::onImageTapped. No reader channel available.")
+-                return
+-            }
++        if (json.length > 65536) return
+         try {
+             val data = JSONObject(json)
+             if (publication.suppressesImageTapEvents(data)) {
+@@ -59,7 +50,7 @@
+                 }
+ 
+             PluginLog.d(TAG, "::onImageTapped href=$href")
+-            channel.onImageTapped(result.toString())
++            onMessage(result.toString())
+         } catch (e: Exception) {
+             PluginLog.w(TAG, "::onImageTapped. Failed to process event: $e")
+         }
+@@ -67,7 +58,6 @@
+ 
+     private fun resolvePublicationHref(srcUrl: String): String? {
+         if (srcUrl.isEmpty()) return null
+-        val publication = ReadiumReader.currentPublication ?: return null
+         return try {
+             val imgPath = URI(srcUrl).path
+             val allLinks = publication.readingOrder + publication.resources
+--- /dev/null
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/EpubTextInteractionBridge.kt
+@@ -0,0 +1,11 @@
++package dk.nota.flutterreadium
++
++import android.webkit.JavascriptInterface
++
++/** 每个资源绑定自己的接收者，旧 WebView 无法把事件发给新阅读会话。 */
++internal class EpubTextInteractionBridge(private val onMessage: (String) -> Unit) {
++    @JavascriptInterface
++    fun postMessage(json: String) {
++        if (json.length <= 65536) onMessage(json)
++    }
++}
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumExtensions.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumExtensions.kt
+@@ -187,6 +187,7 @@
+     tocIds: List<String>,
+     epubPreferences: FlutterEpubPreferences?,
+     extraInjections: List<InjectionAsset> = emptyList(),
++    extraStyleSheet: String = "",
+ ): Resource =
+     TransformingResource(this) { bytes ->
+         val props = this.properties().getOrNull()
+@@ -234,7 +235,8 @@
+             </script>
+             """
+ 
+-        val allLines = assetLines + listOf(platformScript) + listOfNotNull(injectStyle)
++        val fontStyle = extraStyleSheet.takeIf { it.isNotBlank() }?.let { "<style>$it</style>" }
++        val allLines = assetLines + listOf(platformScript) + listOfNotNull(injectStyle, fontStyle)
+         val newBlock = "$INJECT_START_MARKER\n${allLines.joinToString("\n")}\n$INJECT_END_MARKER"
+ 
+         val startIdx = content.indexOf(INJECT_START_MARKER)
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReader.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReader.kt
+@@ -707,6 +707,7 @@
+         // Close previously opened publication to avoid leaks.
+         closePublication()
+ 
++        val publicationInjections = javaScriptInjections + cssInjections
+         val transformingContainerFactory =
+             fun(container: Container<Resource>): Container<Resource> {
+                 return TransformingContainer(container) { url: Url, resource: Resource ->
+@@ -719,11 +720,14 @@
+                             .mapNotNull { it.href.resolve().fragment }
+                     val epubPreferences =
+                         navigator.preferences?.effectiveForLayout(publication.metadata.layout)
+-                    if (url.extension?.value?.endsWith("html", ignoreCase = true) == true) {
++                    val isHtml = publication.linkWithHref(url)?.mediaType?.isHtml
++                        ?: (url.extension?.value?.endsWith("html", ignoreCase = true) == true)
++                    if (isHtml) {
+                         resource.injectScriptsAndStyles(
+                             tocIds,
+                             epubPreferences,
+-                            javaScriptInjections + cssInjections,
++                            publicationInjections,
++                            navigator.localFontStyleSheet(),
+                         )
+                     } else {
+                         resource
+@@ -980,7 +984,7 @@
+             EpubNavigator(
+                 pub,
+                 initialLocator,
+-                this@ReadiumReader,
++                readerWidget,
+                 initialPreferences,
+                 fontFamilyDeclarations = fontFamilyDeclarations,
+             ).apply {
+@@ -1189,9 +1193,11 @@
+ 
+     /** Close the active visual navigator, regardless of type (EPUB or PDF). */
+     fun visualClose() {
+-        currentReaderWidget = null
+-        visualNavigator?.dispose()
+-        visualNavigator = null
++        val reader = currentReaderWidget
++        val navigator = visualNavigator
++        navigator?.dispose()
++        if (visualNavigator === navigator) visualNavigator = null
++        if (currentReaderWidget === reader) currentReaderWidget = null
+     }
+ 
+     /**
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderChannel.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderChannel.kt
+@@ -15,6 +15,10 @@
+     name: String,
+ ) : MethodChannel(messenger, name),
+     CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) {
++    fun onTextInteraction(json: String) = launch { invokeMethod("onTextInteraction", json) }
++
++    fun onReaderError(code: String) = launch { invokeMethod("onReaderError", code) }
++
+     fun onReaderReady() = launch { invokeMethod("onReaderReady", null) }
+ 
+     fun onPageChanged(locator: Locator?) =
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderWidget.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumReaderWidget.kt
+@@ -36,8 +36,7 @@
+ private const val TAG = "ReadiumReaderView"
+ internal const val VIEW_TYPE_CHANNEL_NAME = "dk.nota.flutter_readium/ReadiumReaderWidget"
+ 
+-// How long locator enrichment (JS page-info + ToC lookup) may take before the raw locator
+-// is emitted instead. Mirrors `locatorEnrichmentTimeoutSeconds` on iOS.
++// 位置富化必须限时完成；超时报告失败，不能把初始传入位置冒充实际视口回执。
+ private const val LOCATOR_ENRICHMENT_TIMEOUT_MS = 5000L
+ 
+ @ExperimentalCoroutinesApi
+@@ -62,6 +61,11 @@
+     var hasSentReady = false
+ 
+     private val layout: ViewGroup
++    private var disposed = false
++    private var nativeDetached = false
++    override val handleInternalLinks = creationParams["handleInternalLinks"] as? Boolean ?: true
++    private val sessionId = creationParams["sessionId"] as? String ?: id.toString()
++    private val publication = ReadiumReader.currentPublication
+ 
+     // Source the host activity from the plugin's ActivityAware binding (via ReadiumReader),
+     // not the PlatformView's view context. The view context is the Activity only under
+@@ -83,15 +87,20 @@
+ 
+     override fun dispose() {
+         PluginLog.d(TAG, "::dispose")
+-        ReadiumReader.visualClose()
+-
+-        ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Closed)
++        if (nativeDetached) return
++        disposed = true
++        if (ReadiumReader.currentReaderWidget === this) {
++            ReadiumReader.visualClose()
++            ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Closed)
++        }
+         hasSentReady = false
+ 
+         channel.setMethodCallHandler(null)
++        channel.coroutineContext.cancelChildren()
+ 
+         coroutineContext.cancelChildren()
+         layout.removeAllViews()
++        nativeDetached = true
+     }
+ 
+     override fun onFlutterViewAttached(flutterView: View) {
+@@ -112,13 +121,24 @@
+         @Suppress("UNCHECKED_CAST")
+         val initPrefsMap =
+             creationParams["preferences"] as Map<String, String>?
+-        val publication = ReadiumReader.currentPublication
+         val locatorString = creationParams["initialLocator"] as String?
+         val allowScreenReaderNavigation = creationParams["allowScreenReaderNavigation"] as Boolean?
+-        val fontFamilyDeclarations =
++        var fontResourceFailed = false
++        val fontFamilyDeclarations = runCatching {
+             ReaderFontFamily.fromList(creationParams["fontFamilyDeclarations"]) { asset ->
+-                FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
+-            }
++                if (asset.startsWith("file:")) {
++                    val file = java.io.File(java.net.URI(asset))
++                    require(file.isFile && file.length() in 1..(32L * 1024 * 1024)) { "Invalid local font" }
++                    "data:font/ttf;base64," + android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
++                } else {
++                    FlutterInjector.instance().flutterLoader().getLookupKeyForAsset(asset)
++                }
++            }
++        }.getOrElse { error ->
++            fontResourceFailed = true
++            PluginLog.w(TAG, "Cannot load reader font: $error")
++            emptyList()
++        }
+ 
+         // Selection actions must be known BEFORE the navigator fragment is built, because
+         // EpubReaderFragment decides `selectionActionModeCallback` from
+@@ -164,6 +184,7 @@
+ 
+         channel = ReadiumReaderChannel(messenger, "$VIEW_TYPE_CHANNEL_NAME:$id")
+         channel.setMethodCallHandler(this)
++        if (fontResourceFailed) channel.onReaderError("FontResourceUnavailable")
+ 
+         ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Loading)
+ 
+@@ -199,6 +220,7 @@
+                 throw e
+             } catch (e: Exception) {
+                 PluginLog.e(TAG, "::init - visualEnable failed: ${e.message}", e)
++                channel.onReaderError("ReaderInitializationFailed")
+                 ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Error)
+                 // Heterogeneous failure surface (fragment/navigator-creation errors from
+                 // kotlin-toolkit) with no single vocabulary code that fits - "unknown" is
+@@ -208,12 +230,34 @@
+         }
+     }
+ 
++    override fun onReaderError(code: String) {
++        if (!disposed) channel.onReaderError(code)
++    }
++
++    override fun onImageTapped(json: String) {
++        if (!disposed) channel.onImageTapped(json)
++    }
++
++    override fun onTextInteraction(json: String, resourceHref: String, sourceView: View) {
++        if (disposed) return
++        val payload = runCatching { JSONObject(json) }.getOrNull() ?: return
++        payload.put("sessionId", sessionId)
++        payload.put("resourceHref", resourceHref)
++        payload.remove("anchorRect")
++        if (payload.optString("kind") == "word") {
++            val anchor = ReadiumWordAnchor.inReader(payload, sourceView, layout) ?: return
++            payload.put("anchorRect", anchor)
++        }
++        channel.onTextInteraction(payload.toString())
++    }
++
+     override fun onPageLoaded() {
+         PluginLog.d(TAG, "::onPageLoaded")
+     }
+ 
+     // To avoid duplicate onPageChanged events.
+     private var lastPageLoadedKey: String? = null
++    private var locatorRevision = 0L
+ 
+     // Some navigator transitions update currentLocator without a page-changed callback.
+     // Mirror those into the text-locator stream once so Flutter can observe progress.
+@@ -237,6 +281,7 @@
+         }
+ 
+         lastPageLoadedKey = currentKey
++        val revision = ++locatorRevision
+ 
+         launch {
+             if (!hasSentReady) {
+@@ -245,7 +290,7 @@
+                 ReadiumReader.emitReaderStatusUpdate(ReadiumReaderStatus.Ready)
+             }
+ 
+-            emitOnPageChanged(pageIndex, totalPages, locator)
++            emitOnPageChanged(pageIndex, totalPages, locator, revision)
+ 
+             // Re-inject MO column-break CSS for each freshly-loaded spine item.
+             if (ReadiumReader.shouldInjectMOColumnBreakCssOnPageChange) {
+@@ -268,6 +313,8 @@
+         }
+ 
+         lastVisualLocationKey = currentKey
++        if (disposed || !hasSentReady) return
++        // StateFlow 首值可能只是传入的 initialLocator；实际落位由 onPageChanged 回执。
+         ReadiumReader.emitTextLocatorUpdate(locator)
+         PluginLog.d(TAG, "::onVisualCurrentLocationChanged emitted text locator update")
+     }
+@@ -300,10 +347,11 @@
+         pageIndex: Int,
+         totalPages: Int,
+         locator: Locator,
++        revision: Long,
+     ) {
+         try {
+-            // Bounded: the EPUB branch evaluates JS, which a stalled webview can leave pending
+-            // forever — freezing this stream after Ready was already reported.
++            // 页面信息、资源身份和短文本在同一次 JS 执行中采样，切页后丢弃旧任务。
++            var staleResource = false
+             val enriched =
+                 withTimeoutOrNull(LOCATOR_ENRICHMENT_TIMEOUT_MS) {
+                     var emittingLocator = locator
+@@ -320,22 +368,34 @@
+                         }
+ 
+                         else -> {
+-                            // EPUB: JS page-info eval + TOC href enrichment.
+-                            try {
+-                                evaluateJavascript("window.flutterReadium.getPageInformation()")
+-                                    ?.let {
+-                                        PageInformation.fromJson(
+-                                            it,
+-                                            locator.href,
+-                                        )
+-                                    }?.let { pageInfo ->
+-                                        emittingLocator =
+-                                            emittingLocator.copyWithAdditionalLocations(pageInfo.otherLocations)
+-                                    } ?: run {
+-                                    PluginLog.d(TAG, "::emitOnPageChanged - no page information")
+-                                }
+-                            } catch (e: Error) {
+-                                PluginLog.d(TAG, "::emitOnPageChanged - pageInformation error: $e")
++                            val script = """
++                                (() => ({revision: $revision, href: document.URL,
++                                  pageInformation: window.flutterReadium.getPageInformation(),
++                                  anchor: window.synlenReadiumBridge.getVisibleLocator()}))()
++                            """.trimIndent()
++                            val snapshot = evaluateJavascript(script)?.let { jsonDecode(it) as? JSONObject }
++                                ?: error("Visible locator query failed")
++                            val expectedUrl = (publication?.baseUrl ?: AbsoluteUrl("https://readium_package/")!!)
++                                .resolve(locator.href).cleanHref()
++                            val actualUrl = AbsoluteUrl(snapshot.optString("href"))?.cleanHref()
++                            if (snapshot.optLong("revision") != revision || actualUrl != expectedUrl) {
++                                staleResource = true
++                                return@withTimeoutOrNull null
++                            }
++                            snapshot.optJSONObject("pageInformation")?.let { pageInfo ->
++                                emittingLocator = emittingLocator.copyWithAdditionalLocations(
++                                    PageInformation.fromJson(pageInfo, locator.href).otherLocations,
++                                )
++                            }
++                            // null 表示图页或无法唯一定位；有效短文本优先于段落起点和比例。
++                            snapshot.optJSONObject("anchor")?.let { anchor ->
++                                val selector = anchor.optJSONObject("locations")?.optString("cssSelector")
++                                val text = anchor.optJSONObject("text")
++                                val highlight = text?.optString("highlight")
++                                require(!selector.isNullOrBlank() && !highlight.isNullOrBlank() && highlight.length <= 512)
++                                emittingLocator = emittingLocator
++                                    .copyWithAdditionalLocations(mapOf("cssSelector" to selector))
++                                    .copy(text = Locator.Text.fromJSON(text))
+                             }
+ 
+                             emittingLocator = emittingLocator.addPageNumber(pageIndex, totalPages)
+@@ -345,21 +405,26 @@
+                     emittingLocator
+                 }
+ 
++            if (disposed || revision != locatorRevision || staleResource) return
+             if (enriched == null) {
+                 PluginLog.w(
+                     TAG,
+-                    "::emitOnPageChanged - enrichment timed out after ${LOCATOR_ENRICHMENT_TIMEOUT_MS}ms; " +
+-                        "emitting un-enriched locator",
++                    "::emitOnPageChanged - enrichment timed out after ${LOCATOR_ENRICHMENT_TIMEOUT_MS}ms",
+                 )
+             }
+ 
+-            val emittingLocator = enriched ?: locator
+-
++            val emittingLocator = enriched ?: run {
++                channel.onReaderError("LocatorUnavailable")
++                return
++            }
+             channel.onPageChanged(emittingLocator)
+             ReadiumReader.emitTextLocatorUpdate(emittingLocator)
+             PluginLog.d(TAG, "::emitOnPageChanged: emitted $emittingLocator")
++        } catch (e: CancellationException) {
++            throw e
+         } catch (e: Exception) {
+             PluginLog.e(TAG, "::emitOnPageChanged: failed! $e")
++            if (!disposed && revision == locatorRevision) channel.onReaderError("LocatorUnavailable")
+         }
+     }
+ 
+@@ -371,6 +436,10 @@
+         call: MethodCall,
+         result: MethodChannel.Result,
+     ) {
++        if (disposed && call.method != "dispose") {
++            result.error("ReaderClosed", "Reader is closed", null)
++            return
++        }
+         // TODO: To be safe we're doing everything on the Main thread right now.
+         // Could probably optimize by using .IO and then change to Main
+         // when affecting readerView or returning a result.
+--- /dev/null
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/ReadiumWordAnchor.kt
+@@ -0,0 +1,50 @@
++package dk.nota.flutterreadium
++
++import android.graphics.Matrix
++import android.graphics.RectF
++import android.view.View
++import android.view.ViewGroup
++import org.json.JSONObject
++
++/** 把实际消息来源的 CSS 词矩形转换到 Flutter 平台视口内的逻辑坐标。 */
++internal object ReadiumWordAnchor {
++    fun inReader(payload: JSONObject, source: View, reader: ViewGroup): JSONObject? {
++        val word = payload.optJSONObject("wordRect") ?: return null
++        val viewport = payload.optJSONObject("viewport") ?: return null
++        val x = word.number("x") ?: return null
++        val y = word.number("y") ?: return null
++        val width = word.number("width") ?: return null
++        val height = word.number("height") ?: return null
++        val viewportWidth = viewport.number("width") ?: return null
++        val viewportHeight = viewport.number("height") ?: return null
++        if (!listOf(x, y, width, height, viewportWidth, viewportHeight).all { it.isFinite() } ||
++            x < 0 || y < 0 || width <= 0 || height <= 0 || viewportWidth <= 0 || viewportHeight <= 0 ||
++            x + width > viewportWidth + 0.5 || y + height > viewportHeight + 0.5 ||
++            source.width <= 0 || source.height <= 0 || !source.isShown
++        ) return null
++        val scaleX = source.width / viewportWidth
++        val scaleY = source.height / viewportHeight
++        val rect = RectF((x * scaleX).toFloat(), (y * scaleY).toFloat(),
++            ((x + width) * scaleX).toFloat(), ((y + height) * scaleY).toFloat())
++        val transform = Matrix()
++        if (!sourceToAncestor(source, reader, transform)) return null
++        transform.mapRect(rect)
++        if (!rect.intersect(0f, 0f, reader.width.toFloat(), reader.height.toFloat())) return null
++        val density = reader.resources.displayMetrics.density
++        return JSONObject().put("x", rect.left / density).put("y", rect.top / density)
++            .put("width", rect.width() / density).put("height", rect.height() / density)
++    }
++
++    private fun JSONObject.number(key: String): Double? = (opt(key) as? Number)?.toDouble()
++
++    private fun sourceToAncestor(view: View, ancestor: View, transform: Matrix): Boolean {
++        if (view === ancestor) return true
++        val parent = view.parent as? View ?: return false
++        if (!sourceToAncestor(parent, ancestor, transform)) return false
++        // CSS viewport 已扣除正文滚动；只计原生祖先滚动和变换，DPR 在输出时处理一次。
++        transform.preTranslate(-parent.scrollX.toFloat(), -parent.scrollY.toFloat())
++        transform.preTranslate(view.left.toFloat(), view.top.toFloat())
++        if (!view.matrix.isIdentity) transform.preConcat(view.matrix)
++        return true
++    }
++}
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/fragments/EpubReaderFragment.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/fragments/EpubReaderFragment.kt
+@@ -8,6 +8,7 @@
+ import androidx.fragment.app.commitNow
+ import androidx.lifecycle.lifecycleScope
+ import dk.nota.flutterreadium.EpubImageTapBridge
++import dk.nota.flutterreadium.EpubTextInteractionBridge
+ import dk.nota.flutterreadium.FlutterEpubPreferences
+ import dk.nota.flutterreadium.NarrationSyncInterface
+ import dk.nota.flutterreadium.PluginLog
+@@ -72,9 +73,25 @@
+          * Called when an external link is activated.
+          */
+         fun onExternalLinkActivated(url: AbsoluteUrl)
++
++        fun onTextInteraction(json: String, resourceHref: String, sourceView: View) {}
++        fun onImageTapped(json: String) {}
++        fun onReaderError(code: String) {}
++    }
++
++    override fun onResourceLoadFailed(href: org.readium.r2.shared.util.Url, error: org.readium.r2.shared.util.data.ReadError) {
++        PluginLog.w(TAG, "Resource load failed: $href: $error")
++        lifecycleScope.launch { if (isAdded) listener?.onReaderError("ResourceReadError") }
+     }
+ 
+     var listener: Listener? = null
++    var handleInternalLinks = true
++    private val injectionAssets = ReadiumReader.javaScriptInjections + ReadiumReader.cssInjections
++
++    override fun shouldFollowInternalLink(
++        link: org.readium.r2.shared.publication.Link,
++        context: org.readium.r2.navigator.HyperlinkNavigator.LinkContext?,
++    ): Boolean = handleInternalLinks || context is org.readium.r2.navigator.HyperlinkNavigator.FootnoteContext
+ 
+     val started = MutableStateFlow(false)
+ 
+@@ -610,7 +627,7 @@
+             return
+         }
+ 
+-        if (ReadiumReader.currentPublication == null) {
++        val publication = ReadiumReader.currentPublication ?: run {
+             PluginLog.w(TAG, "::attachNavigator() - $instance - missing publication")
+             return
+         }
+@@ -629,8 +646,13 @@
+                     // Readium uses WebViewAssetLoader.AssetsPathHandler under the surface.
+                     servedAssets =
+                         listOf("flutter_assets/packages/flutter_readium/assets/.*") +
++                            injectionAssets.map { asset ->
++                                val prefix = asset.packageName?.let { "flutter_assets/packages/$it/" } ?: "flutter_assets/"
++                                // PatternMatcher 的简单 glob 中仅 .、*、\\ 是特殊字符。
++                                (prefix + asset.assetPath).replace("\\", "\\\\").replace(".", "\\.").replace("*", "\\*")
++                            } +
+                             model.fontFamilyDeclarations.flatMap { family ->
+-                                family.faces.map { face -> face.asset }
++                                family.faces.map { face -> face.asset }.filterNot { it.startsWith("data:") }
+                             },
+                     // Use experimentalPositioning in decoration templates. It places highlights behind text, instead of on top.
+                     decorationTemplates =
+@@ -649,12 +671,12 @@
+                             null
+                         },
+                 ).apply {
+-                    model.fontFamilyDeclarations.forEach { family ->
++                    model.fontFamilyDeclarations.filter { family -> family.faces.any { !it.asset.startsWith("data:") } }.forEach { family ->
+                         addFontFamilyDeclaration(
+                             FontFamily(family.name),
+                             family.fallbacks.map(::FontFamily),
+                         ) {
+-                            family.faces.forEach { face ->
++                            family.faces.filterNot { it.asset.startsWith("data:") }.forEach { face ->
+                                 addFontFace {
+                                     addSource(face.asset)
+                                     setFontStyle(
+@@ -677,7 +699,18 @@
+ 
+                     // TODO: This is a temporary solution until kotlin-toolkit supports image tap events natively.
+                     // Register JS→native bridge for window.onImageTappedCallback(string).
+-                    registerJavascriptInterface("FlutterImageBridge") { _ -> EpubImageTapBridge() }
++                    registerJavascriptInterface("FlutterImageBridge") { _ ->
++                        EpubImageTapBridge(publication) { json ->
++                            lifecycleScope.launch { if (isAdded) listener?.onImageTapped(json) }
++                        }
++                    }
++                    registerJavascriptInterfaceWithWebView("flutterReadiumText") { link, webView ->
++                        EpubTextInteractionBridge { json ->
++                            lifecycleScope.launch {
++                                if (isAdded) listener?.onTextInteraction(json, link.href.toString(), webView)
++                            }
++                        }
++                    }
+                 }
+ 
+         val fragmentFactory =
+--- a/android/src/main/kotlin/dk/nota/flutterreadium/navigators/EpubNavigator.kt
++++ b/android/src/main/kotlin/dk/nota/flutterreadium/navigators/EpubNavigator.kt
+@@ -1,6 +1,7 @@
+ package dk.nota.flutterreadium.navigators
+ 
+ import android.os.Bundle
++import android.view.View
+ import android.view.ViewGroup
+ import androidx.fragment.app.FragmentManager
+ import androidx.fragment.app.commitNow
+@@ -66,6 +67,16 @@
+ 
+     private var fontFamilyDeclarations: List<ReaderFontFamily> = emptyList()
+ 
++    /** 本地字体在 HTML 首次排版之前注入，避免加载完成后换字体造成位置漂移。 */
++    internal fun localFontStyleSheet(): String = fontFamilyDeclarations.flatMap { family ->
++        family.faces.filter { it.asset.startsWith("data:") }.map { face ->
++            val name = JSONObject.quote(family.name).replace("<", "\\3c ")
++            val style = if (face.style == dk.nota.flutterreadium.ReaderFontStyle.ITALIC) "italic" else "normal"
++            "@font-face { font-family:$name; src:url(${JSONObject.quote(face.asset)}); font-style:$style; font-weight:${face.weight}; }"
++        }
++    }.joinToString("\n")
++
++
+     val visualListener: VisualListener
+ 
+     private var currentVisualLocator: Locator?
+@@ -78,6 +89,7 @@
+      * A VisualListener is used to listen to events from the Visual navigators like EpubNavigator.
+      */
+     interface VisualListener {
++        val handleInternalLinks: Boolean get() = true
+         /**
+          * Called when a page has loaded. Note: not necessarily the visible content, since
+          * the Readium Navigator preloads neighboring charters.
+@@ -108,6 +120,10 @@
+          * Called when the visual reader is ready.
+          */
+         fun onVisualReaderIsReady()
++
++        fun onTextInteraction(json: String, resourceHref: String, sourceView: View) {}
++        fun onImageTapped(json: String) {}
++        fun onReaderError(code: String) {}
+     }
+ 
+     /**
+@@ -136,6 +152,7 @@
+     override suspend fun initNavigator() {
+         epubNavigator =
+             EpubReaderFragment().apply {
++                handleInternalLinks = visualListener.handleInternalLinks
+                 vm =
+                     EpubReaderViewModel().apply {
+                         navigatorFactory = EpubNavigatorFactory(publication)
+@@ -348,6 +365,18 @@
+         visualListener.onExternalLinkActivated(url)
+     }
+ 
++    override fun onReaderError(code: String) {
++        visualListener.onReaderError(code)
++    }
++
++    override fun onImageTapped(json: String) {
++        visualListener.onImageTapped(json)
++    }
++
++    override fun onTextInteraction(json: String, resourceHref: String, sourceView: View) {
++        visualListener.onTextInteraction(json, resourceHref, sourceView)
++    }
++
+     override fun onCurrentLocatorChanges(locator: Locator) {
+         visualListener.onVisualCurrentLocationChanged(locator)
+     }
+@@ -355,15 +384,14 @@
+     override fun dispose() {
+         super.dispose()
+ 
+-        launch {
+-            epubNavigator?.let { fragment ->
+-                fragment.parentFragmentManager.commitNow { remove(fragment) }
+-            }
+-
+-            coroutineContext.cancelChildren()
+-            epubNavigator = null
+-        }
+-
++        // Flutter 平台通道在主线程调用；回包之前同步拆除，防止旧视口关闭新会话。
++        epubNavigator?.let { fragment ->
++            fragment.listener = null
++            // 此视口已关闭，不需恢复 fragment；后台保存状态后也必须完成拆除。
++            if (fragment.isAdded) fragment.parentFragmentManager.commitNow(allowStateLoss = true) { remove(fragment) }
++        }
++        coroutineContext.cancelChildren()
++        epubNavigator = null
+         state.clear()
+     }
+ 
+--- /dev/null
++++ b/android/src/test/kotlin/dk/nota/flutterreadium/ReadiumWordAnchorTest.kt
+@@ -0,0 +1,71 @@
++package dk.nota.flutterreadium
++
++import android.app.Activity
++import android.view.View
++import android.widget.FrameLayout
++import org.json.JSONObject
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertNull
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.robolectric.Robolectric
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.annotation.Config
++
++@RunWith(RobolectricTestRunner::class)
++@Config(sdk = [35], qualifiers = "xxhdpi")
++class ReadiumWordAnchorTest {
++    @Test
++    fun `包含原生页面偏移缩放和祖先滚动且只换算一次密度`() {
++        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
++        val reader = FrameLayout(activity)
++        val page = FrameLayout(activity)
++        val source = View(activity)
++        reader.addView(page)
++        page.addView(source)
++        activity.setContentView(reader)
++        reader.layout(0, 0, 1000, 1600)
++        page.layout(60, 90, 960, 1590)
++        source.layout(40, 50, 840, 1250)
++        source.pivotX = 0f
++        source.pivotY = 0f
++        source.scaleX = 0.5f
++        source.scaleY = 0.5f
++        page.scrollTo(10, 20)
++        source.scrollTo(500, 0)
++
++        val anchor = ReadiumWordAnchor.inReader(payload(), source, reader)!!
++        assertEquals(110.0 / 3, anchor.getDouble("x"), 0.001)
++        assertEquals(160.0 / 3, anchor.getDouble("y"), 0.001)
++        assertEquals(20.0, anchor.getDouble("width"), 0.001)
++        assertEquals(8.0, anchor.getDouble("height"), 0.001)
++    }
++
++    @Test
++    fun `拒绝其他视口的来源与不可见或无效词矩形`() {
++        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
++        val reader = FrameLayout(activity)
++        val source = View(activity)
++        reader.addView(source)
++        activity.setContentView(reader)
++        reader.layout(0, 0, 1000, 1600)
++        source.layout(0, 0, 800, 1200)
++        assertNull(ReadiumWordAnchor.inReader(payload(), source, FrameLayout(activity)))
++        val outside = payload().apply { getJSONObject("wordRect").put("x", 390) }
++        assertNull(ReadiumWordAnchor.inReader(outside, source, reader))
++        assertNull(ReadiumWordAnchor.inReader(JSONObject(), source, reader))
++        for (invalidX in listOf("20", true)) {
++            val invalid = payload().apply { getJSONObject("wordRect").put("x", invalidX) }
++            assertNull(ReadiumWordAnchor.inReader(invalid, source, reader))
++        }
++        source.translationX = 2000f
++        assertNull(ReadiumWordAnchor.inReader(payload(), source, reader))
++        source.translationX = 0f
++        source.visibility = View.INVISIBLE
++        assertNull(ReadiumWordAnchor.inReader(payload(), source, reader))
++    }
++
++    private fun payload(): JSONObject = JSONObject()
++        .put("wordRect", JSONObject().put("x", 20).put("y", 40).put("width", 60).put("height", 24))
++        .put("viewport", JSONObject().put("width", 400).put("height", 600))
++}
+--- a/ios/flutter_readium.podspec
++++ b/ios/flutter_readium.podspec
+@@ -16,10 +16,10 @@
+   s.source_files     = 'flutter_readium/Sources/flutter_readium/**/*.swift'
+   s.resource_bundles = {'flutter_readium_privacy' => ['flutter_readium/Sources/flutter_readium/PrivacyInfo.xcprivacy']}
+   s.dependency 'Flutter'
+-  s.dependency 'ReadiumShared', '~> 3.11.0'
+-  s.dependency 'ReadiumStreamer', '~> 3.11.0'
+-  s.dependency 'ReadiumNavigator', '~> 3.11.0'
+-  s.dependency 'ReadiumOPDS', '~> 3.11.0'
++  s.dependency 'ReadiumShared', '3.11.0'
++  s.dependency 'ReadiumStreamer', '3.11.0'
++  s.dependency 'ReadiumNavigator', '3.11.0'
++  s.dependency 'ReadiumOPDS', '3.11.0'
+   # s.dependency 'ReadiumLCP', '~> 3.5.0'
+ 
+   s.platform = :ios, '15.0'
+--- a/ios/flutter_readium/Package.swift
++++ b/ios/flutter_readium/Package.swift
+@@ -17,7 +17,7 @@
+     ],
+     dependencies: [
+       .package(name: "FlutterFramework", path: "../FlutterFramework"),
+-      .package(url: "https://github.com/readium/swift-toolkit.git", .upToNextMinor(from: "3.11.0"))
++      .package(url: "https://github.com/readium/swift-toolkit.git", exact: "3.11.0")
+     ],
+     targets: [
+         .target(
+--- a/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+JSBridge.swift
++++ b/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+JSBridge.swift
+@@ -3,7 +3,6 @@
+ import Flutter
+ import WebKit
+ 
+-private var userScripts: [WKUserScript] = []
+ private let jsonEncoder = JSONEncoder()
+ 
+ /// Breaks the `WKUserContentController → message-handler → EPUBReaderView` retain cycle.
+@@ -23,13 +22,15 @@
+ 
+   // implements EPUBNavigatorDelegate::navigator:setupUserScripts
+   public func navigator(_ navigator: EPUBNavigatorViewController, setupUserScripts userContentController: WKUserContentController) {
+-    Log.reader.debug("setupUserScripts: adding \(userScripts.count) scripts")
++    Log.reader.debug("setupUserScripts: adding \(self.userScripts.count) scripts")
+     for script in userScripts {
+       userContentController.addUserScript(script)
+     }
+     // Register handler so `window.updateNarrationSync(bool)` in the helper script can reach native.
+     // WeakScriptHandler breaks the retain cycle WKUserContentController → handler → EPUBReaderView.
+     userContentController.add(WeakScriptHandler(self), name: "narrationSync")
++    userContentController.add(WeakScriptHandler(self), name: "flutterReadiumText")
++    addCustomUserScripts(to: userContentController)
+ 
+     /// Custom preferences added dynamically for each WebView, to make sure changes to preferences are respected.
+     if let preferencesStylesheet = self.preferences.map(effectivePreferences)?.toInjectableStyleSheet() {
+@@ -69,6 +70,35 @@
+   /// Receives messages from the `window.updateNarrationSync(bool)` bridge injected
+   /// by the iOS platform shim (bootstrap script in `initUserScripts`).
+   func handleScriptMessage(_ message: WKScriptMessage) {
++    guard !isDisposed else { return }
++    if message.name == "flutterReadiumText" {
++      guard let json = message.body as? String, json.utf16.count <= 65536,
++            let data = json.data(using: .utf8),
++            var payload = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
++            let url = message.frameInfo.request.url,
++            let topURL = message.webView?.url,
++            url.scheme == topURL.scheme, url.host == topURL.host, url.port == topURL.port,
++            let resourceHref = PublicationFrameMatcher.resourceHref(
++              frameURL: url, readingOrder: publication.readingOrder.map(\.href)
++            ) else { return }
++      // 身份来自 WebKit 实际 frame；其他来源的 iframe 及不明确的路径均拒绝。
++      payload["sessionId"] = sessionId
++      payload["resourceHref"] = resourceHref
++      payload.removeValue(forKey: "anchorRect")
++      if payload["kind"] as? String == "word" {
++        guard let webView = message.webView,
++              webView.isDescendant(of: containerView),
++              let localRect = ReadiumWordAnchor.webViewRect(payload: payload, size: webView.bounds.size) else { return }
++        // UIKit 的视图变换已包含原生页偏移，结果为 Flutter 平台视口内的逻辑点。
++        let rect = webView.convert(localRect, to: containerView).intersection(containerView.bounds)
++        guard !rect.isNull, rect.width > 0, rect.height > 0 else { return }
++        payload["anchorRect"] = ["x": rect.minX, "y": rect.minY, "width": rect.width, "height": rect.height]
++      }
++      guard let result = try? JSONSerialization.data(withJSONObject: payload),
++            let resultJson = String(data: result, encoding: .utf8) else { return }
++      channel.invokeMethod("onTextInteraction", arguments: resultJson)
++      return
++    }
+     guard message.name == "narrationSync", let enabled = message.body as? Bool else { return }
+     Log.reader.debug("handleScriptMessage: narrationSync=\(enabled)")
+     Task { @MainActor in
+@@ -105,12 +135,43 @@
+     return data
+   }
+ 
+-  /// Builds the shared `userScripts` list on first use. Safe to call from every
+-  /// `EPUBReaderView` instance — the list is shared across webviews and only needs
+-  /// building once per process.
++  /// 每个阅读视口维护自己的脚本及目录信息，预加载 WebView 复用当前视口的副本。
+   func ensureUserScriptsInitialized(registrar: FlutterPluginRegistrar) {
+     guard userScripts.isEmpty else { return }
+     initUserScripts(registrar: registrar)
++  }
++
++  /// 应用资源在视口创建时冻结；新会话才读取新的注入登记。
++  private func addCustomUserScripts(to controller: WKUserContentController) {
++    guard let registrar = FlutterReadiumPlugin.registrar else { return }
++    func load(_ asset: InjectionAsset) -> Data? {
++      let key: String
++      if let package = asset.packageName {
++        key = registrar.lookupKey(forAsset: asset.assetPath, fromPackage: package)
++      } else {
++        key = registrar.lookupKey(forAsset: asset.assetPath)
++      }
++      guard let data = loadBundledAsset(key) else {
++        channel.invokeMethod("onReaderError", arguments: "InjectionAssetUnavailable")
++        return nil
++      }
++      return data
++    }
++    for asset in customCssInjections {
++      guard let data = load(asset) else { continue }
++      let source = """
++        (() => {
++          const style = document.createElement('style');
++          style.textContent = new TextDecoder().decode(Uint8Array.from(atob('\(data.base64EncodedString())'), c => c.charCodeAt(0)));
++          document.head.appendChild(style);
++        })();
++        """
++      controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
++    }
++    for asset in customJavaScriptInjections {
++      guard let data = load(asset), let source = String(data: data, encoding: .utf8) else { continue }
++      controller.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentEnd, forMainFrameOnly: false))
++    }
+   }
+ 
+   func initUserScripts(registrar: FlutterPluginRegistrar) {
+--- a/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+MethodChannel.swift
++++ b/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+MethodChannel.swift
+@@ -117,6 +117,8 @@
+       result(nil)
+       break
+     case "dispose":
++      if isDisposed { result(nil); return }
++      isDisposed = true
+       Log.reader.info("Disposing readiumViewController")
+       readiumViewController.view.removeFromSuperview()
+       readiumViewController.delegate = nil
+--- a/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+Selection.swift
++++ b/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView+Selection.swift
+@@ -5,6 +5,7 @@
+ extension EPUBReaderView {
+ 
+   public func navigator(_ navigator: SelectableNavigator, shouldShowMenuForSelection selection: Selection) -> Bool {
++    guard !isDisposed else { return false }
+     Log.reader.debug("shouldShowMenuForSelection: \(selection.locator)")
+     let locator = selection.locator
+     let selectedText = locator.text.highlight
+@@ -19,6 +20,7 @@
+ 
+   /// Called by `EPUBContainerView` when a configured action slot fires via the responder chain.
+   func handleSelectionAction(actionId: String) {
++    guard !isDisposed else { return }
+     Log.reader.debug("handleSelectionAction: \(actionId)")
+     guard let selection = readiumViewController.currentSelection else {
+       Log.reader.warn("handleSelectionAction: no current selection")
+--- a/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView.swift
++++ b/ios/flutter_readium/Sources/flutter_readium/reader/EPUBReaderView.swift
+@@ -2,6 +2,7 @@
+ import ReadiumShared
+ import Flutter
+ import UIKit
++import WebKit
+ 
+ /// Core class declaration, stored state, lifecycle, and the base `Navigator`/
+ /// `EPUBNavigatorDelegate` callbacks that don't have a more specific home.
+@@ -20,15 +21,21 @@
+ /// only ever be declared here, never added by an extension.
+ public class EPUBReaderView: NSObject, FlutterPlatformView, ReadiumReaderView, EPUBNavigatorDelegate, VisualNavigatorDelegate, SelectableNavigatorDelegate {
+ 
+-  /// How long locator enrichment (JS page-info + ToC lookup) may take before the raw locator
+-  /// is emitted instead. Generous for a healthy webview, short enough that a stalled one
+-  /// doesn't silently freeze the text-locator stream.
+-  private static let locatorEnrichmentTimeoutSeconds: UInt64 = 5
++  /// 包含 SDK 等待 spreadLoaded 及 WebKit 首次布局；超时不能用传入位置冒充回执。
++  private static let locatorEnrichmentTimeoutSeconds: UInt64 = 15
+ 
+   let channel: ReadiumReaderChannel
+   let containerView: EPUBContainerView
+   let readiumViewController: EPUBNavigatorViewController
+   private var hasSentReady = false
++  private var locatorRevision = 0
++  var isDisposed = false
++  let sessionId: String
++  let handleInternalLinks: Bool
++  var pendingFootnoteHref: String?
++  let customJavaScriptInjections: [InjectionAsset]
++  let customCssInjections: [InjectionAsset]
++  var userScripts: [WKUserScript] = []
+   var isJumpingToLocator = false
+   private var lastHrefLocation: String?
+   var isMOActive = false
+@@ -85,6 +92,10 @@
+   ) {
+     Log.reader.info("init")
+     let creationParams = args as! Dictionary<String, Any?>
++    self.sessionId = creationParams["sessionId"] as? String ?? String(viewId)
++    self.handleInternalLinks = creationParams["handleInternalLinks"] as? Bool ?? true
++    self.customJavaScriptInjections = FlutterReadiumPlugin.instance?.javaScriptInjections ?? []
++    self.customCssInjections = FlutterReadiumPlugin.instance?.cssInjections ?? []
+ 
+     let publication = FlutterReadiumPlugin.instance!.getCurrentPublication()!
+     self.publication = publication
+@@ -293,9 +304,14 @@
+           Log.reader.error("Invalid custom font face in family: \(name)")
+           return nil
+         }
+-        let assetKey = registrar.lookupKey(forAsset: asset)
+-        guard
+-              let path = Bundle.main.path(forResource: assetKey, ofType: nil),
++        let path: String?
++        if let url = URL(string: asset), url.isFileURL {
++          path = url.path
++        } else {
++          let assetKey = registrar.lookupKey(forAsset: asset)
++          path = Bundle.main.path(forResource: assetKey, ofType: nil)
++        }
++        guard let path, FileManager.default.isReadableFile(atPath: path),
+               let file = FileURL(path: path, isDirectory: false) else {
+           Log.reader.error("Missing custom font asset in family \(name): \(asset)")
+           return nil
+@@ -334,6 +350,7 @@
+   // implements EPUBNavigatorDelegate::navigator:presentError
+   public func navigator(_ navigator: Navigator, presentError error: NavigatorError) {
+     Log.reader.error("Should present error: \(error)")
++    if !isDisposed { channel.invokeMethod("onReaderError", arguments: "NavigatorError") }
+   }
+ 
+   // implements EPUBNavigatorDelegate::navigator:didFailToLoadResourceAt
+@@ -341,6 +358,7 @@
+     Log.reader.warn("didFailToLoadResourceAt: \(href). err: \(error)")
+ 
+     // TODO: Should we send resource-load error like this?
++    if !isDisposed { channel.invokeMethod("onReaderError", arguments: "ResourceReadError") }
+     emitReaderStatusChanged(status: ReadiumReaderStatusError)
+ 
+     let payload = FlutterReadiumError(message: error.localizedDescription, code: "ResourceReadError", data: ["href": href.string])
+@@ -358,6 +376,7 @@
+ 
+   // implements NavigatorDelegate::navigator:locationDidChange
+   public func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
++    guard !isDisposed else { return }
+     Log.reader.debug("onPageChanged: \(locator)")
+     if (!hasSentReady) {
+       channel.onReaderReady()
+@@ -383,6 +402,12 @@
+       return
+     }
+     emitOnExternalLinkActivated(url: url)
++  }
++
++  public func navigator(_ navigator: VisualNavigator, shouldNavigateToLink link: Link) -> Bool {
++    let isFootnote = pendingFootnoteHref == link.href
++    pendingFootnoteHref = nil
++    return !isDisposed && (handleInternalLinks || isFootnote)
+   }
+ 
+   /// Called when the user taps on a link referring to a note.
+@@ -391,6 +416,7 @@
+   /// note yourself, using its `content`. `link.type` contains information about the
+   /// format of `content` and `referrer`, such as `text/html`.
+   public func navigator(_ navigator: Navigator, shouldNavigateToNoteAt link: Link, content: String, referrer: String?) -> Bool {
++    pendingFootnoteHref = link.href
+     Log.reader.info("user tapped on note: \(content)")
+     return true
+   }
+@@ -430,30 +456,64 @@
+ 
+   private func emitOnPageChanged(locator: Locator) -> Void {
+     Log.reader.debug("emitOnPageChanged, locator: \(locator)")
++    locatorRevision += 1
++    let revision = locatorRevision
+ 
+     Task.detached(priority: .high) { [locator] in
+-      /// Enrich Locator with PageInformation and ToC — bounded, because upstream's
+-      /// `EPUBSpreadView.evaluateScript` awaits `spreadLoaded()` with no timeout, so a stalled
+-      /// webview would freeze this stream forever after `ready` was already reported.
+-      let enriched = await withTimeout(seconds: Self.locatorEnrichmentTimeoutSeconds) { [locator] in
++      // 同次执行采样 DOM 身份和可见锚点；revision 拦住切页后才完成的旧查询。
++      let enriched = await withTimeout(seconds: Self.locatorEnrichmentTimeoutSeconds) { [locator] () -> (Locator, String)? in
++        let script = """
++          (() => ({revision: \(revision), href: document.URL,
++            pageInformation: window.flutterReadium.getPageInformation(),
++            anchor: window.synlenReadiumBridge.getVisibleLocator()}))()
++          """
++        let evaluated = await self.evaluateJavascript(script)
++        guard case .success(let value) = evaluated else {
++          if case .failure(let error) = evaluated {
++            Log.reader.error("Visible locator query failed: \(error)")
++          }
++          return nil
++        }
++        guard let snapshot = value as? [String: Any],
++              snapshot["revision"] as? Int == revision,
++              let href = snapshot["href"] as? String, let url = URL(string: href) else {
++          Log.reader.error("Invalid visible locator snapshot")
++          return nil
++        }
++        let resourceHref = PublicationFrameMatcher.resourceHref(
++          frameURL: url, readingOrder: self.publication.readingOrder.map(\.href)
++        ) ?? ""
+         var resultLocator = locator
+-        if let pageInfo = await self.getPageInformation() {
+-          resultLocator.locations.otherLocations.merge(pageInfo.otherLocations, uniquingKeysWith: { lhs, rhs in lhs })
++        if let pageInfo = snapshot["pageInformation"] as? [String: Any] {
++          resultLocator.locations.otherLocations.merge(PageInformation.fromJson(pageInfo).otherLocations, uniquingKeysWith: { _, rhs in rhs })
++        }
++        // null 表示图页或无法唯一定位；短文本优先于跨页段落的起点。
++        if let anchor = snapshot["anchor"] as? [String: Any] {
++          guard let locations = anchor["locations"] as? [String: Any],
++                let selector = locations["cssSelector"] as? String, !selector.isEmpty,
++                let text = anchor["text"] as? [String: Any],
++                let highlight = text["highlight"] as? String, !highlight.isEmpty, highlight.utf16.count <= 512 else { return nil }
++          resultLocator.locations.otherLocations["cssSelector"] = .string(selector)
++          resultLocator.text = Locator.Text(after: text["after"] as? String, before: text["before"] as? String, highlight: highlight)
+         }
+         if let tocLink = try? await FlutterReadiumPlugin.instance?.currentTocLinkFromLocator(resultLocator) {
+           resultLocator.title = tocLink.title
+           resultLocator.locations.otherLocations["tocHref"] = .string(tocLink.href)
+         }
+-        return resultLocator
+-      }
+-
+-      if enriched == nil {
+-        Log.reader.warn("emitOnPageChanged: enrichment timed out after \(Self.locatorEnrichmentTimeoutSeconds)s; emitting un-enriched locator")
++        return (resultLocator, resourceHref)
+       }
+ 
+       /// Immutable ref, so that we can use it on the main thread
+-      let finalLocator = enriched ?? locator
+       await MainActor.run() {
++        guard !self.isDisposed, revision == self.locatorRevision else { return }
++        guard let (finalLocator, resourceHref) = enriched ?? nil else {
++          if enriched == nil {
++            Log.reader.warn("Visible locator query timed out after \(Self.locatorEnrichmentTimeoutSeconds)s")
++          }
++          self.channel.invokeMethod("onReaderError", arguments: "LocatorUnavailable")
++          return
++        }
++        guard resourceHref == locator.href.string else { return }
+         self.channel.onPageChanged(locator: finalLocator)
+         do {
+           FlutterReadiumPlugin.instance?.textLocatorStreamHandler?.sendEvent(try finalLocator.jsonString())
+--- /dev/null
++++ b/ios/flutter_readium/Sources/flutter_readium/reader/PublicationFrameMatcher.swift
+@@ -0,0 +1,17 @@
++import Foundation
++
++/// 从 WebKit 实际 frame 路径找最长完整资源路径，避免目录后缀重叠串页。
++enum PublicationFrameMatcher {
++  static func resourceHref(frameURL: URL, readingOrder: [String]) -> String? {
++    let base = URL(string: "https://publication.invalid/")!
++    let matches = Set(readingOrder).compactMap { href -> (String, String)? in
++      guard let resourceURL = URL(string: href, relativeTo: base)?.absoluteURL else { return nil }
++      let path = resourceURL.standardized.path
++      guard path != "/", frameURL.standardized.path.hasSuffix(path) else { return nil }
++      return (href, path)
++    }
++    guard let longest = matches.map({ $0.1.count }).max() else { return nil }
++    let best = matches.filter { $0.1.count == longest }
++    return best.count == 1 ? best[0].0 : nil
++  }
++}
+--- /dev/null
++++ b/ios/flutter_readium/Sources/flutter_readium/reader/ReadiumWordAnchor.swift
+@@ -0,0 +1,33 @@
++import Foundation
++import CoreGraphics
++import CoreFoundation
++
++/// JS 提供顶层 WebView 的可见 CSS 矩形；这里仅转换到该原生视图的局部单位。
++enum ReadiumWordAnchor {
++  static func webViewRect(payload: [String: Any], size: CGSize) -> CGRect? {
++    guard let word = payload["wordRect"] as? [String: Any],
++          let viewport = payload["viewport"] as? [String: Any],
++          let x = number(word["x"]), let y = number(word["y"]),
++          let width = number(word["width"]), let height = number(word["height"]),
++          let viewportWidth = number(viewport["width"]),
++          let viewportHeight = number(viewport["height"]),
++          [x, y, width, height, viewportWidth, viewportHeight].allSatisfy({ $0.isFinite }),
++          size.width > 0, size.height > 0,
++          x >= 0, y >= 0, width > 0, height > 0,
++          viewportWidth > 0, viewportHeight > 0,
++          x + width <= viewportWidth + 0.5,
++          y + height <= viewportHeight + 0.5 else { return nil }
++    let scaleX = size.width / CGFloat(viewportWidth)
++    let scaleY = size.height / CGFloat(viewportHeight)
++    let nativeX: CGFloat = CGFloat(x) * scaleX
++    let nativeY: CGFloat = CGFloat(y) * scaleY
++    let nativeWidth: CGFloat = CGFloat(width) * scaleX
++    let nativeHeight: CGFloat = CGFloat(height) * scaleY
++    return CGRect(x: nativeX, y: nativeY, width: nativeWidth, height: nativeHeight)
++  }
++
++  private static func number(_ value: Any?) -> Double? {
++    guard let value = value as? NSNumber, CFGetTypeID(value) != CFBooleanGetTypeID() else { return nil }
++    return value.doubleValue
++  }
++}
+--- a/lib/flutter_readium.dart
++++ b/lib/flutter_readium.dart
+@@ -116,12 +116,18 @@
+   /// Navigates backward in the publication, such as to the previous page or section.
+   ///
+   /// The exact behavior may depend on the publication's format and if audio or TTS is enabled.
+-  Future<void> goBackward() => _readiumCall(() => _platform.goBackward());
++  Future<void> goBackward({bool animated = true}) => _readiumCall(() async {
++    // ignore: invalid_use_of_protected_member
++    await _platform.currentReaderWidget?.goBackward(animated: animated);
++  });
+ 
+   /// Navigates forward in the publication, such as to the next page or section.
+   ///
+   /// The exact behavior may depend on the publication's format and if audio or TTS is enabled.
+-  Future<void> goForward() => _readiumCall(() => _platform.goForward());
++  Future<void> goForward({bool animated = true}) => _readiumCall(() async {
++    // ignore: invalid_use_of_protected_member
++    await _platform.currentReaderWidget?.goForward(animated: animated);
++  });
+ 
+   /// Skips to the next chapter in the publication's (flattened) table of contents.
+   ///
+@@ -206,7 +212,13 @@
+   /// Navigates the reader to the given [locator].
+   ///
+   /// Returns `true` if navigation succeeded, `false` otherwise.
+-  Future<bool> goToLocator(Locator locator) => _readiumCall(() => _platform.goToLocator(locator));
++  Future<bool> goToLocator(Locator locator, {bool animated = false}) => _readiumCall(() async {
++    // ignore: invalid_use_of_protected_member
++    final reader = _platform.currentReaderWidget;
++    if (reader == null) return false;
++    await reader.go(locator, animated: animated, isAudioBookWithText: false);
++    return true;
++  });
+ 
+   /// Navigates the reader to a specific progression in the current resource, where 0.0 is the start and 1.0 is the end.
+   ///
+--- a/lib/reader_channel.dart
++++ b/lib/reader_channel.dart
+@@ -29,6 +29,8 @@
+     required this.onPageChanged,
+     this.onExternalLinkActivated,
+     this.onTextSelected,
++    this.onTextInteraction,
++    this.onReaderError,
+     this.onSelectionAction,
+     this.onDecorationInteraction,
+     this.onImageTapped,
+@@ -37,6 +39,7 @@
+   }
+ 
+   static final _log = ReadiumLog.tag('ReaderChannel');
++  bool _disposed = false;
+ 
+   /// Called once when the native reader first reports content on screen.
+   ///
+@@ -55,6 +58,9 @@
+   /// Called when the user selects text in the reader.
+   void Function(TextSelectionEvent)? onTextSelected;
+ 
++  void Function(String)? onTextInteraction;
++  void Function(String)? onReaderError;
++
+   /// Called when the user taps a configured editing action on selected text.
+   void Function(SelectionActionEvent)? onSelectionAction;
+ 
+@@ -73,7 +79,8 @@
+     _log.d('$name: $locator, $animated');
+ 
+     return _invokeMethod(_ReaderChannelMethodInvoke.go, [
+-      json.encode(locator.toTextLocator()),
++      // 目录锚点、CFI、扩展位置及媒体类型须原样交给原生导航。
++      json.encode(locator.toJson()),
+       animated,
+       isAudioBookWithText,
+     ]);
+@@ -132,17 +139,19 @@
+ 
+   /// Tears down the method channel handler and signals the native side to clean up.
+   Future<void> dispose() async {
++    _disposed = true;
+     try {
+       await _invokeMethod(_ReaderChannelMethodInvoke.dispose);
+-    } on Object catch (_) {
+-      // ignore
++    } on MissingPluginException {
++      // Flutter 平台视图可能已经先完成原生销毁。
++    } finally {
++      setMethodCallHandler(null);
+     }
+-
+-    setMethodCallHandler(null);
+   }
+ 
+   /// Handles method calls from the native platform.
+   Future<dynamic> onMethodCall(final MethodCall call) async {
++    if (_disposed) return null;
+     try {
+       switch (call.method) {
+         case 'onReaderReady':
+@@ -169,6 +178,16 @@
+           _log.d('onExternalLinkActivated $link');
+           onExternalLinkActivated?.call(link);
+ 
++          return null;
++        case 'onTextInteraction':
++          final payload = call.arguments;
++          if (payload is String && payload.length <= 65536) {
++            onTextInteraction?.call(payload);
++          }
++          return null;
++        case 'onReaderError':
++          final code = call.arguments;
++          if (code is String) onReaderError?.call(code);
+           return null;
+         case 'onTextSelected':
+           final args = call.arguments as String;
+--- /dev/null
++++ b/lib/reader_orientation_alignment.dart
+@@ -0,0 +1,31 @@
++import 'dart:async';
++
++/// 旋转后的延迟落页属于当前视口；拆除或新一次旋转使旧校正失效。
++class ReaderOrientationAlignment {
++  ReaderOrientationAlignment({required this.onError});
++
++  final void Function(Object, StackTrace) onError;
++  Timer? _timer;
++  int _revision = 0;
++  bool _disposed = false;
++
++  void schedule(Future<void> Function() align) {
++    if (_disposed) return;
++    _timer?.cancel();
++    final revision = ++_revision;
++    _timer = Timer(const Duration(milliseconds: 500), () async {
++      try {
++        await align();
++      } catch (error, stack) {
++        if (!_disposed && revision == _revision) onError(error, stack);
++      }
++    });
++  }
++
++  void dispose() {
++    _disposed = true;
++    _revision++;
++    _timer?.cancel();
++    _timer = null;
++  }
++}
+--- /dev/null
++++ b/lib/reader_platform_view.dart
+@@ -0,0 +1,197 @@
++import 'dart:async';
++
++import 'package:flutter/rendering.dart';
++import 'package:flutter/services.dart';
++import 'package:flutter/widgets.dart';
++
++/// 由阅读会话持有，关闭等待在途创建和原生拆除，不依赖组件的晚到回调。
++class ReaderPlatformViewLifecycle {
++  ReaderPlatformViewLifecycle({
++    required this.viewType,
++    required this.creationParams,
++    required this.onAllocated,
++    required this.beforeDispose,
++  });
++
++  final String viewType;
++  final Map<String, dynamic> creationParams;
++  final ValueChanged<int> onAllocated;
++  final Future<void> Function() beforeDispose;
++
++  AndroidViewController? androidController;
++  UiKitViewController? uiKitController;
++  Future<void>? _creation;
++  Future<void>? _disposal;
++  bool _closed = false;
++  bool _readerDetached = false;
++  bool _platformDisposed = false;
++  bool _controllerDisposeAttempted = false;
++  TargetPlatform? _platform;
++  int? _viewId;
++  bool get hasStarted => _creation != null;
++  bool get closed => _closed;
++
++  Future<void> create(TargetPlatform platform, Size size) {
++    if (_closed) return Future.value();
++    return _creation ??= _create(platform, size);
++  }
++
++  Future<void> _create(TargetPlatform platform, Size size) async {
++    final id = platformViewsRegistry.getNextPlatformViewId();
++    _platform = platform;
++    _viewId = id;
++    // 通道先于原生创建接线，初始化失败也能回传给所属会话。
++    onAllocated(id);
++    if (platform == TargetPlatform.android) {
++      final controller = PlatformViewsService.initSurfaceAndroidView(
++        id: id,
++        viewType: viewType,
++        layoutDirection: TextDirection.ltr,
++        creationParams: creationParams,
++        creationParamsCodec: const StandardMessageCodec(),
++      );
++      androidController = controller;
++      await controller.create(size: size, position: Offset.zero);
++    } else {
++      uiKitController = await PlatformViewsService.initUiKitView(
++        id: id,
++        viewType: viewType,
++        layoutDirection: TextDirection.ltr,
++        creationParams: creationParams,
++        creationParamsCodec: const StandardMessageCodec(),
++      );
++    }
++  }
++
++  Future<void> dispose() {
++    _closed = true;
++    return _disposal ??= _disposeWithRetry();
++  }
++
++  Future<void> _disposeWithRetry() async {
++    // State.dispose 只调用一次；瞬时通道失败在内部重试，持续失败不发虚假 ACK。
++    for (var attempt = 0; attempt < 2; attempt++) {
++      try {
++        await _dispose();
++        return;
++      } on Object {
++        if (attempt == 1) {
++          _disposal = null;
++          rethrow;
++        }
++      }
++    }
++  }
++
++  Future<void> _dispose() async {
++    final creation = _creation;
++    if (creation == null) return;
++    try {
++      await creation;
++    } on Object {
++      // 创建错误由视口报告；仍须清理已经分配的通道及可能部分创建的视图。
++    }
++    if (!_readerDetached) {
++      await beforeDispose();
++      _readerDetached = true;
++    }
++    if (_platformDisposed) return;
++    try {
++      final android = androidController;
++      final uiKit = uiKitController;
++      if (!_controllerDisposeAttempted && (android != null || uiKit != null)) {
++        _controllerDisposeAttempted = true;
++        if (android != null) {
++          await android.dispose();
++        } else {
++          await uiKit!.dispose();
++        }
++      } else {
++        // Android controller 在回包之前就进入 disposed，失败重试须直接请求引擎。
++        await SystemChannels.platform_views.invokeMethod<void>(
++          'dispose',
++          _platform == TargetPlatform.android
++              ? {'id': _viewId, 'hybrid': android?.requiresViewComposition ?? false}
++              : _viewId,
++        );
++      }
++    } on PlatformException catch (error) {
++      // iOS 明确确认该 id 不存在时，创建失败或重复拆除均已无资源可释放。
++      if (_platform != TargetPlatform.iOS || error.code != 'unknown_view') rethrow;
++    }
++    _platformDisposed = true;
++  }
++}
++
++/// 保留 Flutter 平台视图的绘制与手势分发，生命周期由所属会话管理。
++class ReaderPlatformView extends StatefulWidget {
++  const ReaderPlatformView({
++    required this.lifecycle,
++    required this.platform,
++    required this.onError,
++    super.key,
++  });
++
++  final ReaderPlatformViewLifecycle lifecycle;
++  final TargetPlatform platform;
++  final void Function(Object, StackTrace) onError;
++
++  @override
++  State<ReaderPlatformView> createState() => _ReaderPlatformViewState();
++}
++
++class _ReaderPlatformViewState extends State<ReaderPlatformView> {
++  bool _ready = false;
++
++  void _create(Size size) {
++    final lifecycle = widget.lifecycle;
++    if (lifecycle.hasStarted || lifecycle.closed || size.isEmpty) return;
++    unawaited(
++      lifecycle
++          .create(widget.platform, size)
++          .then(
++            (_) {
++              if (mounted && !lifecycle.closed) setState(() => _ready = true);
++            },
++            onError: (Object error, StackTrace stack) {
++              if (mounted && !lifecycle.closed) widget.onError(error, stack);
++            },
++          ),
++    );
++  }
++
++  @override
++  Widget build(BuildContext context) => LayoutBuilder(
++    builder: (context, constraints) {
++      _create(constraints.biggest);
++      if (!_ready) return const SizedBox.expand();
++      final android = widget.lifecycle.androidController;
++      if (android != null) {
++        return AndroidViewSurface(
++          controller: android,
++          gestureRecognizers: const {},
++          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
++        );
++      }
++      return _ReaderUiKitSurface(controller: widget.lifecycle.uiKitController!);
++    },
++  );
++}
++
++class _ReaderUiKitSurface extends LeafRenderObjectWidget {
++  const _ReaderUiKitSurface({required this.controller});
++
++  final UiKitViewController controller;
++
++  @override
++  RenderUiKitView createRenderObject(BuildContext context) => RenderUiKitView(
++    viewController: controller,
++    hitTestBehavior: PlatformViewHitTestBehavior.opaque,
++    gestureRecognizers: const {},
++  );
++
++  @override
++  void updateRenderObject(BuildContext context, RenderUiKitView renderObject) {
++    renderObject.viewController = controller;
++  }
++}
+--- a/lib/reader_widget.dart
++++ b/lib/reader_widget.dart
+@@ -5,11 +5,12 @@
+ import 'package:flutter/material.dart' as mq show Orientation;
+ import 'package:flutter/material.dart';
+ import 'package:flutter/rendering.dart';
+-import 'package:flutter/services.dart';
+ import 'package:wakelock_plus/wakelock_plus.dart';
+ 
+ import 'flutter_readium.dart';
+ import 'reader_channel.dart';
++import 'reader_orientation_alignment.dart';
++import 'reader_platform_view.dart';
+ 
+ const _viewType = 'dk.nota.flutter_readium/ReadiumReaderWidget';
+ 
+@@ -22,6 +23,14 @@
+     this.shouldShowControls,
+     this.onExternalLinkActivated,
+     this.onTextSelected,
++    this.onTextInteraction,
++    this.onLocatorChanged,
++    this.onReaderReady,
++    this.onReaderError,
++    this.onReaderDisposed,
++    this.sessionId,
++    this.handlePointerControls = true,
++    this.handleInternalLinks = true,
+     this.onSelectionAction,
+     this.onDecorationInteraction,
+     this.onImageTapped,
+@@ -57,6 +66,26 @@
+   /// Callback invoked when the user selects text in the reader.
+   final ValueChanged<TextSelectionEvent>? onTextSelected;
+ 
++  /// 原生视口绑定的文字事件；身份字段由原生覆盖，宿主校验内容协议。
++  final ValueChanged<String>? onTextInteraction;
++
++  /// 当前视口的位置回执，不共享其他阅读会话的事件流。
++  final ValueChanged<Locator>? onLocatorChanged;
++
++  /// 首次位置回执之后调用；不表示后续字号重排已经完成。
++  final VoidCallback? onReaderReady;
++  final ValueChanged<String>? onReaderError;
++
++  /// 原生视口拆除完成后调用，允许宿主随后重新打开同一出版物。
++  final VoidCallback? onReaderDisposed;
++  final String? sessionId;
++
++  /// 自定义学习手势接管正文点击时设为 false；保留无障碍语义操作。
++  final bool handlePointerControls;
++
++  /// 是否跟随普通书内链接；脚注链接仍由阅读器处理。
++  final bool handleInternalLinks;
++
+   /// Callback invoked when the user taps a configured editing action on selected text.
+   final ValueChanged<SelectionActionEvent>? onSelectionAction;
+ 
+@@ -117,12 +146,19 @@
+ 
+   Timer? _wakelockTimer;
+   ReadiumReaderChannel? _channel;
++  ReaderPlatformViewLifecycle? _platformLifecycle;
+   bool wasDestroyed = false;
+   bool isReady = false;
+ 
+   final _readium = FlutterReadiumPlatform.instance;
+ 
+   mq.Orientation? _lastOrientation;
++  late final _orientationAlignment = ReaderOrientationAlignment(
++    onError: (error, stack) {
++      _log.e(error, data: '旋转后的阅读位置校正失败', stackTrace: stack);
++      if (mounted && !wasDestroyed) widget.onReaderError?.call('LocatorUnavailable');
++    },
++  );
+   late Widget _readerWidget;
+ 
+   EPUBPreferences? get _defaultPreferences => _readium.defaultPreferences;
+@@ -147,13 +183,26 @@
+   @override
+   void dispose() {
+     _log.d('ReadiumReaderWidget dispose');
++    _orientationAlignment.dispose();
+     _cleanup();
+-    _channel?.dispose();
+-    _channel = null;
++    wasDestroyed = true;
++    final lifecycle = _platformLifecycle;
++    if (lifecycle != null) {
++      unawaited(
++        lifecycle.dispose().then(
++          (_) => widget.onReaderDisposed?.call(),
++          onError: (Object error, StackTrace stack) {
++            _log.e(error, data: '原生阅读视口关闭失败', stackTrace: stack);
++            widget.onReaderError?.call('ReaderDisposalFailed');
++          },
++        ),
++      );
++    } else {
++      widget.onReaderDisposed?.call();
++    }
+     _lastOrientation = null;
+ 
+     _disableWakelock();
+-    wasDestroyed = true;
+ 
+     super.dispose();
+   }
+@@ -210,7 +259,7 @@
+               _enableWakelock();
+             },
+             onPointerMove: (final event) {
+-              if (userSwipe) {
++              if (!widget.handlePointerControls || userSwipe) {
+                 return;
+               }
+ 
+@@ -221,6 +270,7 @@
+               }
+             },
+             onPointerUp: (final event) async {
++              if (!widget.handlePointerControls) return;
+               if (userSwipe) {
+                 /// Wait for page animation to complete.
+                 await Future.delayed(const Duration(seconds: 1));
+@@ -265,14 +315,14 @@
+   }
+ 
+   @override
+-  Future<void> goBackward({final bool animated = true}) async => _channel?.goBackward();
+-
+-  @override
+-  Future<void> goForward({final bool animated = true}) async => _channel?.goForward();
++  Future<void> goBackward({final bool animated = true}) async => _channel?.goBackward(animated: animated);
++
++  @override
++  Future<void> goForward({final bool animated = true}) async => _channel?.goForward(animated: animated);
+ 
+   @override
+   Future<void> setEPUBPreferences(EPUBPreferences preferences) async {
+-    _channel?.setEPUBPreferences(preferences);
++    await _channel?.setEPUBPreferences(preferences);
+ 
+     _scrollMode = preferences.scroll ?? false;
+   }
+@@ -299,6 +349,8 @@
+ 
+     final creationParams = <String, dynamic>{
+       'pubIdentifier': publication.identifier,
++      'sessionId': widget.sessionId,
++      'handleInternalLinks': widget.handleInternalLinks,
+       'preferences': defaultPreferences,
+       'initialLocator': widget.initialLocator == null ? null : json.encode(widget.initialLocator),
+       'preloadPreviousPositionCount': widget.preloadPreviousPositionCount,
+@@ -312,33 +364,25 @@
+ 
+     _log.d('creationParams=$creationParams');
+ 
+-    if (Platform.isAndroid) {
+-      return PlatformViewLink(
++    if (Platform.isAndroid || Platform.isIOS) {
++      final lifecycle = ReaderPlatformViewLifecycle(
+         viewType: _viewType,
+-        surfaceFactory: (final context, final controller) => AndroidViewSurface(
+-          controller: controller as AndroidViewController,
+-          gestureRecognizers: const {},
+-          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+-        ),
+-        onCreatePlatformView: (final params) =>
+-            PlatformViewsService.initSurfaceAndroidView(
+-                id: params.id,
+-                viewType: _viewType,
+-                layoutDirection: TextDirection.ltr,
+-                creationParams: creationParams,
+-                creationParamsCodec: const StandardMessageCodec(),
+-              )
+-              ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+-              ..addOnPlatformViewCreatedListener(_onPlatformViewCreated)
+-              ..create(),
++        creationParams: creationParams,
++        onAllocated: _onPlatformViewCreated,
++        beforeDispose: () async {
++          final channel = _channel;
++          await channel?.dispose();
++          if (identical(_channel, channel)) _channel = null;
++        },
+       );
+-    } else if (Platform.isIOS) {
+-      return UiKitView(
+-        viewType: _viewType,
+-        layoutDirection: TextDirection.ltr,
+-        creationParams: creationParams,
+-        creationParamsCodec: const StandardMessageCodec(),
+-        onPlatformViewCreated: _onPlatformViewCreated,
++      _platformLifecycle = lifecycle;
++      return ReaderPlatformView(
++        lifecycle: lifecycle,
++        platform: Platform.isAndroid ? TargetPlatform.android : TargetPlatform.iOS,
++        onError: (error, stack) {
++          _log.e(error, data: '原生阅读视口创建失败', stackTrace: stack);
++          widget.onReaderError?.call('ReaderInitializationFailed');
++        },
+       );
+     }
+     return ColoredBox(
+@@ -377,25 +421,52 @@
+   void _cleanup() {
+     _log.d('cleanup ${_channel?.name}!');
+     // ignore: invalid_use_of_protected_member
+-    _readium.currentReaderWidget = null;
++    if (identical(_readium.currentReaderWidget, this)) {
++      // ignore: invalid_use_of_protected_member
++      _readium.currentReaderWidget = null;
++    }
+   }
+ 
+   Locator? _currentLocator;
++  bool _reportedInitialLocator = false;
+ 
+   void _onPlatformViewCreated(final int id) {
++    if (wasDestroyed || !mounted) return;
+     _channel = ReadiumReaderChannel(
+       '$_viewType:$id',
+       onReaderReady: _markReady,
+       onPageChanged: (final locator) {
++        if (!mounted || wasDestroyed) return;
+         _log.d(() => 'onPageChanged: ${locator.toJson()}');
+         _currentLocator = locator;
+-
++        widget.onLocatorChanged?.call(locator);
+         _markReady();
+-      },
+-      onTextSelected: widget.onTextSelected,
+-      onSelectionAction: widget.onSelectionAction,
+-      onDecorationInteraction: widget.onDecorationInteraction,
+-      onImageTapped: widget.onImageTapped,
++        if (!_reportedInitialLocator) {
++          _reportedInitialLocator = true;
++          widget.onReaderReady?.call();
++        }
++      },
++      onExternalLinkActivated: (link) {
++        if (mounted && !wasDestroyed) widget.onExternalLinkActivated?.call(link);
++      },
++      onTextInteraction: (json) {
++        if (mounted && !wasDestroyed) widget.onTextInteraction?.call(json);
++      },
++      onReaderError: (code) {
++        if (mounted && !wasDestroyed) widget.onReaderError?.call(code);
++      },
++      onTextSelected: (event) {
++        if (mounted && !wasDestroyed) widget.onTextSelected?.call(event);
++      },
++      onSelectionAction: (event) {
++        if (mounted && !wasDestroyed) widget.onSelectionAction?.call(event);
++      },
++      onDecorationInteraction: (event) {
++        if (mounted && !wasDestroyed) widget.onDecorationInteraction?.call(event);
++      },
++      onImageTapped: (event) {
++        if (mounted && !wasDestroyed) widget.onImageTapped?.call(event);
++      },
+     );
+ 
+     if (widget.selectionActions.isNotEmpty) {
+@@ -418,7 +489,7 @@
+   /// TODO: Remove this workaround, if the underlying issue is completely fixed in Readium.
+   ///
+   /// If orientation changes, fix page alignment, so it doesn't stay on a weird-looking page 5½.
+-  void _onOrientationChangeWorkaround(final mq.Orientation orientation) async {
++  void _onOrientationChangeWorkaround(final mq.Orientation orientation) {
+     if (_lastOrientation == null) {
+       _lastOrientation = orientation;
+ 
+@@ -430,17 +501,18 @@
+     }
+ 
+     if (orientation != _lastOrientation) {
+-      // Remove domRange/cssSelector, so it navigates to a progression, which will always
+-      // trigger scrolling to the nearest page.
+       if (_lastOrientation != null && _currentLocator != null) {
+-        Future.delayed(const Duration(milliseconds: 500)).then((final value) {
++        final channel = _channel;
++        _orientationAlignment.schedule(() async {
++          final locator = _currentLocator;
++          if (!mounted || wasDestroyed || channel == null || !identical(channel, _channel) || locator == null) return;
+           _log
+             ..d(
+               'Orientation changed. Re-navigating to current locator to re-align page.',
+             )
+             ..d('locator = $_currentLocator');
+-          _channel?.go(
+-            _currentLocator!,
++          await channel.go(
++            locator,
+             animated: false,
+             isAudioBookWithText: false, // TODO: isAudioBookWithText - we don't know atm.
+           );
+--- a/lib/reader_widget_unsupported.dart
++++ b/lib/reader_widget_unsupported.dart
+@@ -9,6 +9,14 @@
+     this.shouldShowControls,
+     this.onExternalLinkActivated,
+     this.onTextSelected,
++    this.onTextInteraction,
++    this.onLocatorChanged,
++    this.onReaderReady,
++    this.onReaderError,
++    this.onReaderDisposed,
++    this.sessionId,
++    this.handlePointerControls = true,
++    this.handleInternalLinks = true,
+     this.onSelectionAction,
+     this.onDecorationInteraction,
+     this.onImageTapped,
+@@ -28,6 +36,27 @@
+   final ValueNotifier<bool>? shouldShowControls;
+   final Function(String)? onExternalLinkActivated;
+   final ValueChanged<TextSelectionEvent>? onTextSelected;
++
++  /// 原生视口绑定的文字事件；身份字段由原生覆盖，宿主校验内容协议。
++  final ValueChanged<String>? onTextInteraction;
++
++  /// 当前视口的位置回执，不共享其他阅读会话的事件流。
++  final ValueChanged<Locator>? onLocatorChanged;
++
++  /// 首次位置回执之后调用；不表示后续字号重排已经完成。
++  final VoidCallback? onReaderReady;
++  final ValueChanged<String>? onReaderError;
++
++  /// 原生视口拆除完成后调用，允许宿主随后重新打开同一出版物。
++  final VoidCallback? onReaderDisposed;
++  final String? sessionId;
++
++  /// 自定义学习手势接管正文点击时设为 false；保留无障碍语义操作。
++  final bool handlePointerControls;
++
++  /// 是否跟随普通书内链接；脚注链接仍由阅读器处理。
++  final bool handleInternalLinks;
++
+   final ValueChanged<SelectionActionEvent>? onSelectionAction;
+   final ValueChanged<DecorationInteractionEvent>? onDecorationInteraction;
+   final ValueChanged<ImageTapEvent>? onImageTapped;
+--- a/lib/reader_widget_web.dart
++++ b/lib/reader_widget_web.dart
+@@ -17,6 +17,14 @@
+     this.toggleShowControlsSemanticLabel = 'Toggle show controls',
+     this.verticalScroll = false,
+     this.onTextSelected,
++    this.onTextInteraction,
++    this.onLocatorChanged,
++    this.onReaderReady,
++    this.onReaderError,
++    this.onReaderDisposed,
++    this.sessionId,
++    this.handlePointerControls = true,
++    this.handleInternalLinks = true,
+     this.onSelectionAction,
+     this.onDecorationInteraction,
+     this.onImageTapped,
+@@ -36,6 +44,27 @@
+   final String toggleShowControlsSemanticLabel;
+   final bool verticalScroll;
+   final void Function(TextSelectionEvent)? onTextSelected;
++
++  /// 原生视口绑定的文字事件；身份字段由原生覆盖，宿主校验内容协议。
++  final ValueChanged<String>? onTextInteraction;
++
++  /// 当前视口的位置回执，不共享其他阅读会话的事件流。
++  final ValueChanged<Locator>? onLocatorChanged;
++
++  /// 首次位置回执之后调用；不表示后续字号重排已经完成。
++  final VoidCallback? onReaderReady;
++  final ValueChanged<String>? onReaderError;
++
++  /// 原生视口拆除完成后调用，允许宿主随后重新打开同一出版物。
++  final VoidCallback? onReaderDisposed;
++  final String? sessionId;
++
++  /// 自定义学习手势接管正文点击时设为 false；保留无障碍语义操作。
++  final bool handlePointerControls;
++
++  /// 是否跟随普通书内链接；脚注链接仍由阅读器处理。
++  final bool handleInternalLinks;
++
+   final void Function(SelectionActionEvent)? onSelectionAction;
+   final void Function(DecorationInteractionEvent)? onDecorationInteraction;
+   final ValueChanged<ImageTapEvent>? onImageTapped;
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -25,8 +25,6 @@
+         pluginClass: FlutterReadiumPlugin
+       ios:
+         pluginClass: FlutterReadiumPlugin
+-      macos:
+-        pluginClass: FlutterReadiumPlugin
+       web:
+         pluginClass: FlutterReadiumWebPlugin
+         fileName: src/flutter_readium_web.dart
+@@ -39,7 +37,7 @@
+     sdk: flutter
+   flutter_web_plugins:
+     sdk: flutter
+-  flutter_readium_platform_interface: ^0.5.0
++  flutter_readium_platform_interface: 0.5.0
+   wakelock_plus: ^1.7.0
+   web: ^1.1.1
+   collection: ^1.19.1
+@@ -57,5 +55,4 @@
+ #   flutter_readium_platform_interface:
+ #     path: ../flutter_readium_platform_interface
+ 
+-executables:
+-  copy_js_file:
++publish_to: none
+--- a/test/flutter_readium_test.dart
++++ b/test/flutter_readium_test.dart
+@@ -182,6 +182,18 @@
+   void emitExternalPlaybackCommand(ReadiumExternalPlaybackCommand command) =>
+       _externalPlaybackCommandController.add(command);
+   void emitError(ReadiumError e) => _errorController.add(e);
++}
++
++class _RecordingReaderWidget implements ReadiumReaderWidgetInterface {
++  final navigations = <({Locator locator, bool animated, bool isAudioBookWithText})>[];
++
++  @override
++  Future<void> go(Locator locator, {required bool isAudioBookWithText, bool animated = false}) async {
++    navigations.add((locator: locator, animated: animated, isAudioBookWithText: isAudioBookWithText));
++  }
++
++  @override
++  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+ }
+ 
+ // ---------------------------------------------------------------------------
+@@ -292,12 +304,33 @@
+   });
+ 
+   group('goToLocator', () {
+-    test('returns true on success', () async {
+-      final locator = Locator(
++    test('向当前视口传递完整 Locator 与动画参数，成功返回 true', () async {
++      final viewport = _RecordingReaderWidget();
++      platform.currentReaderWidget = viewport;
++      const locator = Locator(
+         href: '/ch1.xhtml',
+         type: 'application/xhtml+xml',
++        title: 'Chapter one',
++        locations: Locations(
++          fragments: ['epubcfi(/6/4!/4/2)'],
++          cssSelector: '#p42',
++          progression: .45,
++          additionalProperties: {'customLocation': 'keep'},
++        ),
++        text: LocatorText(highlight: 'Reader position'),
+       );
+       expect(await reader.goToLocator(locator), isTrue);
++      expect(await reader.goToLocator(locator, animated: true), isTrue);
++      expect(viewport.navigations.map((call) => call.animated), [false, true]);
++      for (final call in viewport.navigations) {
++        expect(call.locator.toJson(), locator.toJson());
++        expect(call.isAudioBookWithText, isFalse);
++      }
++    });
++
++    test('没有活动视口时返回 false', () async {
++      const locator = Locator(href: '/ch1.xhtml', type: 'application/xhtml+xml');
++      expect(await reader.goToLocator(locator), isFalse);
+     });
+   });
+ 
+--- /dev/null
++++ b/test/publication_frame_matcher_test.swift
+@@ -0,0 +1,14 @@
++import Foundation
++
++@main
++struct PublicationFrameMatcherTest {
++  static func main() {
++    let nested = URL(string: "readium://publication/book/sub/a.xhtml")!
++    precondition(PublicationFrameMatcher.resourceHref(frameURL: nested, readingOrder: ["a.xhtml", "sub/a.xhtml"]) == "sub/a.xhtml")
++    precondition(PublicationFrameMatcher.resourceHref(frameURL: URL(string: "readium://publication/book/a.xhtml")!, readingOrder: ["a.xhtml", "sub/a.xhtml"]) == "a.xhtml")
++    precondition(PublicationFrameMatcher.resourceHref(frameURL: URL(string: "readium://publication/book/not-a.xhtml")!, readingOrder: ["a.xhtml"]) == nil)
++    precondition(PublicationFrameMatcher.resourceHref(frameURL: URL(string: "readium://publication/book/a%20b.xhtml")!, readingOrder: ["a%20b.xhtml"]) == "a%20b.xhtml")
++    precondition(PublicationFrameMatcher.resourceHref(frameURL: nested, readingOrder: ["sub/a.xhtml", "sub/./a.xhtml"]) == nil)
++    precondition(PublicationFrameMatcher.resourceHref(frameURL: nested, readingOrder: ["sub/a.xhtml", "sub/a.xhtml"]) == "sub/a.xhtml")
++  }
++}
+--- /dev/null
++++ b/test/reader_orientation_alignment_test.dart
+@@ -0,0 +1,49 @@
++import 'dart:async';
++
++import 'package:flutter_readium/reader_orientation_alignment.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++void main() {
++  testWidgets('视口关闭取消尚未开始的旋转校正', (tester) async {
++    var calls = 0;
++    final alignment = ReaderOrientationAlignment(onError: (_, _) => fail('没有在途请求'));
++    alignment.schedule(() async => calls++);
++    await tester.pump(const Duration(milliseconds: 200));
++    alignment.dispose();
++    await tester.pump(const Duration(milliseconds: 600));
++    expect(calls, 0);
++    alignment.schedule(() async => calls++);
++    await tester.pump(const Duration(milliseconds: 600));
++    expect(calls, 0);
++  });
++
++  testWidgets('关闭后在途原生取消不回传到后续视口', (tester) async {
++    final request = Completer<void>();
++    final errors = <Object>[];
++    final alignment = ReaderOrientationAlignment(onError: (error, _) => errors.add(error));
++    alignment.schedule(() => request.future);
++    await tester.pump(const Duration(milliseconds: 500));
++    alignment.dispose();
++    request.completeError(StateError('native disposed'));
++    await tester.pump();
++    expect(errors, isEmpty);
++    expect(tester.takeException(), isNull);
++  });
++
++  testWidgets('仍活动的校正失败回传且连续旋转只执行最后一次', (tester) async {
++    final errors = <Object>[];
++    var calls = 0;
++    final alignment = ReaderOrientationAlignment(onError: (error, _) => errors.add(error));
++    alignment.schedule(() async => calls++);
++    await tester.pump(const Duration(milliseconds: 200));
++    final failure = StateError('native navigation failed');
++    alignment.schedule(() async {
++      calls++;
++      throw failure;
++    });
++    await tester.pump(const Duration(milliseconds: 500));
++    expect(calls, 1);
++    expect(errors, [failure]);
++    alignment.dispose();
++  });
++}
+--- /dev/null
++++ b/test/readium_word_anchor_test.swift
+@@ -0,0 +1,30 @@
++import Foundation
++import CoreGraphics
++
++@main
++struct ReadiumWordAnchorTest {
++  static func main() {
++    let payload: [String: Any] = [
++      "wordRect": ["x": 20.0, "y": 40.0, "width": 60.0, "height": 24.0],
++      "viewport": ["width": 400.0, "height": 800.0],
++    ]
++    precondition(ReadiumWordAnchor.webViewRect(payload: payload, size: CGSize(width: 200, height: 400)) == CGRect(x: 10, y: 20, width: 30, height: 12))
++    precondition(ReadiumWordAnchor.webViewRect(payload: payload, size: .zero) == nil)
++    for badWord in [
++      ["x": -1.0, "y": 40.0, "width": 60.0, "height": 24.0],
++      ["x": 380.0, "y": 40.0, "width": 60.0, "height": 24.0],
++      ["x": 20.0, "y": 40.0, "width": 0.0, "height": 24.0],
++      ["x": Double.infinity, "y": 40.0, "width": 60.0, "height": 24.0],
++    ] {
++      var invalid = payload
++      invalid["wordRect"] = badWord
++      precondition(ReadiumWordAnchor.webViewRect(payload: invalid, size: CGSize(width: 400, height: 800)) == nil)
++    }
++    precondition(ReadiumWordAnchor.webViewRect(payload: [:], size: CGSize(width: 400, height: 800)) == nil)
++    for invalidX: Any in [true, "20"] {
++      var invalid = payload
++      invalid["wordRect"] = ["x": invalidX, "y": 40, "width": 60, "height": 24]
++      precondition(ReadiumWordAnchor.webViewRect(payload: invalid, size: CGSize(width: 400, height: 800)) == nil)
++    }
++  }
++}
+--- /dev/null
++++ b/test/synlen_reader_channel_test.dart
+@@ -0,0 +1,118 @@
++import 'dart:async';
++import 'dart:convert';
++
++import 'package:flutter/services.dart';
++import 'package:flutter_readium/flutter_readium.dart';
++import 'package:flutter_readium/reader_channel.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++
++  test('文字回执只到所属视口，拒绝超限与非字符串载荷', () async {
++    final firstEvents = <String>[];
++    final secondEvents = <String>[];
++    final first = ReadiumReaderChannel(
++      'test/reader/first',
++      onReaderReady: () {},
++      onPageChanged: (_) {},
++      onTextInteraction: firstEvents.add,
++    );
++    final second = ReadiumReaderChannel(
++      'test/reader/second',
++      onReaderReady: () {},
++      onPageChanged: (_) {},
++      onTextInteraction: secondEvents.add,
++    );
++    await first.onMethodCall(const MethodCall('onTextInteraction', '{"sessionId":"first"}'));
++    await second.onMethodCall(const MethodCall('onTextInteraction', '{"sessionId":"second"}'));
++    await first.onMethodCall(MethodCall('onTextInteraction', 'x' * 65537));
++    await first.onMethodCall(const MethodCall('onTextInteraction', {'kind': 'word'}));
++    expect(firstEvents, ['{"sessionId":"first"}']);
++    expect(secondEvents, ['{"sessionId":"second"}']);
++    first.setMethodCallHandler(null);
++    second.setMethodCallHandler(null);
++  });
++
++  test('目录与恢复导航原样传递锚点、CFI、扩展位置和媒体类型', () async {
++    const name = 'test/reader/navigation';
++    final sent = <List<dynamic>>[];
++    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
++    // ignore: cascade_invocations
++    messenger.setMockMethodCallHandler(const MethodChannel(name), (call) async {
++      expect(call.method, 'go');
++      sent.add(call.arguments as List<dynamic>);
++      return null;
++    });
++    final channel = ReadiumReaderChannel(name, onReaderReady: () {}, onPageChanged: (_) {});
++    final originals = <Map<String, dynamic>>[
++      {
++        'href': 'OEBPS/chapter2.xhtml',
++        'type': 'application/xhtml+xml',
++        'locations': {'progression': 0.0},
++      },
++      {
++        'href': 'OEBPS/chapter2.xhtml',
++        'type': 'application/xhtml+xml',
++        'locations': {
++          'fragments': ['top'],
++        },
++      },
++      {
++        'href': 'OEBPS/chapter2.xhtml',
++        'type': 'application/xhtml+xml',
++        'locations': {
++          'fragments': ['epubcfi(/6/4!/4/2)'],
++          'cssSelector': '#p42',
++          'progression': 0.45,
++          'customLocation': 'keep',
++        },
++        'text': {'highlight': 'Reader position'},
++      },
++    ];
++    for (final original in originals) {
++      final locator = Locator.fromJsonString(jsonEncode(original))!;
++      await channel.go(locator, isAudioBookWithText: false, animated: true);
++      expect(jsonDecode(sent.last[0] as String), locator.toJson());
++      expect(sent.last.sublist(1), [true, false]);
++    }
++    expect(sent, hasLength(originals.length));
++    channel.setMethodCallHandler(null);
++    messenger.setMockMethodCallHandler(const MethodChannel(name), null);
++  });
++
++  test('关闭 Future 等待原生拆除回包', () async {
++    const name = 'test/reader/dispose';
++    final completed = Completer<void>();
++    final invoked = Completer<void>();
++    // 同一 messenger 在测试结束后还需卸载处理器。
++    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
++    // ignore: cascade_invocations
++    messenger.setMockMethodCallHandler(const MethodChannel(name), (call) async {
++      expect(call.method, 'dispose');
++      invoked.complete();
++      await completed.future;
++      return null;
++    });
++    final lateEvents = <String>[];
++    final channel = ReadiumReaderChannel(
++      name,
++      onReaderReady: () => lateEvents.add('ready'),
++      onPageChanged: (_) => lateEvents.add('location'),
++      onExternalLinkActivated: lateEvents.add,
++      onTextInteraction: lateEvents.add,
++    );
++    var disposed = false;
++    final future = channel.dispose().then((_) => disposed = true);
++    await invoked.future;
++    expect(disposed, isFalse);
++    await channel.onMethodCall(const MethodCall('onReaderReady'));
++    await channel.onMethodCall(const MethodCall('onExternalLinkActivated', 'https://example.com'));
++    await channel.onMethodCall(const MethodCall('onTextInteraction', '{}'));
++    expect(lateEvents, isEmpty);
++    completed.complete();
++    await future;
++    expect(disposed, isTrue);
++    messenger.setMockMethodCallHandler(const MethodChannel(name), null);
++  });
++}
+--- /dev/null
++++ b/test/synlen_reader_platform_view_test.dart
+@@ -0,0 +1,148 @@
++import 'dart:async';
++
++import 'package:flutter/foundation.dart';
++import 'package:flutter/services.dart';
++import 'package:flutter_readium/reader_platform_view.dart';
++import 'package:flutter_test/flutter_test.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
++
++  tearDown(() {
++    messenger.setMockMethodCallHandler(SystemChannels.platform_views, null);
++    debugDefaultTargetPlatformOverride = null;
++  });
++
++  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
++    test('$platform 创建在途时关闭必须等待创建和所属原生视口拆除', () async {
++      debugDefaultTargetPlatformOverride = platform;
++      final creation = Completer<dynamic>();
++      final nativeDetach = Completer<void>();
++      final steps = <String>[];
++      messenger.setMockMethodCallHandler(SystemChannels.platform_views, (call) async {
++        if (call.method == 'create') {
++          steps.add('create');
++          return creation.future;
++        }
++        if (call.method == 'dispose') steps.add('platformDispose');
++        return null;
++      });
++      final lifecycle = ReaderPlatformViewLifecycle(
++        viewType: 'test/reader',
++        creationParams: const {},
++        onAllocated: (_) => steps.add('allocated'),
++        beforeDispose: () async {
++          steps.add('nativeDetach');
++          await nativeDetach.future;
++        },
++      );
++      final opening = lifecycle.create(platform, const Size(300, 500));
++      await Future<void>.delayed(Duration.zero);
++      var disposed = false;
++      final closing = lifecycle.dispose().then((_) => disposed = true);
++      expect(steps, ['allocated', 'create']);
++      expect(disposed, isFalse);
++      creation.complete(platform == TargetPlatform.android ? 1 : null);
++      await opening;
++      await Future<void>.delayed(Duration.zero);
++      expect(steps, ['allocated', 'create', 'nativeDetach']);
++      expect(disposed, isFalse);
++      nativeDetach.complete();
++      await closing;
++      expect(steps, ['allocated', 'create', 'nativeDetach', 'platformDispose']);
++      expect(disposed, isTrue);
++      await lifecycle.dispose();
++      expect(steps.where((step) => step == 'platformDispose'), hasLength(1));
++    });
++
++    test('$platform 创建失败仍清理通道与部分平台资源', () async {
++      debugDefaultTargetPlatformOverride = platform;
++      final steps = <String>[];
++      messenger.setMockMethodCallHandler(SystemChannels.platform_views, (call) async {
++        if (call.method == 'create') throw PlatformException(code: 'create_failed');
++        if (call.method == 'dispose') {
++          steps.add('platformDispose');
++          if (platform == TargetPlatform.iOS) throw PlatformException(code: 'unknown_view');
++        }
++        return null;
++      });
++      final lifecycle = ReaderPlatformViewLifecycle(
++        viewType: 'test/reader',
++        creationParams: const {},
++        onAllocated: (_) => steps.add('allocated'),
++        beforeDispose: () async => steps.add('nativeDetach'),
++      );
++      await expectLater(
++        lifecycle.create(platform, const Size(300, 500)),
++        throwsA(isA<PlatformException>()),
++      );
++      await lifecycle.dispose();
++      expect(steps, ['allocated', 'nativeDetach', 'platformDispose']);
++    });
++
++    for (final failReader in [true, false]) {
++      test('$platform 单次关闭会内部重试瞬时${failReader ? '阅读通道' : '平台'}拆除失败', () async {
++        debugDefaultTargetPlatformOverride = platform;
++        var readerAttempts = 0;
++        var platformAttempts = 0;
++        messenger.setMockMethodCallHandler(SystemChannels.platform_views, (call) async {
++          if (call.method == 'create') return platform == TargetPlatform.android ? 1 : null;
++          if (call.method == 'dispose') {
++            platformAttempts++;
++            if (!failReader && platformAttempts == 1) throw PlatformException(code: 'transient');
++          }
++          return null;
++        });
++        final lifecycle = ReaderPlatformViewLifecycle(
++          viewType: 'test/reader',
++          creationParams: const {},
++          onAllocated: (_) {},
++          beforeDispose: () async {
++            readerAttempts++;
++            if (failReader && readerAttempts == 1) throw PlatformException(code: 'transient');
++          },
++        );
++        await lifecycle.create(platform, const Size(300, 500));
++        await lifecycle.dispose();
++        expect(readerAttempts, failReader ? 2 : 1);
++        expect(platformAttempts, failReader ? 1 : 2);
++      });
++    }
++
++    test('$platform 持续拆除失败不确认成功，失败 Future 不会永久缓存', () async {
++      debugDefaultTargetPlatformOverride = platform;
++      var attempts = 0;
++      messenger.setMockMethodCallHandler(SystemChannels.platform_views, (call) async {
++        if (call.method == 'create') return platform == TargetPlatform.android ? 1 : null;
++        if (call.method == 'dispose' && ++attempts <= 2) throw PlatformException(code: 'persistent');
++        return null;
++      });
++      final lifecycle = ReaderPlatformViewLifecycle(
++        viewType: 'test/reader',
++        creationParams: const {},
++        onAllocated: (_) {},
++        beforeDispose: () async {},
++      );
++      await lifecycle.create(platform, const Size(300, 500));
++      await expectLater(lifecycle.dispose(), throwsA(isA<PlatformException>()));
++      expect(attempts, 2);
++      await lifecycle.dispose();
++      expect(attempts, 3);
++    });
++  }
++
++  test('从未开始创建的视口可直接关闭，关闭后不允许晚到创建', () async {
++    var allocated = false;
++    final lifecycle = ReaderPlatformViewLifecycle(
++      viewType: 'test/reader',
++      creationParams: const {},
++      onAllocated: (_) => allocated = true,
++      beforeDispose: () async => fail('不存在原生视口'),
++    );
++    await lifecycle.dispose();
++    await lifecycle.create(TargetPlatform.android, const Size(300, 500));
++    expect(allocated, isFalse);
++    expect(lifecycle.hasStarted, isFalse);
++  });
++}

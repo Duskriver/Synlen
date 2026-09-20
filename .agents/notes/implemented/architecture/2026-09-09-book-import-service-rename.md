@@ -19,5 +19,5 @@ Status: implemented
 ## Consequences
 
 - `rg 'EpubImportService|epub_import_service' lib test docs` 为空（提案笔记除外，它记录问题）。
-- 纯改名，行为不变；`EpubStreamService` / `EpubZipParser` / `EpubTheme` 仍保留 Epub 名——它们只服务 EPUB。
+- 纯改名，行为不变；`EpubZipParser` 仍专门解析 EPUB；阅读侧命名与职责已随 [Readium 引擎决策](../../implemented/architecture/2026-09-20-readium-reader-engine.md)更新。
 - 提案的第二步（原生通道方法名）与第三步（`epub://` 虚拟域）待做。

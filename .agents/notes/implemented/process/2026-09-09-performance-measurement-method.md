@@ -9,7 +9,7 @@ Status: implemented
 ## Decision
 
 - 落库[测量性能](../../../../docs/cookbook/measuring-performance.md)手册：固定四个指标（冷启动到首帧、10 MB EPUB 导入、翻章帧时间、阅读峰值内存）、设备矩阵（至少低端 + 中端 Android）、工具（`--trace-startup`、DevTools Performance / Memory）与记录格式（中位数 + 设备/构建/日期）。
-- 只测 profile / release 构建；测前清空应用数据并冷启动，跨版本比较保持同一 WebView 预热策略。
+- 只测 profile / release 构建；测前清空应用数据并冷启动，跨版本比较保持相同的出版物缓存与初始化状态。
 - 基线数值本身**不伪造**：手册的 Dev Note 留空表，标注"待真机采集"，采集后再填。
 
 ## Alternatives considered

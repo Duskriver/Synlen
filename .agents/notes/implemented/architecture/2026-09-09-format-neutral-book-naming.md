@@ -8,13 +8,13 @@ Status: implemented
 
 ## Decision
 
-按改动面从窄到宽分三步改名，每步独立提交与验证：
+最初按改动面从窄到宽分三步改名：
 
 1. **Dart 类型名**：`EpubImportService` → `BookImportService`、`EpubWebViewHandler` → `BookWebViewHandler`（含文件、provider 与测试重命名）。
 2. **原生通道方法名**：`pickEpubFiles` / `pickEpubFolder` / `isEpubFile` → `pickBookFiles` / `pickBookFolder` / `isBookFile`，Kotlin、Swift 与 Dart 三处同批（通道方法名是跨语言契约）。
 3. **虚拟域**：`epub://` → `book://`，同批改 `virtualScheme`、Dart 字面量、`theme_manager.ts` 的字体 URL 与 l10n 的 ARB 描述，并重跑 `build_web_assets.dart` 与 `flutter gen-l10n`。
 
-`EpubStreamService`、`EpubZipParser`、`EpubTheme` 确实只服务 EPUB，保持原名。
+[Readium 引擎决策](../../implemented/architecture/2026-09-20-readium-reader-engine.md)已删除虚拟域、`BookWebViewHandler` 与 `EpubStreamService`。导入服务和原生选择器的格式中立命名继续生效；`EpubZipParser` 仍专门解析 EPUB，`EpubTheme` 是 EPUB 与 TXT 共用的阅读配色类型。
 
 ## Alternatives considered
 

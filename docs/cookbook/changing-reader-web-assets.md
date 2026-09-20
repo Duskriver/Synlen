@@ -1,54 +1,43 @@
 # 修改阅读器 Web 资源
 
-改完能看到阅读器行为按预期变化，且生成物与源一致。阅读器 TypeScript/CSS 源在 `web_assets/`，Flutter 加载的是生成物 `lib/src/web/web_assets.dart`；只改源不重新生成，改动不会生效。
+目标是更新 Readium 文档中的学习手势、词句提取与可见文本采样，并让生成的 Flutter asset 与源码一致。排版、分页与定位恢复属于 Readium；Web 脚本只读取可见短文本供标准 Locator 使用，行为契约见 [reader](../subsystems/reader.md#边界与不变量)。
 
 ## 前置
 
-Node 22（见 [development.md](../development.md) 的环境小节）。浏览器二进制由 Playwright 单独下载，首次安装需要网络。
+Node 22 与 Dart 环境见 [development.md](../development.md)。Playwright 浏览器二进制单独下载，首次安装需要网络。
 
 ## 步骤
 
-1. 安装工具链，在仓库根目录执行：
+1. 在仓库根目录安装锁定的工具链和浏览器：
 
    ```sh
-   npm ci --prefix web_assets/controller.js
-   npm exec --prefix web_assets/controller.js -- playwright install chromium webkit
+   npm ci --prefix web_assets/readium
+   npm exec --prefix web_assets/readium -- playwright install chromium webkit
    ```
 
-   `npm ci` 装的是 `web_assets/controller.js/package-lock.json` 锁定的 esbuild、typescript 与 Playwright。
-
-2. 改源：入口是 `web_assets/controller.js/index.ts`，渲染、分页、交互与学习文本提取在 `web_assets/controller.js/renderer/`；分页样式在 `web_assets/pagination.css/main.css` 及其 `_` 前缀分片；骨架样式在 `web_assets/skeleton.css`。
-3. 改 `web_assets/controller.js/renderer/learning_text.ts` 时守住这些规则：
-   - 在点击位置所在的语义块建立文本与 DOM 偏移映射；内联标签保持连续，相邻块保持边界。
-   - 隐藏内容（`hidden`、`display: none`、`visibility: hidden|collapse`）与 `SCRIPT`、`STYLE`、`NOSCRIPT`、`TEMPLATE`、`RT`、`RP`、`SVG`、`MATH` 不参与上下文。
-   - 点击坐标必须命中真实字符矩形（`Range.getClientRects()`）；浏览器 caret 吸附到附近文字不足以触发学习。
-   - 英文取词覆盖直 / 弯撇号、连字符、软连字符与常见重音字母。
-   - 断句用标点与缩写规则，覆盖小数、姓名首字母、称谓（`Mr`、`Dr` 等）、`e.g.` / `i.e.`、引文与引述语；缩写也可能位于句尾，规则不能消除所有英文歧义。
-   - 新语料先加进 `web_assets/controller.js/tests/learning_text.spec.cjs` 的 fixture，再改规则。
-4. 类型检查：`npm run typecheck --prefix web_assets/controller.js`。
-5. 浏览器回归：`npm test --prefix web_assets/controller.js`。Playwright 按 `web_assets/controller.js/playwright.config.cjs` 的 projects 在 chromium 与 webkit 各跑一遍真实 DOM、Range 与 iframe，并检查 Flutter bridge 收到的单词与整句内容。
-6. 重新生成并提交：
+2. 按职责修改 `web_assets/readium/bridge.ts` 的手势处理、`web_assets/readium/learning_text.ts` 的词句提取或 `web_assets/readium/visible_locator.ts` 的可见文本采样。词句语料、手势与定位边界分别加入 `web_assets/readium/tests/` 下的对应回归。
+3. 运行类型检查与两个浏览器项目：
 
    ```sh
-   dart run tool/build_web_assets.dart
+   npm run typecheck --prefix web_assets/readium
+   npm test --prefix web_assets/readium
    ```
 
-   脚本调用 `web_assets/controller.js/node_modules/.bin/esbuild`，重复生成应得到相同内容；生成物 `lib/src/web/web_assets.dart` 与源一起提交。
+4. 从 `web_assets/readium/index.ts` 生成独立 Web asset：
+
+   ```sh
+   dart run tool/build_readium_assets.dart
+   ```
+
+   生成物 `assets/reader/readium_learning.js` 与源一起提交，不手改。构建脚本仅依赖 Dart 标准库与 npm 锁定的本地 esbuild。
+5. 在 Android / iOS 打开 EPUB 与 TXT，验证点词附带整句、长按句子、中心空白控制栏、边缘翻页、链接和图片；滑动或多指不得误触学习，切章后的旧消息不得作用于新页面。修改可见文本采样时，对照字号变化与重开前后的截图及 Locator，确认原段落仍可见、同字号页码一致。
 
 ## 验证
 
-1. `npm run typecheck --prefix web_assets/controller.js` 无报错。
-2. `npm test --prefix web_assets/controller.js` 在 chromium 与 webkit 两个 project 全绿。
-3. `dart run tool/build_web_assets.dart` 输出包含 `web assets generated`。
-4. `git diff --exit-code lib/src/web/web_assets.dart` 通过：生成物与源一致且已提交。
-5. `flutter analyze` 零 error 零 warning。
-6. 实机验收：`flutter run -d <device-id>` 打开一本 EPUB，点词、长按句子、翻页、切换主题都正常。
-
-## 约束
-
-- 浏览器回归测试不替代 Android/iOS 实机的触摸坐标转换、长按时序、WebView 版本与分页体验验收。
-- 缩写歧义无法完全消除；发现新语料先补 `learning_text.spec.cjs` 的用例再调规则。
-- CI 只跑 typecheck 与生成物漂移检查，`npm test` 由本地执行。
+1. `npm ci` 接受 `package.json` 与 `package-lock.json`，`git diff --exit-code -- web_assets/readium/package-lock.json` 无漂移。
+2. TypeScript 与 Playwright 全部通过；断言实际词句内容、消息次数与默认事件是否被消费。
+3. 重跑构建后，`git diff --exit-code -- assets/reader/readium_learning.js` 通过，证明生成物与已提交源码一致。
+4. CI 与发布入口执行相同的锁文件、类型、浏览器和生成物检查；原生侧验收不能用桌面浏览器结果替代。
 
 ## Dev Note
 

@@ -618,7 +618,7 @@
   "@tipLongPressNextTrack": {
     "description": "Tip for long pressing previous/next button"
   },
-  "longPressToViewImage": "Long press on image to view original",
+  "longPressToViewImage": "Tap an image to view it full screen",
   "@longPressToViewImage": {
     "description": "Tip for long pressing image to view original"
   },
@@ -850,7 +850,7 @@
   "@readerHandleIntraLink": {
     "description": "Switch label to enable/disable following intra-book (book://) links"
   },
-  "readerPageAnimationSection": "Pagination",
+  "readerPageAnimationSection": "Button page-turn animation",
   "@readerPageAnimationSection": {
     "description": "Reader style sheet section title for page-turning animation"
   },
@@ -1086,6 +1086,9 @@
   "deepSeekCheckFailed": "Cannot reach DeepSeek. Check your network",
   "readerLoadFailed": "Could not open this book. Please try again.",
   "readerRenderFailed": "Could not update the reading layout. Please try again.",
+  "readerControls": "Reading controls",
+  "readerLinkFailed": "Unable to open this link.",
+  "readerImageFailed": "Unable to open this image.",
   "wordTabExplanation": "Explanation",
   "wordTabSynonyms": "Synonyms",
   "wordTabFormation": "Formation",

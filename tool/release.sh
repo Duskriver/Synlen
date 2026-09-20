@@ -77,15 +77,16 @@ flutter test
 dart run tool/layer_gates.dart
 cargo test --locked --manifest-path rust/Cargo.toml
 dart run tool/doc_gates.dart
-npm ci --prefix web_assets/controller.js
-npm run typecheck --prefix web_assets/controller.js
+npm ci --prefix web_assets/readium
+git diff --exit-code -- web_assets/readium/package-lock.json || fail '阅读器 npm 锁文件发生漂移'
+npm run typecheck --prefix web_assets/readium
 (
-  cd web_assets/controller.js
+  cd web_assets/readium
   npx playwright install chromium webkit
   npm test
 )
-dart run tool/build_web_assets.dart
-git diff --exit-code -- lib/src/web/web_assets.dart
+dart run tool/build_readium_assets.dart
+git diff --exit-code -- assets/reader/readium_learning.js || fail '阅读器学习脚本生成物发生漂移'
 [[ -z "$(git status --porcelain)" && "$(git rev-parse HEAD)" == "$SOURCE_COMMIT" ]] || fail '检查期间源码或提交发生变化，请提交后重新执行'
 
 if [[ -z "$REUSE_APK" ]]; then
@@ -98,6 +99,9 @@ if [[ -z "$REUSE_APK" ]]; then
   APK_SHA256="$(shasum -a 256 "$APK" | awk '{print $1}')"
   jq -n --arg commit "$SOURCE_COMMIT" --arg sha "$APK_SHA256" '{sourceCommit:$commit,sha256:$sha}' > "$APK.json"
 fi
+# 新构建与复用产物都须通过原生回归，失败时不得推送标签或上传。
+bash tool/test_readium_android.sh || fail 'Readium Android 原生回归未通过'
+[[ -z "$(git status --porcelain)" && "$(git rev-parse HEAD)" == "$SOURCE_COMMIT" ]] || fail '原生检查期间源码或提交发生变化，请提交后重新执行'
 if [[ "$PREPARE_ONLY" == true ]]; then
   echo "已准备并验证：$APK"
   echo '未推送源码、tag 或发布安装包。'

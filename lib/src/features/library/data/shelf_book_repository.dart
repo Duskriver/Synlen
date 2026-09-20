@@ -1,3 +1,4 @@
+import '../domain/book_progress.dart';
 import 'package:drift/drift.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
@@ -326,9 +327,7 @@ class ShelfBookRepository {
   /// 更新阅读进度
   Future<Either<String, bool>> updateProgress({
     required int bookId,
-    required int currentChapterIndex,
-    required double progress,
-    required double? scrollPosition,
+    required BookProgress progress,
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -337,9 +336,8 @@ class ShelfBookRepository {
             _db.shelfBooks,
           )..where((t) => t.id.equals(bookId))).write(
             ShelfBooksCompanion(
-              currentChapterIndex: Value(currentChapterIndex),
-              readingProgress: Value(progress),
-              chapterScrollPosition: Value(scrollPosition),
+              progress: Value(progress),
+              readingProgress: Value(progress.fraction),
               lastOpenedDate: Value(now),
             ),
           );

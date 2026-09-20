@@ -1,3 +1,4 @@
+import '../../../../helpers/book_progress.dart';
 import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -73,9 +74,10 @@ void main() {
         format: BookFormat.txt,
         importDate: 1,
         direction: 0,
-        currentChapterIndex: 1,
+
+        progress: testBookProgress(chapter: 1, fraction: 0.8, within: 0.6),
         readingProgress: 0.8,
-        chapterScrollPosition: 0.6,
+
         lastOpenedDate: 300,
         isFinished: true,
         isDeleted: false,
@@ -189,7 +191,10 @@ void main() {
     final book = (await shelfRepo.getBookByHash('book-a'))!;
     expect(book.title, '测试书');
     expect(book.readingProgress, 0.8);
-    expect(book.currentChapterIndex, 1);
+    expect(
+      book.progress,
+      testBookProgress(chapter: 1, fraction: 0.8, within: 0.6),
+    );
     expect(book.lastOpenedDate, 300);
     expect(book.coverPath, 'covers/book-a.jpg');
     expect(

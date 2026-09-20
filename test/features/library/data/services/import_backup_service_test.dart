@@ -1,3 +1,4 @@
+import '../../../../helpers/book_progress.dart';
 import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -79,9 +80,8 @@ void main() {
     'epubVersion': '',
     'format': ?format,
     'importDate': 10,
-    'currentChapterIndex': 0,
+    'progress': testBookProgress(fraction: 0.2, within: 0.3).toJson(),
     'readingProgress': 0.2,
-    'chapterScrollPosition': 0.3,
     'lastOpenedDate': readAt,
     'isFinished': false,
     'groupName': '书组',
@@ -184,9 +184,10 @@ void main() {
       format: BookFormat.txt,
       importDate: 1,
       direction: 0,
-      currentChapterIndex: 1,
+
+      progress: testBookProgress(chapter: 1, fraction: 0.8, within: 0.6),
       readingProgress: 0.8,
-      chapterScrollPosition: 0.6,
+
       lastOpenedDate: readAt,
       isFinished: true,
       isDeleted: isDeleted,
@@ -285,14 +286,14 @@ void main() {
     );
   });
 
-  test('元数据与进度同时更新时只提交一次最终书目，空章内位置可覆盖旧值', () async {
+  test('元数据与进度同时更新时只提交一次最终书目，空 Locator 可覆盖旧值', () async {
     await localBook(updatedAt: 100, readAt: 100);
     await db.customStatement('CREATE TABLE write_count (book_id INTEGER)');
     await db.customStatement(
       'CREATE TRIGGER count_book_update AFTER UPDATE ON shelf_books '
       'BEGIN INSERT INTO write_count VALUES (NEW.id); END',
     );
-    final data = bookMap()..['chapterScrollPosition'] = null;
+    final data = bookMap()..['progress'] = null;
     expect(
       (await restore(await backup(books: [data]))).last.result,
       isA<ImportSuccess>(),
@@ -301,10 +302,7 @@ void main() {
       await db.customSelect('SELECT * FROM write_count').get(),
       hasLength(1),
     );
-    expect(
-      (await shelfRepo.getBookByHash('book-a'))!.chapterScrollPosition,
-      isNull,
-    );
+    expect((await shelfRepo.getBookByHash('book-a'))!.progress, isNull);
   });
 
   test('旧版无格式字段的备份按 EPUB 恢复', () async {
@@ -405,9 +403,15 @@ void main() {
             ? scenario.backupMeta
             : scenario.localMeta,
       );
-      expect(result.currentChapterIndex, scenario.backupProgress ? 0 : 1);
+      expect(
+        result.progress!.locator['href'],
+        scenario.backupProgress ? 'chapter0.xhtml' : 'chapter1.xhtml',
+      );
       expect(result.readingProgress, scenario.backupProgress ? 0.2 : 0.8);
-      expect(result.chapterScrollPosition, scenario.backupProgress ? 0.3 : 0.6);
+      expect(
+        result.progress!.locator['locations']['progression'],
+        scenario.backupProgress ? 0.3 : 0.6,
+      );
       expect(result.isFinished, !scenario.backupProgress);
       expect(
         result.lastOpenedDate,

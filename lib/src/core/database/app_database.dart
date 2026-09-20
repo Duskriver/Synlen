@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+import 'package:synlen/src/features/library/domain/book_progress.dart';
 
 part 'app_database.g.dart';
 
@@ -78,6 +79,18 @@ class ManifestListConverter extends TypeConverter<List<ManifestItem>, String> {
       jsonEncode(value.map((e) => e.toJson()).toList());
 }
 
+/// 完整阅读位置与书架百分比的 JSON 存储。
+class BookProgressConverter extends TypeConverter<BookProgress, String> {
+  const BookProgressConverter();
+
+  @override
+  BookProgress fromSql(String fromDb) =>
+      BookProgress.fromJson(jsonDecode(fromDb) as Map<String, dynamic>);
+
+  @override
+  String toSql(BookProgress value) => jsonEncode(value.toJson());
+}
+
 // ==================== 确定性 ID 哈希 ====================
 // 学习缓存使用 FNV-1a 64 位哈希生成确定性主键，保证同一词条/句子的缓存键稳定。
 
@@ -143,11 +156,9 @@ class ShelfBooks extends Table {
       .withDefault(const Constant('epub'))();
   IntColumn get importDate => integer()();
   IntColumn get direction => integer().withDefault(const Constant(0))();
-  IntColumn get currentChapterIndex =>
-      integer().withDefault(const Constant(0))();
+  TextColumn get progress =>
+      text().map(const BookProgressConverter()).nullable()();
   RealColumn get readingProgress => real().withDefault(const Constant(0.0))();
-  RealColumn get chapterScrollPosition =>
-      real().nullable().withDefault(const Constant(0.0))();
   IntColumn get lastOpenedDate => integer().nullable()();
   BoolColumn get isFinished => boolean().withDefault(const Constant(false))();
   TextColumn get groupName => text().nullable()();
@@ -243,16 +254,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
+  // 当前无已发布用户数据。旧开发库须重置，不把旧分页坐标转换为 Locator。
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (migrator, from, to) async {
-      if (from < 2) {
-        // v2：ShelfBooks / BookManifests 增加 format 列（默认 'epub'）
-        await migrator.addColumn(shelfBooks, shelfBooks.format);
-        await migrator.addColumn(bookManifests, bookManifests.format);
-      }
+      throw StateError('数据库结构已更新，请重置开发数据库后重试');
     },
   );
 }

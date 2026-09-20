@@ -41,5 +41,5 @@ flutter build apk --release --target-platform android-arm64
 
 ## 说明
 
-- Flutter SDK >= 3.38.0（推荐 3.44.9 stable）；Dart SDK >= 3.10.8（推荐 3.12.2 stable）。
+- Flutter SDK >= 3.44.8（推荐 3.44.9 stable）；Dart SDK >= 3.10.8（推荐 3.12.2 stable）。
 - 本项目自有代码以 [MIT](./LICENSE) 发布；上游项目的 MIT 许可证保留在 [assets/licenses/lumina_mit.txt](./assets/licenses/lumina_mit.txt) 中，并已接入应用内"开源许可证"页面。MIT 仅覆盖项目自有代码，第三方依赖（如 flutter_sound 的 MPL-2.0）各自保留其许可证。
