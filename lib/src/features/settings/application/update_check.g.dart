@@ -53,7 +53,7 @@ final class UpdateCheckProvider
   }
 }
 
-String _$updateCheckHash() => r'a3947bfc82fc6127e57950177b861da999d9cb89';
+String _$updateCheckHash() => r'fc8c92b1658cae4b744b128c797b9c009a485961';
 
 /// 更新检查与下载用例：拉取清单、与本地版本比较、下载并校验 APK。
 ///

@@ -650,6 +650,12 @@ abstract class AppLocalizations {
   /// **'Cache cleaned'**
   String get cleanCacheSuccess;
 
+  /// 缓存清理失败提示
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleanup could not finish. Please try again.'**
+  String get cleanCacheFailed;
+
   /// Appearance section title in about screen
   ///
   /// In en, this message translates to:

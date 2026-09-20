@@ -82,7 +82,7 @@ class SettingsAiServiceSection extends ConsumerWidget {
                 ref.read(apiKeyProvider.notifier).setAliyunTtsKey(value),
           ),
         ),
-        const _DeepSeekConnectivityCheckTile(),
+        _DeepSeekConnectivityCheckTile(apiKey: config.deepSeekKey),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
           child: Text(
@@ -114,48 +114,44 @@ class SettingsAiServiceSection extends ConsumerWidget {
 }
 
 /// DeepSeek 连通性检查：GET /models 不消耗 tokens，验证密钥与网络。
-class _DeepSeekConnectivityCheckTile extends ConsumerStatefulWidget {
-  const _DeepSeekConnectivityCheckTile();
+class _DeepSeekConnectivityCheckTile extends ConsumerWidget {
+  const _DeepSeekConnectivityCheckTile({required this.apiKey});
 
-  @override
-  ConsumerState<_DeepSeekConnectivityCheckTile> createState() =>
-      _DeepSeekConnectivityCheckTileState();
-}
+  final String apiKey;
 
-class _DeepSeekConnectivityCheckTileState
-    extends ConsumerState<_DeepSeekConnectivityCheckTile> {
-  bool _checking = false;
-
-  Future<void> _check() async {
+  Future<void> _check(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    final key = (await ref.read(apiKeyProvider.future)).deepSeekKey;
-    if (!mounted) return;
-
-    setState(() => _checking = true);
-    final outcome = await ref
-        .read(deepSeekKeyCheckProvider.notifier)
-        .check(key);
-    if (!mounted) return;
-    setState(() => _checking = false);
-
-    switch (outcome) {
-      case DeepSeekConnectivity.ok:
-        ToastService.showSuccess(l10n.deepSeekCheckOk);
-      case DeepSeekConnectivity.notConfigured:
-        ToastService.showError(l10n.apiKeyNotConfigured);
-      case DeepSeekConnectivity.invalidKey:
-        ToastService.showError(l10n.deepSeekCheckBadKey);
-      case DeepSeekConnectivity.unreachable:
-        ToastService.showError(l10n.deepSeekCheckFailed);
-    }
+    await ref.read(deepSeekKeyCheckProvider.notifier).check(apiKey);
+    if (!context.mounted) return;
+    ref
+        .read(deepSeekKeyCheckProvider)
+        .when(
+          data: (outcome) {
+            switch (outcome) {
+              case DeepSeekConnectivity.ok:
+                ToastService.showSuccess(l10n.deepSeekCheckOk);
+              case DeepSeekConnectivity.notConfigured:
+                ToastService.showError(l10n.apiKeyNotConfigured);
+              case DeepSeekConnectivity.invalidKey:
+                ToastService.showError(l10n.deepSeekCheckBadKey);
+              case DeepSeekConnectivity.unreachable:
+                ToastService.showError(l10n.deepSeekCheckFailed);
+              case null:
+                break;
+            }
+          },
+          error: (_, _) => ToastService.showError(l10n.deepSeekCheckFailed),
+          loading: () {},
+        );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final checking = ref.watch(deepSeekKeyCheckProvider).isLoading;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-      leading: _checking
+      leading: checking
           ? const SizedBox(
               width: 20,
               height: 20,
@@ -166,7 +162,7 @@ class _DeepSeekConnectivityCheckTileState
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
       title: Text(l10n.deepSeekCheckConnectivity),
-      onTap: _checking ? null : _check,
+      onTap: checking ? null : () => _check(context, ref),
     );
   }
 }

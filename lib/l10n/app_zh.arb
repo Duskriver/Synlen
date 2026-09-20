@@ -437,6 +437,10 @@
   "@cleanCacheSuccess": {
     "description": "缓存清理成功消息"
   },
+  "cleanCacheFailed": "缓存清理未完成，请重试。",
+  "@cleanCacheFailed": {
+    "description": "缓存清理失败提示"
+  },
   "appAppearance": "外观",
   "@appAppearance": {
     "description": "关于页面外观设置区块标题"

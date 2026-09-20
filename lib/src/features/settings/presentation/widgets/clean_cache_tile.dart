@@ -4,40 +4,34 @@ import 'package:synlen/src/core/services/toast_service.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/cache_cleanup.dart';
 
-/// List tile that cleans cached and orphaned files when tapped.
-/// Manages its own [_isCleaning] busy state so the parent screen stays lean.
-class CleanCacheTile extends ConsumerStatefulWidget {
+/// 订阅缓存清理状态，展示进度与本地化结果。
+class CleanCacheTile extends ConsumerWidget {
   const CleanCacheTile({super.key});
 
-  @override
-  ConsumerState<CleanCacheTile> createState() => _CleanCacheTileState();
-}
-
-class _CleanCacheTileState extends ConsumerState<CleanCacheTile> {
-  bool _isCleaning = false;
-
-  Future<void> _clean() async {
+  Future<void> _clean(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    setState(() => _isCleaning = true);
-
-    final deletedCount = await ref
-        .read(cacheCleanupProvider.notifier)
-        .cleanAll();
-
-    await Future.delayed(const Duration(milliseconds: 200));
-    if (!mounted) return;
-    setState(() => _isCleaning = false);
-
-    final message = deletedCount == 0
-        ? l10n.cleanCacheSuccess
-        : l10n.cleanCacheSuccessWithCount(deletedCount);
-
-    ToastService.showSuccess(message);
+    await ref.read(cacheCleanupProvider.notifier).cleanAll();
+    if (!context.mounted) return;
+    ref
+        .read(cacheCleanupProvider)
+        .when(
+          data: (deletedCount) {
+            if (deletedCount == null) return;
+            ToastService.showSuccess(
+              deletedCount == 0
+                  ? l10n.cleanCacheSuccess
+                  : l10n.cleanCacheSuccessWithCount(deletedCount),
+            );
+          },
+          error: (_, _) => ToastService.showError(l10n.cleanCacheFailed),
+          loading: () {},
+        );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final isCleaning = ref.watch(cacheCleanupProvider).isLoading;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
@@ -53,14 +47,14 @@ class _CleanCacheTileState extends ConsumerState<CleanCacheTile> {
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: _isCleaning
+      trailing: isCleaning
           ? const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : null,
-      onTap: _isCleaning ? null : _clean,
+      onTap: isCleaning ? null : () => _clean(context, ref),
     );
   }
 }

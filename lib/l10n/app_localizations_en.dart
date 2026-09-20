@@ -318,6 +318,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cleanCacheSuccess => 'Cache cleaned';
 
   @override
+  String get cleanCacheFailed =>
+      'Cache cleanup could not finish. Please try again.';
+
+  @override
   String get appAppearance => 'Appearance';
 
   @override

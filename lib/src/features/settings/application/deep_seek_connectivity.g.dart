@@ -17,7 +17,8 @@ final deepSeekKeyCheckProvider = DeepSeekKeyCheckProvider._();
 /// DeepSeek 密钥连通性检查用例（组合面）：把 data 层的 HTTP 异常翻译成
 /// presentation 可直接映射 l10n 的结果，UI 不再 import Dio。
 final class DeepSeekKeyCheckProvider
-    extends $NotifierProvider<DeepSeekKeyCheck, void> {
+    extends
+        $NotifierProvider<DeepSeekKeyCheck, AsyncValue<DeepSeekConnectivity?>> {
   /// DeepSeek 密钥连通性检查用例（组合面）：把 data 层的 HTTP 异常翻译成
   /// presentation 可直接映射 l10n 的结果，UI 不再 import Dio。
   DeepSeekKeyCheckProvider._()
@@ -39,30 +40,41 @@ final class DeepSeekKeyCheckProvider
   DeepSeekKeyCheck create() => DeepSeekKeyCheck();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
+  Override overrideWithValue(AsyncValue<DeepSeekConnectivity?> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<void>(value),
+      providerOverride: $SyncValueProvider<AsyncValue<DeepSeekConnectivity?>>(
+        value,
+      ),
     );
   }
 }
 
-String _$deepSeekKeyCheckHash() => r'75359b00ab9debb9b03cd5f96ab0be20db5a4284';
+String _$deepSeekKeyCheckHash() => r'bdbac087657d58fadec702d51e299b44047c5481';
 
 /// DeepSeek 密钥连通性检查用例（组合面）：把 data 层的 HTTP 异常翻译成
 /// presentation 可直接映射 l10n 的结果，UI 不再 import Dio。
 
-abstract class _$DeepSeekKeyCheck extends $Notifier<void> {
-  void build();
+abstract class _$DeepSeekKeyCheck
+    extends $Notifier<AsyncValue<DeepSeekConnectivity?>> {
+  AsyncValue<DeepSeekConnectivity?> build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<void, void>;
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<DeepSeekConnectivity?>,
+              AsyncValue<DeepSeekConnectivity?>
+            >;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<void, void>,
-              void,
+              AnyNotifier<
+                AsyncValue<DeepSeekConnectivity?>,
+                AsyncValue<DeepSeekConnectivity?>
+              >,
+              AsyncValue<DeepSeekConnectivity?>,
               Object?,
               Object?
             >;

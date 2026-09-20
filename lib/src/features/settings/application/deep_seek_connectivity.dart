@@ -4,7 +4,7 @@ import 'package:synlen/src/features/learning/data/repositories/learning_reposito
 
 part 'deep_seek_connectivity.g.dart';
 
-/// 连通性检查的三种可展示结果。
+/// 连通性检查的可展示结果。
 enum DeepSeekConnectivity { ok, notConfigured, invalidKey, unreachable }
 
 /// DeepSeek 密钥连通性检查用例（组合面）：把 data 层的 HTTP 异常翻译成
@@ -12,21 +12,31 @@ enum DeepSeekConnectivity { ok, notConfigured, invalidKey, unreachable }
 @riverpod
 class DeepSeekKeyCheck extends _$DeepSeekKeyCheck {
   @override
-  void build() {}
+  AsyncValue<DeepSeekConnectivity?> build() {
+    // HTTP 客户端必须覆盖异步请求的等待期，并随最后一个订阅者退出释放。
+    ref.watch(deepSeekServiceProvider);
+    return const AsyncValue.data(null);
+  }
 
-  Future<DeepSeekConnectivity> check(String apiKey) async {
+  Future<void> check(String apiKey) async {
+    if (state.isLoading) return;
     if (apiKey.trim().isEmpty) {
-      return DeepSeekConnectivity.notConfigured;
+      state = const AsyncValue.data(DeepSeekConnectivity.notConfigured);
+      return;
     }
+    state = const AsyncValue.loading();
+    DeepSeekConnectivity outcome;
     try {
       await ref.read(deepSeekServiceProvider).verifyApiKey(apiKey);
-      return DeepSeekConnectivity.ok;
+      outcome = DeepSeekConnectivity.ok;
     } on DioException catch (error) {
-      return error.response?.statusCode == 401
+      outcome = error.response?.statusCode == 401
           ? DeepSeekConnectivity.invalidKey
           : DeepSeekConnectivity.unreachable;
     } catch (_) {
-      return DeepSeekConnectivity.unreachable;
+      outcome = DeepSeekConnectivity.unreachable;
     }
+    if (!ref.mounted) return;
+    state = AsyncValue.data(outcome);
   }
 }

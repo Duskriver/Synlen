@@ -307,6 +307,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cleanCacheSuccess => '清理完成';
 
   @override
+  String get cleanCacheFailed => '缓存清理未完成，请重试。';
+
+  @override
   String get appAppearance => '外观';
 
   @override
