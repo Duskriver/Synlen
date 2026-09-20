@@ -99,6 +99,9 @@ if [[ -z "$REUSE_APK" ]]; then
   APK_SHA256="$(shasum -a 256 "$APK" | awk '{print $1}')"
   jq -n --arg commit "$SOURCE_COMMIT" --arg sha "$APK_SHA256" '{sourceCommit:$commit,sha256:$sha}' > "$APK.json"
 fi
+# 新构建与复用产物都须通过原生回归，失败时不得推送标签或上传。
+bash tool/test_readium_android.sh || fail 'Readium Android 原生回归未通过'
+[[ -z "$(git status --porcelain)" && "$(git rev-parse HEAD)" == "$SOURCE_COMMIT" ]] || fail '原生检查期间源码或提交发生变化，请提交后重新执行'
 if [[ "$PREPARE_ONLY" == true ]]; then
   echo "已准备并验证：$APK"
   echo '未推送源码、tag 或发布安装包。'

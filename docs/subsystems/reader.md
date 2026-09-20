@@ -27,7 +27,7 @@
 | `ReaderSettings` / `ReaderLinkHandling` / `ReaderPageAnimation` | 字号、边距、主题、链接策略、翻页动画、导入字体与音量键翻页 | `lib/src/features/reader/domain/reader_settings.dart` |
 | `EpubTheme` | 阅读配色与边距，与全局主题配置解耦 | `lib/src/features/reader/domain/epub_theme.dart` |
 | `VolumeControlService` / `VolumeKeyPageTurnController` | 平台按键事件与按启用条件订阅的翻页动作 | `lib/src/features/reader/application/volume_key_page_turn.dart` |
-| `ReaderScreen` / `ReadiumViewport` / `ControlPanel` / `TocDrawer` | 页面生命周期、原生视口、控制面板与目录 | `lib/src/features/reader/presentation/` |
+| `ReaderScreen` / `ReaderPageStage` / `ReadiumViewport` / `ControlPanel` / `TocDrawer` | 页面生命周期、留白命中、原生视口、控制面板与目录 | `lib/src/features/reader/presentation/` |
 
 ## 边界与不变量
 
@@ -40,6 +40,7 @@
 - 学习脚本报告的 `href` 只用于诊断；可信 `sessionId` 与 `resourceHref` 由原生层补入，Dart 再与当前会话、Locator 核对。
 - 点词携带完整句子；550ms 长按文字触发句子学习。位移超过 10 CSS px、多指、滚动与取消事件终止该手势，迟到 click 不补发学习或控制栏动作。
 - 左右各 24 CSS px 留给原生翻页；链接、图片、表单与媒体透传给 Readium。中心空白短点只切控制栏，正文原生 selection 与上下文菜单禁用。
+- `ReaderPageStage` 接收原生视口外的 Flutter 留白短点，包括底部进度区域；多指、长按、移动与取消不得打开菜单。控制栏切换要求会话就绪，且没有学习浮层或抽屉。
 - 词句提取按语义块建立 DOM 偏移映射，保留内联连续性；隐藏内容、注音、脚本、SVG 和 MathML 不进入学习上下文。真实字符矩形命中后才取词，英文缩写歧义不保证全部消除。
 - `ReaderSettings.themeIndex` 索引 core 的主题枚举；外链只允许受支持的协议并遵循阅读器外链策略。
 - 关闭等待进度提交与原生资源释放；失败通过阅读错误状态与日志报告。
@@ -47,6 +48,8 @@
 ## 开发与验证
 
 Web 脚本构建和 DOM 回归见 [修改阅读器 Web 资源](../cookbook/changing-reader-web-assets.md)。会话 fake 测试验证异步次序，设备测试验证真实 Readium 视口与学习流程，入口见 [测试](../testing.md)。本地插件 fork 的来源、修改范围与许可证随 `third_party/flutter_readium/` 保存。
+
+Android Navigator 固定源码并补齐拖动停顿后的落页判定，来源、补丁与升级边界见[手势修复决策](../../.agents/notes/implemented/bug-fix/2026-09-20-readium-reader-gestures.md)。
 
 ## 已知限制与待办
 

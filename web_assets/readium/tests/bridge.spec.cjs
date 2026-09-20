@@ -74,6 +74,20 @@ for (const platform of ['android', 'ios']) {
     expect(await messages(page)).toHaveLength(1);
   });
 
+  test(`${platform} 正文顶底和侧边空白均打开控制栏，24px翻页边缘除外`, async ({ page }) => {
+    await setup(page, '<p>One short paragraph.</p>', platform);
+    for (const blank of [{x:206,y:10},{x:206,y:700},{x:30,y:300},{x:382,y:300}]) {
+      await page.evaluate(() => { window.messages = []; });
+      await page.mouse.click(blank.x, blank.y);
+      expect(await messages(page)).toEqual([{version:1,href:'about:blank',kind:'controls'}]);
+    }
+    await page.evaluate(() => { window.messages = []; });
+    await page.mouse.click(10, 700);
+    await page.mouse.click(402, 700);
+    expect(await messages(page)).toEqual([]);
+    expect(await page.evaluate(() => window.nativeClicks)).toBe(2);
+  });
+
   test(`${platform} 真实浏览器 pointer 手势在 click 被上游截断时仍完成点词`, async ({ page }) => {
     await setup(page, undefined, platform);
     await page.evaluate(() => {

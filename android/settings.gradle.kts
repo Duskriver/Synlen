@@ -24,3 +24,6 @@ plugins {
 }
 
 include(":app")
+
+include(":synlen_readium_navigator")
+project(":synlen_readium_navigator").projectDir = file("../third_party/flutter_readium/android/readium-navigator")

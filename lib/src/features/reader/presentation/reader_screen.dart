@@ -19,6 +19,7 @@ import '../application/volume_key_page_turn.dart';
 import '../domain/reader_settings.dart';
 import '../domain/readium_interaction.dart';
 import 'control_panel.dart';
+import 'reader_page_stage.dart';
 import 'readium_image_dialog.dart';
 import 'readium_viewport.dart';
 import 'toc_drawer.dart';
@@ -165,7 +166,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (event == null) return;
     switch (event.kind) {
       case 'controls':
-        _controls.value = !_controls.value;
+        _toggleControls();
       case 'word':
         _overlayOpen = true;
         _syncVolume();
@@ -184,6 +185,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (event.kind != 'controls') {
       _overlayOpen = false;
       if (mounted) _syncVolume();
+    }
+  }
+
+  void _toggleControls() {
+    if (session.ready && !_overlayOpen && !_drawerOpen) {
+      _controls.value = !_controls.value;
     }
   }
 
@@ -315,7 +322,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               children: [
                 if (session.publication != null)
                   SafeArea(
-                    child: Padding(
+                    child: ReaderPageStage(
+                      onBlankTap: _toggleControls,
                       padding:
                           (session.layout?.theme.padding ?? EdgeInsets.zero) +
                           const EdgeInsets.only(bottom: 24),

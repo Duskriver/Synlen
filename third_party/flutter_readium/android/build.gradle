@@ -21,6 +21,11 @@ group 'dk.nota.flutterreadium'
 version '1.0-SNAPSHOT'
 
 rootProject.allprojects {
+  configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+      substitute module('org.readium.kotlin-toolkit:readium-navigator') using project(':synlen_readium_navigator')
+    }
+  }
   repositories {
     google()
     mavenCentral()

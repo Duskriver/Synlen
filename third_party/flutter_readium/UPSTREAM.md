@@ -18,13 +18,15 @@
 
 ## 本地修补
 
-[上游差异补丁](SYNlen.patch) 记录本地源码差异。重建时先校验上游归档摘要，解压后保留上述 5 个目录及 `LICENSE`、`README.md`、`CHANGELOG.md`、`analysis_options.yaml`、`pubspec.yaml`，在该目录执行 `patch -p1 < SYNlen.patch`。本说明与补丁是维护资料，不参与源码重放。更新依赖时先重放补丁，再验证两端真实触摸、书内跳转、文字身份、字体加载、字号重建及快速关闭重开。
+[上游差异补丁](SYNlen.patch) 记录本地源码差异。重建时先校验上游归档摘要，解压后保留上述 5 个目录及 `LICENSE`、`README.md`、`CHANGELOG.md`、`analysis_options.yaml`、`pubspec.yaml`，在该目录执行 `patch -p1 < SYNlen.patch`。本说明与补丁是维护资料，不参与源码重放。嵌套的 `android/readium-navigator/` 不包含在此补丁内，须另按其 [来源与重建说明](android/readium-navigator/UPSTREAM.md) 还原。更新依赖时先重放补丁，再验证两端真实触摸、书内跳转、文字身份、字体加载、字号重建及快速关闭重开。
 
 - Android 文字与图片桥绑定所属 fragment、navigator 和 widget；重复销毁不关闭新视口，EPUB 视口在关闭回包前同步拆除。
 - iOS 注入列表、脚本和目录信息属于各自视口；文字身份由 WebKit 实际 frame URL 与出版物 reading order 匹配，关闭后丢弃异步回执。
 - 两端补齐应用 JS/CSS 注入、本地字体、普通内部链接开关及视口回执；Dart 补齐外链回调、偏好更新等待和动画参数。
 
 本分支只支持应用串行打开单个活动出版物，不支持同一插件同时展示多本书。Readium 的页面 JavaScript 处于启用状态；书内脚本过滤由词镜准备出版物的流程承担，桥接身份字段不构成对书内脚本的隔离。
+
+Android Navigator 使用固定 3.3.0 的本地源码模块，仅补充分页拖动的落页判定；其余 Readium 组件保留官方 Maven 依赖。Flutter 优先收集根 [NOTICES](NOTICES)，其中保留原插件、Readium、PhotoView 与随包字体的许可；原始许可证文件也随源码保留。
 
 Android 构建使用 JDK 21、compile SDK 36、min SDK 24，并开启 core library desugaring；iOS 最低版本为 15。JDK 路径由构建环境配置，不写入仓库。
 

@@ -48,6 +48,38 @@ jobs:
       - name: Run layer gates
         run: dart run tool/layer_gates.dart
 
+  android-reader:
+    name: Readium Android native tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.44.9'
+          channel: 'stable'
+          cache: true
+
+      # universal 缓存含 wrapper；pub get 生成本机配置与插件清单，不构建 APK。
+      - name: Prepare Android project
+        run: |
+          flutter precache --universal
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+
+      - name: Run native reader regressions
+        run: bash tool/test_readium_android.sh
+
   docs:
     name: Documentation gates
     runs-on: ubuntu-latest

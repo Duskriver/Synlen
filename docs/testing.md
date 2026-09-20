@@ -25,6 +25,7 @@
 | `pubspec.yaml` / `analysis_options.yaml` / `build.yaml` / `l10n.yaml` | `flutter analyze` + **全量** `flutter test` |
 | `rust/` 或 FFI 绑定 | `cargo test`（在 `rust/` 内）→ 绑定重新生成 → analyze + 冒烟测试 |
 | Android 原生库构建或 APK 校验 | 重建 APK → `bash tool/verify_android_page_alignment.sh <apk>`（需 `ANDROID_HOME`）+ `flutter test test/tool/release_test.dart`；在设备上覆盖安装并启动 |
+| Android Readium Navigator 或手势补丁 | `flutter pub get` → `bash tool/test_readium_android.sh`（需 JDK 21）；真实 `MotionEvent` 回归通过后，在设备验证拖动松手、取消与跨章 |
 | reader 学习脚本 | npm 锁文件检查 + `npm run typecheck --prefix web_assets/readium` + `npm test --prefix web_assets/readium` → `dart run tool/build_readium_assets.dart`（见[操作手册](cookbook/changing-reader-web-assets.md)） |
 
 测试文件过滤不等于覆盖率豁免：新增源文件必须有对应测试。全量本地演练只在用户明确要求、排查 CI 失败或变更横跨全仓库时执行；**推送与合并前全量 `flutter test` 必须全绿**。

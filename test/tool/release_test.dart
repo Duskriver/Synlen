@@ -39,6 +39,7 @@ void main() {
     }
     for (final script in [
       'release.sh',
+      'test_readium_android.sh',
       'verify_release_apk.sh',
       'verify_android_page_alignment.sh',
     ]) {
@@ -47,7 +48,15 @@ void main() {
     await File(
       '${repo.path}/pubspec.yaml',
     ).writeAsString('version: 0.3.4+304\n');
-    await File('${repo.path}/.gitignore').writeAsString('build/\n');
+    await File('${repo.path}/.gitignore').writeAsString('/build/\n');
+    await File('android/.gitignore').copy('${repo.path}/android/.gitignore');
+    final wrapperProperties = File(
+      '${repo.path}/android/gradle/wrapper/gradle-wrapper.properties',
+    );
+    await wrapperProperties.parent.create(recursive: true);
+    await File(
+      'android/gradle/wrapper/gradle-wrapper.properties',
+    ).copy(wrapperProperties.path);
     await File(
       '${repo.path}/web_assets/readium/package-lock.json',
     ).writeAsString('{}\n');
@@ -75,6 +84,12 @@ cp "$3" "$FIXTURE/gitee.apk"
 command="$(basename "$0")"
 echo "$command $*" >> "$FIXTURE/events"
 if [[ "$command $1" == 'flutter test' && "${SCENARIO:-}" == test-failure ]]; then exit 20; fi
+if [[ "$command $*" == 'flutter pub get' ]]; then
+  printf 'flutter.sdk=%s\n' "$FIXTURE/flutter sdk" > android/local.properties
+  if [[ "${SCENARIO:-}" == native-bootstrap-failure ]]; then
+    rm "$FIXTURE/flutter sdk/bin/cache/artifacts/gradle_wrapper/gradle/wrapper/gradle-wrapper.jar"
+  fi
+fi
 if [[ "$command $1" == 'flutter build' ]]; then
   mkdir -p build/app/outputs/flutter-apk
   printf 'APK bytes from the build' > build/app/outputs/flutter-apk/app-release.apk
@@ -91,6 +106,26 @@ if [[ "$command $*" == 'npm ci --prefix web_assets/readium' && "${SCENARIO:-}" =
 fi
 ''');
     }
+    await executable(
+      'flutter sdk/bin/cache/artifacts/gradle_wrapper/gradlew',
+      r'''
+echo "native-gradle $*" >> "$FIXTURE/events"
+[[ -f gradle/wrapper/gradle-wrapper.jar ]]
+[[ -f local.properties ]]
+[[ "$*" == '--no-daemon :synlen_readium_navigator:testDebugUnitTest' ]]
+[[ "${SCENARIO:-}" != native-test-failure ]] || exit 22
+mkdir -p build/reports/problems
+printf 'Gradle diagnostic report' > build/reports/problems/problems-report.html
+if [[ "${SCENARIO:-}" == native-source-drift ]]; then
+  printf '\nchanged\n' >> ../assets/reader/readium_learning.js
+fi
+''',
+    );
+    final wrapperJar = File(
+      '${fixture.path}/flutter sdk/bin/cache/artifacts/gradle_wrapper/gradle/wrapper/gradle-wrapper.jar',
+    );
+    await wrapperJar.parent.create(recursive: true);
+    await wrapperJar.writeAsString('fixture wrapper');
     await executable('sdk/build-tools/36.0.0/aapt', r'''
 version=0.3.4
 [[ "${SCENARIO:-}" != wrong-version ]] || version=0.3.3
@@ -210,6 +245,14 @@ esac
       (await git(['rev-parse', 'HEAD'])).stdout.toString().trim(),
     );
     expect(record['sha256'], matches(RegExp(r'^[0-9a-f]{64}$')));
+    expect(events(), contains('native-gradle --no-daemon'));
+    expect(
+      File(
+        '${repo.path}/android/build/reports/problems/problems-report.html',
+      ).existsSync(),
+      isTrue,
+    );
+    expect((await git(['status', '--porcelain'])).stdout, isEmpty);
     expect(events(), isNot(contains('gh ')));
     await expectUnpublished();
   });
@@ -224,6 +267,10 @@ esac
     expect(calls.indexOf('npm test'), lessThan(calls.indexOf('flutter build')));
     expect(
       calls.indexOf('flutter build'),
+      lessThan(calls.indexOf('native-gradle')),
+    );
+    expect(
+      calls.indexOf('native-gradle'),
       lessThan(calls.indexOf('sync-gitee')),
     );
     expect(
@@ -240,14 +287,24 @@ esac
       await File('${fixture.path}/gitee.apk').readAsBytes(),
     );
     await File('${fixture.path}/events').writeAsString('');
+    // 在干净检出中复用 APK 时，wrapper 与本机配置也可能尚未生成。
+    await File('${repo.path}/android/gradlew').delete();
+    await File(
+      '${repo.path}/android/gradle/wrapper/gradle-wrapper.jar',
+    ).delete();
+    await File('${repo.path}/android/local.properties').delete();
     await expectSuccess(await release(['--apk', 'build/outputs/$apkName']));
     expect(events(), isNot(contains('flutter build')));
+    expect(events(), contains('native-gradle --no-daemon'));
     expect(events(), isNot(contains('gh release create')));
     expect(events(), isNot(contains('gh release upload')));
   });
 
   for (final scenario in [
     'test-failure',
+    'native-test-failure',
+    'native-bootstrap-failure',
+    'native-source-drift',
     'drift',
     'npm-lock-drift',
     'npm-lock-mismatch',
@@ -269,6 +326,9 @@ esac
         reason: '${result.stdout}\n${result.stderr}',
       );
       final expectedErrors = {
+        'native-test-failure': 'Readium Android 原生回归未通过',
+        'native-bootstrap-failure': 'Flutter SDK 缺少 Gradle wrapper',
+        'native-source-drift': '原生检查期间源码或提交发生变化',
         'drift': '阅读器学习脚本生成物发生漂移',
         'npm-lock-drift': '阅读器 npm 锁文件发生漂移',
         'npm-lock-mismatch': 'package-lock.json to be in sync',
@@ -295,9 +355,24 @@ esac
       if (scenario == 'invalid-signature') {
         expect(events(), contains('flutter build'));
       }
+      if (scenario.startsWith('native-')) {
+        expect(events(), contains('flutter build'));
+      }
       await expectUnpublished();
     });
   }
+
+  test('复用 APK 仍须通过原生回归，失败不推送或上传', () async {
+    await expectSuccess(await release(['--prepare-only']));
+    await File('${fixture.path}/events').writeAsString('');
+    environment['SCENARIO'] = 'native-test-failure';
+    final result = await release(['--apk', 'build/outputs/$apkName']);
+    expect(result.exitCode, isNot(0));
+    expect(result.stderr, contains('Readium Android 原生回归未通过'));
+    expect(events(), contains('native-gradle --no-daemon'));
+    expect(events(), isNot(contains('flutter build')));
+    await expectUnpublished();
+  });
 
   test('未提交源码在执行检查前被拒绝', () async {
     await File(
