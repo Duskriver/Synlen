@@ -7,7 +7,7 @@ version: 0.3.5+305
 
 environment:
   sdk: ^3.10.8
-  flutter: ">=3.38.0"
+  flutter: ">=3.44.8"
 
 dependencies:
   flutter:
@@ -47,8 +47,8 @@ dependencies:
   crypto: ^3.0.7
   
   # Reader
-  flutter_inappwebview: ^6.1.5
-  flutter_widget_from_html_core: ^0.17.2
+  flutter_readium:
+    path: third_party/flutter_readium
   wakelock_plus: ^1.8.0
 
   # File Picking & Permissions
@@ -107,11 +107,14 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
 
 flutter:
+  config:
+    enable-swift-package-manager: false
   generate: true
   uses-material-design: true
 
   assets:
     - assets/licenses/lumina_mit.txt
     - assets/licenses/flutter_sound_mpl2.txt
+    - assets/reader/readium_learning.js
     - assets/icons/icon.svg
     - assets/logos/logo.svg

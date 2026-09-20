@@ -1,36 +1,31 @@
 import 'dart:async';
 
 import '../../../core/services/app_logger.dart';
-import '../domain/reading_progress.dart';
+import '../../library/domain/book_progress.dart';
 
 /// 合并连续翻页，串行提交完整位置；关闭时提交尚未落库的进度。
 class ReadingProgressController {
   ReadingProgressController({
-    required Future<void> Function(ReadingProgress) save,
+    required Future<void> Function(BookProgress) save,
     required void Function() onSaveFailed,
     Duration debounce = const Duration(seconds: 1),
   }) : _save = save,
        _onSaveFailed = onSaveFailed,
        _debounce = debounce;
 
-  final Future<void> Function(ReadingProgress) _save;
+  final Future<void> Function(BookProgress) _save;
   final void Function() _onSaveFailed;
   final Duration _debounce;
   Timer? _timer;
-  ReadingProgress? _pending;
-  ReadingProgress? _saved;
+  BookProgress? _pending;
+  BookProgress? _saved;
   Future<bool>? _saving;
   bool _closed = false;
   bool _failed = false;
 
   /// 加载或重新分页期间不采集位置，保留上一份有效进度。
-  void record(ReadingProgress progress, {required bool isReady}) {
-    if (_closed ||
-        !isReady ||
-        progress.chapterIndex < 0 ||
-        progress.pageCount <= 0 ||
-        progress.pageIndex < 0 ||
-        progress.pageIndex >= progress.pageCount) {
+  void record(BookProgress progress, {required bool isReady}) {
+    if (_closed || !isReady) {
       return;
     }
     if (_pending == progress ||

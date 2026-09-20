@@ -1,49 +1,176 @@
 PODS:
+  - CryptoSwift (1.10.0)
+  - DifferenceKit (1.3.0):
+    - DifferenceKit/Core (= 1.3.0)
+    - DifferenceKit/UIKitExtension (= 1.3.0)
+  - DifferenceKit/Core (1.3.0)
+  - DifferenceKit/UIKitExtension (1.3.0):
+    - DifferenceKit/Core
   - Flutter (1.0.0)
-  - flutter_inappwebview_ios (0.0.1):
+  - flutter_image_compress_common (1.0.0):
     - Flutter
-    - flutter_inappwebview_ios/Core (= 0.0.1)
-    - OrderedSet (~> 6.0.3)
-  - flutter_inappwebview_ios/Core (0.0.1):
+    - SDWebImage
+    - SDWebImageWebPCoder
+  - flutter_readium (0.0.1):
     - Flutter
-    - OrderedSet (~> 6.0.3)
+    - ReadiumNavigator (= 3.11.0)
+    - ReadiumOPDS (= 3.11.0)
+    - ReadiumShared (= 3.11.0)
+    - ReadiumStreamer (= 3.11.0)
+  - flutter_secure_storage_darwin (10.0.0):
+    - Flutter
+    - FlutterMacOS
   - flutter_sound (9.30.0):
     - Flutter
     - flutter_sound_core (= 9.30.0)
   - flutter_sound_core (9.30.0)
-  - OrderedSet (6.0.3)
+  - integration_test (0.0.1):
+    - Flutter
+  - libwebp (1.5.0):
+    - libwebp/demux (= 1.5.0)
+    - libwebp/mux (= 1.5.0)
+    - libwebp/sharpyuv (= 1.5.0)
+    - libwebp/webp (= 1.5.0)
+  - libwebp/demux (1.5.0):
+    - libwebp/webp
+  - libwebp/mux (1.5.0):
+    - libwebp/demux
+  - libwebp/sharpyuv (1.5.0)
+  - libwebp/webp (1.5.0):
+    - libwebp/sharpyuv
+  - Minizip (1.0.0)
+  - package_info_plus (0.4.5):
+    - Flutter
+  - ReadiumFuzi (4.0.1)
+  - ReadiumInternal (3.11.0)
+  - ReadiumNavigator (3.11.0):
+    - DifferenceKit (~> 1.0)
+    - ReadiumInternal (~> 3.11.0)
+    - ReadiumShared (~> 3.11.0)
+    - SwiftSoup (~> 2.11.0)
+  - ReadiumOPDS (3.11.0):
+    - ReadiumFuzi (~> 4.0.0)
+    - ReadiumInternal (~> 3.11.0)
+    - ReadiumShared (~> 3.11.0)
+  - ReadiumShared (3.11.0):
+    - Minizip (~> 1.0.0)
+    - ReadiumFuzi (~> 4.0.0)
+    - ReadiumInternal (~> 3.11.0)
+    - ReadiumZIPFoundation (~> 3.0.1)
+    - SwiftSoup (~> 2.11.0)
+  - ReadiumStreamer (3.11.0):
+    - CryptoSwift (~> 1.10.0)
+    - ReadiumFuzi (~> 4.0.0)
+    - ReadiumInternal (~> 3.11.0)
+    - ReadiumShared (~> 3.11.0)
+  - ReadiumZIPFoundation (3.0.1)
+  - SDWebImage (5.21.7):
+    - SDWebImage/Core (= 5.21.7)
+  - SDWebImage/Core (5.21.7)
+  - SDWebImageWebPCoder (0.15.0):
+    - libwebp (~> 1.0)
+    - SDWebImage/Core (~> 5.17)
+  - share_plus (0.0.1):
+    - Flutter
+  - shared_preferences_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - SwiftSoup (2.11.3)
   - synlen_rust (0.0.1):
+    - Flutter
+  - url_launcher_ios (0.0.1):
+    - Flutter
+  - wakelock_plus (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
+  - flutter_image_compress_common (from `.symlinks/plugins/flutter_image_compress_common/ios`)
+  - flutter_readium (from `.symlinks/plugins/flutter_readium/ios`)
+  - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
+  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - synlen_rust (from `.symlinks/plugins/synlen_rust/ios`)
+  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
 
 SPEC REPOS:
+  https://github.com/readium/podspecs:
+    - ReadiumFuzi
+    - ReadiumInternal
+    - ReadiumNavigator
+    - ReadiumOPDS
+    - ReadiumShared
+    - ReadiumStreamer
+    - ReadiumZIPFoundation
   trunk:
+    - CryptoSwift
+    - DifferenceKit
     - flutter_sound_core
-    - OrderedSet
+    - libwebp
+    - Minizip
+    - SDWebImage
+    - SDWebImageWebPCoder
+    - SwiftSoup
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  flutter_inappwebview_ios:
-    :path: ".symlinks/plugins/flutter_inappwebview_ios/ios"
+  flutter_image_compress_common:
+    :path: ".symlinks/plugins/flutter_image_compress_common/ios"
+  flutter_readium:
+    :path: ".symlinks/plugins/flutter_readium/ios"
+  flutter_secure_storage_darwin:
+    :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
   flutter_sound:
     :path: ".symlinks/plugins/flutter_sound/ios"
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+  package_info_plus:
+    :path: ".symlinks/plugins/package_info_plus/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
+  shared_preferences_foundation:
+    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   synlen_rust:
     :path: ".symlinks/plugins/synlen_rust/ios"
+  url_launcher_ios:
+    :path: ".symlinks/plugins/url_launcher_ios/ios"
+  wakelock_plus:
+    :path: ".symlinks/plugins/wakelock_plus/ios"
 
 SPEC CHECKSUMS:
+  CryptoSwift: e2e7776512f250e66205955da748e7a4e4abffe0
+  DifferenceKit: ab185c4d7f9cef8af3fcf593e5b387fb81e999ca
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_inappwebview_ios: b89ba3482b96fb25e00c967aae065701b66e9b99
+  flutter_image_compress_common: 11d5dcfb36f4ded92320bfa896261813a073240e
+  flutter_readium: 2d0beb641cd4f4e24b849ac0cde82a9f00acefbb
+  flutter_secure_storage_darwin: 46e401699982ee74142909676535e0f6a7321e58
   flutter_sound: d95194f6476c9ad211d22b3a414d852c12c7ca44
   flutter_sound_core: 7f2626d249d3a57bfa6da892ef7e22d234482c1a
-  OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
+  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
+  libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
+  Minizip: 188cb3e39a1195c283ae03bf673d182596fefd0b
+  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
+  ReadiumFuzi: c1362cfcb9bb166a25e0f50a2137ba2cfec44ce6
+  ReadiumInternal: 98d4abbdc4061946b4aa7b1edd4b8a0596b8dab4
+  ReadiumNavigator: 35ff2a44cd012f04bab7221bdf3b684003e0b549
+  ReadiumOPDS: ed24434a6f13f4c1197602c3d5666c33c26980cd
+  ReadiumShared: 3c7ab177aeb917cd4bc3543db908a1ca0db7ea4b
+  ReadiumStreamer: 2bd80a6825ab623dc06a578eb629c54714fa3d67
+  ReadiumZIPFoundation: 4009f635ebc718cc113a388ecb33c773f00639ca
+  SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
+  SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
+  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
+  SwiftSoup: 959c9ac70d7053fbf476341bfac90ab228523f2a
   synlen_rust: 13f63bbf3895e24f642ac8d2e1bd32b066d198cd
+  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
+  wakelock_plus: d4ca1e4e4bc9de42cb55d57b5bdc158af318e3c6
 
-PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
+PODFILE CHECKSUM: 00d3eed84b63476a3a22bf1681cf5bfc0baff98a
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

@@ -12,7 +12,7 @@
 | `SpineItem` | spine 中的线性阅读顺序条目，决定上一页 / 下一页导航。TXT 条目通过 `sourceRange` 记录章节在归一化 UTF-8 字节流中的范围（`"start-end"`，左闭右开）。 | 章节项、spine 项 |
 | `ShelfGroup` | 书架分组，用户自定义的书目分类。 | 分类夹、书架分类 |
 | `ShelfBookSortBy` | 书架排序依据。 | 排序方式、SortBy |
-| `ReadingProgress` | 完成分页后的阅读位置：章节序号、章内页码、章内总页数（record typedef）。 | 阅读进度对象、Progress |
+| `BookProgress` | 完整 Locator JSON 与书架显示百分比；保留文本上下文和 SDK 扩展字段，恢复不使用页码推算。 | 阅读进度对象、Progress |
 | `UnifiedImportService` | 把书籍文件加入藏书的统一编排入口：平台选择、导入缓存与哈希。 | 导入流程、Ingest、ImportService |
 | `ProgressLog` / `BackupImportProgress` / `ImportResult` | 导入与恢复的进度事件与结果值对象。data 发事件、application 编排、presentation 渲染三方都要用，因此落在 domain，避免 data → application 的逆向依赖。 | 进度回调、导入状态 |
 | Cover（封面） | 书的封面图片，导入时从 EPUB 提取生成，独立于书籍文件存储。TXT 无封面。 | 缩略图、书封 |
@@ -25,8 +25,9 @@
 | `EpubTheme` | 阅读器配色主题，与全局 `AppThemeSettings` 解耦。 | 阅读主题配置、ThemePreset |
 | `ReaderLinkHandling` | 阅读器对外部链接点击的处理策略：ask / always / never。 | LinkHandling、链接策略 |
 | `ReaderPageAnimation` | 翻页动画样式：none / slide。 | PageAnimation、翻页效果 |
-| `BookSession` | 一次阅读会话：内容供给、章节与页码映射、进度落库。 | 阅读会话对象、Session |
-| `ReaderSessionFactory` | 阅读器装配入口，把内容供给与进度持久化组装成 `BookSession`；屏幕不直接读 data provider。 | 阅读器工厂、ReaderFactory |
+| `ReadiumSession` | 一次阅读会话：打开出版物、定位与主题重排、过滤过期事件、进度提交及原生资源释放。 | 阅读会话对象、Session |
+| `ReaderSessionFactory` | 阅读器装配入口，组合内容供给、原生能力与进度持久化，并串行交接出版物。 | 阅读器工厂、ReaderFactory |
+| `ReadiumPublicationSource` | 准备 Readium 所需的本地出版物文件及书目上下文；TXT 以虚拟章节生成派生 EPUB。 | — |
 
 ## 学习
 

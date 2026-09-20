@@ -32,7 +32,8 @@ void main() {
       'tool',
       'docs/user',
       'android',
-      'web_assets/controller.js',
+      'web_assets/readium',
+      'assets/reader',
     ]) {
       await Directory('${repo.path}/$path').create(recursive: true);
     }
@@ -47,6 +48,12 @@ void main() {
       '${repo.path}/pubspec.yaml',
     ).writeAsString('version: 0.3.4+304\n');
     await File('${repo.path}/.gitignore').writeAsString('build/\n');
+    await File(
+      '${repo.path}/web_assets/readium/package-lock.json',
+    ).writeAsString('{}\n');
+    await File(
+      '${repo.path}/assets/reader/readium_learning.js',
+    ).writeAsString('// fixture\n');
     await File(
       '${repo.path}/android/key.properties',
     ).writeAsString('fixture\n');
@@ -72,8 +79,15 @@ if [[ "$command $1" == 'flutter build' ]]; then
   mkdir -p build/app/outputs/flutter-apk
   printf 'APK bytes from the build' > build/app/outputs/flutter-apk/app-release.apk
 fi
-if [[ "$command $*" == 'dart run tool/build_web_assets.dart' && "${SCENARIO:-}" == drift ]]; then
-  printf '\nchanged\n' >> pubspec.yaml
+if [[ "$command $*" == 'dart run tool/build_readium_assets.dart' && "${SCENARIO:-}" == drift ]]; then
+  printf '\nchanged\n' >> assets/reader/readium_learning.js
+fi
+if [[ "$command $*" == 'npm ci --prefix web_assets/readium' && "${SCENARIO:-}" == npm-lock-drift ]]; then
+  printf '\nchanged\n' >> web_assets/readium/package-lock.json
+fi
+if [[ "$command $*" == 'npm ci --prefix web_assets/readium' && "${SCENARIO:-}" == npm-lock-mismatch ]]; then
+  echo 'npm ci requires package.json and package-lock.json to be in sync' >&2
+  exit 21
 fi
 ''');
     }
@@ -235,6 +249,8 @@ esac
   for (final scenario in [
     'test-failure',
     'drift',
+    'npm-lock-drift',
+    'npm-lock-mismatch',
     'wrong-version',
     'debug-signature',
     'invalid-signature',
@@ -253,7 +269,9 @@ esac
         reason: '${result.stdout}\n${result.stderr}',
       );
       final expectedErrors = {
-        'drift': '检查期间源码或提交发生变化',
+        'drift': '阅读器学习脚本生成物发生漂移',
+        'npm-lock-drift': '阅读器 npm 锁文件发生漂移',
+        'npm-lock-mismatch': 'package-lock.json to be in sync',
         'wrong-version': 'APK 包名、版本号或构建号',
         'debug-signature': 'APK 签名与正式发布证书不一致',
         'wrong-abi': 'APK 必须只包含 ARM64',
@@ -265,7 +283,12 @@ esac
       if (expectedErrors.containsKey(scenario)) {
         expect(result.stderr, contains(expectedErrors[scenario]));
       }
-      if (scenario == 'test-failure') {
+      if (const [
+        'test-failure',
+        'drift',
+        'npm-lock-drift',
+        'npm-lock-mismatch',
+      ].contains(scenario)) {
         expect(events(), contains('flutter test'));
         expect(events(), isNot(contains('flutter build')));
       }

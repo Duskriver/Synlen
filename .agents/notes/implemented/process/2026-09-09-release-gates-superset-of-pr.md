@@ -10,7 +10,7 @@ PR 的日常 CI 跑分层门禁与 Rust 测试，发版的 quality-gates 却不�
 
 门禁对齐方向定为**发版 ⊇ PR**：`tool/release.sh` 执行格式、分析、Flutter 测试、分层、Rust 测试、文档、reader typecheck、Playwright 与资源漂移检查。手动云工作流调用同一入口；执行环境与触发方式由[默认本地发布](2026-09-17-local-release-with-manual-cloud-fallback.md)持有。
 
-`.github/workflows/flutter_ci.yml` 的 web-assets job 在 typecheck 之后跑 `npm test`（即 `playwright test`）。浏览器安装集与 `web_assets/controller.js/playwright.config.cjs` 的 projects 保持一致：`npx playwright install --with-deps chromium webkit`，配置改动时两处同步。用例不依赖 WebView 与网络，浏览器内核是唯一新增的运行时依赖。
+`.github/workflows/flutter_ci.yml` 的 web-assets job 在 typecheck 之后跑 `npm test`（即 `playwright test`）。浏览器安装集与 `web_assets/readium/playwright.config.cjs` 的 projects 保持一致：`npx playwright install --with-deps chromium webkit`，配置改动时两处同步。用例不依赖 WebView 与网络，浏览器内核是唯一新增的运行时依赖。
 
 ## Alternatives considered
 

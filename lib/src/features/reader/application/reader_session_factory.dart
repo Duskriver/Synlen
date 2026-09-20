@@ -1,33 +1,71 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'dart:async';
+
+import 'package:flutter_readium/flutter_readium.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../library/application/book_queries.dart';
-import '../data/services/epub_stream_service_provider.dart';
-import 'book_session.dart';
-import 'book_webview_handler.dart';
-import 'txt_content_service_provider.dart';
-import 'reader_workflow.dart';
-import 'reader_viewport.dart';
+import 'readium_gateway.dart';
+import 'readium_publication_source.dart';
+import 'readium_session.dart';
 
-part 'reader_session_factory.g.dart';
+/// 原生插件一次只拥有一本书；所有权仅在前一会话成功释放后转交。
+class ReaderSessionFactory {
+  ReaderSessionFactory({
+    required this.prepare,
+    required this.queries,
+    required this.gateway,
+  });
+  final Future<PreparedReadiumPublication> Function(String) prepare;
+  final BookQueries queries;
+  final ReadiumGateway gateway;
+  ReadiumSession? _owner;
+  Future<void> _handover = Future.value();
+  bool _disposed = false;
 
-/// 阅读会话的装配入口：data 层依赖的注入集中在这里，
-/// presentation 只取装配好的会话与 WebView 处理器。
-@riverpod
-class ReaderSessionFactory extends _$ReaderSessionFactory {
-  @override
-  void build() {}
+  ReadiumSession create(String fileHash) {
+    late final ReadiumSession session;
+    session = ReadiumSession(
+      fileHash: fileHash,
+      prepare: prepare,
+      queries: queries,
+      gateway: gateway,
+      beforeOpen: () {
+        final task = _handover.then((_) async {
+          if (_disposed) throw StateError('阅读会话装配入口已关闭');
+          if (identical(_owner, session)) return;
+          final previous = _owner;
+          if (previous != null && !await previous.close()) {
+            throw StateError('上一阅读会话尚未完成保存或释放');
+          }
+          _owner = session;
+        });
+        // 失败会话仍持有所有权，下一请求必须重试释放；队列本身可以继续执行。
+        _handover = task.then<void>(
+          (_) {},
+          onError: (Object _, StackTrace _) {},
+        );
+        return task;
+      },
+    );
+    return session;
+  }
 
-  /// 为 [fileHash] 创建一次阅读会话（书目 + 清单 + spine）。
-  BookSession createSession(String fileHash) =>
-      BookSession(fileHash: fileHash, queries: ref.read(bookQueriesProvider));
-
-  /// 会话持有导航与进度资源，页面结束时调用 close。
-  ReaderWorkflow createWorkflow(String fileHash, ReaderViewport viewport) =>
-      ReaderWorkflow(book: createSession(fileHash), viewport: viewport);
-
-  /// 创建阅读内容供给处理器（虚拟域拦截 + LRU 缓存）。
-  BookWebViewHandler createWebViewHandler() => BookWebViewHandler(
-    streamService: ref.read(epubStreamServiceProvider),
-    txtContentService: ref.read(txtContentServiceProvider),
-  );
+  void dispose() {
+    _disposed = true;
+    unawaited(
+      _handover.then((_) async {
+        await _owner?.close();
+      }),
+    );
+  }
 }
+
+final readerSessionFactoryProvider = Provider<ReaderSessionFactory>((ref) {
+  final factory = ReaderSessionFactory(
+    prepare: ref.watch(readiumPublicationSourceProvider).open,
+    queries: ref.watch(bookQueriesProvider),
+    gateway: NativeReadiumGateway(FlutterReadium()),
+  );
+  ref.onDispose(factory.dispose);
+  return factory;
+});

@@ -1,6 +1,7 @@
 import 'package:synlen/src/core/database/app_database.dart';
 
 import '../../domain/book_format.dart';
+import '../../domain/book_progress.dart';
 import '../../domain/book_manifest.dart';
 
 /// 备份 JSON 到领域对象的反序列化。
@@ -35,6 +36,9 @@ ShelfBook mapToShelfBook(
   required String? coverPath,
   required BookFormat format,
 }) {
+  final progress = m['progress'] == null
+      ? null
+      : BookProgress.fromJson(m['progress'] as Map<String, dynamic>);
   return ShelfBook(
     id: 0,
     fileHash: m['fileHash'] as String,
@@ -49,9 +53,8 @@ ShelfBook mapToShelfBook(
     epubVersion: m['epubVersion'] as String,
     format: format,
     importDate: m['importDate'] as int,
-    currentChapterIndex: m['currentChapterIndex'] as int? ?? 0,
-    readingProgress: (m['readingProgress'] as num? ?? 0.0).toDouble(),
-    chapterScrollPosition: (m['chapterScrollPosition'] as num?)?.toDouble(),
+    progress: progress,
+    readingProgress: progress?.fraction ?? 0.0,
     lastOpenedDate: m['lastOpenedDate'] as int?,
     isFinished: m['isFinished'] as bool? ?? false,
     groupName: m['groupName'] as String?,

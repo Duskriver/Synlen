@@ -4,7 +4,7 @@
 
 ## 环境
 
-Flutter SDK ≥ 3.38.0、Dart SDK ≥ 3.10.8；reader 的 Web 资源另需 Node 22 与 `npm ci`（见 [操作手册](cookbook/changing-reader-web-assets.md)）。
+Flutter SDK ≥ 3.44.8、Dart SDK ≥ 3.10.8；Android 构建使用 JDK 21，Android 最低 API 24，iOS 最低部署版本为 15.0。reader 学习脚本另需 Node 22 与 `npm ci`（见 [操作手册](cookbook/changing-reader-web-assets.md)）。
 
 ```sh
 flutter pub get
@@ -12,6 +12,8 @@ flutter run -d <device-id>
 ```
 
 实际构建版本由 `rust-toolchain.toml`（Rust 1.97.1）与 CI 的 `flutter-version: '3.44.9'` 固定；本地与 CI 必须同版本，升级走[工具链锁定](../.agents/notes/implemented/process/2026-08-11-pin-toolchain-and-dependency-ceiling.md)的流程。依赖更新与漏洞告警由 Dependabot 每周提 PR，Rust 侧另有每周 `cargo audit`（[依赖审计](../.agents/notes/implemented/process/2026-09-09-dependency-audit-and-dependabot.md)）。
+
+Readium 进度格式不兼容旧开发库；首次运行此开发版本前清除应用数据或卸载重装，再导入原书。尚无用户数据迁移承诺，不从旧章内比例构造 Locator，也不使用旧开发备份恢复位置。
 
 ## 按规模选流程
 
@@ -65,7 +67,7 @@ dart run tool/doc_gates.dart                     # 动了文档时（CI 在 PR �
 
 ## 注释与文档语言
 
-注释、dartdoc、Markdown 一律中文；类名、变量名、文件名、枚举值、包名、命令、路径保持英文。生成物（`*.g.dart`、l10n 生成文件、`lib/src/web/web_assets.dart`）先改源再重新生成。
+注释、dartdoc、Markdown 一律中文；类名、变量名、文件名、枚举值、包名、命令、路径保持英文。生成物（`*.g.dart`、l10n 生成文件、`assets/reader/readium_learning.js`）先改源再重新生成。
 
 早期写就的模块里仍有成片英文注释（集中在导入、解析、主题与备份相关的几个大文件）。按 Boy Scout Rule 路过即译，不做一次性批量翻译——翻译不改行为，却会淹没 diff。
 

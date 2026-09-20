@@ -1,3 +1,4 @@
+import '../../../helpers/book_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/library/data/services/backup_json_mapper.dart';
 import 'package:synlen/src/features/library/domain/book_format.dart';
@@ -31,9 +32,8 @@ void main() {
       'epubVersion': '3.0',
       'importDate': 1,
       'updatedAt': 2,
-      'currentChapterIndex': 3,
+      'progress': testBookProgress(chapter: 3).toJson(),
       'readingProgress': 0.5,
-      'chapterScrollPosition': 0.25,
       'lastOpenedDate': 4,
       'isFinished': true,
       'groupName': '科幻',
@@ -57,9 +57,8 @@ void main() {
       expect(book.format, BookFormat.epub);
       expect(book.authors, ['作者', '合著者']);
       expect(book.subjects, ['科幻']);
-      expect(book.currentChapterIndex, 3);
+      expect(book.progress, testBookProgress(chapter: 3));
       expect(book.readingProgress, 0.5);
-      expect(book.chapterScrollPosition, 0.25);
       expect(book.isFinished, isTrue);
       expect(book.isDeleted, isTrue);
       expect(book.direction, 1);
@@ -83,9 +82,8 @@ void main() {
         format: BookFormat.txt,
       );
 
-      expect(book.currentChapterIndex, 0);
+      expect(book.progress, isNull);
       expect(book.readingProgress, 0.0);
-      expect(book.chapterScrollPosition, isNull);
       expect(book.isFinished, isFalse);
       expect(book.isDeleted, isFalse);
       expect(book.direction, 0);

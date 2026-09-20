@@ -11,6 +11,7 @@ import 'package:mockito/src/dummies.dart' as _i7;
 import 'package:synlen/src/core/database/app_database.dart' as _i2;
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart'
     as _i3;
+import 'package:synlen/src/features/library/domain/book_progress.dart' as _i8;
 import 'package:synlen/src/features/library/domain/shelf_book_sort_by.dart'
     as _i5;
 
@@ -267,25 +268,19 @@ class MockShelfBookRepository extends _i1.Mock
   @override
   _i4.Future<_i6.Either<String, bool>> updateProgress({
     required int? bookId,
-    required int? currentChapterIndex,
-    required double? progress,
-    required double? scrollPosition,
+    required _i8.BookProgress? progress,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updateProgress, [], {
               #bookId: bookId,
-              #currentChapterIndex: currentChapterIndex,
               #progress: progress,
-              #scrollPosition: scrollPosition,
             }),
             returnValue: _i4.Future<_i6.Either<String, bool>>.value(
               _i7.dummyValue<_i6.Either<String, bool>>(
                 this,
                 Invocation.method(#updateProgress, [], {
                   #bookId: bookId,
-                  #currentChapterIndex: currentChapterIndex,
                   #progress: progress,
-                  #scrollPosition: scrollPosition,
                 }),
               ),
             ),

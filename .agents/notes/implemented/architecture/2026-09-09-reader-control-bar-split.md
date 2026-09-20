@@ -10,7 +10,7 @@ Status: implemented
 
 - 底部控制条拆成 `ReaderBottomBar`（`widgets/reader_bottom_bar.dart`）：目录入口、上一页 / 下一页按钮（长按每 500ms 连续翻）、样式面板入口与长按计时器都归它；`ControlPanel` 只传标签、可用性与回调。
 - 页码格式化 `formatPageIndicator` 随控制条走，成为可单测的顶层函数。
-- 八个 getter 收敛为 `_canTurn(isNext)`，直接复用 `resolvePageTurnBoundary`；左右方向映射成 `_canTurn(isVertical)` / `_canTurn(!isVertical)`。
+- 控制条只消费宿主传入的可用性与回调。旧 application 页码边界已由 [Readium 引擎决策](../../implemented/architecture/2026-09-20-readium-reader-engine.md)替代，翻页交给原生 Navigator。
 
 ## Alternatives considered
 
@@ -22,6 +22,5 @@ Status: implemented
 
 ## Consequences
 
-- `control_panel.dart` 由 477 行降到 197 行，reader 的超 400 行清单少一项。
-- 翻页可用性只剩一处实现（application 的边界判定），底部控制条有 widget test 覆盖禁用态、点击与长按连发。
-- 行为不变：按钮启用条件、长按间隔与样式面板的打开 / 关闭时序逐字保留。
+- 底部控制条有 widget test 覆盖禁用态、点击与长按连发。
+- 计时器跟随按钮销毁，控制条不持有出版物或分页状态。

@@ -23,7 +23,7 @@ updates:
     open-pull-requests-limit: 5
 
   - package-ecosystem: "npm"
-    directory: "/web_assets/controller.js"
+    directory: "/web_assets/readium"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

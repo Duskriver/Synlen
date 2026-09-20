@@ -1,3 +1,4 @@
+import '../../../helpers/book_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mockito/annotations.dart';
@@ -52,9 +53,10 @@ void main() {
         format: BookFormat.epub,
         importDate: 0,
         direction: 1,
-        currentChapterIndex: 2,
+
+        progress: testBookProgress(chapter: 2),
         readingProgress: 0.5,
-        chapterScrollPosition: 0.25,
+
         isFinished: false,
         isDeleted: false,
         updatedAt: 0,
@@ -88,8 +90,8 @@ void main() {
     expect(book.filePath, 'books/hash1.epub');
     expect(book.totalChapters, 3);
     expect(book.direction, 1);
-    expect(book.currentChapterIndex, 2);
-    expect(book.chapterScrollPosition, 0.25);
+    expect(book.progress, testBookProgress(chapter: 2));
+    expect(book.format, BookFormat.epub);
 
     final manifest = await queries.findManifest('hash1');
     expect(manifest, isNotNull);
@@ -101,19 +103,13 @@ void main() {
     when(
       shelfRepo.updateProgress(
         bookId: anyNamed('bookId'),
-        currentChapterIndex: anyNamed('currentChapterIndex'),
+
         progress: anyNamed('progress'),
-        scrollPosition: anyNamed('scrollPosition'),
       ),
     ).thenAnswer((_) async => const Right(true));
 
     await expectLater(
-      queries.saveProgress(
-        bookId: 1,
-        chapterIndex: 2,
-        progress: 0.5,
-        scrollPosition: 0.25,
-      ),
+      queries.saveProgress(bookId: 1, progress: testBookProgress(chapter: 2)),
       completes,
     );
   });
@@ -126,18 +122,15 @@ void main() {
       when(
         shelfRepo.updateProgress(
           bookId: anyNamed('bookId'),
-          currentChapterIndex: anyNamed('currentChapterIndex'),
+
           progress: anyNamed('progress'),
-          scrollPosition: anyNamed('scrollPosition'),
         ),
       ).thenAnswer((_) async => result);
 
       await expectLater(
         queries.saveProgress(
           bookId: 1,
-          chapterIndex: 0,
-          progress: 0.1,
-          scrollPosition: null,
+          progress: testBookProgress(fraction: 0.1),
         ),
         throwsStateError,
       );

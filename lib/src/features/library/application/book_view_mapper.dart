@@ -40,8 +40,8 @@ ReaderBookView readerBookView(ShelfBook book) => (
   filePath: book.filePath,
   totalChapters: book.totalChapters,
   direction: book.direction,
-  currentChapterIndex: book.currentChapterIndex,
-  chapterScrollPosition: book.chapterScrollPosition,
+  format: book.format,
+  progress: book.progress,
 );
 
 /// 阅读会话只取 spine 与目录。

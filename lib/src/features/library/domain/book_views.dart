@@ -1,5 +1,6 @@
 import 'book_format.dart';
 import 'book_manifest.dart';
+import 'book_progress.dart';
 
 /// 分组选项：标签页与对话框只需要 id 与名称，不持有持久化行类型。
 typedef GroupOption = ({int id, String name});
@@ -48,8 +49,8 @@ typedef ReaderBookView = ({
   String? filePath,
   int totalChapters,
   int direction,
-  int currentChapterIndex,
-  double? chapterScrollPosition,
+  BookFormat format,
+  BookProgress? progress,
 });
 
 /// 阅读会话需要的清单字段：spine 与目录；不持有持久化行类型。

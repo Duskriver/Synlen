@@ -1,3 +1,4 @@
+import '../../../helpers/book_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/library/application/book_view_mapper.dart';
@@ -16,7 +17,8 @@ ShelfBook buildBook() => ShelfBook(
   format: BookFormat.txt,
   importDate: 0,
   direction: 1,
-  currentChapterIndex: 3,
+
+  progress: testBookProgress(chapter: 3),
   readingProgress: 0.5,
   isFinished: false,
   isDeleted: false,
@@ -69,8 +71,8 @@ void main() {
     expect(view.filePath, isNull);
     expect(view.totalChapters, 12);
     expect(view.direction, 1);
-    expect(view.currentChapterIndex, 3);
-    expect(view.chapterScrollPosition, isNull);
+    expect(view.progress, testBookProgress(chapter: 3));
+    expect(view.format, BookFormat.txt);
   });
 
   test('readerManifestView 只取 spine 与目录', () {

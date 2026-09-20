@@ -447,7 +447,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tipLongPressNextTrack => '长按上/下一页按钮跳到上/下一章节';
 
   @override
-  String get longPressToViewImage => '长按图片查看原图';
+  String get longPressToViewImage => '点击图片查看大图';
 
   @override
   String get importFromFolder => '扫描文件夹';
@@ -607,7 +607,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerHandleIntraLink => '跟随书内链接';
 
   @override
-  String get readerPageAnimationSection => '翻页';
+  String get readerPageAnimationSection => '按钮翻页动画';
 
   @override
   String get readerPageAnimationNone => '无动画';
@@ -798,4 +798,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get readerRenderFailed => '阅读排版更新失败，请重试。';
+
+  @override
+  String get readerControls => '阅读菜单';
+
+  @override
+  String get readerLinkFailed => '无法打开这个链接。';
+
+  @override
+  String get readerImageFailed => '无法打开这张图片。';
 }

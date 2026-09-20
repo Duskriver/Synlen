@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-判定在 Dart 导入侧，还原在 Rust 供给侧，两侧各自从 EPUB 文件解析 `encryption.xml`，不持久化任何映射：
+导入判定在 Dart，Rust 条目 API 保留字体还原支持，不持久化映射。[Readium 引擎决策](../../implemented/architecture/2026-09-20-readium-reader-engine.md)落地后，阅读供给由原生 Readium 负责，不再经 Rust 条目 API；准备层必须保留 identifier 与字体字节。原有 Dart / Rust 契约如下：
 
 - 导入侧（`epub_encryption.dart`，`EpubZipParser` 的 part 文件）：每个 EncryptedData 都满足「算法是 IDPF（`http://www.idpf.org/2008/embedding`）或 Adobe（`http://ns.adobe.com/pdf/enc#RC`），且目标资源在 OPF manifest 中的 media-type 是字体」才放行；其余（未知算法如 LCP、加密内容文档、清单畸形）按 DRM 拒绝，返回 `LibraryException`（`drmProtected`），`ProgressDialog` 渲染日志时按错误码映射为 l10n 文案 `importFailedDrm`（见 [library 错误模型统一](../architecture/2026-09-09-library-typed-error-codes.md)）。
 - 供给侧（`rust/src/font_obfuscation.rs` 纯函数模块）：`load_epub` 现场读 `encryption.xml` + `container.xml` + OPF，派生「归一化路径 → (XOR key, 前缀长度)」映射存进 `CachedArchive`；`read_epub_file` 命中混淆字体时还原前缀字节（IDPF 前 1040、Adobe 前 1024）。key 派生：IDPF 为去空白后 identifier 的 SHA-1，Adobe 为 UUID 去前缀去连字符的 16 字节。映射构建失败退化为空映射，不阻断打开。

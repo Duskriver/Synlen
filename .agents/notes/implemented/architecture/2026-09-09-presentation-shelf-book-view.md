@@ -32,4 +32,4 @@ presentation 直接依赖 drift 生成的 `ShelfBook`：9 个文件引 `core/dat
 - presentation 不再 import `core/database/app_database.dart`：`dart run tool/layer_gates.dart` 的存量计数为 0，名单为空集，新增依赖会被规则 5 拒绝。
 - 书架相关 widget test 的 fixture 从 22 列 `ShelfBook` 变成 8 字段记录；`shelfBookView` / `detailBookView` / `editableBookView` 与 `BookFormat.mimeType` 都有单测。
 - 详情页不再有 `initialBook` 兜底，无加载态依赖网格预取 `bookDetailProvider`，因此该 provider 保持手写 `FutureProvider.family`（非 autoDispose）：换成 codegen 的 autoDispose 会在路由动画期间丢掉预取结果。
-- reader 会话侧的收窄由 [BookQueries 收窄为阅读视图](2026-09-09-book-queries-reader-view.md) 完成：`BookSession` 持 `ReaderBookView` / `ReaderManifestView`，跨 feature seam 不再出现 drift 行类型。
+- reader 会话侧的收窄由 [BookQueries 收窄为阅读视图](2026-09-09-book-queries-reader-view.md) 完成：`ReadiumSession` 持 `ReaderBookView` / `ReaderManifestView`，跨 feature seam 不再出现 drift 行类型。

@@ -519,17 +519,15 @@ class $ShelfBooksTable extends ShelfBooks
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _currentChapterIndexMeta =
-      const VerificationMeta('currentChapterIndex');
   @override
-  late final GeneratedColumn<int> currentChapterIndex = GeneratedColumn<int>(
-    'current_chapter_index',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
+  late final GeneratedColumnWithTypeConverter<BookProgress?, String> progress =
+      GeneratedColumn<String>(
+        'progress',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<BookProgress?>($ShelfBooksTable.$converterprogressn);
   static const VerificationMeta _readingProgressMeta = const VerificationMeta(
     'readingProgress',
   );
@@ -542,18 +540,6 @@ class $ShelfBooksTable extends ShelfBooks
     requiredDuringInsert: false,
     defaultValue: const Constant(0.0),
   );
-  static const VerificationMeta _chapterScrollPositionMeta =
-      const VerificationMeta('chapterScrollPosition');
-  @override
-  late final GeneratedColumn<double> chapterScrollPosition =
-      GeneratedColumn<double>(
-        'chapter_scroll_position',
-        aliasedName,
-        true,
-        type: DriftSqlType.double,
-        requiredDuringInsert: false,
-        defaultValue: const Constant(0.0),
-      );
   static const VerificationMeta _lastOpenedDateMeta = const VerificationMeta(
     'lastOpenedDate',
   );
@@ -644,9 +630,8 @@ class $ShelfBooksTable extends ShelfBooks
     format,
     importDate,
     direction,
-    currentChapterIndex,
+    progress,
     readingProgress,
-    chapterScrollPosition,
     lastOpenedDate,
     isFinished,
     groupName,
@@ -746,30 +731,12 @@ class $ShelfBooksTable extends ShelfBooks
         direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
       );
     }
-    if (data.containsKey('current_chapter_index')) {
-      context.handle(
-        _currentChapterIndexMeta,
-        currentChapterIndex.isAcceptableOrUnknown(
-          data['current_chapter_index']!,
-          _currentChapterIndexMeta,
-        ),
-      );
-    }
     if (data.containsKey('reading_progress')) {
       context.handle(
         _readingProgressMeta,
         readingProgress.isAcceptableOrUnknown(
           data['reading_progress']!,
           _readingProgressMeta,
-        ),
-      );
-    }
-    if (data.containsKey('chapter_scroll_position')) {
-      context.handle(
-        _chapterScrollPositionMeta,
-        chapterScrollPosition.isAcceptableOrUnknown(
-          data['chapter_scroll_position']!,
-          _chapterScrollPositionMeta,
         ),
       );
     }
@@ -888,18 +855,16 @@ class $ShelfBooksTable extends ShelfBooks
         DriftSqlType.int,
         data['${effectivePrefix}direction'],
       )!,
-      currentChapterIndex: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}current_chapter_index'],
-      )!,
+      progress: $ShelfBooksTable.$converterprogressn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}progress'],
+        ),
+      ),
       readingProgress: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}reading_progress'],
       )!,
-      chapterScrollPosition: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}chapter_scroll_position'],
-      ),
       lastOpenedDate: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}last_opened_date'],
@@ -938,6 +903,10 @@ class $ShelfBooksTable extends ShelfBooks
       const StringListConverter();
   static TypeConverter<BookFormat, String> $converterformat =
       const BookFormatConverter();
+  static TypeConverter<BookProgress, String> $converterprogress =
+      const BookProgressConverter();
+  static TypeConverter<BookProgress?, String?> $converterprogressn =
+      NullAwareTypeConverter.wrap($converterprogress);
 }
 
 class ShelfBook extends DataClass implements Insertable<ShelfBook> {
@@ -957,9 +926,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
   final BookFormat format;
   final int importDate;
   final int direction;
-  final int currentChapterIndex;
+  final BookProgress? progress;
   final double readingProgress;
-  final double? chapterScrollPosition;
   final int? lastOpenedDate;
   final bool isFinished;
   final String? groupName;
@@ -981,9 +949,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     required this.format,
     required this.importDate,
     required this.direction,
-    required this.currentChapterIndex,
+    this.progress,
     required this.readingProgress,
-    this.chapterScrollPosition,
     this.lastOpenedDate,
     required this.isFinished,
     this.groupName,
@@ -1026,11 +993,12 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     }
     map['import_date'] = Variable<int>(importDate);
     map['direction'] = Variable<int>(direction);
-    map['current_chapter_index'] = Variable<int>(currentChapterIndex);
-    map['reading_progress'] = Variable<double>(readingProgress);
-    if (!nullToAbsent || chapterScrollPosition != null) {
-      map['chapter_scroll_position'] = Variable<double>(chapterScrollPosition);
+    if (!nullToAbsent || progress != null) {
+      map['progress'] = Variable<String>(
+        $ShelfBooksTable.$converterprogressn.toSql(progress),
+      );
     }
+    map['reading_progress'] = Variable<double>(readingProgress);
     if (!nullToAbsent || lastOpenedDate != null) {
       map['last_opened_date'] = Variable<int>(lastOpenedDate);
     }
@@ -1068,11 +1036,10 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       format: Value(format),
       importDate: Value(importDate),
       direction: Value(direction),
-      currentChapterIndex: Value(currentChapterIndex),
-      readingProgress: Value(readingProgress),
-      chapterScrollPosition: chapterScrollPosition == null && nullToAbsent
+      progress: progress == null && nullToAbsent
           ? const Value.absent()
-          : Value(chapterScrollPosition),
+          : Value(progress),
+      readingProgress: Value(readingProgress),
       lastOpenedDate: lastOpenedDate == null && nullToAbsent
           ? const Value.absent()
           : Value(lastOpenedDate),
@@ -1108,13 +1075,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       format: serializer.fromJson<BookFormat>(json['format']),
       importDate: serializer.fromJson<int>(json['importDate']),
       direction: serializer.fromJson<int>(json['direction']),
-      currentChapterIndex: serializer.fromJson<int>(
-        json['currentChapterIndex'],
-      ),
+      progress: serializer.fromJson<BookProgress?>(json['progress']),
       readingProgress: serializer.fromJson<double>(json['readingProgress']),
-      chapterScrollPosition: serializer.fromJson<double?>(
-        json['chapterScrollPosition'],
-      ),
       lastOpenedDate: serializer.fromJson<int?>(json['lastOpenedDate']),
       isFinished: serializer.fromJson<bool>(json['isFinished']),
       groupName: serializer.fromJson<String?>(json['groupName']),
@@ -1141,11 +1103,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
       'format': serializer.toJson<BookFormat>(format),
       'importDate': serializer.toJson<int>(importDate),
       'direction': serializer.toJson<int>(direction),
-      'currentChapterIndex': serializer.toJson<int>(currentChapterIndex),
+      'progress': serializer.toJson<BookProgress?>(progress),
       'readingProgress': serializer.toJson<double>(readingProgress),
-      'chapterScrollPosition': serializer.toJson<double?>(
-        chapterScrollPosition,
-      ),
       'lastOpenedDate': serializer.toJson<int?>(lastOpenedDate),
       'isFinished': serializer.toJson<bool>(isFinished),
       'groupName': serializer.toJson<String?>(groupName),
@@ -1170,9 +1129,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     BookFormat? format,
     int? importDate,
     int? direction,
-    int? currentChapterIndex,
+    Value<BookProgress?> progress = const Value.absent(),
     double? readingProgress,
-    Value<double?> chapterScrollPosition = const Value.absent(),
     Value<int?> lastOpenedDate = const Value.absent(),
     bool? isFinished,
     Value<String?> groupName = const Value.absent(),
@@ -1194,11 +1152,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     format: format ?? this.format,
     importDate: importDate ?? this.importDate,
     direction: direction ?? this.direction,
-    currentChapterIndex: currentChapterIndex ?? this.currentChapterIndex,
+    progress: progress.present ? progress.value : this.progress,
     readingProgress: readingProgress ?? this.readingProgress,
-    chapterScrollPosition: chapterScrollPosition.present
-        ? chapterScrollPosition.value
-        : this.chapterScrollPosition,
     lastOpenedDate: lastOpenedDate.present
         ? lastOpenedDate.value
         : this.lastOpenedDate,
@@ -1234,15 +1189,10 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
           ? data.importDate.value
           : this.importDate,
       direction: data.direction.present ? data.direction.value : this.direction,
-      currentChapterIndex: data.currentChapterIndex.present
-          ? data.currentChapterIndex.value
-          : this.currentChapterIndex,
+      progress: data.progress.present ? data.progress.value : this.progress,
       readingProgress: data.readingProgress.present
           ? data.readingProgress.value
           : this.readingProgress,
-      chapterScrollPosition: data.chapterScrollPosition.present
-          ? data.chapterScrollPosition.value
-          : this.chapterScrollPosition,
       lastOpenedDate: data.lastOpenedDate.present
           ? data.lastOpenedDate.value
           : this.lastOpenedDate,
@@ -1275,9 +1225,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
           ..write('format: $format, ')
           ..write('importDate: $importDate, ')
           ..write('direction: $direction, ')
-          ..write('currentChapterIndex: $currentChapterIndex, ')
+          ..write('progress: $progress, ')
           ..write('readingProgress: $readingProgress, ')
-          ..write('chapterScrollPosition: $chapterScrollPosition, ')
           ..write('lastOpenedDate: $lastOpenedDate, ')
           ..write('isFinished: $isFinished, ')
           ..write('groupName: $groupName, ')
@@ -1304,9 +1253,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
     format,
     importDate,
     direction,
-    currentChapterIndex,
+    progress,
     readingProgress,
-    chapterScrollPosition,
     lastOpenedDate,
     isFinished,
     groupName,
@@ -1332,9 +1280,8 @@ class ShelfBook extends DataClass implements Insertable<ShelfBook> {
           other.format == this.format &&
           other.importDate == this.importDate &&
           other.direction == this.direction &&
-          other.currentChapterIndex == this.currentChapterIndex &&
+          other.progress == this.progress &&
           other.readingProgress == this.readingProgress &&
-          other.chapterScrollPosition == this.chapterScrollPosition &&
           other.lastOpenedDate == this.lastOpenedDate &&
           other.isFinished == this.isFinished &&
           other.groupName == this.groupName &&
@@ -1358,9 +1305,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
   final Value<BookFormat> format;
   final Value<int> importDate;
   final Value<int> direction;
-  final Value<int> currentChapterIndex;
+  final Value<BookProgress?> progress;
   final Value<double> readingProgress;
-  final Value<double?> chapterScrollPosition;
   final Value<int?> lastOpenedDate;
   final Value<bool> isFinished;
   final Value<String?> groupName;
@@ -1382,9 +1328,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     this.format = const Value.absent(),
     this.importDate = const Value.absent(),
     this.direction = const Value.absent(),
-    this.currentChapterIndex = const Value.absent(),
+    this.progress = const Value.absent(),
     this.readingProgress = const Value.absent(),
-    this.chapterScrollPosition = const Value.absent(),
     this.lastOpenedDate = const Value.absent(),
     this.isFinished = const Value.absent(),
     this.groupName = const Value.absent(),
@@ -1407,9 +1352,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     this.format = const Value.absent(),
     required int importDate,
     this.direction = const Value.absent(),
-    this.currentChapterIndex = const Value.absent(),
+    this.progress = const Value.absent(),
     this.readingProgress = const Value.absent(),
-    this.chapterScrollPosition = const Value.absent(),
     this.lastOpenedDate = const Value.absent(),
     this.isFinished = const Value.absent(),
     this.groupName = const Value.absent(),
@@ -1436,9 +1380,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     Expression<String>? format,
     Expression<int>? importDate,
     Expression<int>? direction,
-    Expression<int>? currentChapterIndex,
+    Expression<String>? progress,
     Expression<double>? readingProgress,
-    Expression<double>? chapterScrollPosition,
     Expression<int>? lastOpenedDate,
     Expression<bool>? isFinished,
     Expression<String>? groupName,
@@ -1461,11 +1404,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
       if (format != null) 'format': format,
       if (importDate != null) 'import_date': importDate,
       if (direction != null) 'direction': direction,
-      if (currentChapterIndex != null)
-        'current_chapter_index': currentChapterIndex,
+      if (progress != null) 'progress': progress,
       if (readingProgress != null) 'reading_progress': readingProgress,
-      if (chapterScrollPosition != null)
-        'chapter_scroll_position': chapterScrollPosition,
       if (lastOpenedDate != null) 'last_opened_date': lastOpenedDate,
       if (isFinished != null) 'is_finished': isFinished,
       if (groupName != null) 'group_name': groupName,
@@ -1490,9 +1430,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     Value<BookFormat>? format,
     Value<int>? importDate,
     Value<int>? direction,
-    Value<int>? currentChapterIndex,
+    Value<BookProgress?>? progress,
     Value<double>? readingProgress,
-    Value<double?>? chapterScrollPosition,
     Value<int?>? lastOpenedDate,
     Value<bool>? isFinished,
     Value<String?>? groupName,
@@ -1515,10 +1454,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
       format: format ?? this.format,
       importDate: importDate ?? this.importDate,
       direction: direction ?? this.direction,
-      currentChapterIndex: currentChapterIndex ?? this.currentChapterIndex,
+      progress: progress ?? this.progress,
       readingProgress: readingProgress ?? this.readingProgress,
-      chapterScrollPosition:
-          chapterScrollPosition ?? this.chapterScrollPosition,
       lastOpenedDate: lastOpenedDate ?? this.lastOpenedDate,
       isFinished: isFinished ?? this.isFinished,
       groupName: groupName ?? this.groupName,
@@ -1579,16 +1516,13 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
     if (direction.present) {
       map['direction'] = Variable<int>(direction.value);
     }
-    if (currentChapterIndex.present) {
-      map['current_chapter_index'] = Variable<int>(currentChapterIndex.value);
+    if (progress.present) {
+      map['progress'] = Variable<String>(
+        $ShelfBooksTable.$converterprogressn.toSql(progress.value),
+      );
     }
     if (readingProgress.present) {
       map['reading_progress'] = Variable<double>(readingProgress.value);
-    }
-    if (chapterScrollPosition.present) {
-      map['chapter_scroll_position'] = Variable<double>(
-        chapterScrollPosition.value,
-      );
     }
     if (lastOpenedDate.present) {
       map['last_opened_date'] = Variable<int>(lastOpenedDate.value);
@@ -1628,9 +1562,8 @@ class ShelfBooksCompanion extends UpdateCompanion<ShelfBook> {
           ..write('format: $format, ')
           ..write('importDate: $importDate, ')
           ..write('direction: $direction, ')
-          ..write('currentChapterIndex: $currentChapterIndex, ')
+          ..write('progress: $progress, ')
           ..write('readingProgress: $readingProgress, ')
-          ..write('chapterScrollPosition: $chapterScrollPosition, ')
           ..write('lastOpenedDate: $lastOpenedDate, ')
           ..write('isFinished: $isFinished, ')
           ..write('groupName: $groupName, ')
@@ -3727,9 +3660,8 @@ typedef $$ShelfBooksTableCreateCompanionBuilder =
       Value<BookFormat> format,
       required int importDate,
       Value<int> direction,
-      Value<int> currentChapterIndex,
+      Value<BookProgress?> progress,
       Value<double> readingProgress,
-      Value<double?> chapterScrollPosition,
       Value<int?> lastOpenedDate,
       Value<bool> isFinished,
       Value<String?> groupName,
@@ -3753,9 +3685,8 @@ typedef $$ShelfBooksTableUpdateCompanionBuilder =
       Value<BookFormat> format,
       Value<int> importDate,
       Value<int> direction,
-      Value<int> currentChapterIndex,
+      Value<BookProgress?> progress,
       Value<double> readingProgress,
-      Value<double?> chapterScrollPosition,
       Value<int?> lastOpenedDate,
       Value<bool> isFinished,
       Value<String?> groupName,
@@ -3846,18 +3777,14 @@ class $$ShelfBooksTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get currentChapterIndex => $composableBuilder(
-    column: $table.currentChapterIndex,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<BookProgress?, BookProgress, String>
+  get progress => $composableBuilder(
+    column: $table.progress,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<double> get readingProgress => $composableBuilder(
     column: $table.readingProgress,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get chapterScrollPosition => $composableBuilder(
-    column: $table.chapterScrollPosition,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3971,18 +3898,13 @@ class $$ShelfBooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get currentChapterIndex => $composableBuilder(
-    column: $table.currentChapterIndex,
+  ColumnOrderings<String> get progress => $composableBuilder(
+    column: $table.progress,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<double> get readingProgress => $composableBuilder(
     column: $table.readingProgress,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get chapterScrollPosition => $composableBuilder(
-    column: $table.chapterScrollPosition,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4076,18 +3998,11 @@ class $$ShelfBooksTableAnnotationComposer
   GeneratedColumn<int> get direction =>
       $composableBuilder(column: $table.direction, builder: (column) => column);
 
-  GeneratedColumn<int> get currentChapterIndex => $composableBuilder(
-    column: $table.currentChapterIndex,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<BookProgress?, String> get progress =>
+      $composableBuilder(column: $table.progress, builder: (column) => column);
 
   GeneratedColumn<double> get readingProgress => $composableBuilder(
     column: $table.readingProgress,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get chapterScrollPosition => $composableBuilder(
-    column: $table.chapterScrollPosition,
     builder: (column) => column,
   );
 
@@ -4161,9 +4076,8 @@ class $$ShelfBooksTableTableManager
                 Value<BookFormat> format = const Value.absent(),
                 Value<int> importDate = const Value.absent(),
                 Value<int> direction = const Value.absent(),
-                Value<int> currentChapterIndex = const Value.absent(),
+                Value<BookProgress?> progress = const Value.absent(),
                 Value<double> readingProgress = const Value.absent(),
-                Value<double?> chapterScrollPosition = const Value.absent(),
                 Value<int?> lastOpenedDate = const Value.absent(),
                 Value<bool> isFinished = const Value.absent(),
                 Value<String?> groupName = const Value.absent(),
@@ -4185,9 +4099,8 @@ class $$ShelfBooksTableTableManager
                 format: format,
                 importDate: importDate,
                 direction: direction,
-                currentChapterIndex: currentChapterIndex,
+                progress: progress,
                 readingProgress: readingProgress,
-                chapterScrollPosition: chapterScrollPosition,
                 lastOpenedDate: lastOpenedDate,
                 isFinished: isFinished,
                 groupName: groupName,
@@ -4211,9 +4124,8 @@ class $$ShelfBooksTableTableManager
                 Value<BookFormat> format = const Value.absent(),
                 required int importDate,
                 Value<int> direction = const Value.absent(),
-                Value<int> currentChapterIndex = const Value.absent(),
+                Value<BookProgress?> progress = const Value.absent(),
                 Value<double> readingProgress = const Value.absent(),
-                Value<double?> chapterScrollPosition = const Value.absent(),
                 Value<int?> lastOpenedDate = const Value.absent(),
                 Value<bool> isFinished = const Value.absent(),
                 Value<String?> groupName = const Value.absent(),
@@ -4235,9 +4147,8 @@ class $$ShelfBooksTableTableManager
                 format: format,
                 importDate: importDate,
                 direction: direction,
-                currentChapterIndex: currentChapterIndex,
+                progress: progress,
                 readingProgress: readingProgress,
-                chapterScrollPosition: chapterScrollPosition,
                 lastOpenedDate: lastOpenedDate,
                 isFinished: isFinished,
                 groupName: groupName,

@@ -31,7 +31,7 @@ dart run tool/layer_gates.dart                   # 分层门禁（动了 lib/ �
 dart run tool/doc_gates.dart                     # 文档门禁
 ```
 
-需要 Flutter SDK ≥ 3.38.0、Dart SDK ≥ 3.10.8。
+需要 Flutter SDK ≥ 3.44.8、Dart SDK ≥ 3.10.8。
 
 ## 入口
 

@@ -470,7 +470,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press previous/next button to jump to previous/next chapter';
 
   @override
-  String get longPressToViewImage => 'Long press on image to view original';
+  String get longPressToViewImage => 'Tap an image to view it full screen';
 
   @override
   String get importFromFolder => 'Scan Folder';
@@ -633,7 +633,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerHandleIntraLink => 'Follow in-book links';
 
   @override
-  String get readerPageAnimationSection => 'Pagination';
+  String get readerPageAnimationSection => 'Button page-turn animation';
 
   @override
   String get readerPageAnimationNone => 'None';
@@ -831,4 +831,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get readerRenderFailed =>
       'Could not update the reading layout. Please try again.';
+
+  @override
+  String get readerControls => 'Reading controls';
+
+  @override
+  String get readerLinkFailed => 'Unable to open this link.';
+
+  @override
+  String get readerImageFailed => 'Unable to open this image.';
 }

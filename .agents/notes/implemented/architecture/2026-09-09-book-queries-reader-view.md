@@ -10,10 +10,10 @@ Status: implemented
 
 `BookQueries` 的读取方法只返回定义在 `domain/book_views.dart` 的窄视图，接口文件不再 import `app_database.dart`：
 
-- `ReaderBookView`：`id`、`title`、`author`、`coverPath`、`filePath`、`totalChapters`、`direction`、`currentChapterIndex`、`chapterScrollPosition`。
+- `ReaderBookView`：`id`、`title`、`author`、`coverPath`、`filePath`、`totalChapters`、`direction`、`format`、`progress`。
 - `ReaderManifestView`：`spine`、`toc`。
 - 行 → 视图的映射收在 `application/book_view_mapper.dart` 的 `readerBookView` / `readerManifestView`，与既有 `shelfBookView` 等映射同一处。
-- `BookSession._book` / `_manifest` 改持视图；`saveProgress` 仍按行主键 `id` 落库，错误语义不变（仓库 `Either` 失败仍翻译为 `StateError`，不引入 `LibraryException`——进度落库不在 import / backup 错误模型统一的范围内）。
+- `ReadiumPublicationSource` 与 `ReadiumSession` 持有视图；`saveProgress` 仍按行主键 `id` 落库，错误语义不变（仓库 `Either` 失败仍翻译为 `StateError`，不引入 `LibraryException`——进度落库不在 import / backup 错误模型统一的范围内）。
 
 ## 字段取舍
 
@@ -22,13 +22,13 @@ Status: implemented
 - `id`：`saveProgress` 的落库主键，必要。
 - `title`：TOC 查找表回退标签、目录抽屉标题、舞台标题。
 - `direction`：渲染方向。
-- `currentChapterIndex` / `chapterScrollPosition`：初始阅读位置。
-- `filePath`：EPUB 后端按路径取条目（脚注与封面链路，`epubPath`）。
+- `format`：选择 EPUB 准备或 TXT 派生缓存；`progress`：完整 Locator 初始位置。
+- `filePath`：找到 EPUB 或 TXT 源文件。
 - `author` / `coverPath` / `totalChapters`：目录抽屉的书目头部展示。
 
 明确不进视图的数据库语义：
 
-- `readingProgress` / `lastOpenedDate`：reader 不读；唯一消费方是 `reading_progress_persistence_test` 的持久化断言，改为直接经 `ShelfBookRepository` 读行验证。
+- `readingProgress` / `lastOpenedDate`：独立数据库列不进入视图；书架百分比随 `BookProgress` 提供，持久化测试直接经 `ShelfBookRepository` 读行验证。
 - `isDeleted`（软删除标志）：reader 从不判定；打开已软删书籍的语义维持原样，不在本次改动中收紧。
 - `fileHash`：会话自带路由参数，不重复携带。
 - `ReaderManifestView` 不带 `id` / `opfRootPath` / `epubVersion` / `format` / `lastUpdated`：reader 只用 `spine` 与 `toc`。
@@ -47,7 +47,7 @@ Status: implemented
 
 - `lib/` 中跨 feature seam 的签名不再出现 drift 行类型；reader 侧只有测试 fixture 变化，行为不变。
 - reader 相关测试 fixture 从 22 列 `ShelfBook` 整行变为 9 字段记录；`readerBookView` / `readerManifestView` 与 `RepositoryBookQueries` 的映射各有单测。
-- `reading_progress_persistence_test` 的持久化断言直接读仓库行，不再经会话对象。
+- 持久化断言直接读仓库行，不再经会话对象；进度字段与消费方已由 [Readium 引擎决策](../../implemented/architecture/2026-09-20-readium-reader-engine.md)更新，窄视图边界继续生效。
 
 ## 其他外泄核查
 

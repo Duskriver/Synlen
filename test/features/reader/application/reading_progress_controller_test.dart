@@ -3,15 +3,19 @@ import 'dart:async';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/reader/application/reading_progress_controller.dart';
-import 'package:synlen/src/features/reader/domain/reading_progress.dart';
+import 'package:synlen/src/features/library/domain/book_progress.dart';
 
-ReadingProgress position(int page, {int chapter = 0, int count = 10}) =>
-    (chapterIndex: chapter, pageIndex: page, pageCount: count);
+BookProgress position(int page, {int chapter = 0, int count = 10}) =>
+    BookProgress.fromLocator({
+      'href': 'chapter-$chapter.xhtml',
+      'type': 'application/xhtml+xml',
+      'locations': {'progression': page / count},
+    }, fraction: page / count);
 
 void main() {
   test('连续翻页只提交最后完整位置', () {
     fakeAsync((clock) {
-      final saved = <ReadingProgress>[];
+      final saved = <BookProgress>[];
       final controller = ReadingProgressController(
         save: (progress) async => saved.add(progress),
         onSaveFailed: () => fail('不应保存失败'),
@@ -30,7 +34,7 @@ void main() {
 
   test('定时器尚未触发时关闭，仍完成提交且不再写第二次', () {
     fakeAsync((clock) {
-      final saved = <ReadingProgress>[];
+      final saved = <BookProgress>[];
       final controller = ReadingProgressController(
         save: (progress) async => saved.add(progress),
         onSaveFailed: () => fail('不应保存失败'),
@@ -49,7 +53,7 @@ void main() {
   });
 
   test('慢写入期间合并新位置，所有 flush 等到最后一笔完成', () async {
-    final calls = <ReadingProgress>[];
+    final calls = <BookProgress>[];
     final writes = <Completer<void>>[];
     final controller = ReadingProgressController(
       save: (progress) {
@@ -79,12 +83,14 @@ void main() {
   });
 
   test('返回已保存位置时仍等待在途新位置写完，再写回目标位置', () async {
-    final calls = <ReadingProgress>[];
+    final calls = <BookProgress>[];
     final slowWrite = Completer<void>();
     final controller = ReadingProgressController(
       save: (progress) async {
         calls.add(progress);
-        if (progress.pageIndex == 2) await slowWrite.future;
+        if (progress.locator['locations']['progression'] == 0.2) {
+          await slowWrite.future;
+        }
       },
       onSaveFailed: () => fail('不应保存失败'),
     );
@@ -100,18 +106,14 @@ void main() {
     expect(calls, [position(1), position(2), position(1)]);
   });
 
-  test('加载中的临时章节页码不能覆盖最后有效位置', () async {
-    final saved = <ReadingProgress>[];
+  test('加载中的临时定位不能覆盖最后有效位置', () async {
+    final saved = <BookProgress>[];
     final controller = ReadingProgressController(
       save: (progress) async => saved.add(progress),
       onSaveFailed: () => fail('不应保存失败'),
     );
     controller.record(position(4, chapter: 2), isReady: true);
     controller.record(position(0, chapter: 3), isReady: false);
-    controller.record(position(-1), isReady: true);
-    controller.record(position(0, count: 0), isReady: true);
-    controller.record(position(10), isReady: true);
-    controller.record(position(0, chapter: -1), isReady: true);
     expect(await controller.close(), isTrue);
     expect(saved, [position(4, chapter: 2)]);
   });
@@ -128,7 +130,7 @@ void main() {
   test('保存失败保留位置且通知一次，显式刷新可重试', () async {
     var failWrite = true;
     var failures = 0;
-    final calls = <ReadingProgress>[];
+    final calls = <BookProgress>[];
     final controller = ReadingProgressController(
       save: (progress) async {
         calls.add(progress);
@@ -149,7 +151,7 @@ void main() {
 
   test('旧写入失败期间出现新位置，重试只提交最新位置', () async {
     final firstWrite = Completer<void>();
-    final calls = <ReadingProgress>[];
+    final calls = <BookProgress>[];
     final controller = ReadingProgressController(
       save: (progress) async {
         calls.add(progress);
@@ -170,7 +172,7 @@ void main() {
     fakeAsync((clock) {
       var failWrite = true;
       var failures = 0;
-      final calls = <ReadingProgress>[];
+      final calls = <BookProgress>[];
       final controller = ReadingProgressController(
         save: (progress) async {
           calls.add(progress);
@@ -190,7 +192,7 @@ void main() {
   });
 
   test('重复刷新同一位置不重复写入', () async {
-    final saved = <ReadingProgress>[];
+    final saved = <BookProgress>[];
     final controller = ReadingProgressController(
       save: (progress) async => saved.add(progress),
       onSaveFailed: () => fail('不应保存失败'),

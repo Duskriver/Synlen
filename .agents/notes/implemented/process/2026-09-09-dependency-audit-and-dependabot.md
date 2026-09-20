@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-- **Dependabot**（`.github/dependabot.yml`）覆盖四类生态：`github-actions`（合并为一个 group PR）、`pub`、`cargo`（`/rust`）、`npm`（`web_assets/controller.js`），每周检查。它同时承载 pub 侧的安全告警——Dart 没有等价 `cargo audit` 的本地扫描器。
+- **Dependabot**（`.github/dependabot.yml`）覆盖四类生态：`github-actions`（合并为一个 group PR）、`pub`、`cargo`（`/rust`）、`npm`（`web_assets/readium`），每周检查。它同时承载 pub 侧的安全告警——Dart 没有等价 `cargo audit` 的本地扫描器。
 - **cargo audit**（`.github/workflows/security_audit.yml`）每周一 03:23 UTC 与手动触发时跑 `cargo audit`，命中 RustSec 公告即失败；PR CI 不加这一步，避免每次改动都依赖外部公告库可用性。
 - **Actions 固定到 commit SHA**（见[工具链锁定](2026-08-11-pin-toolchain-and-dependency-ceiling.md)），尾注保留 `# v4` 这类语义标签，更新走 Dependabot PR。
 - **许可证扫描暂不接入**：现有做法是 `assets/licenses/` 手工登记 + 发布时核对。自动化需要先定许可白名单策略（哪些许可证可接受），这是策略决策而非工具缺口，留给独立议题。

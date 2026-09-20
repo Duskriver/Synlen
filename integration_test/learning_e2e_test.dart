@@ -13,10 +13,11 @@ import 'package:synlen/src/features/library/domain/book_format.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
 import 'package:synlen/src/features/learning/presentation/widgets/sentence_analysis_dialog.dart';
 import 'package:synlen/src/features/learning/presentation/widgets/word_definition_dialog.dart';
+import 'package:synlen/src/features/reader/presentation/readium_viewport.dart';
 import 'package:synlen/src/features/reader/presentation/reader_screen.dart'
     as reader;
 
-/// 学习链路真机端到端验收：在模拟器上以真实 WebView 渲染
+/// 学习链路真机端到端验收：在模拟器上以真实 Readium 原生视口渲染
 /// TXT 书籍，点击单词与长按句子走真实 DeepSeek 接口。
 ///
 /// 运行方式（密钥经 --dart-define 传入，不入库）：
@@ -70,29 +71,45 @@ void main() {
     await tester.pumpAndSettle(const Duration(milliseconds: 200));
     await tester.tap(startReading);
 
-    // 阅读器就绪后再等 WebView 分页渲染。
     await _pumpUntil(
       tester,
       find.byType(reader.ReaderScreen),
       timeout: const Duration(seconds: 15),
     );
-    await _pumpFor(tester, const Duration(seconds: 8));
-
-    // 阅读器已渲染：点击页面中央触发取词。取词经 JS 桥往返，弹窗可能
-    // 数秒后才出现；等待足够久再决定是否补点，避免二次点击竞态。
-    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
-    final center = Offset(size.width / 2, size.height / 2);
-    await tester.tapAt(center);
-    await _pumpFor(tester, const Duration(seconds: 3));
-    final wordDialog = find.byType(WordDefinitionDialog);
-    if (!await _waitFor(
-      tester,
-      wordDialog,
-      timeout: const Duration(seconds: 10),
-    )) {
-      await tester.tapAt(center);
+    final readyUntil = DateTime.now().add(const Duration(seconds: 40));
+    while (DateTime.now().isBefore(readyUntil)) {
+      await tester.pump(const Duration(milliseconds: 200));
+      final views = find.byType(ReadiumViewport);
+      if (views.evaluate().isNotEmpty &&
+          tester.widget<ReadiumViewport>(views).session.ready) {
+        break;
+      }
     }
-    await _pumpUntil(tester, wordDialog, timeout: const Duration(seconds: 15));
+    final viewport = find.byType(ReadiumViewport);
+    expect(tester.widget<ReadiumViewport>(viewport).session.ready, isTrue);
+    final bounds = tester.getRect(viewport);
+    final wordDialog = find.byType(WordDefinitionDialog);
+    Offset? selectedPoint;
+    // 行间空白不会产生点词事件；扫描相邻像素行，命中后停止，避免重复请求。
+    for (final dy in [0.0, 5.0, -5.0, 10.0, -10.0, 15.0, -15.0]) {
+      final point = Offset(
+        bounds.center.dx,
+        bounds.top + bounds.height * 0.4 + dy,
+      );
+      await tester.tapAt(point);
+      if (await _waitFor(
+        tester,
+        wordDialog,
+        timeout: const Duration(seconds: 3),
+      )) {
+        selectedPoint = point;
+        break;
+      }
+    }
+    expect(selectedPoint, isNotNull, reason: 'Readium 的真实点词未产生学习弹窗');
+    final selected = tester.widget<WordDefinitionDialog>(wordDialog);
+    expect(_bookContent, contains(selected.word));
+    expect(_bookContent, contains(selected.context));
     // 单词弹窗流式渲染四节契约（真实网络，放宽等待）。
     final phoneticsHeading = find.text('音标');
     await _pumpUntil(
@@ -111,31 +128,24 @@ void main() {
       timeout: const Duration(seconds: 30),
     );
 
-    // 关闭弹窗，长按触发句子分析。
+    // 使用刚刚命中字形的位置长按，覆盖 550 ms 脚本阈值。
     await tester.tap(find.byIcon(Icons.close));
     await _pumpFor(tester, const Duration(seconds: 2));
-    await tester.longPressAt(Offset(size.width / 2, size.height * 0.6));
-    await _pumpFor(tester, const Duration(seconds: 3));
+    final gesture = await tester.startGesture(selectedPoint!);
+    await tester.pump(const Duration(milliseconds: 900));
+    await gesture.up();
     final sentenceDialog = find.byType(SentenceAnalysisDialog);
-    if (!await _waitFor(
-      tester,
-      sentenceDialog,
-      timeout: const Duration(seconds: 10),
-    )) {
-      await tester.longPressAt(Offset(size.width / 2, size.height * 0.6));
-    }
     await _pumpUntil(
       tester,
       sentenceDialog,
       timeout: const Duration(seconds: 15),
     );
-
-    // 原句由本地立即展示（不等待模型）。
-    final originalSentence = find.textContaining('perseverance');
+    final analysis = tester.widget<SentenceAnalysisDialog>(sentenceDialog);
+    expect(analysis.sentence, selected.context);
     await _pumpUntil(
       tester,
-      originalSentence,
-      timeout: const Duration(seconds: 30),
+      find.text(analysis.sentence),
+      timeout: const Duration(seconds: 10),
     );
     // 翻译小节由真实模型流式输出。
     await _pumpUntil(
@@ -184,9 +194,7 @@ Future<void> _seed(WidgetTester tester) async {
           importDate: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
           direction: 0,
-          currentChapterIndex: 0,
           readingProgress: 0,
-          chapterScrollPosition: 0,
           lastOpenedDate: null,
           isFinished: false,
           isDeleted: false,

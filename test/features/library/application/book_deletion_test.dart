@@ -38,7 +38,7 @@ void main() {
       importDate: 1,
       updatedAt: 1,
       direction: 0,
-      currentChapterIndex: 0,
+
       readingProgress: 0,
       isFinished: false,
       isDeleted: false,
