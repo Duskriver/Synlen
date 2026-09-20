@@ -64,9 +64,7 @@ export class Renderer implements SynlenApi {
     this.onResize = (ev: UIEvent) => {
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight;
-      if (this.currentSize.width === 0 && this.currentSize.height === 0) {
-        this.currentSize = { width: newWidth, height: newHeight };
-      } else if (this.currentSize.width !== newWidth || this.currentSize.height !== newHeight) {
+      if (this.currentSize.width !== newWidth || this.currentSize.height !== newHeight) {
         this.currentSize = { width: newWidth, height: newHeight };
         if (this.resizeDebounceTimer) {
           clearTimeout(this.resizeDebounceTimer);
@@ -91,6 +89,7 @@ export class Renderer implements SynlenApi {
     this.state.config.theme = config.theme;
 
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
+    this.currentSize = { width: window.innerWidth, height: window.innerHeight };
     window.removeEventListener('resize', this.onResize);
     window.addEventListener('resize', this.onResize, { passive: true });
   }
@@ -191,8 +190,8 @@ export class Renderer implements SynlenApi {
     });
   }
 
-  checkTapElementAt(x: number, y: number): void {
-    this.interactionMgr.checkTapElementAt(x, y);
+  checkTapElementAt(x: number, y: number, requestId: number): void {
+    this.interactionMgr.checkTapElementAt(x, y, requestId);
   }
   checkLongPressElementAt(x: number, y: number): void {
     this.interactionMgr.checkLongPressElementAt(x, y);

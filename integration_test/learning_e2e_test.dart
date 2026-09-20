@@ -15,6 +15,7 @@ import 'package:synlen/src/features/learning/presentation/widgets/sentence_analy
 import 'package:synlen/src/features/learning/presentation/widgets/word_definition_dialog.dart';
 import 'package:synlen/src/features/reader/presentation/reader_screen.dart'
     as reader;
+import 'package:synlen/src/features/reader/presentation/widgets/reader_stage.dart';
 
 /// 学习链路真机端到端验收：在模拟器上以真实 WebView 渲染
 /// TXT 书籍，点击单词与长按句子走真实 DeepSeek 接口。
@@ -93,27 +94,54 @@ void main() {
       await tester.tapAt(center);
     }
     await _pumpUntil(tester, wordDialog, timeout: const Duration(seconds: 15));
-    // 单词弹窗流式渲染四节契约（真实网络，放宽等待）。
-    final phoneticsHeading = find.text('音标');
+    // 内容区在对应记录解析成功后出现，标签本身不代表请求已完成。
     await _pumpUntil(
       tester,
-      phoneticsHeading,
+      find.byKey(const ValueKey('word-summary')),
       timeout: const Duration(seconds: 120),
     );
     await _pumpUntil(
       tester,
-      find.text('句中含义'),
+      find.byKey(const ValueKey('word-explanation')),
       timeout: const Duration(seconds: 60),
     );
+    final synonymsTab = find.byKey(const ValueKey('word-tab-synonyms'));
+    await tester.ensureVisible(synonymsTab);
+    await tester.tap(synonymsTab);
     await _pumpUntil(
       tester,
-      find.text('常见用法'),
+      find.byKey(const ValueKey('word-synonyms')),
+      timeout: const Duration(seconds: 30),
+    );
+    final formationTab = find.byKey(const ValueKey('word-tab-formation'));
+    await tester.ensureVisible(formationTab);
+    await tester.tap(formationTab);
+    await _pumpUntil(
+      tester,
+      find.byKey(const ValueKey('word-formation')),
       timeout: const Duration(seconds: 30),
     );
 
-    // 关闭弹窗，长按触发句子分析。
-    await tester.tap(find.byIcon(Icons.close));
+    // 屏障消费关闭手势，不能穿透到正文再次查词或翻页。
+    final navigator = tester
+        .widget<ReaderStage>(find.byType(ReaderStage))
+        .navigator;
+    final beforeDismiss = navigator.state.value;
+    final cardBounds = tester.getRect(
+      find.byKey(const ValueKey('word-popover')),
+    );
+    final outside = [
+      Offset(size.width / 2, size.height * 0.15),
+      Offset(size.width / 2, size.height * 0.85),
+      Offset(size.width * 0.05, size.height / 2),
+    ].firstWhere((point) => !cardBounds.contains(point));
+    await tester.tapAt(outside);
     await _pumpFor(tester, const Duration(seconds: 2));
+    expect(wordDialog, findsNothing);
+    expect(navigator.state.value.spineIndex, beforeDismiss.spineIndex);
+    expect(navigator.state.value.pageInChapter, beforeDismiss.pageInChapter);
+
+    // 长按句子的底部面板与分析内容保持独立验收。
     await tester.longPressAt(Offset(size.width / 2, size.height * 0.6));
     await _pumpFor(tester, const Duration(seconds: 3));
     final sentenceDialog = find.byType(SentenceAnalysisDialog);

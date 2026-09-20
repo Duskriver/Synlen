@@ -59,7 +59,7 @@ final class LearningControllerProvider
 }
 
 String _$learningControllerHash() =>
-    r'f17d691fd13cb00fa180131b25b1a24b8b7930b1';
+    r'751f8849336a9b9c57fd5c73da09eb17dc84b0ff';
 
 final class LearningControllerFamily extends $Family
     with

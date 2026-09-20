@@ -30,8 +30,20 @@ sealed class ReaderWebEvent {
       case ('onLinkTap', [String url, num x, num y])
           when x.isFinite && y.isFinite:
         return ReaderLink(url, x.toDouble(), y.toDouble());
-      case ('onWordTap', [String word, String context]):
-        return ReaderWord(word, context);
+      case (
+            'onWordTap',
+            [
+              String word,
+              String context,
+              num x,
+              num y,
+              num w,
+              num h,
+              int requestId,
+            ],
+          )
+          when _validRect(x, y, w, h) && w > 0 && h > 0 && requestId > 0:
+        return ReaderWord(word, context, _rect(x, y, w, h), requestId);
       case ('onSentenceSelected', [String sentence]):
         return ReaderSentence(sentence);
       case ('onViewportResize', []):
@@ -93,9 +105,11 @@ final class ReaderLink extends ReaderWebEvent {
 }
 
 final class ReaderWord extends ReaderWebEvent {
-  const ReaderWord(this.word, this.context);
+  const ReaderWord(this.word, this.context, this.rect, this.requestId);
   final String word;
   final String context;
+  final WebRect rect;
+  final int requestId;
 }
 
 final class ReaderSentence extends ReaderWebEvent {

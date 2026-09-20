@@ -17,7 +17,7 @@ class SentenceLearningCacheStore implements SentenceAnalysisStore {
 
   SentenceLearningCacheStore(this._db);
 
-  String _cacheKey(String sentence) => 'v$kLearningTextPromptVersion|$sentence';
+  String _cacheKey(String sentence) => 'v$kSentenceTextPromptVersion|$sentence';
 
   @override
   Future<SentenceAnalysis?> getSentence(String sentence) {

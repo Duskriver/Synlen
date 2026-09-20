@@ -53,6 +53,7 @@
   ```
 
 - `integration_test/reader_smoke_test.dart` 无需密钥，在 Android / iOS 设备验证真实 TXT 导入、WebView 翻页与跨章、主题重新分页、退出保存和重开恢复：`flutter test integration_test/reader_smoke_test.dart -d <device>`。
+- `integration_test/word_popover_smoke_test.dart` 无需密钥，真实导入 TXT / EPUB 并驱动 WebView 点词，在学习仓储与播放器注入替身，验证词卡渐进内容、外部关闭不翻页、重排与旋转关闭，以及退出取消请求：`flutter test integration_test/word_popover_smoke_test.dart -d <device>`。
 - 浏览器测试在 Chromium 与 WebKit 执行真实三 iframe，覆盖跨章、位置恢复与主题回执；实机触摸坐标、长按时序和不同 WebView 版本的体验仍需人工验收。
 
 ## Dev Note

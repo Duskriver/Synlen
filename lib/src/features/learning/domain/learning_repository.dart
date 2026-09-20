@@ -4,7 +4,7 @@ import 'package:synlen/src/features/learning/domain/learning_query.dart';
 
 /// 学习信息查询结果：文本内容与音频路径及其缓存状态。
 class LearningInfo {
-  /// 学习文本（词释义或句分析，Markdown 格式）；未命中缓存时为 null。
+  /// 单词释义为四条 NDJSON，句子分析为 Markdown；未命中缓存时为 null。
   final String? content;
 
   /// 发音音频 URL 或本地路径；未命中缓存时为 null。
@@ -38,7 +38,8 @@ abstract interface class LearningRepository {
     LearningCancellation? cancellation,
   });
 
-  /// 正文流（词释义或句分析），流结束后由实现自动落缓存。
+  /// 单词逐条输出已验证的完整 NDJSON 记录，句子输出 Markdown 片段。
+  /// 只有正文与传输均完整成功才落缓存。
   Stream<String> getContentStream(
     LearningQuery query, {
     LearningCancellation? cancellation,

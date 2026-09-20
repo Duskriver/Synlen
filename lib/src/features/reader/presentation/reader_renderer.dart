@@ -187,18 +187,19 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         _iosPageTurnSession.isAnimating) {
       _handleTapZone(details.localPosition.dx, details.localPosition.dy);
     } else {
+      final webViewBox = _webViewKey.currentContext?.findRenderObject();
+      if (webViewBox is! RenderBox || !webViewBox.hasSize) return;
+      final point = webViewBox.globalToLocal(details.globalPosition);
       unawaited(
         widget.runInteraction(
-          () => _webViewController.checkTapElementAt(
-            details.localPosition.dx,
-            details.localPosition.dy,
-          ),
+          () => _webViewController.checkTapElementAt(point.dx, point.dy),
         ),
       );
     }
   }
 
   void _handleTapZone(double x, double y) {
+    if (ModalRoute.of(context)?.isCurrent != true) return;
     final width = MediaQuery.of(context).size.width;
     if (width <= 0) return;
 
@@ -250,11 +251,11 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   }
 
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
+    final webViewBox = _webViewKey.currentContext?.findRenderObject();
+    if (webViewBox is! RenderBox || !webViewBox.hasSize) return;
+    final point = webViewBox.globalToLocal(details.globalPosition);
     await widget.runInteraction(
-      () => _webViewController.checkLongPressElementAt(
-        details.localPosition.dx,
-        details.localPosition.dy,
-      ),
+      () => _webViewController.checkLongPressElementAt(point.dx, point.dy),
     );
   }
 

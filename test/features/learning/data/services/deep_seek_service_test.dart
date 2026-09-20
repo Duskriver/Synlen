@@ -19,6 +19,8 @@ import '../repositories/learning_repository_test.dart'
         InMemorySentenceAnalysisStore,
         InMemorySentencePronunciationStore;
 
+import '../../word_definition_fixture.dart';
+
 class FakeChatAdapter implements HttpClientAdapter {
   FakeChatAdapter(this.respond);
 
@@ -106,7 +108,7 @@ void main() {
     }
   });
 
-  test('prompt 固定输出契约：单词四节、句子两节且不回显原句', () async {
+  test('prompt 固定输出契约：单词四条 NDJSON、原词音标，句子两节且不回显原句', () async {
     Future<String> capturePrompt(Future<void> Function() send) async {
       final adapter = FakeChatAdapter(
         (_) async => body(
@@ -121,13 +123,20 @@ void main() {
     }
 
     final wordPrompt = await capturePrompt(
-      () => service().explainWordStream('run', 'I run fast.').toList(),
+      () =>
+          service().explainWordStream('sorted', 'They sorted books.').toList(),
     );
-    for (final section in ['## 音标', '## 直译', '## 常见用法', '## 句中含义']) {
-      expect(wordPrompt, contains(section));
+    var previousIndex = -1;
+    for (final section in ['summary', 'explanation', 'synonyms', 'formation']) {
+      final index = wordPrompt.indexOf('"type":"$section"');
+      expect(index, greaterThan(previousIndex));
+      previousIndex = index;
     }
-    expect(wordPrompt, contains('run'));
-    expect(wordPrompt, contains('I run fast.'));
+    expect(wordPrompt, contains('NDJSON'));
+    expect(wordPrompt, contains('先输出 summary 并换行'));
+    expect(wordPrompt, contains('phonetic 必须对应被点击词形'));
+    expect(wordPrompt, contains('"sorted"'));
+    expect(wordPrompt, contains('They sorted books.'));
 
     final sentencePrompt = await capturePrompt(
       () => service().analyzeSentenceStream('She said hello.').toList(),
@@ -238,8 +247,8 @@ void main() {
 
   for (final complete in [true, false]) {
     test('真实适配器仅在完整响应后写入单词和句子缓存：$complete', () async {
-      String responseText() =>
-          '${event(content: '解释')}'
+      String responseText(String content) =>
+          '${event(content: content)}'
           '${complete ? '${event(reason: 'stop')}data: [DONE]\n\n' : ''}';
       final wordCache = InMemoryWordCacheStore();
       final sentenceCache = InMemorySentenceAnalysisStore();
@@ -258,19 +267,23 @@ void main() {
         InMemorySentencePronunciationStore(),
         InMemoryAudioFileStore(),
       );
-      for (final stream in [
-        wordRepository.getContentStream(
-          const WordLearningQuery(word: 'word', context: 'context'),
-        ),
-        sentenceRepository.getContentStream(
-          const SentenceLearningQuery(sentence: 'Sentence.'),
-        ),
-      ]) {
+      for (final isWord in [true, false]) {
+        final stream = isWord
+            ? wordRepository.getContentStream(
+                const WordLearningQuery(word: 'word', context: 'context'),
+              )
+            : sentenceRepository.getContentStream(
+                const SentenceLearningQuery(sentence: 'Sentence.'),
+              );
         dio.httpClientAdapter = FakeChatAdapter(
-          (_) async => body(responseText()),
+          (_) async =>
+              body(responseText(isWord ? wordDefinitionContent : '解释')),
         );
         if (complete) {
-          expect(await stream.toList(), ['解释']);
+          expect(
+            await stream.toList(),
+            isWord ? wordDefinitionRecords : ['解释'],
+          );
         } else {
           await expectLater(stream.toList(), throwsA(isA<LearningException>()));
         }

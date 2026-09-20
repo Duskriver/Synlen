@@ -831,4 +831,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get readerRenderFailed =>
       'Could not update the reading layout. Please try again.';
+
+  @override
+  String get wordTabExplanation => 'Explanation';
+
+  @override
+  String get wordTabSynonyms => 'Synonyms';
+
+  @override
+  String get wordTabFormation => 'Formation';
+
+  @override
+  String get wordNoSynonyms => 'No suitable synonyms in this context.';
+
+  @override
+  String get wordNoFormation => 'No reliable word formation information.';
+
+  @override
+  String get wordSectionUnavailable => 'This section could not be loaded.';
+
+  @override
+  String pronounceWord(String word) {
+    return 'Pronounce “$word”';
+  }
 }

@@ -40,7 +40,9 @@ for (const [name, html, search, word, sentence] of fixtures) {
       caret.collapse(true);
       return LearningText.extractLearningText(caret);
     }, { search });
-    expect(result).toEqual({ word, sentence });
+    expect(result).toMatchObject({ word, sentence });
+    expect(result.wordRect.width).toBeGreaterThan(0);
+    expect(result.wordRect.height).toBeGreaterThan(0);
   });
 }
 
@@ -67,14 +69,18 @@ test('真实 iframe 中点词和长按复用上下文，空白处不弹查词', 
     window.flutter_inappwebview = { callHandler: (...args) => calls.push(args) };
     const manager = new Interaction.InteractionManager({ quadTree: null }, { getFrame: () => frame, getCurrFrame: () => frame });
     const rect = frame.contentDocument.querySelector('em').getBoundingClientRect();
-    manager.checkTapElementAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    manager.checkLongPressElementAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    manager.checkTapElementAt(550, rect.top + rect.height / 2);
-    manager.checkLongPressElementAt(550, rect.top + rect.height / 2);
-    return calls;
+    const bounds = frame.getBoundingClientRect();
+    const x = rect.left + bounds.left + frame.clientLeft;
+    const y = rect.top + bounds.top + frame.clientTop;
+    manager.checkTapElementAt(x + rect.width / 2, y + rect.height / 2, 7);
+    manager.checkLongPressElementAt(x + rect.width / 2, y + rect.height / 2);
+    manager.checkTapElementAt(550, y + rect.height / 2, 8);
+    manager.checkLongPressElementAt(550, y + rect.height / 2);
+    return { calls, rect: { x, y, width: rect.width, height: rect.height } };
   });
-  expect(result).toEqual([
-    ['onWordTap', 'really', 'I really love this book.'],
+  expect(result.calls).toEqual([
+    ['onWordTap', 'really', 'I really love this book.',
+      result.rect.x, result.rect.y, result.rect.width, result.rect.height, 7],
     ['onSentenceSelected', 'I really love this book.'],
     ['onTap', 550, expect.any(Number)],
   ]);
@@ -91,5 +97,45 @@ test('换行后点击词尾字符仍命中整个词，行间空白不命中', as
     return [LearningText.extractLearningText(caret, { x: rect.right - 1, y: rect.top + rect.height / 2 }),
       LearningText.extractLearningText(caret, { x: rect.right - 1, y: rect.bottom + 8 })];
   });
-  expect(result).toEqual([{ word: 'reading', sentence: 'hello reading now.' }, null]);
+  expect(result[0]).toMatchObject({ word: 'reading', sentence: 'hello reading now.' });
+  expect(result[1]).toBeNull();
+});
+
+test('跨内联节点与软连字符换行的词矩形包含全部可见片段', async ({ page }) => {
+  await page.setContent('<p style="width:100px;font:24px/2 monospace"><span id="target">dic\u00ad</span><b>tionary</b></p>');
+  await page.addScriptTag({ content: bundle });
+  const result = await page.evaluate(() => {
+    const first = document.querySelector('#target').firstChild;
+    const last = document.querySelector('b').firstChild;
+    const caret = document.createRange(); caret.setStart(first, 1);
+    const word = document.createRange(); word.setStart(first, 0); word.setEnd(last, last.length);
+    const rect = word.getBoundingClientRect();
+    return { extracted: LearningText.extractLearningText(caret),
+      expected: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+      lines: new Set(Array.from(word.getClientRects()).filter(rect => rect.width > 0).map(rect => rect.top)).size };
+  });
+  expect(result.extracted.word).toBe('dictionary');
+  expect(result.lines).toBeGreaterThan(1);
+  expect(result.extracted.wordRect).toEqual(result.expected);
+});
+
+test('分页滚动后只返回本页可见词片段，不把排版留白和页外部分计入锚点', async ({ page }) => {
+  await page.setContent('<style>html{margin:0;padding:30px 40px;overflow:hidden}body{margin:0;width:96px;height:48px;overflow:auto;column-width:96px;column-gap:80px;column-fill:auto;font:24px/48px monospace}p{margin:0;overflow-wrap:anywhere;orphans:1;widows:1}</style><p id="target">abcdefghijklmnop</p>');
+  await page.addScriptTag({ content: bundle });
+  const result = await page.evaluate(() => {
+    const node = document.querySelector('#target').firstChild;
+    document.body.scrollLeft = 176;
+    const caret = document.createRange(); caret.setStart(node, 8);
+    const box = document.body.getBoundingClientRect();
+    return { extracted: LearningText.extractLearningText(caret), scroll: document.body.scrollLeft,
+      bounds: { left: box.left, top: box.top, right: box.right, bottom: box.bottom } };
+  });
+  expect(result.scroll).toBeGreaterThan(0);
+  expect(result.extracted.word).toBe('abcdefghijklmnop');
+  const rect = result.extracted.wordRect;
+  expect(rect.x).toBeGreaterThanOrEqual(result.bounds.left);
+  expect(rect.y).toBeGreaterThanOrEqual(result.bounds.top);
+  expect(rect.x + rect.width).toBeLessThanOrEqual(result.bounds.right);
+  expect(rect.y + rect.height).toBeLessThanOrEqual(result.bounds.bottom);
+  expect(rect.width).toBeGreaterThan(0);
 });

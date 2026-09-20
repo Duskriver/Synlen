@@ -1567,6 +1567,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not update the reading layout. Please try again.'**
   String get readerRenderFailed;
+
+  /// No description provided for @wordTabExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Explanation'**
+  String get wordTabExplanation;
+
+  /// No description provided for @wordTabSynonyms.
+  ///
+  /// In en, this message translates to:
+  /// **'Synonyms'**
+  String get wordTabSynonyms;
+
+  /// No description provided for @wordTabFormation.
+  ///
+  /// In en, this message translates to:
+  /// **'Formation'**
+  String get wordTabFormation;
+
+  /// No description provided for @wordNoSynonyms.
+  ///
+  /// In en, this message translates to:
+  /// **'No suitable synonyms in this context.'**
+  String get wordNoSynonyms;
+
+  /// No description provided for @wordNoFormation.
+  ///
+  /// In en, this message translates to:
+  /// **'No reliable word formation information.'**
+  String get wordNoFormation;
+
+  /// No description provided for @wordSectionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This section could not be loaded.'**
+  String get wordSectionUnavailable;
+
+  /// 朗读被点击词形的按钮提示
+  ///
+  /// In en, this message translates to:
+  /// **'Pronounce “{word}”'**
+  String pronounceWord(String word);
 }
 
 class _AppLocalizationsDelegate

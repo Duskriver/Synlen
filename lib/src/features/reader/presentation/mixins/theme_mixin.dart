@@ -5,6 +5,7 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
   ReaderWorkflow get workflow;
   ThemeData? get currentTheme;
   set currentTheme(ThemeData? value);
+  void dismissWordPopup();
 
   EpubTheme getEpubTheme() =>
       ref.read(readerSettingsProvider).toEpubTheme(context);
@@ -18,8 +19,13 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
     }
   }
 
-  void updateWebViewThemeWithDebounce() =>
-      workflow.requestTheme(getEpubTheme(), debounce: true);
+  void updateWebViewThemeWithDebounce() {
+    dismissWordPopup();
+    workflow.requestTheme(getEpubTheme(), debounce: true);
+  }
 
-  void updateWebViewTheme() => workflow.requestTheme(getEpubTheme());
+  void updateWebViewTheme() {
+    dismissWordPopup();
+    workflow.requestTheme(getEpubTheme());
+  }
 }

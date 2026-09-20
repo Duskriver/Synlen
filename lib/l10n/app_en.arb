@@ -1085,5 +1085,20 @@
   "deepSeekCheckBadKey": "DeepSeek key is invalid or expired",
   "deepSeekCheckFailed": "Cannot reach DeepSeek. Check your network",
   "readerLoadFailed": "Could not open this book. Please try again.",
-  "readerRenderFailed": "Could not update the reading layout. Please try again."
+  "readerRenderFailed": "Could not update the reading layout. Please try again.",
+  "wordTabExplanation": "Explanation",
+  "wordTabSynonyms": "Synonyms",
+  "wordTabFormation": "Formation",
+  "wordNoSynonyms": "No suitable synonyms in this context.",
+  "wordNoFormation": "No reliable word formation information.",
+  "wordSectionUnavailable": "This section could not be loaded.",
+  "pronounceWord": "Pronounce “{word}”",
+  "@pronounceWord": {
+    "description": "朗读被点击词形的按钮提示",
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  }
 }

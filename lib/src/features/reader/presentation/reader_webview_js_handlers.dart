@@ -28,8 +28,27 @@ void _registerJavaScriptHandlers(
             } else {
               callbacks.onTap(x, y);
             }
-          case ReaderWord(:final word, :final context):
-            callbacks.onWordTap(word, context);
+          case ReaderWord(
+            :final word,
+            :final context,
+            rect: final bounds,
+            :final requestId,
+          ):
+            if (!state._api.acceptWordRequest(requestId)) break;
+            final box = state.context.findRenderObject();
+            if (box is RenderBox &&
+                box.hasSize &&
+                state.widget.shouldShowWebView &&
+                !state.widget.isLoading) {
+              callbacks.onWordTap(
+                word,
+                context,
+                MatrixUtils.transformRect(
+                  box.getTransformTo(null),
+                  rect(bounds),
+                ),
+              );
+            }
           case ReaderSentence(:final sentence):
             callbacks.onSentenceSelected(sentence);
           case ReaderImage(:final url, rect: final bounds):
@@ -37,6 +56,7 @@ void _registerJavaScriptHandlers(
           case ReaderFootnote(:final html, rect: final bounds, :final baseUrl):
             callbacks.onFootnoteTap(html, rect(bounds), baseUrl);
           case ReaderResize():
+            state._api.invalidateWordRequest();
             callbacks.onViewportResize?.call();
           case ReaderEventFinished(:final token):
             state._bridge.resolveToken(token);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -78,6 +79,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   InAppWebViewController? _controller;
   HeadlessInAppWebView? _headlessWebView;
   bool _isHeadlessInitialized = false;
+  bool _isHeadlessReady = false;
 
   bool _isSubsequentLoad = false;
 
@@ -95,6 +97,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   @override
   void dispose() {
+    _api.invalidateWordRequest();
     widget.controller._attachState(null);
     _bridge.detach();
     _headlessWebView?.dispose();
@@ -105,6 +108,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   void didUpdateWidget(covariant ReaderWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isLoading && widget.isLoading) {
+      _api.invalidateWordRequest();
       setState(() {
         _isSubsequentLoad = true;
       });
@@ -124,8 +128,18 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       onLoadStop: _onLoadStop,
     );
 
-    _headlessWebView?.run();
+    unawaited(_startHeadlessWebView(_headlessWebView!));
     _isHeadlessInitialized = true;
+  }
+
+  Future<void> _startHeadlessWebView(HeadlessInAppWebView webView) async {
+    await webView.run();
+    if (!mounted) {
+      await webView.dispose();
+      return;
+    }
+    // 插件只有在 run 完成后才能把预载实例移到可见视图。
+    setState(() => _isHeadlessReady = true);
   }
 
   Future<void> _waitForWebviewRender() async {
@@ -212,6 +226,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   void _onWebViewCreated(InAppWebViewController controller) {
+    if (!mounted) return;
+    _api.invalidateWordRequest();
     _controller = controller;
     _bridge.attach((source) async {
       await controller.evaluateJavascript(source: source);
@@ -231,13 +247,14 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         final width = constraints.maxWidth - _currentTheme.padding.horizontal;
         final height = constraints.maxHeight - _currentTheme.padding.vertical;
         _initHeadlessWebViewIfNeeded(width, height);
+        final showWebView = widget.shouldShowWebView && _isHeadlessReady;
 
         return Stack(
           children: [
             RepaintBoundary(
               key: _repaintKey,
               child: AbsorbPointer(
-                child: widget.shouldShowWebView
+                child: showWebView
                     ? InAppWebView(
                         headlessWebView: _headlessWebView,
                         initialData: _generateInitialData(width, height),
@@ -254,17 +271,15 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             ),
             Positioned.fill(
               child: IgnorePointer(
-                ignoring: !widget.isLoading && widget.shouldShowWebView,
+                ignoring: !widget.isLoading && showWebView,
                 child: AnimatedOpacity(
-                  duration: (widget.isLoading || !widget.shouldShowWebView)
+                  duration: (widget.isLoading || !showWebView)
                       ? Duration.zero
                       : const Duration(
                           milliseconds: AppTheme.defaultAnimationDurationMs,
                         ),
                   curve: Curves.easeOut,
-                  opacity: (widget.isLoading || !widget.shouldShowWebView)
-                      ? 1.0
-                      : 0.0,
+                  opacity: (widget.isLoading || !showWebView) ? 1.0 : 0.0,
                   child: Container(
                     color: _currentTheme.surfaceColor,
                     child: _isSubsequentLoad

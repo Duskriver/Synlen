@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:synlen/src/features/learning/domain/word_definition.dart';
 
 @immutable
 class LearningDetailState {
@@ -6,6 +7,7 @@ class LearningDetailState {
   final bool isFetchingContent;
   final bool isFetchingAudio;
   final String content;
+  final WordDefinition? wordDefinition;
   final String? audioUrl;
   final Object? contentError;
   final Object? audioError;
@@ -16,6 +18,7 @@ class LearningDetailState {
     this.isFetchingContent = false,
     this.isFetchingAudio = false,
     this.content = '',
+    this.wordDefinition,
     this.audioUrl,
     this.contentError,
     this.audioError,
@@ -27,6 +30,7 @@ class LearningDetailState {
     bool? isFetchingContent,
     bool? isFetchingAudio,
     String? content,
+    WordDefinition? wordDefinition,
     String? audioUrl,
     bool clearAudioUrl = false,
     Object? contentError,
@@ -40,6 +44,7 @@ class LearningDetailState {
       isFetchingContent: isFetchingContent ?? this.isFetchingContent,
       isFetchingAudio: isFetchingAudio ?? this.isFetchingAudio,
       content: content ?? this.content,
+      wordDefinition: wordDefinition ?? this.wordDefinition,
       audioUrl: clearAudioUrl ? null : (audioUrl ?? this.audioUrl),
       contentError: clearContentError
           ? null

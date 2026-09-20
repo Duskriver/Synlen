@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/application/learning_audio_coordinator.dart';
 import 'package:synlen/src/features/learning/application/learning_controller_support.dart';
 import 'package:synlen/src/features/learning/application/learning_detail_state.dart';
@@ -8,6 +9,8 @@ import 'package:synlen/src/features/learning/data/repositories/learning_reposito
 import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/features/learning/domain/learning_repository.dart';
+import 'package:synlen/src/features/learning/domain/word_definition.dart';
+import 'package:synlen/src/features/learning/domain/word_definition_parser.dart';
 
 part 'learning_controller.g.dart';
 
@@ -66,11 +69,24 @@ class LearningController extends _$LearningController {
         return;
       }
 
+      var hasCachedContent = result.hasCachedContent;
+      WordDefinition? wordDefinition;
+      if (query is WordLearningQuery && hasCachedContent) {
+        try {
+          wordDefinition = WordDefinitionParser.parse(result.content ?? '');
+        } on FormatException catch (error) {
+          // 缓存可重建；跳过损坏内容，让本次请求覆盖，避免重试循环命中坏记录。
+          appLogger.w('Invalid cached word definition: $error');
+          hasCachedContent = false;
+        }
+      }
+
       state = LearningDetailState(
         isLoading: false,
-        isFetchingContent: !result.hasCachedContent,
+        isFetchingContent: !hasCachedContent,
         isFetchingAudio: !result.hasCachedAudio,
-        content: result.content ?? '',
+        content: hasCachedContent ? result.content ?? '' : '',
+        wordDefinition: wordDefinition,
         audioUrl: result.audioUrl,
         hasAudio: result.hasCachedAudio,
       );
@@ -84,7 +100,7 @@ class LearningController extends _$LearningController {
         unawaited(_fetchAndCacheAudio(query, session));
       }
 
-      if (result.hasCachedContent) {
+      if (hasCachedContent) {
         _updateState(
           session,
           (current) => current.copyWith(isFetchingContent: false),
@@ -172,6 +188,16 @@ class LearningController extends _$LearningController {
   ) async {
     try {
       final repository = session.repository;
+      if (query is WordLearningQuery) {
+        await _consumeWordContent(
+          repository.getContentStream(
+            query,
+            cancellation: session.cancellation,
+          ),
+          session,
+        );
+        return;
+      }
       await consumeLearningContentStream(
         stream: repository.getContentStream(
           query,
@@ -196,6 +222,38 @@ class LearningController extends _$LearningController {
         session,
         (current) => current.copyWith(isFetchingContent: false),
       );
+    }
+  }
+
+  /// 单词只有四条已合行记录，立即发布，避免简义等待后续记录才刷新。
+  Future<void> _consumeWordContent(
+    Stream<String> stream,
+    LearningControllerSession<LearningRepository> session,
+  ) async {
+    if (session.isDisposed) return;
+    final iterator = StreamIterator(stream);
+    final unregister = session.cancellation.onCancel(
+      () => unawaited(iterator.cancel()),
+    );
+    final parser = WordDefinitionParser();
+    try {
+      while (await iterator.moveNext()) {
+        if (session.isDisposed) return;
+        final record = iterator.current;
+        final definition = parser.addLine(record);
+        _updateState(
+          session,
+          (current) => current.copyWith(
+            content: current.content + record,
+            wordDefinition: definition,
+            clearContentError: true,
+          ),
+        );
+      }
+      if (!session.isDisposed) parser.finish();
+    } finally {
+      unregister();
+      await iterator.cancel();
     }
   }
 

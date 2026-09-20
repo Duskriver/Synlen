@@ -9,6 +9,7 @@ import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/features/learning/domain/learning_repository.dart';
 
 import 'learning_audio_coordinator_test.dart' show FakeLearningAudioPlayer;
+import '../word_definition_fixture.dart';
 
 class RetryLearningRepository implements LearningRepository {
   final queries = <LearningCancellation>[];
@@ -19,8 +20,8 @@ class RetryLearningRepository implements LearningRepository {
   }) async {
     queries.add(cancellation!);
     if (queries.length == 1) throw StateError('temporary');
-    return const LearningInfo(
-      content: '缓存释义',
+    return LearningInfo(
+      content: query is WordLearningQuery ? wordDefinitionContent : '缓存释义',
       hasCachedContent: true,
       hasCachedAudio: true,
     );
@@ -37,6 +38,7 @@ void main() {
   for (final isWord in [true, false]) {
     test('${isWord ? '单词' : '句子'}失败后重试取消旧会话、清除错误并复用缓存，连续触发不重复查询', () async {
       final query = isWord ? wordQuery : sentenceQuery;
+      final cachedContent = isWord ? wordDefinitionContent : '缓存释义';
       final provider = learningControllerProvider(query);
       final repository = RetryLearningRepository();
       final container = ProviderContainer.test(
@@ -51,7 +53,7 @@ void main() {
       final recovered = Completer<void>();
       final subscription = container.listen(provider, (_, next) {
         if (next.contentError != null && !failed.isCompleted) failed.complete();
-        if (next.content == '缓存释义' && !recovered.isCompleted) {
+        if (next.content == cachedContent && !recovered.isCompleted) {
           recovered.complete();
         }
       });
@@ -65,7 +67,7 @@ void main() {
       expect(repository.queries, hasLength(2));
       expect(repository.queries.first.isCancelled, isTrue);
       expect(repository.queries.last.isCancelled, isFalse);
-      expect(container.read(provider).content, '缓存释义');
+      expect(container.read(provider).content, cachedContent);
       expect(container.read(provider).contentError, isNull);
       subscription.close();
       await container.pump();

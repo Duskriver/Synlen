@@ -45,8 +45,10 @@ export class FlutterBridge {
     window.flutter_inappwebview.callHandler('onImageLongPress', src, x, y, width, height);
   }
 
-  static onWordTap(word: string, context: string): void {
-    window.flutter_inappwebview.callHandler('onWordTap', word, context);
+  /** 矩形使用顶层 WebView 视口的 CSS 像素，已包含章节排版与 iframe 偏移。 */
+  static onWordTap(word: string, context: string, x: number, y: number,
+    width: number, height: number, requestId: number): void {
+    window.flutter_inappwebview.callHandler('onWordTap', word, context, x, y, width, height, requestId);
   }
 
   static onSentenceSelected(sentence: string): void {

@@ -76,7 +76,9 @@ class ReaderWebViewCallbacks {
   final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
   final Function(String url) onLinkTap;
   final bool Function(String url) shouldHandleLinkTap;
-  final Function(String word, String context) onWordTap;
+
+  /// 词矩形使用 Flutter 全局逻辑坐标，不含设备像素比缩放。
+  final Function(String word, String context, Rect anchorRect) onWordTap;
   final Function(String sentence) onSentenceSelected;
 
   const ReaderWebViewCallbacks({

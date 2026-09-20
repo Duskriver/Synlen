@@ -5,26 +5,96 @@ import 'package:synlen/src/core/services/toast_service.dart';
 
 import '../presentation/widgets/sentence_analysis_dialog.dart';
 import '../presentation/widgets/word_definition_dialog.dart';
+import '../presentation/widgets/word_definition_popover.dart';
 
 part 'learning_entry.g.dart';
 
-/// 学习能力的对外入口：宿主（阅读器）只依赖这两个方法，
-/// 弹窗形状、滚动与生命周期留在学习模块内部。
+/// 学习能力的对外入口：宿主提供词锚点并在重排时关闭词卡。
 @riverpod
 class LearningEntry extends _$LearningEntry {
-  @override
-  void build() {}
+  RawDialogRoute<void>? _wordRoute;
+  bool _wordDismissPending = false;
 
-  /// 点词入口：LLM 释义 + TTS 发音。
-  Future<void> showWord({required String word, String? context}) async {
-    appLogger.d('Word Tapped: $word');
-    await _showSheet(
-      (controller) => WordDefinitionDialog(
-        word: word,
-        context: context ?? '',
-        scrollController: controller,
-      ),
+  @override
+  void build() {
+    ref.onDispose(dismissWord);
+  }
+
+  /// [anchorRect] 为 Flutter 全局逻辑坐标；同时只允许一张词卡。
+  Future<void> showWord({
+    required String word,
+    String? context,
+    required Rect anchorRect,
+    required ThemeData theme,
+  }) async {
+    if (_wordRoute != null) return;
+    final navigator = ToastService.navigatorKey.currentState;
+    final overlayBox = navigator?.overlay?.context.findRenderObject();
+    if (navigator == null ||
+        overlayBox is! RenderBox ||
+        !overlayBox.hasSize ||
+        !anchorRect.isFinite ||
+        anchorRect.isEmpty) {
+      return;
+    }
+    final localAnchor = Rect.fromPoints(
+      overlayBox.globalToLocal(anchorRect.topLeft),
+      overlayBox.globalToLocal(anchorRect.bottomRight),
     );
+    final keepAlive = ref.keepAlive();
+    final route = RawDialogRoute<void>(
+      barrierDismissible: true,
+      barrierColor: Colors.transparent,
+      barrierLabel: MaterialLocalizations.of(
+        navigator.context,
+      ).modalBarrierDismissLabel,
+      transitionDuration: MediaQuery.disableAnimationsOf(navigator.context)
+          ? Duration.zero
+          : const Duration(milliseconds: 180),
+      pageBuilder: (routeContext, animation, secondaryAnimation) => Theme(
+        data: theme,
+        child: Semantics(
+          scopesRoute: true,
+          namesRoute: true,
+          explicitChildNodes: true,
+          label: word,
+          child: WordDefinitionPopover(
+            anchorRect: localAnchor,
+            child: WordDefinitionDialog(word: word, context: context ?? ''),
+          ),
+        ),
+      ),
+      transitionBuilder: (context, animation, secondaryAnimation, child) =>
+          FadeTransition(
+            opacity: animation.drive(CurveTween(curve: Curves.easeOut)),
+            child: child,
+          ),
+    );
+    _wordRoute = route;
+    try {
+      await navigator.push(route);
+      await route.completed;
+    } finally {
+      if (identical(_wordRoute, route)) {
+        _wordRoute = null;
+        _wordDismissPending = false;
+      }
+      keepAlive.close();
+    }
+  }
+
+  /// 仅移除本入口持有的词卡；延到帧末以兼容宿主重排与销毁回调。
+  void dismissWord() {
+    final route = _wordRoute;
+    if (route == null || _wordDismissPending) return;
+    _wordDismissPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = route.navigator;
+      if (navigator != null && navigator.mounted && route.isActive) {
+        navigator.removeRoute(route);
+      }
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   /// 长按句子入口：翻译 / 语法分析 + 整句朗读。

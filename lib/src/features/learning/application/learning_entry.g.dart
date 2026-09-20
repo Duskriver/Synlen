@@ -8,18 +8,15 @@ part of 'learning_entry.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 学习能力的对外入口：宿主（阅读器）只依赖这两个方法，
-/// 弹窗形状、滚动与生命周期留在学习模块内部。
+/// 学习能力的对外入口：宿主提供词锚点并在重排时关闭词卡。
 
 @ProviderFor(LearningEntry)
 final learningEntryProvider = LearningEntryProvider._();
 
-/// 学习能力的对外入口：宿主（阅读器）只依赖这两个方法，
-/// 弹窗形状、滚动与生命周期留在学习模块内部。
+/// 学习能力的对外入口：宿主提供词锚点并在重排时关闭词卡。
 final class LearningEntryProvider
     extends $NotifierProvider<LearningEntry, void> {
-  /// 学习能力的对外入口：宿主（阅读器）只依赖这两个方法，
-  /// 弹窗形状、滚动与生命周期留在学习模块内部。
+  /// 学习能力的对外入口：宿主提供词锚点并在重排时关闭词卡。
   LearningEntryProvider._()
     : super(
         from: null,
@@ -47,10 +44,9 @@ final class LearningEntryProvider
   }
 }
 
-String _$learningEntryHash() => r'971ddc7a64207d1c50b61d9ba12febcb9786d2ae';
+String _$learningEntryHash() => r'967d83bdd73f1962b1bb35ff0dde3c5b985f6a12';
 
-/// 学习能力的对外入口：宿主（阅读器）只依赖这两个方法，
-/// 弹窗形状、滚动与生命周期留在学习模块内部。
+/// 学习能力的对外入口：宿主提供词锚点并在重排时关闭词卡。
 
 abstract class _$LearningEntry extends $Notifier<void> {
   void build();

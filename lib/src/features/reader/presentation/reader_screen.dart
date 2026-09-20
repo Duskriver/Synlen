@@ -80,6 +80,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   Timer? _progressLabelTimer;
   bool _exitInProgress = false;
+  VoidCallback? _dismissWordPopup;
+  ReaderNavState? _wordPopupLocation;
+  MediaQueryData? _wordPopupMetrics;
+
+  bool get _isWordPopupOpen => _dismissWordPopup != null;
 
   // Theme state (used by _ThemeMixin)
   @override
@@ -131,7 +136,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       disableInterception: VolumeControlService.disableInterception,
       onPreviousPage: () => rendererController.performPreviousPageTurn(),
       onNextPage: () => rendererController.performNextPageTurn(),
-      isEnabled: () => ref.read(readerSettingsProvider).volumeKeyTurnsPage,
+      isEnabled: () =>
+          ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
+          !_isWordPopupOpen,
     );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -140,12 +147,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final router = ModalRoute.of(context);
       if (router != null && router.animation != null) {
         routeAnimation = router.animation!;
         routeAnimation?.addStatusListener(handleRouteAnimationStatus);
+        // 无动画导航或慢首帧可能错过 completed 通知，订阅后立即同步当前状态。
+        handleRouteAnimationStatus(routeAnimation!.status);
       } else {
-        shouldShowWebView = true;
+        setState(() => shouldShowWebView = true);
       }
     });
     hideBottomNavigationBar();
@@ -180,6 +190,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   @override
   void dispose() {
+    dismissWordPopup();
     WidgetsBinding.instance.removeObserver(this);
     routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
     routeAnimation = null;
@@ -205,6 +216,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
+      dismissWordPopup();
       unawaited(workflow.flush());
     }
 
@@ -212,8 +224,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     setupVolumeControl();
   }
 
+  @override
+  void didChangeMetrics() {
+    final previous = _wordPopupMetrics;
+    if (previous == null) return;
+    final current = MediaQueryData.fromView(View.of(context));
+    // iOS 可在几何值不变时重复通知；只有锚点坐标或安全区变化才需要关卡。
+    if (previous.size != current.size ||
+        previous.devicePixelRatio != current.devicePixelRatio ||
+        previous.viewPadding != current.viewPadding ||
+        previous.viewInsets != current.viewInsets) {
+      dismissWordPopup();
+    }
+  }
+
   Future<void> _leaveReader() async {
     if (_exitInProgress) return;
+    dismissWordPopup();
     _exitInProgress = true;
     final saved = await workflow.flush();
     _exitInProgress = false;
@@ -228,6 +255,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
           !tocDrawerOpen &&
           !styleDrawerOpen &&
+          !_isWordPopupOpen &&
           lastLifecycleState == AppLifecycleState.resumed,
     );
   }
@@ -235,6 +263,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   void _refreshNavigationView() {
     if (!mounted) return;
     final nav = navigator.state.value;
+    final location = _wordPopupLocation;
+    if (location != null &&
+        (nav.isBusy ||
+            nav.spineIndex != location.spineIndex ||
+            nav.pageInChapter != location.pageInChapter ||
+            nav.totalPagesInChapter != location.totalPagesInChapter)) {
+      dismissWordPopup();
+    }
     tocState.refresh(bookSession, nav.spineIndex);
     _progressLabelTimer?.cancel();
     _progressLabelTimer = Timer(const Duration(milliseconds: 150), () {
@@ -284,6 +320,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   /// 翻页前的边界判定：越界时提示并阻止本次翻页。
   bool canPerformPageTurn(bool isNext) {
+    if (_isWordPopupOpen) return false;
     final outcome = navigator.canTurnPage(isNext);
     if (outcome != ReaderNavOutcome.moved) _showNavOutcome(outcome);
     return outcome == ReaderNavOutcome.moved;
@@ -352,11 +389,42 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     scaffoldKey.currentState?.openDrawer();
   }
 
-  void handleWordTap(String word, String wordContext) {
-    ref
-        .read(learningEntryProvider.notifier)
-        .showWord(word: word, context: wordContext);
+  Future<void> handleWordTap(
+    String word,
+    String wordContext,
+    Rect anchorRect,
+  ) async {
+    if (!mounted ||
+        _isWordPopupOpen ||
+        !shouldShowWebView ||
+        showControls ||
+        _exitInProgress ||
+        navigator.state.value.isBusy ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    final entry = ref.read(learningEntryProvider.notifier);
+    _dismissWordPopup = entry.dismissWord;
+    _wordPopupLocation = navigator.state.value;
+    _wordPopupMetrics = MediaQueryData.fromView(View.of(context));
+    setupVolumeControl();
+    try {
+      await entry.showWord(
+        word: word,
+        context: wordContext,
+        anchorRect: anchorRect,
+        theme: getEpubTheme().themeData,
+      );
+    } finally {
+      _dismissWordPopup = null;
+      _wordPopupLocation = null;
+      _wordPopupMetrics = null;
+      if (mounted) setupVolumeControl();
+    }
   }
+
+  @override
+  void dismissWordPopup() => _dismissWordPopup?.call();
 
   void handleSentenceSelected(String sentence) {
     ref.read(learningEntryProvider.notifier).showSentence(sentence: sentence);
@@ -445,8 +513,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               callbacks: ReaderWebViewCallbacks(
                 onInitialized: () =>
                     workflow.initializeRenderer(theme: getEpubTheme()),
-                onViewportResize: () =>
-                    workflow.requestTheme(getEpubTheme(), force: true),
+                onViewportResize: () {
+                  dismissWordPopup();
+                  workflow.requestTheme(getEpubTheme(), force: true);
+                },
                 onPageCountReady: workflow.reportPageCount,
                 onPageChanged: workflow.reportPageIndex,
                 onScrollAnchors: handleScrollAnchors,

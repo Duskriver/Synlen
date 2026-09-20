@@ -32,7 +32,7 @@ domain 新增统一抽象，词/句各保留一个实现，controller 合并为�
 - 词/句两组现有测试全绿且断言不减少：`learning_repository_test.dart` 两组用例迁到 `getInfo` / `LearningInfo` 命名；lifecycle/retry 的 4 组替身（Deferred/Retry × Word/Sentence）合并为 `DeferredLearningRepository` / `RetryLearningRepository` 各一组，覆盖两条路径；`learning_request_cancellation_test` 与 `deep_seek_service_test` 的流调用迁到 `getContentStream`。
 - 分层改善：controller 只依赖 domain 的 `LearningRepository` 抽象；application→data 的具体类型依赖（`WordRepository` / `SentenceRepository`）收敛到 provider 选择点。`docs/subsystems/learning.md`、`architecture.md` 数据流、`glossary.md`、`development.md` 的类型名同步更新。
 - 合并以迁移前测试为行为基线逐条对照；免费词典降级、取消传播、重试语义均有测试锁定。风险与验收的折入：若词/句差异未来扩大，接口参数化点选在有真实差异的位置，差异真扩大时允许再拆。
-- `LearningControllerSession<T>` 泛型参数现为 `LearningRepository`；`consumeLearningContentStream` 的 `_kThrottle` 不变量不受合并影响。
+- `LearningControllerSession<T>` 泛型参数为 `LearningRepository`；句子继续经 `consumeLearningContentStream` 节流。词侧的逐条结构化更新由[点词释义浮卡](../feature/2026-09-20-word-definition-popover.md)决策持有；共享查询、音频与取消生命周期仍由本笔记持有。
 
 ## Dev Note
 

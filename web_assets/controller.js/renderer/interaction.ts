@@ -231,7 +231,7 @@ export class InteractionManager {
     return false;
   }
 
-  checkTapElementAt(x: number, y: number): void {
+  checkTapElementAt(x: number, y: number, requestId: number): void {
     const bestCandidate = this.checkElementAtHelper(x, y, (candidate) => candidate.type === 'footnote');
 
     if (bestCandidate) {
@@ -264,7 +264,7 @@ export class InteractionManager {
     }
 
     if (this.checkLinkAt(x, y)) return;
-    if (this.checkWordAt(x, y)) return;
+    if (this.checkWordAt(x, y, requestId)) return;
 
     FlutterBridge.onTap(x, y);
   }
@@ -387,25 +387,38 @@ export class InteractionManager {
     return null;
   }
 
-  private checkWordAt(x: number, y: number): boolean {
-    const range = this.getRangeFromPoint(x, y);
+  private checkWordAt(x: number, y: number, requestId: number): boolean {
+    const frame = this.frameMgr.getCurrFrame();
+    if (!frame) return false;
+    const frameBounds = frame.getBoundingClientRect();
+    const point = { x: x - frameBounds.left - frame.clientLeft,
+      y: y - frameBounds.top - frame.clientTop };
+    const range = this.getRangeFromPoint(point.x, point.y);
     if (!range) {
       return false;
     }
 
-    const result = extractLearningText(range, { x, y });
-    if (!result?.word) return false;
-    FlutterBridge.onWordTap(result.word, result.sentence);
+    const result = extractLearningText(range, point);
+    if (!result?.word || !result.wordRect) return false;
+    const rect = result.wordRect;
+    FlutterBridge.onWordTap(result.word, result.sentence,
+      rect.x + frameBounds.left + frame.clientLeft,
+      rect.y + frameBounds.top + frame.clientTop, rect.width, rect.height, requestId);
     return true;
   }
 
   private checkSentenceAt(x: number, y: number): boolean {
-    const range = this.getRangeFromPoint(x, y);
+    const frame = this.frameMgr.getCurrFrame();
+    if (!frame) return false;
+    const frameBounds = frame.getBoundingClientRect();
+    const point = { x: x - frameBounds.left - frame.clientLeft,
+      y: y - frameBounds.top - frame.clientTop };
+    const range = this.getRangeFromPoint(point.x, point.y);
     if (!range) {
       return false;
     }
 
-    const result = extractLearningText(range, { x, y });
+    const result = extractLearningText(range, point);
     if (!result) {
       return false;
     }

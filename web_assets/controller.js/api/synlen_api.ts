@@ -30,7 +30,7 @@ export interface SynlenApi {
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
   /// If there is nothing, `onTap` will be called
-  checkTapElementAt(x: number, y: number): void;
+  checkTapElementAt(x: number, y: number, requestId: number): void;
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y) for long press.
   checkLongPressElementAt(x: number, y: number): void;

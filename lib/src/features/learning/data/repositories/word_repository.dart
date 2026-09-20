@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../services/learning_http_request.dart';
 import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'package:dio/dio.dart';
@@ -11,6 +13,7 @@ import 'package:synlen/src/features/learning/data/stores/word_learning_cache_sto
 import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/features/learning/domain/learning_repository.dart';
+import 'package:synlen/src/features/learning/domain/word_definition_parser.dart';
 
 /// 单词学习仓库，专门负责单词的发音、解释及缓存逻辑
 class WordRepository implements LearningRepository {
@@ -160,7 +163,7 @@ class WordRepository implements LearningRepository {
     return _cacheStore.savePronunciationPath(word, audioPath);
   }
 
-  /// 流式获取单词解释并自动持久化
+  /// 逐条发出已验证的记录，四条齐全且上游正常完成后才写入缓存。
   @override
   Stream<String> getContentStream(
     LearningQuery query, {
@@ -170,28 +173,30 @@ class WordRepository implements LearningRepository {
     final word = wordQuery.word;
     final context = wordQuery.context;
     cancellation?.throwIfCancelled();
-    String fullContent = '';
+    final fullContent = StringBuffer();
+    final parser = WordDefinitionParser();
 
-    // 同时启动 AI 查询
     final aiStream = _deepSeekService.explainWordStream(
       word,
       context,
       cancellation: cancellation,
     );
 
-    await for (final chunk in aiStream) {
-      fullContent += chunk;
-      yield chunk;
+    await for (final line in aiStream.transform(const LineSplitter())) {
+      cancellation?.throwIfCancelled();
+      if (line.trim().isEmpty) continue;
+      parser.addLine(line);
+      final record = '$line\n';
+      fullContent.write(record);
+      yield record;
     }
 
     cancellation?.throwIfCancelled();
-    // 当 AI 解释完成时，保存到本地缓存
-    if (fullContent.isNotEmpty) {
-      await _cacheStore.saveExplanation(
-        word: word,
-        context: context,
-        explanation: fullContent,
-      );
-    }
+    parser.finish();
+    await _cacheStore.saveExplanation(
+      word: word,
+      context: context,
+      explanation: fullContent.toString(),
+    );
   }
 }

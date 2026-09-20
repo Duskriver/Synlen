@@ -32,6 +32,7 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 | `ReaderSettingsNotifier` | 阅读设置持久化与修改（`SharedPreferences`） | `lib/src/features/reader/application/reader_settings_notifier.dart` |
 | `EpubTheme` / `colorToHex` | 阅读器配色，与全局 `AppThemeSettings` 解耦 | `lib/src/features/reader/domain/epub_theme.dart` |
 | `ReadingProgress` | 完成分页后的位置：章节序号、章内页码、章内总页数 | `lib/src/features/reader/domain/reading_progress.dart` |
+| `ReaderWord` / `WebRect` | 点词桥接事件与矩形：单词、句子上下文、WebView 视口内的可见词矩形 | `lib/src/web/api/reader_web_event.dart` |
 | `VolumeControlService` / `VolumeKeyPageTurnController` | 音量键翻页：前者封装平台拦截与事件流，后者按启用条件订阅并把事件映射为翻页动作 | `lib/src/features/reader/application/volume_control_service.dart` |
 | `ReaderScreen` / `ReaderRenderer` / `ReaderWebView` / `ControlPanel` / `ReaderBottomBar` / `TocDrawer` | 屏幕、三 iframe 渲染器、InAppWebView 封装、控制面板与底部控制条、目录抽屉 | `lib/src/features/reader/presentation/` |
 | `AndroidPageTurnSession` / `IOSPageTurnSession` | 平台翻页动画 | `lib/src/features/reader/presentation/page_turn/` |
@@ -54,7 +55,9 @@ reader 模块负责阅读：把 `BookManifest` 变成可翻页的 WebView 内容
 - `BookSession.saveProgress` 在书籍未加载或位置非法时抛错，由调用方处理。
 - `EpubStreamService` 记录当前书籍路径：切换书籍时先关闭上一本，`dispose` 关闭当前书；Rust 侧缓存不随阅读累积。
 - EPUB 的 XHTML/HTML/XML/SVG 供给前经 `sanitizeBookXhtml` 剥离 `<script>` 与 `on*` 属性（在 `BookWebViewHandler` 入缓存前执行，缓存里存的是剥离后字节）；骨架 iframe 的 `sandbox="allow-same-origin"` 是第一道防线，供给层剥离不依赖 WebView 对 sandbox 的强制力。TXT 章节内容整体转义，无脚本面。
-- 导航或主题刷新在途时忽略新导航；主题请求串行且合并为最新参数，排版完成前不采集位置。WebView 回执超时、执行失败或卸载均转为阅读错误状态；同一原生视口由预加载转为可见只更新执行器，保留在途回执。
+- 导航或主题刷新在途时忽略新导航；主题请求串行且合并为最新参数，排版完成前不采集位置。WebView 回执超时、执行失败或卸载均转为阅读错误状态；预加载启动完成后才创建可见 WebView，同一原生视口转为可见只更新执行器，保留在途回执。启动期间退出时，启动完成后仍释放该视口。
+- 点词锚点为 DOM `Range.getClientRects()` 中当前页可见词片段的包围矩形。WebView 边界将 CSS 像素矩形转换为 Flutter 全局逻辑坐标，不重复乘设备像素比或加阅读边距；非法或零面积矩形不触发词卡。每次点击的请求编号只能消费一次，导航、重排或卸载后拒绝旧回执。
+- 词卡打开期间暂停阅读手势与音量键翻页；页面位置、排版或视口变化，以及退出阅读器时关闭词卡。词卡的布局、内容和请求生命周期由 [learning](learning.md#边界与不变量) 持有。
 
 ## 已知限制与待办
 

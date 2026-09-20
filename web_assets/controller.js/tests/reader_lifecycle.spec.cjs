@@ -45,6 +45,30 @@ async function position(page) {
   });
 }
 
+test('初始化后的首次真实视口变化会通知重排', async ({ page }) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await setup(page);
+  await page.evaluate(() => { window.events = []; });
+  await page.setViewportSize({ width: 874, height: 402 });
+  await expect.poll(() => page.evaluate(() =>
+    window.events.filter(event => event[0] === 'onViewportResize').length
+  )).toBe(1);
+});
+
+test('尺寸未变的 resize 不会触发重排', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    window.events = [];
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event('resize'));
+  });
+  // 超过合并窗口后仍无回执，避免同值通知打断已打开的词卡。
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() =>
+    window.events.filter(event => event[0] === 'onViewportResize')
+  )).toEqual([]);
+});
+
 test('真实三 iframe 跨章并恢复保存的位置', async ({ page }) => {
   await setup(page);
   expect((await position(page)).count).toBeGreaterThan(3);

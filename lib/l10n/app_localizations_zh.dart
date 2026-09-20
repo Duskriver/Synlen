@@ -798,4 +798,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get readerRenderFailed => '阅读排版更新失败，请重试。';
+
+  @override
+  String get wordTabExplanation => '解释';
+
+  @override
+  String get wordTabSynonyms => '近义词';
+
+  @override
+  String get wordTabFormation => '构词';
+
+  @override
+  String get wordNoSynonyms => '当前语境下没有合适的近义词。';
+
+  @override
+  String get wordNoFormation => '暂无可靠的构词信息。';
+
+  @override
+  String get wordSectionUnavailable => '这部分内容未能加载。';
+
+  @override
+  String pronounceWord(String word) {
+    return '朗读原词“$word”';
+  }
 }

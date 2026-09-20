@@ -20,6 +20,7 @@ import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/features/learning/domain/learning_repository.dart';
 
 import 'learning_audio_coordinator_test.dart' show FakeLearningAudioPlayer;
+import '../word_definition_fixture.dart';
 
 class DeferredLearningRepository implements LearningRepository {
   final info = Completer<LearningInfo>();
@@ -73,7 +74,7 @@ void main() {
     await cache.saveExplanation(
       word: 'word',
       context: 'context',
-      explanation: '缓存释义',
+      explanation: wordDefinitionContent,
     );
     final marker = Provider((_) => 'test-key');
     var serviceDisposed = false;
@@ -128,7 +129,7 @@ void main() {
     dictionaryResponse.complete(ResponseBody.fromString('not found', 404));
     await finished.future.timeout(const Duration(seconds: 1));
     final state = container.read(provider);
-    expect(state.content, '缓存释义');
+    expect(state.content, wordDefinitionContent);
     expect(state.audioError, isNull);
     expect(state.hasAudio, isTrue);
     expect(state.audioUrl, '/tmp/word.pcm');
@@ -145,6 +146,13 @@ void main() {
   for (final isWord in [true, false]) {
     final label = isWord ? '单词' : '句子';
     final query = isWord ? wordQuery : sentenceQuery;
+    final cachedContent = isWord ? wordDefinitionContent : '缓存';
+    final newContent = isWord
+        ? wordDefinitionContent.replaceFirst('分类', '新查询')
+        : '新查询';
+    final oldContent = isWord
+        ? wordDefinitionContent.replaceFirst('分类', '旧查询')
+        : '旧查询';
     final provider = learningControllerProvider(query);
 
     test('$label：慢缓存查询期间持有 Repository，关闭后才释放', () async {
@@ -169,14 +177,14 @@ void main() {
       await container.pump();
       expect(disposed, isFalse);
       repository.info.complete(
-        const LearningInfo(
-          content: '缓存',
+        LearningInfo(
+          content: cachedContent,
           hasCachedContent: true,
           hasCachedAudio: true,
         ),
       );
       await container.pump();
-      expect(container.read(provider).content, '缓存');
+      expect(container.read(provider).content, cachedContent);
       expect(container.read(provider).contentError, isNull);
       subscription.close();
       await container.pump();
@@ -231,23 +239,23 @@ void main() {
       await newRepository.started.future;
       expect(oldRepository.cancellation!.isCancelled, isTrue);
       newRepository.info.complete(
-        const LearningInfo(
-          content: '新查询',
+        LearningInfo(
+          content: newContent,
           hasCachedContent: true,
           hasCachedAudio: true,
         ),
       );
       await container.pump();
-      expect(container.read(provider).content, '新查询');
+      expect(container.read(provider).content, newContent);
       oldRepository.info.complete(
-        const LearningInfo(
-          content: '旧查询',
+        LearningInfo(
+          content: oldContent,
           hasCachedContent: true,
           hasCachedAudio: true,
         ),
       );
       await container.pump();
-      expect(container.read(provider).content, '新查询');
+      expect(container.read(provider).content, newContent);
       expect(container.read(provider).contentError, isNull);
       subscription.close();
       await container.pump();

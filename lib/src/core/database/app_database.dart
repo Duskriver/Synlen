@@ -81,12 +81,12 @@ class ManifestListConverter extends TypeConverter<List<ManifestItem>, String> {
 // ==================== 确定性 ID 哈希 ====================
 // 学习缓存使用 FNV-1a 64 位哈希生成确定性主键，保证同一词条/句子的缓存键稳定。
 
-/// 学习文本缓存的 prompt 版本。修改 LLM 输出契约（如 DeepSeek prompt 的
-/// 固定小节）时必须递增，使旧版本生成的缓存自然失效，避免新旧格式混杂。
-const int kLearningTextPromptVersion = 2;
+/// 修改对应 LLM 输出契约时递增，只令该类文本的旧缓存失效。
+const int kWordTextPromptVersion = 3;
+const int kSentenceTextPromptVersion = 2;
 
 int wordExplanationId(String word, String? context) =>
-    _fastHash('v$kLearningTextPromptVersion|$word|${context ?? ''}');
+    _fastHash('v$kWordTextPromptVersion|$word|${context ?? ''}');
 
 int wordPronunciationId(String word) => _fastHash(word);
 

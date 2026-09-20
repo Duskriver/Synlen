@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/learning/data/services/deep_seek_service.dart';
+import 'package:synlen/src/features/learning/domain/word_definition_parser.dart';
 
 /// 真实 DeepSeek 接口的受控端到端验收。
 ///
@@ -16,7 +17,7 @@ void main() {
       DeepSeekService(dio: Dio(), readApiKey: () => apiKey);
 
   test(
-    '单词解释流：模型可用且输出固定四节契约',
+    '单词解释流：模型可用且输出完整四条 NDJSON',
     () async {
       // 流按增量 delta 发出，必须无分隔符拼接。
       final sections = await service()
@@ -26,10 +27,9 @@ void main() {
           )
           .join();
 
-      for (final section in ['## 音标', '## 直译', '## 常见用法', '## 句中含义']) {
-        expect(sections, contains(section), reason: '输出缺少固定小节：$section');
-      }
-      expect(sections, contains('perseverance'), reason: '输出应围绕目标单词');
+      final definition = WordDefinitionParser.parse(sections);
+      expect(definition.isComplete, isTrue);
+      expect(definition.summary!.lemma, 'perseverance');
     },
     timeout: const Timeout(Duration(minutes: 3)),
     skip: skipReason,

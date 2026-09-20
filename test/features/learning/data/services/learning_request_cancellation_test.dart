@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../word_definition_fixture.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -168,7 +169,9 @@ void main() {
           onError: errors.add,
           onDone: finished.complete,
         );
-    source.add(Uint8List.fromList(utf8.encode(event(content: '残文'))));
+    source.add(
+      Uint8List.fromList(utf8.encode(event(content: wordSummaryRecord))),
+    );
     await firstChunk.future;
     cancellation.cancel();
     await finished.future.timeout(const Duration(seconds: 1));

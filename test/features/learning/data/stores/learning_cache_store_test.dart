@@ -5,8 +5,9 @@ import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/features/learning/data/stores/sentence_learning_cache_store.dart';
 import 'package:synlen/src/features/learning/data/stores/word_learning_cache_store.dart';
 
-/// 与旧版缓存键相同的 FNV-1a 哈希（无版本前缀），用于验证版本失效。
-int _legacyWordId(String word, String context) => _fastHash('$word|$context');
+/// 上一版单词键仍带 v2，用于验证本次格式升级不会误读 Markdown。
+int _previousWordId(String word, String context) =>
+    _fastHash('v2|$word|$context');
 
 int _fastHash(String string) {
   var hash = 0xcbf29ce484222325;
@@ -30,13 +31,13 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('单词解释缓存键带 prompt 版本，旧格式缓存不命中', () async {
+  test('单词解释升级到 v3，上一版 v2 Markdown 缓存不命中', () async {
     final store = WordLearningCacheStore(db);
     await db
         .into(db.wordExplanations)
         .insert(
           WordExplanationsCompanion.insert(
-            id: Value(_legacyWordId('run', 'I run')),
+            id: Value(_previousWordId('run', 'I run')),
             word: 'run',
             explanation: '旧格式内容',
             lastUpdated: DateTime.now(),
@@ -54,6 +55,25 @@ void main() {
     final cached = await store.getExplanation('run', 'I run');
     expect(cached!.explanation, '新格式内容');
     expect(cached.id, wordExplanationId('run', 'I run'));
+    expect(cached.id, _fastHash('v3|run|I run'));
+  });
+
+  test('单词格式升级保留已有 v2 句子缓存及原词音频键', () async {
+    const sentence = 'She said hello.';
+    await db
+        .into(db.sentenceAnalyses)
+        .insert(
+          SentenceAnalysesCompanion.insert(
+            sentence: 'v2|$sentence',
+            analysis: '已有句子分析',
+            lastUpdated: DateTime.now(),
+          ),
+        );
+    final cached = await SentenceLearningCacheStore(db).getSentence(sentence);
+    expect(cached!.analysis, '已有句子分析');
+    expect(cached.sentence, 'v2|$sentence');
+    expect(wordPronunciationId('sorted'), _fastHash('sorted'));
+    expect(sentencePronunciationId(sentence), _fastHash(sentence));
   });
 
   test('句子分析缓存键带 prompt 版本，旧格式缓存不命中', () async {

@@ -19,6 +19,8 @@ import 'package:synlen/src/features/learning/domain/audio_stream_result.dart';
 import 'package:synlen/src/features/learning/domain/learning_query.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
+import '../../word_definition_fixture.dart';
+
 class InMemoryAudioFileStore implements AudioFileStore {
   final Map<String, String?> wordAudioPaths;
   final Map<String, String?> sentenceAudioPaths;
@@ -277,7 +279,7 @@ void main() {
         await cacheStore.saveExplanation(
           word: word,
           context: context,
-          explanation: 'cached explanation',
+          explanation: wordDefinitionContent,
         );
 
         final repository = WordRepository(
@@ -292,7 +294,7 @@ void main() {
           const WordLearningQuery(word: word, context: context),
         );
 
-        expect(result.content, 'cached explanation');
+        expect(result.content, wordDefinitionContent);
         expect(result.audioUrl, isNull);
         expect(result.hasCachedContent, isTrue);
         expect(result.hasCachedAudio, isFalse);
@@ -333,7 +335,7 @@ void main() {
       await cacheStore.saveExplanation(
         word: word,
         context: context,
-        explanation: 'cached explanation',
+        explanation: wordDefinitionContent,
       );
       await cacheStore.savePronunciationPath(word, '/tmp/clarity.wav');
 
@@ -349,7 +351,7 @@ void main() {
         const WordLearningQuery(word: word, context: context),
       );
 
-      expect(result.content, 'cached explanation');
+      expect(result.content, wordDefinitionContent);
       expect(result.audioUrl, '/tmp/clarity.wav');
       expect(result.hasCachedContent, isTrue);
       expect(result.hasCachedAudio, isTrue);
@@ -444,7 +446,7 @@ void main() {
       const context = 'Clarity matters.';
       final repository = WordRepository(
         FreeDictionaryService(dio: testDio()),
-        FakeDeepSeekService(wordChunks: const <String>['clear', ' ', 'idea']),
+        FakeDeepSeekService(wordChunks: wordDefinitionContent.split('')),
         AliyunTTSService(dio: testDio()),
         cacheStore,
         InMemoryAudioFileStore(),
@@ -456,10 +458,10 @@ void main() {
           )
           .toList();
 
-      expect(chunks, <String>['clear', ' ', 'idea']);
+      expect(chunks, wordDefinitionRecords);
       expect(
         cacheStore.explanations['$word|$context']?.explanation,
-        'clear idea',
+        wordDefinitionContent,
       );
     });
   });
