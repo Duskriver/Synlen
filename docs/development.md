@@ -13,7 +13,7 @@ flutter run -d <device-id>
 
 实际构建版本由 `rust-toolchain.toml`（Rust 1.97.1）与 CI 的 `flutter-version: '3.44.9'` 固定；本地与 CI 必须同版本，升级走[工具链锁定](../.agents/notes/implemented/process/2026-08-11-pin-toolchain-and-dependency-ceiling.md)的流程。依赖更新与漏洞告警由 Dependabot 每周提 PR，Rust 侧另有每周 `cargo audit`（[依赖审计](../.agents/notes/implemented/process/2026-09-09-dependency-audit-and-dependabot.md)）。
 
-Readium 进度格式不兼容旧开发库；首次运行此开发版本前清除应用数据或卸载重装，再导入原书。尚无用户数据迁移承诺，不从旧章内比例构造 Locator，也不使用旧开发备份恢复位置。
+升级保留已有书库，不清除应用数据；数据库迁移与验证步骤见[数据库 schema](cookbook/changing-the-database-schema.md)，旧阅读坐标的恢复精度见[reader 边界](subsystems/reader.md#边界与不变量)。
 
 ## 按规模选流程
 

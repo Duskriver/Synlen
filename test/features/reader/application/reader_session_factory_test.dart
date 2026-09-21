@@ -179,7 +179,7 @@ void main() {
     expect(gateway.calls, ['open:/a.epub', 'close:/a.epub']);
     queries.failSave = false;
     await start(b);
-    expect(queries.saved['a'.codeUnitAt(0)]!.locator['text'], {
+    expect(queries.saved['a'.codeUnitAt(0)]!.locator!['text'], {
       'highlight': 'A complete visible paragraph.',
     });
     expect(gateway.calls, ['open:/a.epub', 'close:/a.epub', 'open:/b.epub']);

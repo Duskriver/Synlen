@@ -404,12 +404,12 @@ void main() {
             : scenario.localMeta,
       );
       expect(
-        result.progress!.locator['href'],
+        result.progress!.locator!['href'],
         scenario.backupProgress ? 'chapter0.xhtml' : 'chapter1.xhtml',
       );
       expect(result.readingProgress, scenario.backupProgress ? 0.2 : 0.8);
       expect(
-        result.progress!.locator['locations']['progression'],
+        result.progress!.locator!['locations']['progression'],
         scenario.backupProgress ? 0.3 : 0.6,
       );
       expect(result.isFinished, !scenario.backupProgress);
@@ -494,6 +494,23 @@ void main() {
     expect((await restore(paths)).last.result, isA<ImportFailure>());
     expect(await db.select(db.shelfBooks).get(), isEmpty);
     expect(await db.select(db.bookManifests).get(), isEmpty);
+  });
+
+  test('v1 旧备份经完整恢复链路保留旧坐标和书籍文件', () async {
+    final oldBook = bookMap()
+      ..remove('progress')
+      ..['currentChapterIndex'] = 1
+      ..['chapterScrollPosition'] = .6
+      ..['readingProgress'] = .8;
+    final paths = await backup(books: [oldBook]);
+    expect((await restore(paths)).last.result, isA<ImportSuccess>());
+    final book = (await shelfRepo.getBookByHash('book-a'))!;
+    expect(book.progress!.legacy, (chapterIndex: 1, progression: .6));
+    expect(book.readingProgress, .8);
+    expect(
+      await File('${AppStorage.documentsPath}books/book-a.txt').exists(),
+      isTrue,
+    );
   });
 
   test('书架版本高于支持版本时拒绝恢复并报版本错误', () async {

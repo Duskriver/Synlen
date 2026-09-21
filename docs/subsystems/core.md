@@ -17,7 +17,7 @@
 
 | 类型 | 语义 | 位置 |
 |---|---|---|
-| `AppDatabase` | drift 数据库入口，`schemaVersion` 为 2；`AppDatabase.forTesting` 注入测试执行器 | `lib/src/core/database/app_database.dart` |
+| `AppDatabase` | drift 数据库入口，`schemaVersion` 为 3；`AppDatabase.forTesting` 注入测试执行器 | `lib/src/core/database/app_database.dart` |
 | `ShelfGroups` / `ShelfBooks` / `BookManifests` | 藏书与阅读清单表；`ShelfBooks` 与 `BookManifests` 的 `format` 列默认 `epub`，v1 存量数据经迁移补列 | 同上 |
 | `WordExplanations` / `WordPronunciations` / `SentenceAnalyses` / `SentencePronunciations` | 学习缓存表，主键为 FNV-1a 64 位确定性哈希 | 同上 |
 | `kWordTextPromptVersion` / `kSentenceTextPromptVersion` | 词、句文本缓存的独立 prompt 版本，分别为 3、2；改对应 LLM 输出契约时递增 | 同上 |
@@ -46,7 +46,7 @@
 1. 选书：`UnifiedImportService.pickFiles` / `pickFolder` 经 MethodChannel `com.tanglei.synlen/native_picker` 取平台路径，`processEpub` 落缓存并算哈希；Android 的 SAF 数字文档 ID 另查 `getDisplayName` 兜底文件名。
 2. 备份恢复：`pickBackupZipFile` + `processBackupZip` 经 `extractVerifiedBackupZip` 校验并解压到导入缓存区，全部条目通过后由 `classifyBackupEntries` 分桶为 `BackupPaths`；失败清理缓存并中止，数据库恢复不会开始。文件夹来源走 `pickBackupFolder`。
 3. 主题：`AppThemeNotifier` 读写 `SharedPreferences`，`AppThemeSettings` 映射为 `ThemeData`，`SynlenThemeExtension` 把当前预设注入 widget 树。
-4. 数据库：`appDatabaseProvider` 为 keepAlive，迁移在 `migration.onUpgrade` 内按版本号追加列。
+4. 数据库：`appDatabaseProvider` 为 keepAlive，`migration.onUpgrade` 在事务内将 schema 1、2 升级到 3，保留书目、文件路径、清单、分组和学习缓存；旧章节坐标存入 `progress` 后重建书架表，失败整体回滚。
 
 ## 边界与不变量
 

@@ -79,7 +79,7 @@ void main() {
     final loaded = (await shelfRepo.getBookByHash('hash'))!;
     expect(loaded.progress, position);
     expect(loaded.progress!.chapterTitle, '第 4 章');
-    expect(loaded.progress!.locator['extensions'], {'retained': true});
+    expect(loaded.progress!.locator!['extensions'], {'retained': true});
     expect(loaded.readingProgress, 0.63);
     expect(loaded.lastOpenedDate, isNotNull);
     final columns = await db

@@ -93,6 +93,8 @@ void main() {
     BookProgress? saved,
     int chapters = 2,
     Duration timeout = const Duration(seconds: 1),
+    List<SpineItem> spine = const [],
+    BookFormat format = BookFormat.epub,
   }) {
     queries = Queries();
     gateway = Gateway(chapters: chapters);
@@ -112,10 +114,10 @@ void main() {
           filePath: 'book.epub',
           totalChapters: chapters,
           direction: 0,
-          format: BookFormat.epub,
+          format: format,
           progress: saved,
         ),
-        manifest: (spine: <SpineItem>[], toc: <TocItem>[]),
+        manifest: (spine: spine, toc: <TocItem>[]),
       ),
     );
   }
@@ -131,6 +133,54 @@ void main() {
   tearDown(() async {
     await session.close();
     session.dispose();
+  });
+
+  for (final format in BookFormat.values) {
+    test('$format 旧坐标按原清单匹配章节，就绪后才替换为原生 Locator', () async {
+      create(
+        saved: BookProgress.fromLegacy(
+          chapterIndex: 0,
+          progression: .6,
+          fraction: .8,
+        ),
+        format: format,
+        // 原清单与新阅读顺序不一致，不能直接沿用数组下标。
+        spine: [
+          SpineItem(href: 'chapter2.xhtml'),
+          SpineItem(href: 'chapter1.xhtml'),
+        ],
+      );
+      final opening = session.open(layout(1));
+      await tick();
+      expect(session.initialLocator!.href, 'chapter2.xhtml');
+      expect(session.initialLocator!.locations!.progression, .6);
+      expect(session.initialLocator!.text, isNull);
+      session.reportReady(session.sessionId);
+      session.reportLocator(session.sessionId, position('chapter1.xhtml', 0));
+      await session.flush();
+      expect(queries.saved, isEmpty);
+      final located = position('chapter2.xhtml', .59);
+      session.reportLocator(session.sessionId, located);
+      await opening;
+      await session.flush();
+      expect(queries.saved.single.legacy, isNull);
+      expect(queries.saved.single.locator, located.toJson());
+    });
+  }
+
+  test('旧章节缺失时保留旧坐标，不从书首覆盖进度', () async {
+    create(
+      saved: BookProgress.fromLegacy(
+        chapterIndex: 9,
+        progression: .4,
+        fraction: .8,
+      ),
+    );
+    await session.open(layout(1));
+    expect(session.failure, ReaderFailure.load);
+    expect(session.publication, isNull);
+    await session.flush();
+    expect(queries.saved, isEmpty);
   });
 
   test('首次内容回执前不保存默认位置，首个完整 Locator 带文本原样入库', () async {

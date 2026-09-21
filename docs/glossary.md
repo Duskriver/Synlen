@@ -12,7 +12,7 @@
 | `SpineItem` | spine 中的线性阅读顺序条目，决定上一页 / 下一页导航。TXT 条目通过 `sourceRange` 记录章节在归一化 UTF-8 字节流中的范围（`"start-end"`，左闭右开）。 | 章节项、spine 项 |
 | `ShelfGroup` | 书架分组，用户自定义的书目分类。 | 分类夹、书架分类 |
 | `ShelfBookSortBy` | 书架排序依据。 | 排序方式、SortBy |
-| `BookProgress` | 完整 Locator JSON 与书架显示百分比；保留文本上下文和 SDK 扩展字段，恢复不使用页码推算。 | 阅读进度对象、Progress |
+| `BookProgress` | 完整 Locator 或待恢复旧章节坐标与书架百分比；旧坐标只支持近似恢复，完整定位保留文本与 SDK 扩展字段。 | 阅读进度对象、Progress |
 | `UnifiedImportService` | 把书籍文件加入藏书的统一编排入口：平台选择、导入缓存与哈希。 | 导入流程、Ingest、ImportService |
 | `ProgressLog` / `BackupImportProgress` / `ImportResult` | 导入与恢复的进度事件与结果值对象。data 发事件、application 编排、presentation 渲染三方都要用，因此落在 domain，避免 data → application 的逆向依赖。 | 进度回调、导入状态 |
 | Cover（封面） | 书的封面图片，导入时从 EPUB 提取生成，独立于书籍文件存储。TXT 无封面。 | 缩略图、书封 |

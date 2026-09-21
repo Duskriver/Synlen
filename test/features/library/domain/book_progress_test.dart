@@ -2,6 +2,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/library/domain/book_progress.dart';
 
 void main() {
+  test('旧坐标明确保留格式与空比例，可再次备份而不伪造 Locator', () {
+    for (final progression in [null, .4, -1.0, 2.0]) {
+      final progress = BookProgress.fromLegacy(
+        chapterIndex: 3,
+        progression: progression,
+        fraction: .72,
+      );
+      expect(progress.locator, isNull);
+      expect(progress.chapterTitle, isNull);
+      expect(progress.legacy, (chapterIndex: 3, progression: progression));
+      expect(BookProgress.fromJson(progress.toJson()), progress);
+    }
+    expect(
+      () => BookProgress.fromLegacy(
+        chapterIndex: 0,
+        progression: double.infinity,
+        fraction: 0,
+      ),
+      throwsFormatException,
+    );
+  });
+
   Map<String, dynamic> locator() => {
     'href': 'OEBPS/chapter.xhtml',
     'type': 'application/xhtml+xml',
@@ -21,7 +43,7 @@ void main() {
     final input = locator();
     final progress = BookProgress.fromLocator(input);
     input['locations']['progression'] = 0.9;
-    final copy = progress.locator;
+    final copy = progress.locator!;
     copy['text']['highlight'] = '改写';
     expect(progress.locator, locator());
     expect(progress.fraction, 0.6);
@@ -34,7 +56,7 @@ void main() {
     expect(BookProgress.fromLocator(input).fraction, 0);
     final progress = BookProgress.fromLocator(input, fraction: 0.4);
     expect(BookProgress.fromJson(progress.toJson()).fraction, 0.4);
-    expect(progress.locator['locations'], {'progression': 0.8});
+    expect(progress.locator!['locations'], {'progression': 0.8});
   });
 
   test('拒绝不可恢复的定位和非有限百分比，显示分数限制到 0–1', () {

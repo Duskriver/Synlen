@@ -158,11 +158,32 @@ class ReadiumSession extends ChangeNotifier {
     final opened = await _gateway.open(prepared!.path, next.preferences);
     _ownsPublication = true;
     if (_closed) return;
+    initialLocator ??= _legacyLocator(opened);
     publication = opened;
     failure = null;
     _ready = Completer<void>();
     _notify();
     await _ready!.future.timeout(_readyTimeout);
+  }
+
+  /// 仅首次打开旧坐标时按原清单匹配资源；比例只用于近似落点。
+  Locator? _legacyLocator(Publication opened) {
+    final old = prepared!.book.progress?.legacy;
+    if (old == null) return null;
+    final spine = prepared!.manifest.spine;
+    if (old.chapterIndex < 0 || old.chapterIndex >= spine.length) {
+      throw StateError('旧阅读章节不在书籍清单中');
+    }
+    final href = spine[old.chapterIndex].href;
+    final link = opened.readingOrder
+        .where((link) => resourcePath(link.href) == resourcePath(href))
+        .firstOrNull;
+    if (link == null) throw StateError('旧阅读章节不在出版物中');
+    return Locator(
+      href: link.href,
+      type: link.type ?? 'application/xhtml+xml',
+      locations: Locations(progression: (old.progression ?? 0).clamp(0.0, 1.0)),
+    );
   }
 
   void viewMounted(String id) {

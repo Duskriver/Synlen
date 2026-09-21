@@ -6,8 +6,7 @@
 /// [LibraryException]（[LibraryErrorCode.backupVersionTooNew]），恢复中止，
 /// 绝不按旧格式静默错解。
 ///
-/// 未来格式演进：为 v2 写一个 decoder 并注册进 `_shelfDecoders` /
-/// `_manifestDecoders` 即可，旧版本 decoder 保留以兼容旧备份。
+/// v2 携带 Locator 或待恢复旧坐标；v1 的旧字段由书目映射器兼容读取。
 library;
 
 import 'package:synlen/src/core/database/app_database.dart';
@@ -17,7 +16,7 @@ import '../../domain/library_exception.dart';
 import 'backup_json_mapper.dart';
 
 /// 当前支持的最高备份格式版本；导出端写入的 version 即取此值。
-const int kBackupFormatVersion = 1;
+const int kBackupFormatVersion = 2;
 
 /// shelf.json 的解码结果：分组与书目的 JSON 列表。
 typedef ShelfBackupData = ({
@@ -29,10 +28,16 @@ typedef _ShelfDecoder = ShelfBackupData Function(Map<String, dynamic> json);
 typedef _ManifestDecoder = BookManifest Function(Map<String, dynamic> json);
 
 /// version → shelf.json decoder 注册表。
-final Map<int, _ShelfDecoder> _shelfDecoders = {1: _decodeShelfV1};
+final Map<int, _ShelfDecoder> _shelfDecoders = {
+  1: _decodeShelf,
+  2: _decodeShelf,
+};
 
 /// version → manifest json decoder 注册表。
-final Map<int, _ManifestDecoder> _manifestDecoders = {1: mapToBookManifest};
+final Map<int, _ManifestDecoder> _manifestDecoders = {
+  1: mapToBookManifest,
+  2: mapToBookManifest,
+};
 
 /// 按 shelf.json 顶层 `version` 分派解码，返回分组与书目列表。
 ShelfBackupData decodeShelfBackup(Map<String, dynamic> json) {
@@ -81,7 +86,7 @@ Never _throwUnknownVersion(int version, String source) {
   throw FormatException('$source 声明了未知备份版本: $version');
 }
 
-ShelfBackupData _decodeShelfV1(Map<String, dynamic> json) => (
+ShelfBackupData _decodeShelf(Map<String, dynamic> json) => (
   groups: (json['groups'] as List<dynamic>).cast<Map<String, dynamic>>(),
   books: (json['books'] as List<dynamic>).cast<Map<String, dynamic>>(),
 );

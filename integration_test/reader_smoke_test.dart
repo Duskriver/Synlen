@@ -54,8 +54,9 @@ void main() {
       documentsPath: root.path,
       tempPath: '${root.path}/cache',
     );
-    final db = AppDatabase.forTesting(NativeDatabase.memory());
-    final repository = ShelfBookRepository(db: db);
+    final databaseFile = File('${root.path}/reader.sqlite');
+    var db = AppDatabase.forTesting(NativeDatabase(databaseFile));
+    var repository = ShelfBookRepository(db: db);
     final importer = BookImportService(
       shelfBookRepo: repository,
       libraryBookStore: LibraryBookStore(db: db),
@@ -87,6 +88,29 @@ void main() {
       )).isRight(),
       isTrue,
     );
+    const migrationProbe = bool.fromEnvironment(
+      'SYNLEN_LEGACY_MIGRATION_PROBE',
+    );
+    if (migrationProbe) {
+      // 正文与清单来自真实导入，数据库还原为旧版列，再重开触发生产迁移。
+      await db.customStatement('ALTER TABLE shelf_books DROP COLUMN progress');
+      await db.customStatement(
+        'ALTER TABLE shelf_books ADD COLUMN current_chapter_index INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.customStatement(
+        'ALTER TABLE shelf_books ADD COLUMN chapter_scroll_position REAL DEFAULT 0.0',
+      );
+      await db.customStatement(
+        "UPDATE shelf_books SET current_chapter_index = 1, chapter_scroll_position = .4, reading_progress = .5 WHERE file_hash = 'reader-smoke'",
+      );
+      await db.customStatement('PRAGMA user_version = 2');
+      await db.close();
+      db = AppDatabase.forTesting(NativeDatabase(databaseFile));
+      repository = ShelfBookRepository(db: db);
+      final migrated = (await repository.getBookByHash('reader-smoke'))!;
+      expect(migrated.progress!.legacy, (chapterIndex: 1, progression: .4));
+      expect(migrated.readingProgress, .5);
+    }
     SharedPreferences.setMockInitialValues({
       'reader_page_animation': 0,
       'reader_zoom': 1.0,
@@ -154,6 +178,18 @@ void main() {
     }
     expect(session().prepared!.path, endsWith('.epub'));
     expect(session().readingOrder, hasLength(3));
+    if (migrationProbe) {
+      expect(session().chapterIndex, 1);
+      expect(session().initialLocator!.locations!.progression, .4);
+      expect(session().locator!.locations!.progression, closeTo(.4, .08));
+      await session().flush();
+      expect(
+        (await repository.getBookByHash('reader-smoke'))!.progress!.legacy,
+        isNull,
+      );
+      await session().goToChapter(0);
+      await _until(tester, () => session().chapterIndex == 0);
+    }
     final first = session().locator!.toJson();
     await session().turnPage(true, animated: false);
     await _until(

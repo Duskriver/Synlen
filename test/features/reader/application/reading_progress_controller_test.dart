@@ -88,7 +88,7 @@ void main() {
     final controller = ReadingProgressController(
       save: (progress) async {
         calls.add(progress);
-        if (progress.locator['locations']['progression'] == 0.2) {
+        if (progress.locator!['locations']['progression'] == 0.2) {
           await slowWrite.future;
         }
       },

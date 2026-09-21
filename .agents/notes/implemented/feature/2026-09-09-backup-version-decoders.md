@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-- `backup_decoders.dart`（library/data）是 version 的唯一消费点：`decodeShelfBackup` / `decodeManifestBackup` 读取顶层 `version`，经 `_shelfDecoders` / `_manifestDecoders` 注册表分派到对应版本的 decoder；未来 v2 只需新增 decoder 并注册。
+- `backup_decoders.dart`（library/data）是 version 的唯一消费点：`decodeShelfBackup` / `decodeManifestBackup` 读取顶层 `version`，经 `_shelfDecoders` / `_manifestDecoders` 注册表分派到对应版本的 decoder；格式 1、2 共用顶层列表与清单解码，进度字段由 mapper 识别。
 - `kBackupFormatVersion` 是当前支持的最高版本，导出端两处写入都改用该常量，版本号单一来源。
 - 字段缺失视为异常但按 1 处理并记 warning——v1 时代备份始终带该字段，缺失多半是手工构造；版本高于支持上限时抛 `LibraryException`（`backupVersionTooNew`），恢复在任何写库之前中止。
 - 用户可见错误按类型化错误码承载（见 [library 错误模型统一](../architecture/2026-09-09-library-typed-error-codes.md)）：`ImportFailure` 携带 `LibraryException`，日志详情只入 appLogger；`progress_dialog.dart` 按 `ProgressLog.error` 的码映射为 l10n 文案，`restore_progress_dialog.dart` 在失败码为 `backupVersionTooNew` 时把结束 toast 换成 `backupVersionTooNew`（双语）。
@@ -24,6 +24,6 @@ Status: implemented
 
 ## Consequences
 
-- v1 备份往返不变（`backup_roundtrip_test.dart` 全绿）；新增测试覆盖 shelf 版本 99 拒绝、version 缺失按 1 恢复、manifest 版本 99 拒绝。
+- 导出格式 2 并兼容格式 1；进度兼容由[升级保留数据决策](../bug-fix/2026-09-21-preserve-legacy-reader-data.md)部分补充。回归覆盖完整 Locator、旧坐标往返、高版本拒绝与 version 缺失。
 - 恢复中止发生在读元数据阶段，中止时未写任何库行。
-- 升 v2 的成本固定为：写一个 decoder、注册、抬 `kBackupFormatVersion`。
+- 新格式在注册表中显式登记，导出版本只由 `kBackupFormatVersion` 提供。

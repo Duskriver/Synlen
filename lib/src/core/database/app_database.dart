@@ -256,11 +256,35 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 3;
 
-  // 当前无已发布用户数据。旧开发库须重置，不把旧分页坐标转换为 Locator。
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (migrator, from, to) async {
-      throw StateError('数据库结构已更新，请重置开发数据库后重试');
+      await transaction(() async {
+        if (from < 2) {
+          await migrator.addColumn(shelfBooks, shelfBooks.format);
+          await migrator.addColumn(bookManifests, bookManifests.format);
+        }
+        if (from < 3) {
+          await migrator.addColumn(shelfBooks, shelfBooks.progress);
+          final rows = await customSelect(
+            'SELECT id, current_chapter_index, chapter_scroll_position, '
+            'reading_progress FROM shelf_books',
+          ).get();
+          for (final row in rows) {
+            final progress = BookProgress.fromLegacy(
+              chapterIndex: row.read<int>('current_chapter_index'),
+              progression: row.readNullable<double>('chapter_scroll_position'),
+              fraction: row.read<double>('reading_progress'),
+            );
+            await customStatement(
+              'UPDATE shelf_books SET progress = ? WHERE id = ?',
+              [jsonEncode(progress.toJson()), row.read<int>('id')],
+            );
+          }
+          // 旧坐标已经无损存入 progress，再移除旧列；其他表与主键保持原样。
+          await migrator.alterTable(TableMigration(shelfBooks));
+        }
+      });
     },
   );
 }

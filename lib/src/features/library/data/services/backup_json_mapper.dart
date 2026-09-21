@@ -36,9 +36,15 @@ ShelfBook mapToShelfBook(
   required String? coverPath,
   required BookFormat format,
 }) {
-  final progress = m['progress'] == null
-      ? null
-      : BookProgress.fromJson(m['progress'] as Map<String, dynamic>);
+  final progress = m['progress'] != null
+      ? BookProgress.fromJson(m['progress'] as Map<String, dynamic>)
+      : m.containsKey('currentChapterIndex')
+      ? BookProgress.fromLegacy(
+          chapterIndex: m['currentChapterIndex'] as int,
+          progression: (m['chapterScrollPosition'] as num?)?.toDouble(),
+          fraction: (m['readingProgress'] as num? ?? 0).toDouble(),
+        )
+      : null;
   return ShelfBook(
     id: 0,
     fileHash: m['fileHash'] as String,
@@ -54,7 +60,8 @@ ShelfBook mapToShelfBook(
     format: format,
     importDate: m['importDate'] as int,
     progress: progress,
-    readingProgress: progress?.fraction ?? 0.0,
+    readingProgress:
+        progress?.fraction ?? (m['readingProgress'] as num? ?? 0).toDouble(),
     lastOpenedDate: m['lastOpenedDate'] as int?,
     isFinished: m['isFinished'] as bool? ?? false,
     groupName: m['groupName'] as String?,

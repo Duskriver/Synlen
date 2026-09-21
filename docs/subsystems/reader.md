@@ -21,7 +21,7 @@
 | `ReadiumTxtPublicationCache` | 按正文与清单摘要生成 EPUB；同一请求合并，缓存可删除重建 | `lib/src/features/reader/data/readium_txt_publication_cache.dart` |
 | `TxtContentService` / `TxtSpineSource` | 按 UTF-8 字节范围取得虚拟章节；TXT 正文整体转义为 XHTML | `lib/src/features/reader/data/services/txt_content_service.dart` |
 | `ReadiumLayout` | 将字号、主题与导入字体转为原生参数；随视口重建应用 | `lib/src/features/reader/application/readium_layout.dart` |
-| `BookProgress` | 原样保存完整 Locator JSON，另带书架百分比；文本上下文及扩展字段不丢弃 | `lib/src/features/library/domain/book_progress.dart` |
+| `BookProgress` | 保存完整 Locator 或待恢复旧坐标，另带书架百分比；文本上下文及扩展字段不丢弃 | `lib/src/features/library/domain/book_progress.dart` |
 | `ReadingProgressController` | 进度防抖和串行落库；关闭时 flush，失败保留待保存位置 | `lib/src/features/reader/application/reading_progress_controller.dart` |
 | `ReadiumInteraction` | 验证原生消息版本、会话与资源路径，再解析词、句或控制栏动作 | `lib/src/features/reader/domain/readium_interaction.dart` |
 | `ReaderSettings` / `ReaderLinkHandling` / `ReaderPageAnimation` | 字号、边距、主题、链接策略、翻页动画、导入字体与音量键翻页 | `lib/src/features/reader/domain/reader_settings.dart` |
@@ -34,7 +34,7 @@
 - EPUB 准备层移除脚本、事件属性与可执行嵌入内容；原生 SDK 的 JavaScript 开关不承担此保证。无活动内容的原包不改写，副本保留资源路径、标识符与字体字节。
 - 应用私有 EPUB 按路径、大小、修改时间与状态变更时间复用内容摘要及校验结果；源文件变化、索引损坏或副本缺失时重新准备。首次校验仍覆盖全部条目的实际解压长度、CRC 与活动内容，规则版本同时使索引和副本失效。
 - EPUB 内容交由 Readium 解析；TXT 缓存必须完整覆盖清单中的连续 UTF-8 字节范围，清单过期或源文件变化时拒绝生成。
-- 完整 Locator 是恢复位置的依据；页码和书架百分比只供展示，不反向合成精确定位。百分比按阅读顺序中的章节等权、结合章内比例估算，不表示全书字数比例。
+- 旧坐标按原清单匹配资源并按章内比例近似恢复，不能保证跨引擎同字定位；匹配失败保留旧坐标并报错，匹配章节就绪后才保存原生 Locator。完整 Locator 是恢复位置的依据；页码和书架百分比只供展示，不反向合成精确定位。百分比按阅读顺序中的章节等权、结合章内比例估算，不表示全书字数比例。
 - 可见短文本与所属元素选择器组成标准文本锚点，包含原始上下文；查询不滚动或修改 DOM，匹配与恢复由 Readium 负责。
 - 排版变更先保存有效 Locator、停止采集、卸载视口，再串行关闭并重开出版物；ready 与匹配章节的位置同时到达后才恢复采集。
 - 原生视口绑定 sessionId。过期视口事件、非当前资源的学习事件、未就绪位置均不得触发学习或覆盖进度。

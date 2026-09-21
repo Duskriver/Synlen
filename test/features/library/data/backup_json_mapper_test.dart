@@ -89,6 +89,22 @@ void main() {
       expect(book.direction, 0);
       expect(book.filePath, isNull);
     });
+
+    test('旧备份保留章节、章内比例和书架百分比', () {
+      final json = bookJson()
+        ..remove('progress')
+        ..['currentChapterIndex'] = 3
+        ..['chapterScrollPosition'] = .4;
+      final book = mapToShelfBook(
+        json,
+        filePath: 'books/old.txt',
+        coverPath: null,
+        format: BookFormat.txt,
+      );
+      expect(book.progress!.legacy, (chapterIndex: 3, progression: .4));
+      expect(book.progress!.locator, isNull);
+      expect(book.readingProgress, .5);
+    });
   });
 
   group('mapToBookManifest', () {

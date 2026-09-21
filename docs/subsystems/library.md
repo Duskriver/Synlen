@@ -61,7 +61,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 - 删除文件的方法同时接受相对与绝对路径；回滚路径必须等待删除完成。
 - 分组为扁平结构，不支持嵌套；`filterGroupId` 为 `-1` 表示未分组，`null` 表示全部。
 - 备份 ZIP 的解压目录由调用方在流结束后删除，恢复服务自身不清理；解压前的上限与路径校验在 core 的 `backup_archive_guard.dart`（见 [core](core.md#关键类型)）。
-- shelf.json 与每书 manifest 顶层的 `version` 由 `backup_decoders.dart` 按版本分派 decoder：字段缺失按 1 处理并记 warning，高于当前支持版本（`kBackupFormatVersion`）时恢复中止，抛 `LibraryException`（`backupVersionTooNew`）。
+- 导出备份格式为 2，恢复兼容格式 1 的旧坐标和格式 2 的完整 Locator／待恢复旧坐标。shelf.json 与每书 manifest 顶层的 `version` 由 `backup_decoders.dart` 按版本分派 decoder：字段缺失按 1 处理并记 warning，高于当前支持版本（`kBackupFormatVersion`）时恢复中止，抛 `LibraryException`（`backupVersionTooNew`）。
 - 导入进度事件落在 `domain`，使 data 发事件、application 编排、presentation 渲染都不产生逆向依赖。
 - 含 `META-INF/encryption.xml` 的 EPUB：仅当每个 EncryptedData 都是 IDPF / Adobe 字体混淆算法且目标是字体 media-type 时放行（`epub_encryption.dart`）；其余按 DRM 拒绝（`LibraryErrorCode.drmProtected`）。放行书籍的混淆字体在阅读时由 Rust 侧现场还原（见 [rust.md](rust.md#职责)）。
 - import / backup 主链路的错误是 `Either<LibraryException, T>` 或携带 `LibraryException` 的进度事件；presentation 只按错误码映射 l10n（`library_error_mapper.dart`），不匹配消息内容。分组 CRUD、删除、清理等其余链路仍是 `Either<String, T>`，迁移时往 `LibraryErrorCode` 补码。

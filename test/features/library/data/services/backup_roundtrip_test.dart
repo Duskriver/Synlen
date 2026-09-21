@@ -1,4 +1,5 @@
 import '../../../../helpers/book_progress.dart';
+import 'package:synlen/src/features/library/domain/book_progress.dart';
 import 'package:synlen/src/features/library/data/library_book_store.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -46,7 +47,7 @@ void main() {
   });
 
   /// 在 documents 落盘源文件并写入数据库，构成一份可导出的书库。
-  Future<void> seedLibrary() async {
+  Future<void> seedLibrary({BookProgress? progress}) async {
     await File(
       '${AppStorage.documentsPath}books/book-a.txt',
     ).create(recursive: true);
@@ -75,7 +76,9 @@ void main() {
         importDate: 1,
         direction: 0,
 
-        progress: testBookProgress(chapter: 1, fraction: 0.8, within: 0.6),
+        progress:
+            progress ??
+            testBookProgress(chapter: 1, fraction: 0.8, within: 0.6),
         readingProgress: 0.8,
 
         lastOpenedDate: 300,
@@ -150,63 +153,73 @@ void main() {
     final shelf =
         jsonDecode(utf8.decode(shelfJson.content as List<int>))
             as Map<String, dynamic>;
+    expect(shelf['version'], 2);
     expect(shelf['books'], hasLength(1));
     expect((shelf['books'] as List).first['fileHash'], 'book-a');
   });
 
-  test('导出的 ZIP 经解压恢复后完整还原书库，临时解压目录被清理', () async {
-    await seedLibrary();
-    final zipPath = await exportAndCaptureZip();
+  for (final saved in [
+    testBookProgress(chapter: 1, fraction: .8, within: .6),
+    BookProgress.fromLegacy(chapterIndex: 1, progression: .6, fraction: .8),
+  ]) {
+    test(
+      '导出恢复完整还原书库与 ${saved.legacy == null ? 'Locator' : '旧坐标'}，临时目录被清理',
+      () async {
+        await seedLibrary(progress: saved);
+        final zipPath = await exportAndCaptureZip();
 
-    // 新库模拟另一台设备。
-    await db.close();
-    db = AppDatabase.forTesting(NativeDatabase.memory());
-    shelfRepo = ShelfBookRepository(db: db);
-    manifestRepo = BookManifestRepository(db: db);
+        // 新库模拟另一台设备。
+        await db.close();
+        db = AppDatabase.forTesting(NativeDatabase.memory());
+        shelfRepo = ShelfBookRepository(db: db);
+        manifestRepo = BookManifestRepository(db: db);
 
-    final unified = UnifiedImportService(cacheManager: ImportCacheManager());
-    final paths = await unified.processBackupZip(IOSFilePath(zipPath));
-    final extractDir = Directory((paths.rootPath as IOSFilePath).path);
+        final unified = UnifiedImportService(
+          cacheManager: ImportCacheManager(),
+        );
+        final paths = await unified.processBackupZip(IOSFilePath(zipPath));
+        final extractDir = Directory((paths.rootPath as IOSFilePath).path);
 
-    final container = ProviderContainer(
-      overrides: [
-        importBackupServiceProvider.overrideWithValue(
-          ImportBackupService(
-            shelfBookRepository: shelfRepo,
-            bookStore: LibraryBookStore(db: db),
-            importService: unified,
-          ),
-        ),
-      ],
+        final container = ProviderContainer(
+          overrides: [
+            importBackupServiceProvider.overrideWithValue(
+              ImportBackupService(
+                shelfBookRepository: shelfRepo,
+                bookStore: LibraryBookStore(db: db),
+                importService: unified,
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        // 通过 LibraryNotifier 的流恢复，验证其负责的解压目录清理。
+        final logs = await container
+            .read(libraryProvider.notifier)
+            .importLibraryFromFolder(paths, cleanupDir: extractDir)
+            .toList();
+        expect(logs.any((log) => log.type == ProgressLogType.success), isTrue);
+
+        final book = (await shelfRepo.getBookByHash('book-a'))!;
+        expect(book.title, '测试书');
+        expect(book.readingProgress, 0.8);
+        expect(book.progress, saved);
+        expect(book.lastOpenedDate, 300);
+        expect(book.coverPath, 'covers/book-a.jpg');
+        expect(
+          await File(
+            '${AppStorage.documentsPath}covers/book-a.jpg',
+          ).readAsBytes(),
+          [8, 9],
+        );
+        expect((await manifestRepo.getManifestByHash('book-a'))!, isNotNull);
+        expect((await shelfRepo.getGroups()).single.name, '书组');
+
+        // 恢复流结束后解压目录应不存在。
+        expect(extractDir.existsSync(), isFalse);
+      },
     );
-    addTearDown(container.dispose);
-
-    // 通过 LibraryNotifier 的流恢复，验证其负责的解压目录清理。
-    final logs = await container
-        .read(libraryProvider.notifier)
-        .importLibraryFromFolder(paths, cleanupDir: extractDir)
-        .toList();
-    expect(logs.any((log) => log.type == ProgressLogType.success), isTrue);
-
-    final book = (await shelfRepo.getBookByHash('book-a'))!;
-    expect(book.title, '测试书');
-    expect(book.readingProgress, 0.8);
-    expect(
-      book.progress,
-      testBookProgress(chapter: 1, fraction: 0.8, within: 0.6),
-    );
-    expect(book.lastOpenedDate, 300);
-    expect(book.coverPath, 'covers/book-a.jpg');
-    expect(
-      await File('${AppStorage.documentsPath}covers/book-a.jpg').readAsBytes(),
-      [8, 9],
-    );
-    expect((await manifestRepo.getManifestByHash('book-a'))!, isNotNull);
-    expect((await shelfRepo.getGroups()).single.name, '书组');
-
-    // 恢复流结束后解压目录应不存在。
-    expect(extractDir.existsSync(), isFalse);
-  });
+  }
 
   test('用户在分享面板取消时报告失败', () async {
     await seedLibrary();
