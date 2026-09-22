@@ -1,7 +1,7 @@
 # 词镜
 
 <p align="center">
-  <img src="docs/icon.png" width="128" alt="词镜图标" />
+  <img src="assets/icons/icon_opaque.png" width="128" alt="词镜图标" />
 </p>
 
 词镜是一个基于 Flutter 开发的英语学习阅读器，当前发布 Android ARM64 安装包。通过阅读英文原书学英语：点击单词查看音标与释义，长按句子获取翻译与语法分析。

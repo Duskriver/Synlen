@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:synlen/src/core/config/app_info.dart';
 
-/// Displays the app icon, logo SVG, and version string at the top of the
-/// Settings screen.
+/// 设置页顶部的应用图标、名称与版本号。
 class SettingsAppHeader extends StatelessWidget {
   const SettingsAppHeader({super.key, required this.version});
 
   final String version;
 
-  static const _appSvgPath = 'assets/icons/icon.svg';
+  static const _appIconPath = 'assets/icons/icon_opaque.png';
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // App icon
         Container(
           width: 96,
           height: 96,
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
@@ -28,7 +26,7 @@ class SettingsAppHeader extends StatelessWidget {
               width: 1.5,
             ),
           ),
-          child: SvgPicture.asset(_appSvgPath, width: 56, height: 56),
+          child: Image.asset(_appIconPath, fit: BoxFit.cover),
         ),
 
         const SizedBox(height: 16),
@@ -42,7 +40,6 @@ class SettingsAppHeader extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // Version number
         if (version.isNotEmpty)
           Text(
             'v$version',

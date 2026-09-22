@@ -118,5 +118,5 @@ flutter:
     - assets/licenses/lumina_mit.txt
     - assets/licenses/flutter_sound_mpl2.txt
     - assets/reader/readium_learning.js
-    - assets/icons/icon.svg
+    - assets/icons/icon_opaque.png
     - assets/logos/logo.svg
