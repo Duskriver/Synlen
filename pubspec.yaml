@@ -49,7 +49,7 @@ dependencies:
   # Reader
   flutter_readium:
     path: third_party/flutter_readium
-  wakelock_plus: ^1.8.0
+  wakelock_plus: ^1.8.1
 
   # File Picking & Permissions
   path: ^1.9.1
