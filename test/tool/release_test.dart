@@ -45,30 +45,24 @@ void main() {
     ]) {
       await File('tool/$script').copy('${repo.path}/tool/$script');
     }
-    await File(
-      '${repo.path}/pubspec.yaml',
-    ).writeAsString('version: 0.3.4+304\n');
+    await File('${repo.path}/pubspec.yaml')
+        .writeAsString('version: 0.3.4+304\n');
     await File('${repo.path}/.gitignore').writeAsString('/build/\n');
     await File('android/.gitignore').copy('${repo.path}/android/.gitignore');
     final wrapperProperties = File(
       '${repo.path}/android/gradle/wrapper/gradle-wrapper.properties',
     );
     await wrapperProperties.parent.create(recursive: true);
-    await File(
-      'android/gradle/wrapper/gradle-wrapper.properties',
-    ).copy(wrapperProperties.path);
-    await File(
-      '${repo.path}/web_assets/readium/package-lock.json',
-    ).writeAsString('{}\n');
-    await File(
-      '${repo.path}/assets/reader/readium_learning.js',
-    ).writeAsString('// fixture\n');
-    await File(
-      '${repo.path}/android/key.properties',
-    ).writeAsString('fixture\n');
-    await File(
-      '${repo.path}/docs/user/release-notes.md',
-    ).writeAsString('## v0.3.4\n\n本版本的更新说明\n\n## v0.3.3\n\n旧版本说明\n');
+    await File('android/gradle/wrapper/gradle-wrapper.properties')
+        .copy(wrapperProperties.path);
+    await File('${repo.path}/web_assets/readium/package-lock.json')
+        .writeAsString('{}\n');
+    await File('${repo.path}/assets/reader/readium_learning.js')
+        .writeAsString('// fixture\n');
+    await File('${repo.path}/android/key.properties')
+        .writeAsString('fixture\n');
+    await File('${repo.path}/docs/user/release-notes.md')
+        .writeAsString('## v0.3.4\n\n本版本的更新说明\n\n## v0.3.3\n\n旧版本说明\n');
     // 网络分发留在现有脚本的测试中，这里只记录其调用与失败时序。
     await executable(
       'repo/tool/sync_gitee.sh',
@@ -79,7 +73,7 @@ echo upload-gitee >> "$FIXTURE/events"
 [[ "${SCENARIO:-}" != gitee-failure ]] || exit 70
 cp "$3" "$FIXTURE/gitee.apk"
 ''');
-    for (final command in ['flutter', 'dart', 'cargo', 'npm', 'npx']) {
+    for (final command in ['flutter', 'dart', 'npm', 'npx']) {
       await executable('bin/$command', r'''
 command="$(basename "$0")"
 echo "$command $*" >> "$FIXTURE/events"
@@ -135,7 +129,18 @@ echo "package: name='com.tanglei.synlen' versionCode='304' versionName='$version
 [[ "${SCENARIO:-}" != invalid-signature ]] || exit 1
 fingerprint=aaecfc6b98149129dfb674117b663af6cd524e34b3dd7af8ad0a3c87bc3d21ff
 [[ "${SCENARIO:-}" != debug-signature ]] || fingerprint=wrong
-echo "Signer #1 certificate SHA-256 digest: $fingerprint"
+other=0000000000000000000000000000000000000000000000000000000000000000
+case "${SCENARIO:-}" in
+  modern-signature) echo "V2 Signer: certificate SHA-256 digest: $fingerprint" ;;
+  multi-scheme-signature)
+    echo "V2 Signer: certificate SHA-256 digest: $fingerprint"
+    echo "V3 Signer: certificate SHA-256 digest: $fingerprint" ;;
+  modern-wrong-signature) echo "V2 Signer: certificate SHA-256 digest: $other" ;;
+  mixed-signatures)
+    echo "V2 Signer: certificate SHA-256 digest: $fingerprint"
+    echo "V3 Signer: certificate SHA-256 digest: $other" ;;
+  *) echo "Signer #1 certificate SHA-256 digest: $fingerprint" ;;
+esac
 ''');
     await executable('bin/unzip', r'''
 if [[ "$1" == -q ]]; then
@@ -231,15 +236,40 @@ esac
     expect(File('${fixture.path}/gitee.apk').existsSync(), isFalse);
   }
 
+  for (final entry in {
+    'modern-signature': true,
+    'multi-scheme-signature': true,
+    'modern-wrong-signature': false,
+    'mixed-signatures': false,
+  }.entries) {
+    test('新版签名输出 ${entry.key} 仍严格校验正式证书', () async {
+      environment['SCENARIO'] = entry.key;
+      final apk = File('${fixture.path}/candidate.apk');
+      await apk.writeAsString('APK fixture');
+      final result = await Process.run(
+        'bash',
+        ['tool/verify_release_apk.sh', tag, apk.path],
+        workingDirectory: repo.path,
+        environment: environment,
+      );
+      expect(
+        result.exitCode == 0,
+        entry.value,
+        reason: '${result.stdout}\n${result.stderr}',
+      );
+      expect(
+        entry.value ? result.stdout : result.stderr,
+        contains(entry.value ? 'APK 校验通过' : 'APK 签名与正式发布证书不一致'),
+      );
+      await expectUnpublished();
+    });
+  }
+
   test('演练检查构建并记录源码摘要，不创建远端发布', () async {
     await expectSuccess(await release(['--prepare-only']));
-    final record =
-        jsonDecode(
-              await File(
-                '${repo.path}/build/outputs/$apkName.json',
-              ).readAsString(),
-            )
-            as Map<String, dynamic>;
+    final record = jsonDecode(
+      await File('${repo.path}/build/outputs/$apkName.json').readAsString(),
+    ) as Map<String, dynamic>;
     expect(
       record['sourceCommit'],
       (await git(['rev-parse', 'HEAD'])).stdout.toString().trim(),
@@ -247,9 +277,8 @@ esac
     expect(record['sha256'], matches(RegExp(r'^[0-9a-f]{64}$')));
     expect(events(), contains('native-gradle --no-daemon'));
     expect(
-      File(
-        '${repo.path}/android/build/reports/problems/problems-report.html',
-      ).existsSync(),
+      File('${repo.path}/android/build/reports/problems/problems-report.html')
+          .existsSync(),
       isTrue,
     );
     expect((await git(['status', '--porcelain'])).stdout, isEmpty);
@@ -289,9 +318,8 @@ esac
     await File('${fixture.path}/events').writeAsString('');
     // 在干净检出中复用 APK 时，wrapper 与本机配置也可能尚未生成。
     await File('${repo.path}/android/gradlew').delete();
-    await File(
-      '${repo.path}/android/gradle/wrapper/gradle-wrapper.jar',
-    ).delete();
+    await File('${repo.path}/android/gradle/wrapper/gradle-wrapper.jar')
+        .delete();
     await File('${repo.path}/android/local.properties').delete();
     await expectSuccess(await release(['--apk', 'build/outputs/$apkName']));
     expect(events(), isNot(contains('flutter build')));
@@ -375,9 +403,8 @@ esac
   });
 
   test('未提交源码在执行检查前被拒绝', () async {
-    await File(
-      '${repo.path}/pubspec.yaml',
-    ).writeAsString('version: 0.3.4+304\n# dirty\n');
+    await File('${repo.path}/pubspec.yaml')
+        .writeAsString('version: 0.3.4+304\n# dirty\n');
     final result = await release();
     expect(result.exitCode, isNot(0));
     expect(result.stderr, contains('请先提交'));
@@ -404,9 +431,8 @@ esac
         await git(['add', '.']);
         await git(['commit', '-m', 'new source']);
       } else {
-        await File(
-          '${repo.path}/build/outputs/$apkName',
-        ).writeAsString('changed bytes');
+        await File('${repo.path}/build/outputs/$apkName')
+            .writeAsString('changed bytes');
       }
       final result = await release(['--apk', 'build/outputs/$apkName']);
       expect(result.exitCode, isNot(0));

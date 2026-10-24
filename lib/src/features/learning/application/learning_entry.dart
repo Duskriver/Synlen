@@ -61,9 +61,8 @@ class LearningEntry extends _$LearningEntry {
       barrierColor: Colors.black.withValues(
         alpha: theme.brightness == Brightness.dark ? 0.22 : 0.12,
       ),
-      barrierLabel: MaterialLocalizations.of(
-        navigator.context,
-      ).modalBarrierDismissLabel,
+      barrierLabel: MaterialLocalizations.of(navigator.context)
+          .modalBarrierDismissLabel,
       transitionDuration: MediaQuery.disableAnimationsOf(navigator.context)
           ? Duration.zero
           : const Duration(milliseconds: 180),

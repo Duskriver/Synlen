@@ -29,9 +29,8 @@ void main() {
       '@xml/ota_update_paths',
     );
     final paths = XmlDocument.parse(
-      File(
-        'android/app/src/main/res/xml/ota_update_paths.xml',
-      ).readAsStringSync(),
+      File('android/app/src/main/res/xml/ota_update_paths.xml')
+          .readAsStringSync(),
     );
     final mapping = paths.rootElement.childElements.single;
     expect(mapping.name.local, 'files-path');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../../core/widgets/book_cover.dart';
 import '../../domain/book_views.dart';
 import '../../../../../l10n/app_localizations.dart';

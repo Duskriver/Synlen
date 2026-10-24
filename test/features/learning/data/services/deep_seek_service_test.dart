@@ -236,9 +236,9 @@ void main() {
       (_) async => ResponseBody(source.stream, 200),
     );
     await expectLater(
-      service(
-        idleTimeout: const Duration(milliseconds: 20),
-      ).analyzeSentenceStream('S.').toList(),
+      service(idleTimeout: const Duration(milliseconds: 20))
+          .analyzeSentenceStream('S.')
+          .toList(),
       throwsA(learningError(LearningErrorCode.requestFailed)),
     );
     await upstreamCancelled.future.timeout(const Duration(seconds: 1));
@@ -315,9 +315,9 @@ void main() {
     final adapter = FakeChatAdapter((_) => response.future);
     dio.httpClientAdapter = adapter;
     await expectLater(
-      service(
-        requestTimeout: const Duration(milliseconds: 30),
-      ).analyzeSentenceStream('S.').toList(),
+      service(requestTimeout: const Duration(milliseconds: 30))
+          .analyzeSentenceStream('S.')
+          .toList(),
       throwsA(learningError(LearningErrorCode.requestFailed)),
     );
     await adapter.cancelled.future.timeout(const Duration(seconds: 1));

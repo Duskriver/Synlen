@@ -3620,7 +3620,16 @@ class $$ShelfGroupsTableTableManager
                 isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$ShelfGroupsTable, ShelfGroup>(table),
+                  BaseReferences<_$AppDatabase, $ShelfGroupsTable, ShelfGroup>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -3644,56 +3653,54 @@ typedef $$ShelfGroupsTableProcessedTableManager =
       ShelfGroup,
       PrefetchHooks Function()
     >;
-typedef $$ShelfBooksTableCreateCompanionBuilder =
-    ShelfBooksCompanion Function({
-      Value<int> id,
-      required String fileHash,
-      Value<String?> filePath,
-      Value<String?> coverPath,
-      required String title,
-      required String author,
-      Value<List<String>> authors,
-      Value<String?> description,
-      Value<List<String>> subjects,
-      Value<int> totalChapters,
-      Value<String> epubVersion,
-      Value<BookFormat> format,
-      required int importDate,
-      Value<int> direction,
-      Value<BookProgress?> progress,
-      Value<double> readingProgress,
-      Value<int?> lastOpenedDate,
-      Value<bool> isFinished,
-      Value<String?> groupName,
-      Value<bool> isDeleted,
-      required int updatedAt,
-      Value<int?> lastSyncedDate,
-    });
-typedef $$ShelfBooksTableUpdateCompanionBuilder =
-    ShelfBooksCompanion Function({
-      Value<int> id,
-      Value<String> fileHash,
-      Value<String?> filePath,
-      Value<String?> coverPath,
-      Value<String> title,
-      Value<String> author,
-      Value<List<String>> authors,
-      Value<String?> description,
-      Value<List<String>> subjects,
-      Value<int> totalChapters,
-      Value<String> epubVersion,
-      Value<BookFormat> format,
-      Value<int> importDate,
-      Value<int> direction,
-      Value<BookProgress?> progress,
-      Value<double> readingProgress,
-      Value<int?> lastOpenedDate,
-      Value<bool> isFinished,
-      Value<String?> groupName,
-      Value<bool> isDeleted,
-      Value<int> updatedAt,
-      Value<int?> lastSyncedDate,
-    });
+typedef $$ShelfBooksTableCreateCompanionBuilder = ShelfBooksCompanion Function({
+  Value<int> id,
+  required String fileHash,
+  Value<String?> filePath,
+  Value<String?> coverPath,
+  required String title,
+  required String author,
+  Value<List<String>> authors,
+  Value<String?> description,
+  Value<List<String>> subjects,
+  Value<int> totalChapters,
+  Value<String> epubVersion,
+  Value<BookFormat> format,
+  required int importDate,
+  Value<int> direction,
+  Value<BookProgress?> progress,
+  Value<double> readingProgress,
+  Value<int?> lastOpenedDate,
+  Value<bool> isFinished,
+  Value<String?> groupName,
+  Value<bool> isDeleted,
+  required int updatedAt,
+  Value<int?> lastSyncedDate,
+});
+typedef $$ShelfBooksTableUpdateCompanionBuilder = ShelfBooksCompanion Function({
+  Value<int> id,
+  Value<String> fileHash,
+  Value<String?> filePath,
+  Value<String?> coverPath,
+  Value<String> title,
+  Value<String> author,
+  Value<List<String>> authors,
+  Value<String?> description,
+  Value<List<String>> subjects,
+  Value<int> totalChapters,
+  Value<String> epubVersion,
+  Value<BookFormat> format,
+  Value<int> importDate,
+  Value<int> direction,
+  Value<BookProgress?> progress,
+  Value<double> readingProgress,
+  Value<int?> lastOpenedDate,
+  Value<bool> isFinished,
+  Value<String?> groupName,
+  Value<bool> isDeleted,
+  Value<int> updatedAt,
+  Value<int?> lastSyncedDate,
+});
 
 class $$ShelfBooksTableFilterComposer
     extends Composer<_$AppDatabase, $ShelfBooksTable> {
@@ -4157,7 +4164,16 @@ class $$ShelfBooksTableTableManager
                 lastSyncedDate: lastSyncedDate,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$ShelfBooksTable, ShelfBook>(table),
+                  BaseReferences<_$AppDatabase, $ShelfBooksTable, ShelfBook>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4434,7 +4450,16 @@ class $$BookManifestsTableTableManager
                 lastUpdated: lastUpdated,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$BookManifestsTable, BookManifest>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $BookManifestsTable,
+                    BookManifest
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4638,7 +4663,16 @@ class $$WordExplanationsTableTableManager
                 context: context,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$WordExplanationsTable, WordExplanation>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $WordExplanationsTable,
+                    WordExplanation
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4824,7 +4858,18 @@ class $$WordPronunciationsTableTableManager
                 lastUpdated: lastUpdated,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$WordPronunciationsTable, WordPronunciation>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $WordPronunciationsTable,
+                    WordPronunciation
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -5011,7 +5056,16 @@ class $$SentenceAnalysesTableTableManager
                 lastUpdated: lastUpdated,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$SentenceAnalysesTable, SentenceAnalysis>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SentenceAnalysesTable,
+                    SentenceAnalysis
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -5203,7 +5257,19 @@ class $$SentencePronunciationsTableTableManager
                 lastUpdated: lastUpdated,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<
+                    $SentencePronunciationsTable,
+                    SentencePronunciation
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SentencePronunciationsTable,
+                    SentencePronunciation
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),

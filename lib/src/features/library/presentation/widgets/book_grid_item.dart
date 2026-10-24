@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/widgets/book_cover.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../domain/book_views.dart';
@@ -174,9 +175,8 @@ class BookGridItem extends StatelessWidget {
               end: detailRect,
             );
 
-            final double statusBarHeight = MediaQuery.paddingOf(
-              flightContext,
-            ).top;
+            final double statusBarHeight = MediaQuery.paddingOf(flightContext)
+                .top;
             final double libraryAppBarBottom =
                 statusBarHeight + kToolbarHeight + 48.0;
             final double detailAppBarBottom = statusBarHeight + kToolbarHeight;

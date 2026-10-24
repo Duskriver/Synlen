@@ -5,6 +5,7 @@ import 'package:synlen/src/core/theme/app_theme_settings.dart';
 import 'package:synlen/src/core/widgets/segmented_option_chip.dart';
 import 'package:synlen/src/core/widgets/theme_variant_chip.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/settings_info_section.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 
 /// Renders the Appearance card on the Settings screen, containing the theme-mode

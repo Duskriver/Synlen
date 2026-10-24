@@ -36,10 +36,11 @@ class ReadiumTxtPublicationCache {
     final directory = cacheDirectory;
     return _pending.putIfAbsent(
       pendingKey,
-      () => Isolate.run(() => _prepare(sourcePath, directory, metadata))
-          .whenComplete(() {
-            _pending.remove(pendingKey);
-          }),
+      () =>
+          Isolate.run(() => _prepare(sourcePath, directory, metadata))
+              .whenComplete(() {
+                _pending.remove(pendingKey);
+              }),
     );
   }
 }
@@ -80,9 +81,8 @@ String _prepare(String sourcePath, String directory, String metadataJson) {
   for (var i = 0; i < spine.length; i++) {
     final item = spine[i];
     final href = item['href'] as String;
-    final match = RegExp(
-      r'^(\d+)-(\d+)$',
-    ).firstMatch(item['sourceRange'] as String? ?? '');
+    final match = RegExp(r'^(\d+)-(\d+)$')
+        .firstMatch(item['sourceRange'] as String? ?? '');
     if (txtChapterIndexFromPath(href) != i || match == null) {
       throw StateError('TXT 章节路径或字节范围无效');
     }

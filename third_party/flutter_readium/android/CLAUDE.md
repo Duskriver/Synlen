@@ -17,5 +17,5 @@ Thin wrapper over [kotlin-toolkit](https://github.com/readium/kotlin-toolkit/); 
 
 ## Toolchain
 
-`minSdkVersion 24`, `compileSdk 36`, Kotlin 2.3.21, Java 18 source/target.
-The plugin fallback uses AGP 8.13.2; the example validates AGP 9.3.0 with Gradle 9.5.
+`minSdkVersion 24`、`compileSdk 36`、Kotlin 2.4.0，Java 源码与字节码目标为 17。
+插件与宿主使用 AGP 9.1.1 的内置 Kotlin、Gradle 9.3.1、JDK 25；验证入口为仓库根目录的 `tool/test_readium_android.sh`。

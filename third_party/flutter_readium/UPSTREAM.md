@@ -35,7 +35,7 @@ Android Navigator 使用固定 3.3.0 的本地源码模块，补充分页拖动�
 
 在仓库根目录执行 `bash tool/test_readium_android.sh`，同时验证插件 `flutter_readium` 与本地 Navigator `synlen_readium_navigator` 的单元测试。词锚点测试覆盖原生页偏移、缩放、祖先滚动、屏幕密度及无效来源；两端还须在设备验证分页、重排和词卡位置。
 
-Android 构建使用 JDK 21、compile SDK 36、min SDK 24，并开启 core library desugaring；profile 变体对本地 Navigator 使用 release 回退。iOS 最低版本为 15。JDK 路径由构建环境配置，不写入仓库。
+Android 构建使用 JDK 25、Java 17 字节码、compile SDK 36、min SDK 24，并开启 core library desugaring；Kotlin 由 AGP 内置支持，序列化与 Parcelize 插件版本由宿主统一声明；profile 变体对本地 Navigator 使用 release 回退。iOS 最低版本为 15。JDK 路径由构建环境配置，不写入仓库。
 
 ## Dev Note
 

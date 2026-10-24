@@ -17,9 +17,10 @@ _MetadataResult _parseMetadata(
   }
 
   // Extract titles
-  var titles = findByLocalName(
-    'title',
-  ).map((e) => e.innerText.trim()).where((t) => t.isNotEmpty).toList();
+  var titles = findByLocalName('title')
+      .map((e) => e.innerText.trim())
+      .where((t) => t.isNotEmpty)
+      .toList();
   if (titles.isEmpty) {
     // Fallback to file name without extension
     final fallbackTitle = fileName != null
@@ -29,19 +30,20 @@ _MetadataResult _parseMetadata(
   }
 
   // Extract authors (dc:creator)
-  final authors = findByLocalName(
-    'creator',
-  ).map((e) => e.innerText.trim()).where((a) => a.isNotEmpty).toList();
+  final authors = findByLocalName('creator')
+      .map((e) => e.innerText.trim())
+      .where((a) => a.isNotEmpty)
+      .toList();
 
   // Extract description
-  final description = findByLocalName(
-    'description',
-  ).firstOrNull?.innerText.trim();
+  final description = findByLocalName('description').firstOrNull?.innerText
+      .trim();
 
   // Extract subjects
-  final subjects = findByLocalName(
-    'subject',
-  ).map((e) => e.innerText.trim()).where((s) => s.isNotEmpty).toList();
+  final subjects = findByLocalName('subject')
+      .map((e) => e.innerText.trim())
+      .where((s) => s.isNotEmpty)
+      .toList();
 
   // Extract cover (from meta tag with name="cover")
   String? coverHref;

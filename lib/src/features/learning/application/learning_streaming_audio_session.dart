@@ -27,8 +27,8 @@ class LearningStreamingAudioSession {
     required this.sampleRate,
     required this.numChannels,
     required this.bitsPerSample,
-    required Stream<List<int>> byteStream,
-  }) : _byteStream = byteStream {
+    required this._byteStream,
+  }) {
     _listen();
   }
 

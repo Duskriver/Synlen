@@ -19,21 +19,15 @@ enum ReaderFailure { load, render, progress, link, image }
 class ReadiumSession extends ChangeNotifier {
   ReadiumSession({
     required this.fileHash,
-    required Future<PreparedReadiumPublication> Function(String) prepare,
-    required BookQueries queries,
-    required ReadiumGateway gateway,
-    Future<void> Function()? beforeOpen,
-    Future<void> Function(Uri) launchLink = UrlLauncher.launch,
-    Duration readyTimeout = const Duration(seconds: 20),
+    required this._prepare,
+    required this._queries,
+    required this._gateway,
+    this._beforeOpen,
+    this._launchLink = UrlLauncher.launch,
+    this._readyTimeout = const Duration(seconds: 20),
     Duration progressDebounce = const Duration(seconds: 1),
-    Duration layoutDebounce = const Duration(milliseconds: 250),
-  }) : _prepare = prepare,
-       _queries = queries,
-       _launchLink = launchLink,
-       _gateway = gateway,
-       _beforeOpen = beforeOpen,
-       _readyTimeout = readyTimeout,
-       _layoutDebounce = layoutDebounce {
+    this._layoutDebounce = const Duration(milliseconds: 250),
+  }) {
     _progress = ReadingProgressController(
       save: (progress) =>
           _queries.saveProgress(bookId: prepared!.book.id, progress: progress),

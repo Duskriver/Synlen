@@ -84,9 +84,8 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
           const SizedBox(height: 8),
           Text(
             l10n.apiKeyObtainHint(widget.providerName),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.outline),
           ),
         ],
       ),

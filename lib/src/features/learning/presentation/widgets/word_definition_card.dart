@@ -248,16 +248,14 @@ class _WordDefinitionCardState extends State<WordDefinitionCard> {
       widget.state.contentError == null
           ? l10n.wordExplanationLoading
           : l10n.wordSectionUnavailable,
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.bodyMedium
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
 
   Widget _error(String text) => Text(
     text,
-    style: Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
+    style: Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: Theme.of(context).colorScheme.error),
   );
 }

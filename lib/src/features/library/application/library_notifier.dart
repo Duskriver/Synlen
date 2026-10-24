@@ -8,6 +8,7 @@ import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/database/app_database.dart';
+
 import '../data/services/book_import_service_provider.dart';
 
 part 'library_notifier.g.dart';
@@ -26,7 +27,7 @@ class ImportProgress extends ProgressLog {
     required this.currentCount,
     required this.currentFileName,
     required this.status,
-    LibraryException? error,
+    super.error,
     this.book,
   }) : super(
          status == ImportStatus.failed
@@ -39,7 +40,6 @@ class ImportProgress extends ProgressLog {
              : (status == ImportStatus.success
                    ? ProgressLogType.success
                    : ProgressLogType.info),
-         error: error,
        );
 }
 

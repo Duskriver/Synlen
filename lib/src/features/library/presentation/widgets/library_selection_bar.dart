@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
 

@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+
 import 'learning_http_request.dart';
+
 import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/features/learning/domain/aliyun_tts_voice.dart';
@@ -10,11 +12,10 @@ import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 
 class AliyunTTSService {
   AliyunTTSService({
-    required Dio dio,
+    required this._dio,
     FutureOr<String> Function()? readApiKey,
     String Function()? readVoiceParam,
-  }) : _dio = dio,
-       _readApiKey = readApiKey ?? (() => ''),
+  }) : _readApiKey = readApiKey ?? (() => ''),
        _readVoiceParam =
            readVoiceParam ?? (() => AliyunTtsVoice.defaultVoice.voiceParam);
 

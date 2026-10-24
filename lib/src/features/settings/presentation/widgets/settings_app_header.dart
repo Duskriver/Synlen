@@ -20,9 +20,8 @@ class SettingsAppHeader extends StatelessWidget {
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Theme.of(
-                context,
-              ).colorScheme.outline.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.outline
+                  .withValues(alpha: 0.5),
               width: 1.5,
             ),
           ),
@@ -33,9 +32,8 @@ class SettingsAppHeader extends StatelessWidget {
 
         Text(
           AppInfo.appName,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
 
         const SizedBox(height: 8),

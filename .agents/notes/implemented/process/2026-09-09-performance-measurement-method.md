@@ -22,5 +22,5 @@ Status: implemented
 
 ## Consequences
 
-- 采集一次即可填入手册的 Dev Note，之后每次大改（reader 引擎、导入链路、Rust 解压）按同一方法复测对照。
+- 采集一次即可填入手册的 Dev Note，之后每次大改（reader 引擎、导入链路、封面解压）按同一方法复测对照。
 - 本 issue 的"识别一个可立即优化的点"要等第一轮数据；在此之前不做性能优化。

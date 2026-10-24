@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:fpdart/fpdart.dart';
+
 import '../../domain/book_manifest.dart';
 import '../../domain/library_exception.dart';
 import '../../domain/txt_chapter_path.dart';

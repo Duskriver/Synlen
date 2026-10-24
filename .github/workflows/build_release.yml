@@ -37,33 +37,20 @@ jobs:
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '25'
           cache: 'gradle'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: '3.44.9'
+          flutter-version: '3.47.8'
           channel: 'stable'
           cache: true
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
-        with:
-          toolchain: 1.97.1
-          targets: aarch64-linux-android
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: |
-            rust
-            rust -> ../build/synlen_rust/build
+          node-version-file: '.nvmrc'
 
       - name: Install browser system dependencies
         working-directory: web_assets/readium

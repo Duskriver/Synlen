@@ -6,12 +6,10 @@ import '../../library/domain/book_progress.dart';
 /// 合并连续翻页，串行提交完整位置；关闭时提交尚未落库的进度。
 class ReadingProgressController {
   ReadingProgressController({
-    required Future<void> Function(BookProgress) save,
-    required void Function() onSaveFailed,
-    Duration debounce = const Duration(seconds: 1),
-  }) : _save = save,
-       _onSaveFailed = onSaveFailed,
-       _debounce = debounce;
+    required this._save,
+    required this._onSaveFailed,
+    this._debounce = const Duration(seconds: 1),
+  });
 
   final Future<void> Function(BookProgress) _save;
   final void Function() _onSaveFailed;

@@ -1,6 +1,7 @@
 # Agent Note: 删除 flutter_rust_bridge 脚手架 demo greet
 
 Status: implemented
+Archived: 2026-09-26
 
 ## Problem
 

@@ -9,6 +9,7 @@ import 'package:synlen/src/features/library/domain/library_exception.dart';
 import 'package:synlen/src/features/library/presentation/library_error_mapper.dart';
 import 'package:synlen/src/features/library/presentation/widgets/import_progress_dialog.dart';
 import 'package:synlen/src/features/library/presentation/widgets/restore_progress_dialog.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -323,9 +324,8 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       await showDialog(
         context: context,
         barrierDismissible: false,
-        barrierColor: Theme.of(
-          context,
-        ).colorScheme.scrim.withValues(alpha: 0.5),
+        barrierColor: Theme.of(context).colorScheme.scrim
+            .withValues(alpha: 0.5),
         builder: (ctx) =>
             RestoreProgressDialog(stream: progressStream, l10n: l10n),
       );

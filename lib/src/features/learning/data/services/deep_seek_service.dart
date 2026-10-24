@@ -9,11 +9,10 @@ import 'package:synlen/src/features/learning/domain/learning_exception.dart';
 class DeepSeekService {
   DeepSeekService({
     FutureOr<String> Function()? readApiKey,
-    required Dio dio,
+    required this._dio,
     this.requestTimeout = const Duration(minutes: 2),
     this.idleTimeout = const Duration(seconds: 30),
-  }) : _readApiKey = readApiKey ?? (() => ''),
-       _dio = dio;
+  }) : _readApiKey = readApiKey ?? (() => '');
 
   final FutureOr<String> Function() _readApiKey;
   final Dio _dio;

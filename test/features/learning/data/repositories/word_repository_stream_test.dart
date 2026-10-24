@@ -68,9 +68,9 @@ void main() {
 
   test('CRLF 和没有末尾换行的最后记录仍完整落缓存', () async {
     final input = wordDefinitionContent.trimRight().replaceAll('\n', '\r\n');
-    final records = await repository(
-      Stream.fromIterable(input.split('')),
-    ).getContentStream(query).toList();
+    final records = await repository(Stream.fromIterable(input.split('')))
+        .getContentStream(query)
+        .toList();
     expect(records, wordDefinitionRecords);
     expect(cache.explanations.values.single.explanation, wordDefinitionContent);
   });
@@ -95,9 +95,9 @@ void main() {
   test('四条内容齐全但传输随后失败仍不得缓存', () async {
     final source = StreamController<String>();
     final received = <String>[];
-    final result = repository(
-      source.stream,
-    ).getContentStream(query).forEach(received.add);
+    final result = repository(source.stream)
+        .getContentStream(query)
+        .forEach(received.add);
     final expectation = expectLater(result, throwsStateError);
     source.add(wordDefinitionContent);
     source.addError(StateError('transport failed'));

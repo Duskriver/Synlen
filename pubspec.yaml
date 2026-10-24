@@ -6,8 +6,8 @@ homepage: https://github.com/Duskriver/Synlen
 version: 0.4.0+400
 
 environment:
-  sdk: ^3.10.8
-  flutter: ">=3.44.8"
+  sdk: ^3.13.7
+  flutter: ">=3.47.8"
 
 dependencies:
   flutter:
@@ -16,25 +16,23 @@ dependencies:
   # Localization
   flutter_localizations:
     sdk: flutter
-  intl: ^0.20.2
+  intl: ^0.20.3
 
   # State Management
-  # 注：Flutter 3.44 生态锁（test_api 0.7.11）上限为 analyzer 12，
-  # riverpod generator 4.0.6+ / drift_dev 2.34.5+ 均需 analyzer 13，待 Flutter 升级后解锁
-  flutter_riverpod: ^3.3.2
-  riverpod_annotation: 4.0.3
+  flutter_riverpod: ^3.4.3
+  riverpod_annotation: ^4.0.7
 
   # Navigation
-  go_router: ^18.0.1
+  go_router: ^18.1.1
 
   # Database
-  drift: ^2.34.4
+  drift: ^2.35.3
   drift_flutter: ^0.3.1
   path_provider: ^2.1.6
   collection: ^1.19.1
 
   # Storage
-  shared_preferences: ^2.5.4
+  shared_preferences: ^2.5.6
   # AI 服务的 API Key 由用户在设置页自填，存安全存储（开源版不含任何密钥）
   flutter_secure_storage: ^11.2.0
 
@@ -43,35 +41,30 @@ dependencies:
 
   # EPUB Parsing
   xml: ^7.0.1
-  archive: ^4.3.0
+  archive: ^4.5.2
   crypto: ^3.0.7
   
   # Reader
   flutter_readium:
     path: third_party/flutter_readium
-  wakelock_plus: ^1.8.0
+  wakelock_plus: ^1.8.2
 
   # File Picking & Permissions
   path: ^1.9.1
   
   # App Info & URL Launcher
-  package_info_plus: ^10.2.1
-  url_launcher: ^6.3.2
+  package_info_plus: ^10.2.2
+  url_launcher: ^6.3.3
   flutter_svg: ^2.3.0
 
   # Image Compression
   flutter_image_compress: ^2.5.1
-  saf_stream: ^4.0.1
+  saf_stream: ^4.0.3
   android_intent_plus: ^6.1.0
 
   # File Sharing (iOS Share Sheet)
-  share_plus: ^13.3.0
+  share_plus: ^13.3.1
 
-  # Rust FFI bridge
-  flutter_rust_bridge: 2.13.0
-  synlen_rust:
-    path: rust_builder
-  
   # Network
   dio: ^5.11.1
 
@@ -88,22 +81,22 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  flutter_native_splash: ^2.4.6
+  flutter_native_splash: ^2.4.8
   
   # Code Generation
-  build_runner: ^2.15.1
-  riverpod_generator: 4.0.4
-  drift_dev: ^2.34.0
+  build_runner: ^2.16.2
+  riverpod_generator: ^4.0.9
+  drift_dev: ^2.35.2
   
   # Testing
   integration_test:
     sdk: flutter
-  path_provider_platform_interface: ^2.1.2
+  path_provider_platform_interface: ^2.1.3
   plugin_platform_interface: ^2.1.8
-  mockito: ^5.4.4
+  mockito: ^5.8.1
   fake_async: ^1.3.3
   # 迁移测试用原生 SQL 搭建旧版本库结构（drift 的底层驱动）
-  sqlite3: ^3.5.2
+  sqlite3: ^3.8.0
 
   # Icon
   flutter_launcher_icons: ^0.14.4

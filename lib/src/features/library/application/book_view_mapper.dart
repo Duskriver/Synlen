@@ -1,4 +1,5 @@
 import '../../library/domain/book_views.dart';
+
 import 'package:synlen/src/core/database/app_database.dart';
 
 /// drift 行 → 视图的映射集中在这里：presentation 与 reader 只吃视图类型。

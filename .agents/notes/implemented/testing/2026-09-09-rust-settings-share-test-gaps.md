@@ -12,7 +12,7 @@ Status: implemented
 
 ## Decision
 
-- **Rust**：在 `rust/src/api/epub.rs` 内嵌 `#[cfg(test)] mod tests`，自带 stored 方法的 ZIP 构造器（手写本地头 / 中央目录 / EOCD + CRC32），不引入写 ZIP 的依赖。覆盖：路径归一化、媒体扩展名判定、未加载与文件不存在错误、读取幂等与 close 后失效、伪造声明大小触发 50 MiB 守卫、encryption.xml + OPF + 字体条目经 `load_epub` 派生还原参数后读出原文。临时 EPUB 路径唯一并在析构时删除，避免测试间共用全局 `EPUB_CACHE`。
+- **封面读取**：Rust 后端及其专属测试由 [Dart 有界读取](../simplification/2026-09-26-replace-rust-cover-reader.md)取代，读取边界与完整导入使用真实 ZIP、文件与数据库验证。
 - **字体导入**：手写 fake 继承 `UnifiedImportService`，只覆写 `pickFontFiles` / `processFontFile` / `cleanCache` / `releaseIosAccess` 四个入口（基类构造器无副作用）。`AppStorage.initForTesting` 指向临时目录，用 `container.listen` 保持 autoDispose provider 存活。覆盖取消、成功导入、重名、单条失败继续、删除。
 - **分享进入**：widget 测试用子类 fake 替换 `LibraryNotifier`（记录传入路径并立刻以成功结束）与 `BookshelfNotifier`（记录刷新次数），只保留真实 `GlobalShareHandler` 与 `ProgressDialog`。断言：待处理路径交给导入管道、状态被消费、对话框出现、关闭后 `clearAllCache` 被调用且书架刷新一次。
 
@@ -30,7 +30,5 @@ Status: implemented
 
 ## Consequences
 
-- `cargo test` 从 14 个用例增至 22 个，新增覆盖 `api/epub.rs` 的读取与守卫路径。
-- 手写 ZIP 构造器只支持 stored 方法；将来需要 deflate 用例时需扩展。
 - 分享测试不跑真实导入，只证明 handler 的转发与收尾接线；真实导入链路由 library 侧测试覆盖。
 - 字体导入 fake 覆写的是 `UnifiedImportService` 的公开入口；若这些方法改名或改签名，测试会编译失败而非静默失真。

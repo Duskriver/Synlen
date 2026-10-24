@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/features/learning/application/learning_controller.dart';
 import 'package:synlen/src/features/learning/domain/learning_query.dart';
+
 import 'word_definition_card.dart';
 
 class WordDefinitionDialog extends ConsumerWidget {

@@ -1,4 +1,5 @@
 import 'package:synlen/src/features/learning/domain/learning_cancellation.dart';
+
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -277,32 +278,29 @@ void main() {
       },
     );
 
-    test(
-      'returns only audio cache when pronunciation exists and explanation is missing',
-      () async {
-        const word = 'clarity';
-        const context = 'Clarity matters.';
+    test('returns only audio cache when pronunciation exists and explanation is missing', () async {
+      const word = 'clarity';
+      const context = 'Clarity matters.';
 
-        await cacheStore.savePronunciationPath(word, '/tmp/clarity.wav');
+      await cacheStore.savePronunciationPath(word, '/tmp/clarity.wav');
 
-        final repository = WordRepository(
-          FreeDictionaryService(dio: testDio()),
-          DeepSeekService(dio: testDio()),
-          AliyunTTSService(dio: testDio()),
-          cacheStore,
-          InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
-        );
+      final repository = WordRepository(
+        FreeDictionaryService(dio: testDio()),
+        DeepSeekService(dio: testDio()),
+        AliyunTTSService(dio: testDio()),
+        cacheStore,
+        InMemoryAudioFileStore(wordAudioPaths: {word: '/tmp/clarity.wav'}),
+      );
 
-        final result = await repository.getInfo(
-          const WordLearningQuery(word: word, context: context),
-        );
+      final result = await repository.getInfo(
+        const WordLearningQuery(word: word, context: context),
+      );
 
-        expect(result.content, isNull);
-        expect(result.audioUrl, '/tmp/clarity.wav');
-        expect(result.hasCachedContent, isFalse);
-        expect(result.hasCachedAudio, isTrue);
-      },
-    );
+      expect(result.content, isNull);
+      expect(result.audioUrl, '/tmp/clarity.wav');
+      expect(result.hasCachedContent, isFalse);
+      expect(result.hasCachedAudio, isTrue);
+    });
 
     test('returns both caches when explanation and audio both exist', () async {
       const word = 'clarity';
@@ -473,33 +471,30 @@ void main() {
       },
     );
 
-    test(
-      'returns only audio cache when pronunciation exists and analysis is missing',
-      () async {
-        const sentence = 'Clarity matters.';
+    test('returns only audio cache when pronunciation exists and analysis is missing', () async {
+      const sentence = 'Clarity matters.';
 
-        await pronunciationStore.saveAudioPath(sentence, '/tmp/sentence.wav');
+      await pronunciationStore.saveAudioPath(sentence, '/tmp/sentence.wav');
 
-        final repository = SentenceRepository(
-          DeepSeekService(dio: testDio()),
-          AliyunTTSService(dio: testDio()),
-          analysisStore,
-          pronunciationStore,
-          InMemoryAudioFileStore(
-            sentenceAudioPaths: {sentence: '/tmp/sentence.wav'},
-          ),
-        );
+      final repository = SentenceRepository(
+        DeepSeekService(dio: testDio()),
+        AliyunTTSService(dio: testDio()),
+        analysisStore,
+        pronunciationStore,
+        InMemoryAudioFileStore(
+          sentenceAudioPaths: {sentence: '/tmp/sentence.wav'},
+        ),
+      );
 
-        final result = await repository.getInfo(
-          const SentenceLearningQuery(sentence: sentence),
-        );
+      final result = await repository.getInfo(
+        const SentenceLearningQuery(sentence: sentence),
+      );
 
-        expect(result.content, isNull);
-        expect(result.audioUrl, '/tmp/sentence.wav');
-        expect(result.hasCachedContent, isFalse);
-        expect(result.hasCachedAudio, isTrue);
-      },
-    );
+      expect(result.content, isNull);
+      expect(result.audioUrl, '/tmp/sentence.wav');
+      expect(result.hasCachedContent, isFalse);
+      expect(result.hasCachedAudio, isTrue);
+    });
 
     test('returns both caches when analysis and audio both exist', () async {
       const sentence = 'Clarity matters.';
@@ -629,72 +624,66 @@ void main() {
       }
     });
 
-    test(
-      'sentence aliyun pcm bytes stay identical after session buffering and file save',
-      () async {
-        const sentence = 'Clarity matters.';
-        const originalBytes = <int>[1, 2, 3, 4, 5, 6, 7, 8];
-        final repository = SentenceRepository(
-          DeepSeekService(dio: testDio()),
-          FakeAliyunTTSService(const <List<int>>[
-            <int>[1, 2, 3],
-            <int>[4, 5],
-            <int>[6, 7, 8],
-          ]),
-          InMemorySentenceAnalysisStore(),
-          InMemorySentencePronunciationStore(),
-          const LearningAudioFileStore(),
-        );
+    test('sentence aliyun pcm bytes stay identical after session buffering and file save', () async {
+      const sentence = 'Clarity matters.';
+      const originalBytes = <int>[1, 2, 3, 4, 5, 6, 7, 8];
+      final repository = SentenceRepository(
+        DeepSeekService(dio: testDio()),
+        FakeAliyunTTSService(const <List<int>>[
+          <int>[1, 2, 3],
+          <int>[4, 5],
+          <int>[6, 7, 8],
+        ]),
+        InMemorySentenceAnalysisStore(),
+        InMemorySentencePronunciationStore(),
+        const LearningAudioFileStore(),
+      );
 
-        final result = await repository.getPronunciationStream(sentence).first;
-        final session = LearningStreamingAudioSession(result: result);
-        final bufferedBytes = await session.waitForPlayableFileBytes();
-        final filePath = await repository.saveAudioFile(
-          sentence,
-          bufferedBytes,
-          result.format,
-          cacheByVoice: result.cacheByVoice,
-        );
-        final savedBytes = await File(filePath).readAsBytes();
+      final result = await repository.getPronunciationStream(sentence).first;
+      final session = LearningStreamingAudioSession(result: result);
+      final bufferedBytes = await session.waitForPlayableFileBytes();
+      final filePath = await repository.saveAudioFile(
+        sentence,
+        bufferedBytes,
+        result.format,
+        cacheByVoice: result.cacheByVoice,
+      );
+      final savedBytes = await File(filePath).readAsBytes();
 
-        expect(result.format, AudioFormat.pcm);
-        expect(bufferedBytes, originalBytes);
-        expect(savedBytes, originalBytes);
-      },
-    );
+      expect(result.format, AudioFormat.pcm);
+      expect(bufferedBytes, originalBytes);
+      expect(savedBytes, originalBytes);
+    });
 
-    test(
-      'word aliyun fallback pcm bytes stay identical after session buffering and file save',
-      () async {
-        const word = 'clarity';
-        const originalBytes = <int>[11, 22, 33, 44, 55, 66];
-        final repository = WordRepository(
-          ThrowingFreeDictionaryService(Exception('dictionary failed')),
-          DeepSeekService(dio: testDio()),
-          FakeAliyunTTSService(const <List<int>>[
-            <int>[11, 22],
-            <int>[33],
-            <int>[44, 55, 66],
-          ]),
-          InMemoryWordCacheStore(),
-          const LearningAudioFileStore(),
-        );
+    test('word aliyun fallback pcm bytes stay identical after session buffering and file save', () async {
+      const word = 'clarity';
+      const originalBytes = <int>[11, 22, 33, 44, 55, 66];
+      final repository = WordRepository(
+        ThrowingFreeDictionaryService(Exception('dictionary failed')),
+        DeepSeekService(dio: testDio()),
+        FakeAliyunTTSService(const <List<int>>[
+          <int>[11, 22],
+          <int>[33],
+          <int>[44, 55, 66],
+        ]),
+        InMemoryWordCacheStore(),
+        const LearningAudioFileStore(),
+      );
 
-        final result = await repository.getPronunciationStream(word).first;
-        final session = LearningStreamingAudioSession(result: result);
-        final bufferedBytes = await session.waitForPlayableFileBytes();
-        final filePath = await repository.saveAudioFile(
-          word,
-          bufferedBytes,
-          result.format,
-          cacheByVoice: result.cacheByVoice,
-        );
-        final savedBytes = await File(filePath).readAsBytes();
+      final result = await repository.getPronunciationStream(word).first;
+      final session = LearningStreamingAudioSession(result: result);
+      final bufferedBytes = await session.waitForPlayableFileBytes();
+      final filePath = await repository.saveAudioFile(
+        word,
+        bufferedBytes,
+        result.format,
+        cacheByVoice: result.cacheByVoice,
+      );
+      final savedBytes = await File(filePath).readAsBytes();
 
-        expect(result.format, AudioFormat.pcm);
-        expect(bufferedBytes, originalBytes);
-        expect(savedBytes, originalBytes);
-      },
-    );
+      expect(result.format, AudioFormat.pcm);
+      expect(bufferedBytes, originalBytes);
+      expect(savedBytes, originalBytes);
+    });
   });
 }

@@ -15,7 +15,7 @@
 
 ## 本地差异与构建
 
-[补丁](SYNlen.patch) 包含独立模块构建配置、分页拖动和位置回执修补及其测试，以及传递实际 WebView 的 JavaScript 桥工厂。构建配置固定官方 POM 中的运行依赖版本，保留资源、ViewBinding、BuildConfig 和上游 Kotlin 编译选项；测试使用 Robolectric 4.16.1。应用将所有 `org.readium.kotlin-toolkit:readium-navigator` 依赖替换为本模块，避免同时打包 Maven 版本。
+[补丁](SYNlen.patch) 包含独立模块构建配置、分页拖动和位置回执修补及其测试，以及传递实际 WebView 的 JavaScript 桥工厂。构建配置固定官方 POM 中的运行依赖版本，保留资源、ViewBinding、BuildConfig 和上游 Kotlin 编译选项；测试使用 Robolectric 4.16.1。模块使用 AGP 内置 Kotlin，序列化与 Parcelize 插件版本由宿主统一声明。应用将所有 `org.readium.kotlin-toolkit:readium-navigator` 依赖替换为本模块，避免同时打包 Maven 版本。
 
 触摸修补仅作用于分页模式下原速度判定未落页的拖动：单指、水平主导、净位移达到视口宽度的四分之一，且外层页面确实同向移动四分之一页，才沿 SDK 原导航路径完成一页。资源边界须有原生外层触边回调；表格内部滚动本身不满足外层位移条件。多指和取消终止位移补充判定，短拖与回撤不进入位移补充判定。原快速甩动、分页排版、动画、RTL 和跨章节导航继续由 SDK 处理。
 
@@ -23,7 +23,7 @@
 
 可重排 EPUB 的当前页完成视觉状态确认及 Locator 恢复后立即上报位置；邻章完成预加载不触发或推迟当前页回执。滚动、普通翻页和固定版式沿用 100ms 防抖，未加载完成或仍在恢复的位置不发出回执。
 
-在仓库根目录执行 `bash tool/test_readium_android.sh`，同时验证本模块 `synlen_readium_navigator` 与插件 `flutter_readium` 的单元测试；构建环境须使用 JDK 21。真机还须验证停顿后抬手、双向跨章节、内部图表滚动和词卡锚点，Robolectric 只重放 Chromium 的外层滚动结果。
+在仓库根目录执行 `bash tool/test_readium_android.sh`，同时验证本模块 `synlen_readium_navigator` 与插件 `flutter_readium` 的单元测试；构建环境须使用 JDK 25。真机还须验证停顿后抬手、双向跨章节、内部图表滚动和词卡锚点，Robolectric 只重放 Chromium 的外层滚动结果。
 
 ## 重建源码
 

@@ -2,9 +2,15 @@ import 'dart:convert';
 
 import 'package:archive/archive.dart';
 
+/// 可由设备原生图片插件解码的 1×1 PNG。
+List<int> testCoverPngBytes() => base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
+);
+
 /// 小型真实 EPUB，供内容供给与设备测试使用。
 List<int> testEpubBytes({
   String? chapter,
+  List<int>? cover,
   Map<String, List<int>> extra = const {},
 }) {
   final archive = Archive()
@@ -24,7 +30,7 @@ List<int> testEpubBytes({
     ..addFile(
       ArchiveFile.string(
         'OEBPS/package.opf',
-        '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:test:a&amp;b</dc:identifier><dc:title>测试 EPUB</dc:title><dc:language>zh</dc:language><meta property="dcterms:modified">2000-01-01T00:00:00Z</meta></metadata><manifest><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" ${chapter?.contains('<svg') == true ? 'properties="svg"' : ''}/><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/></manifest><spine><itemref idref="chapter"/></spine></package>',
+        '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:test:a&amp;b</dc:identifier><dc:title>测试 EPUB</dc:title><dc:language>zh</dc:language><meta property="dcterms:modified">2000-01-01T00:00:00Z</meta></metadata><manifest><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" ${chapter?.contains('<svg') == true ? 'properties="svg"' : ''}/><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>${cover == null ? '' : '<item id="cover" href="images/封面.png" media-type="image/png" properties="cover-image"/>'}</manifest><spine><itemref idref="chapter"/></spine></package>',
       ),
     )
     ..addFile(
@@ -36,12 +42,14 @@ List<int> testEpubBytes({
     ..addFile(
       ArchiveFile.string(
         'OEBPS/chapter.xhtml',
-        chapter ??
-            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>正文</title></head><body><p>普通正文 &amp; 原样保留。</p></body></html>',
+        chapter ?? '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>正文</title></head><body><p>普通正文 &amp; 原样保留。</p></body></html>',
       ),
     );
   for (final entry in extra.entries) {
     archive.addFile(ArchiveFile.bytes(entry.key, entry.value));
+  }
+  if (cover != null) {
+    archive.addFile(ArchiveFile.bytes('OEBPS/images/封面.png', cover));
   }
   return ZipEncoder().encodeBytes(archive);
 }

@@ -35,9 +35,8 @@ class SentenceAnalysisDialog extends ConsumerWidget {
           children: [
             Text(
               l10n.originalSentence,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+              style: Theme.of(context).textTheme.labelMedium
+                  ?.copyWith(color: Theme.of(context).colorScheme.outline),
             ),
             const SizedBox(height: 4),
             Text(sentence, style: Theme.of(context).textTheme.bodyLarge),

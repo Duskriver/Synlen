@@ -1,11 +1,13 @@
 import 'dart:io';
+
 import 'book_file_changes.dart';
 
+import 'package:flutter/foundation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
-import 'package:synlen/src/rust/api/epub.dart' as rust_epub;
 
+import 'epub_cover_reader.dart';
 import 'epub_import_workers.dart';
 
 /// EPUB 封面提取：按 OPF 根目录解析封面条目，压缩后写入 covers 目录。
@@ -14,8 +16,7 @@ import 'epub_import_workers.dart';
 class CoverExtractor {
   const CoverExtractor();
 
-  /// Extract cover image from EPUB and save to covers directory
-  /// Returns relative path to the cover image, or null if no cover found
+  /// 返回已落盘封面的相对路径；封面缺失或提取失败时返回 null。
   Future<String?> extract({
     required String epubPath,
     required String fileHash,
@@ -35,26 +36,21 @@ class CoverExtractor {
         await coversDir.create(recursive: true);
       }
 
-      // Resolve cover path relative to the OPF root, then read only that entry
-      // through the Rust EPUB backend instead of scanning the whole ZIP in Dart.
       final opfDir = opfRootPath.contains('/')
           ? opfRootPath.substring(0, opfRootPath.lastIndexOf('/'))
           : '';
       final coverPath = opfDir.isEmpty ? coverHref : '$opfDir/$coverHref';
 
-      // Determine file extension from MIME type or filename
       var extension = _getImageExtension(coverPath);
 
-      await rust_epub.loadEpub(epubPath: epubPath);
-      final rawCoverData = await rust_epub.readEpubFile(
+      final rawCoverData = await compute(readEpubCover, (
         epubPath: epubPath,
-        filePath: coverPath,
-      );
+        coverPath: coverPath,
+      ));
       if (rawCoverData == null || rawCoverData.isEmpty) {
         return null;
       }
 
-      // Compress image using worker
       var coverData = await ImportWorkers.compressImage(rawCoverData);
       if (coverData != null) {
         extension = '.jpg';
@@ -74,12 +70,9 @@ class CoverExtractor {
       // 封面提取失败不影响主流程，仅记录日志
       appLogger.w('Cover extraction failed: $e');
       return null;
-    } finally {
-      rust_epub.closeEpub(epubPath: epubPath).ignore();
     }
   }
 
-  /// Get image extension from filename
   String _getImageExtension(String filename) {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
@@ -98,6 +91,6 @@ class CoverExtractor {
     final specifiedExtension = filename.contains('.')
         ? filename.substring(filename.lastIndexOf('.'))
         : null;
-    return specifiedExtension ?? '.jpg'; // Default
+    return specifiedExtension ?? '.jpg';
   }
 }

@@ -12,7 +12,7 @@ Dependabot 的解析环境看不到 Flutter SDK 的钉版（`flutter_localizatio
 
 `.github/workflows/flutter_ci.yml` 的 flutter job 在 `flutter pub get` 之后增加一步 `git diff --exit-code -- pubspec.lock`：解析结果与入库的 lock 不一致即失败，并输出提示要求用 CI 固定的 Flutter 版本重跑 `pub get` 后提交结果。
 
-门禁以 CI 固定的 3.44.9 为准，与 [docs/development.md](../../../../docs/development.md#环境) 已写明的「本地与 CI 必须同版本」一致：它给那条要求装上牙齿，不新增约束。
+门禁以 CI 固定的 Flutter 版本为准，与 [docs/development.md](../../../../docs/development.md#环境) 已写明的「本地与 CI 必须同版本」一致：它给那条要求装上牙齿，不新增约束。
 
 ## Alternatives considered
 
@@ -32,4 +32,4 @@ Dependabot 的解析环境看不到 Flutter SDK 的钉版（`flutter_localizatio
 
 ## Related
 
-本决策补充[工具链锁定](2026-08-11-pin-toolchain-and-dependency-ceiling.md)记录的 Dependabot 盲区（cargo 侧靠人工锁步），[依赖审计](2026-09-09-dependency-audit-and-dependabot.md)持有的覆盖面不变；发版入口见[本地发布与手动云端备用](2026-09-17-local-release-with-manual-cloud-fallback.md)。
+本决策补充[工具链锁定](2026-08-11-pin-toolchain-and-dependency-ceiling.md)记录的 Dependabot 盲区，[依赖审计](2026-09-09-dependency-audit-and-dependabot.md)持有的覆盖面不变；发版入口见[本地发布与手动云端备用](2026-09-17-local-release-with-manual-cloud-fallback.md)。

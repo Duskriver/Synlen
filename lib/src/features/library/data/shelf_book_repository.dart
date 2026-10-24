@@ -1,4 +1,5 @@
 import '../domain/book_progress.dart';
+
 import 'package:drift/drift.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
@@ -11,7 +12,7 @@ import 'package:collection/collection.dart';
 class ShelfBookRepository {
   final AppDatabase _db;
 
-  ShelfBookRepository({required AppDatabase db}) : _db = db;
+  ShelfBookRepository({required this._db});
 
   /// 获取所有未删除的书，按导入时间倒序
   Future<List<ShelfBook>> getAllBooks() async {

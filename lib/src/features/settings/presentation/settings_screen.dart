@@ -17,6 +17,7 @@ import 'package:synlen/src/features/settings/presentation/widgets/backup_tile.da
 import 'package:synlen/src/features/settings/presentation/widgets/check_update_tile.dart';
 import 'package:synlen/src/features/settings/presentation/widgets/clean_cache_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
 import '../../../../l10n/app_localizations.dart';
 
 /// Settings Screen - Shows app information, tips and credits

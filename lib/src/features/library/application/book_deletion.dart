@@ -6,11 +6,7 @@ enum BookDeletionResult { deleted, cleanupPending, failed }
 
 /// 逻辑删除提交后清理文件；清理失败保留墓碑，由存储清理重试。
 class BookDeletion {
-  BookDeletion({
-    required LibraryBookStore store,
-    required Future<void> Function(ShelfBook) removeFiles,
-  }) : _store = store,
-       _removeFiles = removeFiles;
+  BookDeletion({required this._store, required this._removeFiles});
 
   final LibraryBookStore _store;
   final Future<void> Function(ShelfBook) _removeFiles;

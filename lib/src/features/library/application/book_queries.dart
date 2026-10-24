@@ -30,10 +30,9 @@ abstract interface class BookQueries {
 /// 通过仓库读取书目与写入进度的默认实现。
 class RepositoryBookQueries implements BookQueries {
   const RepositoryBookQueries({
-    required ShelfBookRepository shelfBookRepository,
-    required BookManifestRepository manifestRepository,
-  }) : _shelfBookRepository = shelfBookRepository,
-       _manifestRepository = manifestRepository;
+    required this._shelfBookRepository,
+    required this._manifestRepository,
+  });
 
   final ShelfBookRepository _shelfBookRepository;
   final BookManifestRepository _manifestRepository;

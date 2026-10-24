@@ -20,8 +20,7 @@ class TxtContentService {
   /// fileHash → spine 的会话级缓存，避免每次翻章都查库
   final Map<String, List<SpineItem>> _spineCache = {};
 
-  TxtContentService({required TxtSpineSource spineSource})
-    : _spineSource = spineSource;
+  TxtContentService({required this._spineSource});
 
   /// 读取指定虚拟路径（`txt/chapter_N.xhtml`）的章节 XHTML。
   /// Returns Either:

@@ -7,18 +7,13 @@ import 'dart:async';
 /// 便于脱离平台服务单测。
 class VolumeKeyPageTurnController {
   VolumeKeyPageTurnController({
-    required Stream<String> events,
-    required void Function() enableInterception,
-    required void Function() disableInterception,
-    required void Function() onPreviousPage,
-    required void Function() onNextPage,
-    required bool Function() isEnabled,
-  }) : _events = events,
-       _enableInterception = enableInterception,
-       _disableInterception = disableInterception,
-       _onPreviousPage = onPreviousPage,
-       _onNextPage = onNextPage,
-       _isEnabled = isEnabled;
+    required this._events,
+    required this._enableInterception,
+    required this._disableInterception,
+    required this._onPreviousPage,
+    required this._onNextPage,
+    required this._isEnabled,
+  });
 
   final Stream<String> _events;
   final void Function() _enableInterception;

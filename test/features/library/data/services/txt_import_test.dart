@@ -1,4 +1,5 @@
 import 'package:synlen/src/features/library/data/services/book_file_store.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -55,9 +56,8 @@ void main() {
 
     when(shelfRepo.bookExistsAndNotDeleted(any)).thenAnswer((_) async => false);
     when(shelfRepo.bookExists(any)).thenAnswer((_) async => false);
-    when(
-      libraryBookStore.saveBookWithManifest(any, any),
-    ).thenAnswer((_) async => right(1));
+    when(libraryBookStore.saveBookWithManifest(any, any))
+        .thenAnswer((_) async => right(1));
   });
 
   tearDown(() async {
@@ -113,9 +113,8 @@ void main() {
       expect(book.epubVersion, '');
 
       // 落盘：books/{hash}.txt 为归一化后的合法 UTF-8
-      final savedBytes = await File(
-        '${booksDir.path}/${book.fileHash}.txt',
-      ).readAsBytes();
+      final savedBytes = await File('${booksDir.path}/${book.fileHash}.txt')
+          .readAsBytes();
       expect(utf8.decode(savedBytes), chapterText);
       expect(
         book.filePath,
@@ -196,9 +195,8 @@ void main() {
     });
 
     test('书籍已存在时返回 left 且不重复导入', () async {
-      when(
-        shelfRepo.bookExistsAndNotDeleted(any),
-      ).thenAnswer((_) async => true);
+      when(shelfRepo.bookExistsAndNotDeleted(any))
+          .thenAnswer((_) async => true);
       final source = writeSourceFile('dup.txt', utf8.encode(chapterText));
 
       final result = await service.importBook(
@@ -216,9 +214,8 @@ void main() {
     });
 
     test('双写失败时不做手工补偿删除，只清理已落盘的书籍文件', () async {
-      when(
-        libraryBookStore.saveBookWithManifest(any, any),
-      ).thenAnswer((_) async => left('DB error'));
+      when(libraryBookStore.saveBookWithManifest(any, any))
+          .thenAnswer((_) async => left('DB error'));
       final source = writeSourceFile('rollback.txt', utf8.encode(chapterText));
 
       final result = await service.importBook(

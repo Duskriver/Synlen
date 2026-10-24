@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/features/library/domain/book_manifest.dart';
+
 import '../../../core/widgets/book_cover.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -362,9 +363,8 @@ class _TocDrawerState extends State<TocDrawer> {
                   ],
                   const SizedBox(height: 8),
                   Text(
-                    AppLocalizations.of(
-                      context,
-                    )!.chaptersCount(widget.totalChapters),
+                    AppLocalizations.of(context)!
+                        .chaptersCount(widget.totalChapters),
                     style: widget.themeData.textTheme.bodySmall?.copyWith(
                       color: widget.themeData.colorScheme.onSurfaceVariant,
                       fontSize: 11,

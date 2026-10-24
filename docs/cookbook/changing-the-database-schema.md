@@ -10,7 +10,7 @@
 4. 重新生成 drift 产物：
 
    ```sh
-   dart run build_runner build --delete-conflicting-outputs
+   dart run build_runner build
    ```
 
 5. 在 `test/database/migration_test.dart` 补测试：新库可创建并往返受影响字段；以旧 SQL 结构写入样本、设置旧 `user_version`，再打开 `AppDatabase` 验证保留数据、新结构读写、重复打开与失败回滚。
@@ -18,7 +18,7 @@
 
 ## 验证
 
-1. `dart run build_runner build --delete-conflicting-outputs` 无冲突输出。
+1. `dart run build_runner build` 无冲突输出。
 2. `flutter analyze` 零 error 零 warning。
 3. `flutter test test/database/migration_test.dart` 全绿。
 4. `dart run tool/doc_gates.dart` 通过。

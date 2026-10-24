@@ -4,6 +4,7 @@ import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
 import 'package:synlen/src/features/settings/application/font_manager_notifier.dart';
 import 'package:synlen/src/features/settings/domain/imported_font.dart';
+
 import 'settings_info_section.dart';
 
 /// Inline font management section embedded directly in the Settings screen.

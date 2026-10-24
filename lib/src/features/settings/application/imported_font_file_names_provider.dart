@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import 'font_manager_notifier.dart';
 
 part 'imported_font_file_names_provider.g.dart';

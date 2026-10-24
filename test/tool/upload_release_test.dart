@@ -11,12 +11,10 @@ void main() {
     for (final path in ['tool', 'bin', 'docs/user']) {
       await Directory('${fixture.path}/$path').create(recursive: true);
     }
-    await File(
-      'tool/upload_release.sh',
-    ).copy('${fixture.path}/tool/upload_release.sh');
-    await File(
-      '${fixture.path}/docs/user/release-notes.md',
-    ).writeAsString('## v0.3.0\n\n更新说明\n\n## v0.2.0\n旧说明\n');
+    await File('tool/upload_release.sh')
+        .copy('${fixture.path}/tool/upload_release.sh');
+    await File('${fixture.path}/docs/user/release-notes.md')
+        .writeAsString('## v0.3.0\n\n更新说明\n\n## v0.2.0\n旧说明\n');
     await File('${fixture.path}/app.apk').writeAsString('test APK bytes');
     await File('${fixture.path}/bin/curl').writeAsString(r'''#!/usr/bin/env bash
 set -euo pipefail
@@ -97,9 +95,8 @@ if [[ "$status" == true ]]; then printf '%s' "$code"; fi
   test('匿名校验完成后发布兼容客户端的清单', () async {
     final result = await publish();
     expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
-    final manifest = await File(
-      '${fixture.path}/build/outputs/version.json',
-    ).readAsString();
+    final manifest = await File('${fixture.path}/build/outputs/version.json')
+        .readAsString();
     expect(manifest, contains('"buildNumber": 300'));
     expect(manifest, contains('更新说明'));
     expect(manifest, isNot(contains('旧说明')));

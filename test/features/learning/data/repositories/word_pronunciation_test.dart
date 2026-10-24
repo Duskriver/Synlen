@@ -77,9 +77,9 @@ void main() {
       return _audioBody(_mp3Bytes);
     });
     const word = "reader's";
-    final result = await _repository(
-      adapter,
-    ).getPronunciationStream(word).first;
+    final result = await _repository(adapter)
+        .getPronunciationStream(word)
+        .first;
 
     expect(result.format, AudioFormat.mp3);
     expect(result.cacheByVoice, isFalse);
@@ -150,9 +150,9 @@ void main() {
     );
     final cancellation = LearningCancellation();
     final result = expectLater(
-      _repository(
-        adapter,
-      ).getPronunciationStream('word', cancellation: cancellation).toList(),
+      _repository(adapter)
+          .getPronunciationStream('word', cancellation: cancellation)
+          .toList(),
       throwsA(isA<LearningCancelled>()),
     );
     await listening.future;
@@ -208,9 +208,9 @@ void main() {
         final adapter = _AudioAdapter(
           (_) async => _audioBody(invalid.bytes, type: invalid.type),
         );
-        final result = await _repository(
-          adapter,
-        ).getPronunciationStream('word').first;
+        final result = await _repository(adapter)
+            .getPronunciationStream('word')
+            .first;
         expect(result.format, AudioFormat.pcm);
         expect(result.cacheByVoice, isTrue);
         expect(await result.stream.expand((bytes) => bytes).toList(), [

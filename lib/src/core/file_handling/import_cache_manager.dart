@@ -1,9 +1,11 @@
 import 'dart:io';
+
 import 'package:crypto/crypto.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:saf_stream/saf_stream.dart';
+
 import 'platform_path.dart';
 import 'importable_epub.dart';
 
@@ -30,8 +32,7 @@ class ImportCacheManager {
 
   Directory? _cacheDirectory;
 
-  ImportCacheManager({Future<String> Function(String)? iosFetchCallback})
-    : _iosFetchCallback = iosFetchCallback;
+  ImportCacheManager({this._iosFetchCallback});
 
   /// 暴露导入缓存目录（已按需创建），供 ZIP 备份解压等复用缓存区的流程使用。
   Future<Directory> getCacheDirectory() => _getCacheDirectory();

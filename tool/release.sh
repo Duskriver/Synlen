@@ -75,7 +75,6 @@ dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 dart run tool/layer_gates.dart
-cargo test --locked --manifest-path rust/Cargo.toml
 dart run tool/doc_gates.dart
 npm ci --prefix web_assets/readium
 git diff --exit-code -- web_assets/readium/package-lock.json || fail '阅读器 npm 锁文件发生漂移'

@@ -20,14 +20,11 @@ typedef PreparedReadiumPublication = ({
 /// 为阅读会话准备文件；错误由会话 controller 转换为可展示状态。
 class ReadiumPublicationSource {
   const ReadiumPublicationSource({
-    required BookQueries queries,
-    required ReadiumTxtPublicationCache txtCache,
-    required ReadiumEpubPublicationCache epubCache,
-    required String documentsDirectory,
-  }) : _queries = queries,
-       _txtCache = txtCache,
-       _epubCache = epubCache,
-       _documentsDirectory = documentsDirectory;
+    required this._queries,
+    required this._txtCache,
+    required this._epubCache,
+    required this._documentsDirectory,
+  });
 
   final BookQueries _queries;
   final ReadiumTxtPublicationCache _txtCache;

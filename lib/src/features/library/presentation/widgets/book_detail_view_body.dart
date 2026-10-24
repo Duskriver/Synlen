@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../application/book_actions.dart';
 import '../../domain/book_format.dart';
 import '../../domain/book_meta.dart';
@@ -64,9 +65,8 @@ class BookDetailViewBody extends ConsumerWidget {
             // Title
             Text(
               book.title,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w400),
+              style: Theme.of(context).textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.w400),
               textAlign: TextAlign.left,
             ),
 
@@ -89,9 +89,8 @@ class BookDetailViewBody extends ConsumerWidget {
               ExpandableText(
                 text: _extract(book.description),
                 maxLines: 4,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w400),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w400),
               ),
             ],
 
@@ -240,9 +239,8 @@ class _MetadataChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }

@@ -1,5 +1,7 @@
 import '../../../../helpers/book_progress.dart';
+
 import 'package:synlen/src/features/library/data/library_book_store.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -101,9 +103,8 @@ void main() {
     'opfRootPath': '',
     'epubVersion': '',
     'format': ?format,
-    'lastUpdated': DateTime.fromMillisecondsSinceEpoch(
-      updatedAt,
-    ).toIso8601String(),
+    'lastUpdated': DateTime.fromMillisecondsSinceEpoch(updatedAt)
+        .toIso8601String(),
     'spine': [
       {
         'index': 0,
@@ -218,9 +219,8 @@ void main() {
     expect(firstGroup.updatedAt, 20);
     expect((await restore(paths)).last.result, isA<ImportSuccess>());
     final newer = manifestMap(updatedAt: 4000)..['opfRootPath'] = 'new-root/';
-    await File(
-      (paths.bookPaths['book-a']!.manifestPath as IOSFilePath).path,
-    ).writeAsString(jsonEncode(newer));
+    await File((paths.bookPaths['book-a']!.manifestPath as IOSFilePath).path)
+        .writeAsString(jsonEncode(newer));
     expect((await restore(paths)).last.result, isA<ImportSuccess>());
     expect(await db.select(db.shelfBooks).get(), hasLength(2));
     expect(await db.select(db.bookManifests).get(), hasLength(2));
@@ -255,9 +255,8 @@ void main() {
       "CREATE TRIGGER reject_manifest_update BEFORE UPDATE ON book_manifests "
       "BEGIN SELECT RAISE(ABORT, 'test failure'); END",
     );
-    await File(
-      (paths.bookPaths['book-a']!.manifestPath as IOSFilePath).path,
-    ).writeAsString(jsonEncode(manifestMap(updatedAt: 9000)));
+    await File((paths.bookPaths['book-a']!.manifestPath as IOSFilePath).path)
+        .writeAsString(jsonEncode(manifestMap(updatedAt: 9000)));
     final progress = await restore(paths);
     expect(progress.last.result, isA<ImportFailure>());
     expect(progress.last.current, 0);
@@ -276,9 +275,8 @@ void main() {
       manifests: {'book-a': manifestMap(updatedAt: 2000)},
     );
     await restore(paths);
-    await File(
-      (paths.bookPaths['book-a']!.manifestPath as IOSFilePath).path,
-    ).writeAsString(jsonEncode(manifestMap(updatedAt: 1000)));
+    await File((paths.bookPaths['book-a']!.manifestPath as IOSFilePath).path)
+        .writeAsString(jsonEncode(manifestMap(updatedAt: 1000)));
     expect((await restore(paths)).last.result, isA<ImportSuccess>());
     expect(
       (await manifestRepo.getManifestByHash('book-a'))!.lastUpdated,

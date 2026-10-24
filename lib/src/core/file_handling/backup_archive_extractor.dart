@@ -66,9 +66,8 @@ Future<void> extractVerifiedBackupZip(File zip, Directory target) async {
             output.writeStream(content);
           case 8:
             // archive 的原生解码器会聚集全部输出；原生 sink 直接逐块校验写盘。
-            final decoder = ZLibDecoder(
-              raw: true,
-            ).startChunkedConversion(_BackupOutputSink(output));
+            final decoder = ZLibDecoder(raw: true)
+                .startChunkedConversion(_BackupOutputSink(output));
             try {
               while (!content.isEOS) {
                 final size = content.length.clamp(0, 64 * 1024);

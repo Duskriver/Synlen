@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:synlen/src/core/storage/app_storage.dart';
+
 import '../shelf_book_repository.dart';
 
 /// Service that scans physical storage directories and removes files
@@ -23,12 +24,10 @@ class StorageCleanupService {
   final SharedPreferences _prefs;
 
   StorageCleanupService({
-    required ShelfBookRepository shelfBookRepo,
-    required ExportBackupService exportBackupService,
+    required this._shelfBookRepo,
+    required this._exportBackupService,
     required SharedPreferences sharedPreferences,
-  }) : _shelfBookRepo = shelfBookRepo,
-       _exportBackupService = exportBackupService,
-       _prefs = sharedPreferences;
+  }) : _prefs = sharedPreferences;
 
   /// Scans [books/] and [covers/] inside [AppStorage.documentsPath] and
   /// deletes every file whose name (without extension) is not present in the

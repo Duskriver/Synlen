@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
+
 import 'services/backup_merger.dart';
+
 import 'package:fpdart/fpdart.dart';
 import 'package:synlen/src/core/database/app_database.dart';
 
@@ -10,7 +12,7 @@ import 'package:synlen/src/core/database/app_database.dart';
 class LibraryBookStore {
   final AppDatabase _db;
 
-  LibraryBookStore({required AppDatabase db}) : _db = db;
+  LibraryBookStore({required this._db});
 
   /// 在同一事务中保存书与清单，返回书的数据库 ID。
   ///

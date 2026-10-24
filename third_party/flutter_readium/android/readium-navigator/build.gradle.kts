@@ -6,9 +6,8 @@
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.parcelize")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.21"
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 group = "org.readium.kotlin-toolkit"
@@ -23,8 +22,8 @@ android {
         buildConfig = true
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
     testOptions { unitTests.isIncludeAndroidResources = true }
@@ -32,9 +31,9 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
-        freeCompilerArgs.addAll("-Xconsistent-data-class-copy-visibility", "-Xannotation-default-target=param-property")
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_4
+        freeCompilerArgs.add("-Xconsistent-data-class-copy-visibility")
     }
 }
 
@@ -59,7 +58,7 @@ dependencies {
     implementation("org.jsoup:jsoup:1.22.2")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.4.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
 }

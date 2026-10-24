@@ -31,12 +31,10 @@ class BookImportService {
   static const _coverExtractor = CoverExtractor();
 
   BookImportService({
-    required ShelfBookRepository shelfBookRepo,
-    required LibraryBookStore libraryBookStore,
-    required BookFileStore fileStore,
-  }) : _shelfBookRepo = shelfBookRepo,
-       _libraryBookStore = libraryBookStore,
-       _fileStore = fileStore;
+    required this._shelfBookRepo,
+    required this._libraryBookStore,
+    required this._fileStore,
+  });
 
   /// Import a book file (EPUB or TXT) following a clean pipeline pattern
   /// [precomputedHash] 为调用方预先算好的 SHA-256 hex 哈希，与导入缓存、

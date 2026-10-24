@@ -76,8 +76,7 @@ void main() {
     expect(await source.readAsBytes(), original);
     await source.writeAsBytes(
       testEpubBytes(
-        chapter:
-            '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>正文</title></head><body onload="bad()"><p>新正文</p></body></html>',
+        chapter: '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>正文</title></head><body onload="bad()"><p>新正文</p></body></html>',
       ),
     );
     final sanitized = await cache.prepare(source.path);

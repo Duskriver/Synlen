@@ -23,9 +23,8 @@ void main() {
     final parsed = const TxtBookParser()
         .parseFromText(text)
         .getOrElse((error) => throw error);
-    source = await File(
-      p.join(directory.path, 'source.txt'),
-    ).writeAsBytes(parsed.normalizedUtf8);
+    source = await File(p.join(directory.path, 'source.txt'))
+        .writeAsBytes(parsed.normalizedUtf8);
     manifest = (spine: parsed.spine, toc: parsed.toc);
     cache = ReadiumTxtPublicationCache(
       cacheDirectory: p.join(directory.path, 'cache'),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 
 /// 可展开的长文本：超过 [maxLines] 行时截断，点击展开显示全文。
@@ -33,9 +34,8 @@ class _ExpandableTextState extends State<ExpandableText> {
             text: widget.text,
             style:
                 widget.style ??
-                Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w400),
+                Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w400),
           );
 
           final tp = TextPainter(
@@ -66,9 +66,8 @@ class _ExpandableTextState extends State<ExpandableText> {
                 widget.text,
                 style:
                     widget.style ??
-                    Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w400,
-                    ),
+                    Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w400),
                 maxLines: _isExpanded ? null : widget.maxLines,
                 overflow: _isExpanded
                     ? TextOverflow.visible

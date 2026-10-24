@@ -31,7 +31,6 @@ import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 import 'package:synlen/src/features/reader/application/reader_settings_notifier.dart';
 import 'package:synlen/src/features/reader/presentation/reader_screen.dart';
 import 'package:synlen/src/features/reader/presentation/readium_viewport.dart';
-import 'package:synlen/src/rust/frb_generated.dart';
 
 import '../test/helpers/epub_fixture.dart';
 import 'native_touch_driver.dart';
@@ -63,7 +62,6 @@ void main() {
         return null;
       });
     }
-    await RustLib.init();
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     final root = await (await getTemporaryDirectory()).createTemp(
       'word-popover-',

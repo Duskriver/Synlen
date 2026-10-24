@@ -8,7 +8,7 @@ Android 真机启动调试包时弹出 16 KB 兼容性警告。对 APK 内全部
 
 ## Decision
 
-`rust/build.rs` 对 Android 的 `cdylib` 传递 `max-page-size=16384` 与 `common-page-size=16384`，同时约束 LOAD 段和 RELRO 布局。参数属于原生库本身，调试和发布构建共用；其他平台不接收 Android 链接参数。
+原生库随[封面后端替代](../simplification/2026-09-26-replace-rust-cover-reader.md)移除；对其余原生库继续执行产物对齐检查。
 
 `tool/verify_android_page_alignment.sh` 检查 APK ZIP 对齐以及全部 ARM64、x86_64 原生库的 LOAD 段。工具缺失、无法解析 ELF、没有 64 位库或对齐不足均失败；发布 APK 校验调用同一脚本，失败时阻止推送和上传。
 
@@ -23,7 +23,7 @@ Android 真机启动调试包时弹出 16 KB 兼容性警告。对 APK 内全部
 ## Consequences
 
 - 对齐检查对修复前的真实 APK 失败，修复后全部库通过；发布脚本测试覆盖 ELF 对齐不足、ZIP 对齐不足及 ELF 解析失败时的阻断。
-- 本机 Rust 单元测试验证非 Android 构建不受链接参数影响；Android 覆盖安装和启动验证修复包可运行。4 KB 真机不能替代 16 KB 内核上的完整运行验收。
+- Android 覆盖安装和启动验证修复包可运行。4 KB 真机不能替代 16 KB 内核上的完整运行验收。
 - 本决策补充[本地与云端共用发布入口](../process/2026-09-17-local-release-with-manual-cloud-fallback.md)的产物检查，其发布顺序与重试规则继续有效。
 
 ## References

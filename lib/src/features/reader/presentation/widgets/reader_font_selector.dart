@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/features/settings/application/font_manager_notifier.dart';
+
 import 'labeled_switch_tile.dart';
 import 'reader_sub_label.dart';
 

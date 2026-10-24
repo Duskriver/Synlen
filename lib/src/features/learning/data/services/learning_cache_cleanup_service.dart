@@ -8,10 +8,9 @@ class LearningCacheCleanupService {
   final AudioFileStore _audioFileStore;
 
   LearningCacheCleanupService({
-    required AppDatabase db,
-    required AudioFileStore audioFileStore,
-  }) : _db = db,
-       _audioFileStore = audioFileStore;
+    required this._db,
+    required this._audioFileStore,
+  });
 
   /// 清空学习文本缓存表与全部音频缓存，返回删除的音频文件数。
   Future<int> cleanAll() async {

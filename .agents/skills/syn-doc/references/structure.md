@@ -14,7 +14,7 @@
 顺序：导语 → 职责与边界 → 关键类型与语义 → 数据流 → 扩展点 → 已知限制与待办 → Dev Note。
 
 - 导语：这个模块负责什么、不负责什么。
-- 职责与边界：对外接口清单；跨 feature 只写经哪个 application 接口。
+- 职责与边界：对外 application 能力入口与 domain 值类型；跨 feature 依赖按[允许形态](../../../../docs/architecture.md#跨-feature-依赖)描述。
 - 关键类型与语义：表格（类型 | 语义 | 约束），类型名与 [术语表](../../../../docs/glossary.md) 一致。
 - 数据流：编号步骤，只写本模块承担的那段；整体数据流归 [architecture.md](../../../../docs/architecture.md)。
 - 扩展点：新增能力改哪个目录或文件。

@@ -632,7 +632,30 @@
 +limitations under the License.
 --- a/android/build.gradle
 +++ b/android/build.gradle
-@@ -21,6 +21,11 @@
+@@ -1,5 +1,4 @@
+ buildscript {
+-  ext.kotlin_version = '2.3.21'
+   ext.readium_version = '3.3.0'
+
+   repositories {
+@@ -8,28 +7,31 @@
+   }
+
+   dependencies {
+-    classpath 'com.android.tools.build:gradle:8.13.2'
+-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
++    classpath 'com.android.tools.build:gradle:9.1.1'
+   }
+ }
+
+ plugins {
+-  id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.21'
++  id 'com.android.library'
++  id 'org.jetbrains.kotlin.plugin.serialization'
++  id 'org.jetbrains.kotlin.plugin.parcelize'
+ }
+
+ group 'dk.nota.flutterreadium'
  version '1.0-SNAPSHOT'
 
  rootProject.allprojects {
@@ -644,21 +667,47 @@
    repositories {
      google()
      mavenCentral()
-@@ -77,6 +82,13 @@
-     )
+     maven { url 'https://jitpack.io' } // Needed for readium-adapter-pdfium
+   }
+ }
+-
+-apply plugin: 'com.android.library'
+-apply plugin: 'kotlin-parcelize'
+
+ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+@@ -39,13 +41,13 @@
    }
 
+   compileOptions {
+-    sourceCompatibility JavaVersion.VERSION_18
+-    targetCompatibility JavaVersion.VERSION_18
++    sourceCompatibility JavaVersion.VERSION_17
++    targetCompatibility JavaVersion.VERSION_17
+   }
+
+   kotlin {
+     compilerOptions {
+-      jvmTarget = JvmTarget.JVM_18
++      jvmTarget = JvmTarget.JVM_17
+     }
+   }
+
+@@ -75,6 +77,13 @@
+       "MEDIA_OVERLAY_FETCH_CONCURRENCY",
+       mediaOverlayFetchConcurrency.toString()
+     )
++  }
++
 +  buildTypes {
 +    // Flutter profile 变体复用本地 Navigator 的 release 实现。
 +    profile {
 +      matchingFallbacks = ['release']
 +    }
-+  }
-+
+   }
+
    buildFeatures {
-     viewBinding = true
-     buildConfig = true
-@@ -109,4 +121,5 @@
+@@ -109,4 +118,5 @@
    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
 
    testImplementation 'junit:junit:4.13.2'
@@ -3469,3 +3518,11 @@
 +    expect(lifecycle.hasStarted, isFalse);
 +  });
 +}
+--- a/android/gradle/wrapper/gradle-wrapper.properties
++++ b/android/gradle/wrapper/gradle-wrapper.properties
+@@ -2,4 +2,4 @@
+ distributionPath=wrapper/dists
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-8.14-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-all.zip

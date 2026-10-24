@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fpdart/fpdart.dart';
+
 import '../../domain/book_format.dart';
 import '../../domain/library_exception.dart';
 import '../parsers/epub_zip_parser.dart';

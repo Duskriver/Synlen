@@ -20,10 +20,10 @@ subprojects {
     afterEvaluate {
         if (project.hasProperty("android")) {
             val androidExtension = project.extensions.findByName("android")
-            if (androidExtension is com.android.build.gradle.BaseExtension) {
-                androidExtension.compileSdkVersion = "android-36"
+            if (androidExtension is com.android.build.api.dsl.CommonExtension) {
+                androidExtension.compileSdk = 36
                 androidExtension.buildToolsVersion = "36.0.0"
-                androidExtension.ndkVersion = "27.3.13750724"
+                androidExtension.ndkVersion = "28.2.13676358"
                 if (androidExtension.namespace == null) {
                     androidExtension.namespace = project.group.toString()
                 }
@@ -51,7 +51,7 @@ tasks.register<Delete>("clean") {
 
 subprojects {
     plugins.withId("com.android.library") {
-        val extension = extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
+        val extension = extensions.findByType(com.android.build.api.dsl.CommonExtension::class.java)
         if (extension != null) {
             if (extension.namespace == null) {
                 extension.namespace = project.group.toString()

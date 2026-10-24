@@ -218,14 +218,12 @@ class AppThemeSettings {
   ColorScheme get darkColorScheme => activeDarkPreset.colorScheme;
 
   /// [ThemeData] built from the chosen light scheme, with [SynlenThemeExtension] injected.
-  ThemeData get lightTheme => AppTheme.buildTheme(
-    lightColorScheme,
-  ).copyWith(extensions: [SynlenThemeExtension(preset: activeLightPreset)]);
+  ThemeData get lightTheme => AppTheme.buildTheme(lightColorScheme)
+      .copyWith(extensions: [SynlenThemeExtension(preset: activeLightPreset)]);
 
   /// [ThemeData] built from the chosen dark scheme, with [SynlenThemeExtension] injected.
-  ThemeData get darkTheme => AppTheme.buildTheme(
-    darkColorScheme,
-  ).copyWith(extensions: [SynlenThemeExtension(preset: activeDarkPreset)]);
+  ThemeData get darkTheme => AppTheme.buildTheme(darkColorScheme)
+      .copyWith(extensions: [SynlenThemeExtension(preset: activeDarkPreset)]);
 
   /// Maps a [AppThemeVariant] to its corresponding [ColorScheme] based on the given brightness.
   static ColorScheme colorSchemeFor(

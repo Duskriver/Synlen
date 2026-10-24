@@ -10,7 +10,7 @@
 
 [差异补丁](SYNlen.patch)包含原生实现和回归测试。重建时校验归档摘要、解压并保留上述文件，删除 `android/gradle/`、`android/gradlew`、`android/gradlew.bat`，再在包目录执行 `patch -p1 < SYNlen.patch`。本说明与补丁自身不参与源码重放。
 
-在仓库根目录执行 `flutter pub get` 与 `bash tool/test_readium_android.sh`，使用 JDK 21 运行真实插件的 Robolectric 回归。测试用可控网络回调和校验闩锁验证并发顺序；安装交接后的系统界面仍需设备验收。
+在仓库根目录执行 `flutter pub get` 与 `bash tool/test_readium_android.sh`，使用 JDK 25 运行真实插件的 Robolectric 回归。测试用可控网络回调和校验闩锁验证并发顺序；安装交接后的系统界面仍需设备验收。
 
 ## Dev Note
 

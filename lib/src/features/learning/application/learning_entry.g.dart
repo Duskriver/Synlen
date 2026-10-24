@@ -44,7 +44,7 @@ final class LearningEntryProvider
   }
 }
 
-String _$learningEntryHash() => r'967d83bdd73f1962b1bb35ff0dde3c5b985f6a12';
+String _$learningEntryHash() => r'b225386aa3b07ade31e9afe18bfa0e2f8d5af350';
 
 /// 学习能力的对外入口：宿主提供词锚点并在重排时关闭词卡。
 

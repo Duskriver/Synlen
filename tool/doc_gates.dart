@@ -200,7 +200,6 @@ const _repoPathPrefixes = <String>[
   'docs/',
   '.agents/',
   'assets/',
-  'rust/',
   'android/',
   'ios/',
   'scripts/',

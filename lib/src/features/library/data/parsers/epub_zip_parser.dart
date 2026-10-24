@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:archive/archive_io.dart';
 import 'package:xml/xml.dart';
 import 'package:fpdart/fpdart.dart';
+
 import '../../domain/book_format.dart';
 import '../../domain/book_manifest.dart';
 import '../../domain/library_exception.dart';

@@ -1,5 +1,4 @@
 buildscript {
-  ext.kotlin_version = '2.3.21'
   ext.readium_version = '3.3.0'
 
   repositories {
@@ -8,13 +7,14 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:8.13.2'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath 'com.android.tools.build:gradle:9.1.1'
   }
 }
 
 plugins {
-  id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.21'
+  id 'com.android.library'
+  id 'org.jetbrains.kotlin.plugin.serialization'
+  id 'org.jetbrains.kotlin.plugin.parcelize'
 }
 
 group 'dk.nota.flutterreadium'
@@ -33,9 +33,6 @@ rootProject.allprojects {
   }
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-parcelize'
-
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 android {
@@ -44,13 +41,13 @@ android {
   }
 
   compileOptions {
-    sourceCompatibility JavaVersion.VERSION_18
-    targetCompatibility JavaVersion.VERSION_18
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
   }
 
   kotlin {
     compilerOptions {
-      jvmTarget = JvmTarget.JVM_18
+      jvmTarget = JvmTarget.JVM_17
     }
   }
 

@@ -77,9 +77,9 @@ void main() {
       )).isRight(),
       isTrue,
     );
-    final epub = await File(
-      '${root.path}/source.epub',
-    ).writeAsBytes(testEpubBytes(chapter: _tableChapter));
+    final epub = await File('${root.path}/source.epub').writeAsBytes(
+      testEpubBytes(chapter: _tableChapter, cover: testCoverPngBytes()),
+    );
     expect(
       (await importer.importBook(
         epub,

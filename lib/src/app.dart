@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:synlen/src/core/config/app_info.dart';
 import 'package:synlen/src/core/theme/app_theme_notifier.dart';
 import 'package:synlen/src/global_share_handler.dart';
+
 import '../l10n/app_localizations.dart';
 import 'app_router.dart';
 

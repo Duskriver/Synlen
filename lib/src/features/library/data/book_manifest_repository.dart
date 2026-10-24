@@ -7,7 +7,7 @@ import 'package:synlen/src/core/database/app_database.dart';
 class BookManifestRepository {
   final AppDatabase _db;
 
-  BookManifestRepository({required AppDatabase db}) : _db = db;
+  BookManifestRepository({required this._db});
 
   /// 按文件哈希获取清单（打开书时的主查询）
   Future<BookManifest?> getManifestByHash(String fileHash) async {

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:synlen/src/features/library/data/parsers/epub_zip_parser.dart';
@@ -13,53 +14,47 @@ void main() {
     });
 
     group('Happy Path (Success Cases)', () {
-      test(
-        'Parse valid EPUB 2.0 byte stream - should return correct book metadata',
-        () {
-          // Arrange: Generate EPUB ZIP byte data with complete structure
-          final epubBytes = _createMinimalEpub2(
-            title: 'The Three-Body Problem',
-            author: 'Liu Cixin',
-            description: 'A science fiction novel',
-            chapters: ['Chapter 1', 'Chapter 2', 'Chapter 3'],
-          );
+      test('Parse valid EPUB 2.0 byte stream - should return correct book metadata', () {
+        // Arrange: Generate EPUB ZIP byte data with complete structure
+        final epubBytes = _createMinimalEpub2(
+          title: 'The Three-Body Problem',
+          author: 'Liu Cixin',
+          description: 'A science fiction novel',
+          chapters: ['Chapter 1', 'Chapter 2', 'Chapter 3'],
+        );
 
-          // Act: Parse EPUB
-          final result = parser.parseFromBytes(epubBytes);
+        // Act: Parse EPUB
+        final result = parser.parseFromBytes(epubBytes);
 
-          // Assert: Verify parsing succeeded
-          expect(result.isRight(), true);
+        // Assert: Verify parsing succeeded
+        expect(result.isRight(), true);
 
-          final parseResult = result.getRight().toNullable()!;
-          expect(parseResult.title, 'The Three-Body Problem');
-          expect(parseResult.author, 'Liu Cixin');
-          expect(parseResult.authors, contains('Liu Cixin'));
-          expect(parseResult.description, 'A science fiction novel');
-        },
-      );
+        final parseResult = result.getRight().toNullable()!;
+        expect(parseResult.title, 'The Three-Body Problem');
+        expect(parseResult.author, 'Liu Cixin');
+        expect(parseResult.authors, contains('Liu Cixin'));
+        expect(parseResult.description, 'A science fiction novel');
+      });
 
-      test(
-        'Parse valid EPUB - should correctly parse chapter list (TOC non-empty)',
-        () {
-          // Arrange
-          final epubBytes = _createMinimalEpub2(
-            title: 'Test Book',
-            author: 'Test Author',
-            chapters: ['Chapter 1', 'Chapter 2'],
-          );
+      test('Parse valid EPUB - should correctly parse chapter list (TOC non-empty)', () {
+        // Arrange
+        final epubBytes = _createMinimalEpub2(
+          title: 'Test Book',
+          author: 'Test Author',
+          chapters: ['Chapter 1', 'Chapter 2'],
+        );
 
-          // Act
-          final result = parser.parseFromBytes(epubBytes);
+        // Act
+        final result = parser.parseFromBytes(epubBytes);
 
-          // Assert
-          expect(result.isRight(), true);
+        // Assert
+        expect(result.isRight(), true);
 
-          final parseResult = result.getRight().toNullable()!;
-          expect(parseResult.toc, isNotEmpty);
-          expect(parseResult.totalChapters, greaterThan(0));
-          expect(parseResult.spine, isNotEmpty);
-        },
-      );
+        final parseResult = result.getRight().toNullable()!;
+        expect(parseResult.toc, isNotEmpty);
+        expect(parseResult.totalChapters, greaterThan(0));
+        expect(parseResult.spine, isNotEmpty);
+      });
 
       test(
         'Parse EPUB with cover - should correctly extract cover information',
@@ -307,37 +302,32 @@ void main() {
     });
 
     group('Complex Scenarios', () {
-      test(
-        'EPUB with NCX table of contents - should correctly parse nested chapters',
-        () {
-          // Arrange
-          final epubBytes = _createEpubWithNcx(
-            title: 'Book with NCX',
-            chapters: [
-              (
-                'Part 1',
-                [('Chapter 1', 'ch1.xhtml'), ('Chapter 2', 'ch2.xhtml')],
-              ),
-              ('Part 2', [('Chapter 3', 'ch3.xhtml')]),
-            ],
-          );
+      test('EPUB with NCX table of contents - should correctly parse nested chapters', () {
+        // Arrange
+        final epubBytes = _createEpubWithNcx(
+          title: 'Book with NCX',
+          chapters: [
+            (
+              'Part 1',
+              [('Chapter 1', 'ch1.xhtml'), ('Chapter 2', 'ch2.xhtml')],
+            ),
+            ('Part 2', [('Chapter 3', 'ch3.xhtml')]),
+          ],
+        );
 
-          // Act
-          final result = parser.parseFromBytes(epubBytes);
+        // Act
+        final result = parser.parseFromBytes(epubBytes);
 
-          // Assert
-          expect(result.isRight(), true);
+        // Assert
+        expect(result.isRight(), true);
 
-          final parseResult = result.getRight().toNullable()!;
-          expect(parseResult.toc, isNotEmpty);
+        final parseResult = result.getRight().toNullable()!;
+        expect(parseResult.toc, isNotEmpty);
 
-          // Verify nested structure
-          final topLevelItems = parseResult.toc.where(
-            (item) => item.depth == 0,
-          );
-          expect(topLevelItems, isNotEmpty);
-        },
-      );
+        // Verify nested structure
+        final topLevelItems = parseResult.toc.where((item) => item.depth == 0);
+        expect(topLevelItems, isNotEmpty);
+      });
 
       test('Multi-author EPUB - should correctly parse all authors', () {
         // Arrange

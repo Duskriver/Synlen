@@ -23,7 +23,8 @@ ABIS="$(unzip -Z -1 "$APK" | awk -F/ '$1 == "lib" && NF == 3 && $3 ~ /[.]so$/ {p
 [[ "$ABIS" == arm64-v8a ]] || { echo 'APK 必须只包含 ARM64 原生库' >&2; exit 1; }
 bash "$(dirname "$0")/verify_android_page_alignment.sh" "$APK"
 CERTS="$("$TOOLS/apksigner" verify --print-certs "$APK")"
-FINGERPRINT="$(printf '%s\n' "$CERTS" | sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: //p' | tr '[:upper:]' '[:lower:]')"
+# Build-Tools 37 按签名方案输出 V2 / V3 Signer；同一证书跨方案只算一次。
+FINGERPRINT="$(printf '%s\n' "$CERTS" | sed -nE 's/^(Signer #[0-9]+|V[0-9]+ Signer:) certificate SHA-256 digest: ([[:xdigit:]]{64})$/\2/p' | tr '[:upper:]' '[:lower:]' | sort -u)"
 # 已发布正式包的证书摘要，防止 Gradle 回退到 debug 签名后被上传。
 [[ "$FINGERPRINT" == aaecfc6b98149129dfb674117b663af6cd524e34b3dd7af8ad0a3c87bc3d21ff ]] || { echo 'APK 签名与正式发布证书不一致' >&2; exit 1; }
 echo "APK 校验通过：${TAG}+${BUILD_NUMBER}，ARM64，正式签名"

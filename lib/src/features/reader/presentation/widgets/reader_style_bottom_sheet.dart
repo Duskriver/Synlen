@@ -7,6 +7,7 @@ import 'package:synlen/src/core/theme/app_theme.dart';
 import 'package:synlen/src/core/theme/app_theme_settings.dart';
 import 'package:synlen/src/core/widgets/theme_variant_chip.dart';
 import 'package:synlen/src/features/reader/domain/reader_settings.dart';
+
 import '../../application/reader_settings_notifier.dart';
 import 'integer_stepper.dart';
 import 'labeled_switch_tile.dart';
@@ -185,9 +186,8 @@ class _ReaderStyleBottomSheetState
                       '${_scale.toStringAsFixed(1)}x',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.5),
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),

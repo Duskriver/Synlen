@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../domain/book_views.dart';
@@ -102,18 +103,17 @@ class _LibraryAppBarState extends State<LibraryAppBar>
               onTap: isSelectionMode ? null : () => context.push('/settings'),
               child: isSelectionMode
                   ? Text(
-                      AppLocalizations.of(
-                        context,
-                      )!.selected(widget.state.selectedCount),
+                      AppLocalizations.of(context)!
+                          .selected(widget.state.selectedCount),
                     )
                   : TextButton(
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.only(right: 24),
                         minimumSize: const Size(48, 48),
                         alignment: Alignment.centerLeft,
-                        foregroundColor: Theme.of(
-                          context,
-                        ).colorScheme.onSurface,
+                        foregroundColor: Theme.of(context)
+                            .colorScheme
+                            .onSurface,
                       ),
                       onPressed: () => context.push('/settings'),
                       child: Text(

@@ -30,7 +30,7 @@
 | `AppStorageConstants` | 磁盘布局常量：`books`、`covers`、`manifests`、`fonts`、`shelf.json` | `lib/src/core/storage/app_storage_constants.dart` |
 | `appLogger` | 全局 `Logger` 实例，日志唯一出口 | `lib/src/core/services/app_logger.dart` |
 | `ToastService` | 基于 overlay 的提示，并持有 `navigatorKey` 供跨页面弹窗使用 | `lib/src/core/services/toast_service.dart` |
-| `UnifiedImportService` | 导入门面：缓存与哈希、备份 ZIP 解压、字体缓存；选择器调用委托 `NativeFilePicker` | `lib/src/core/file_handling/unified_import_service.dart` |
+| `UnifiedImportService` | 导入门面：缓存与哈希、备份 ZIP 解压、字体缓存、SAF 显示名查询；选择器调用委托 `NativeFilePicker` | `lib/src/core/file_handling/unified_import_service.dart` |
 | `NativeFilePicker` | 平台选择器适配：MethodChannel 调用与 Android SAF / iOS UIDocumentPicker 分支 | `lib/src/core/file_handling/native_file_picker.dart` |
 | `ImportCacheManager` | 导入缓存目录与 SHA-256 哈希（`createCacheAndHash` / `createRawCacheFile` / `clearAll`） | `lib/src/core/file_handling/import_cache_manager.dart` |
 | `PlatformPath` / `AndroidUriPath` / `IOSFilePath` | 平台路径抽象：Android 用 SAF `content://`，iOS 用文件系统路径 | `lib/src/core/file_handling/platform_path.dart` |
@@ -68,7 +68,7 @@
 find lib/src/core -name '*.dart' ! -name '*.g.dart' -exec wc -l {} + | sort -rn | head
 ```
 
-- 旧模块注释仍有英文；按 Boy Scout Rule 路过即译，不做一次性批量翻译（[注释与文档语言](../development.md#注释与文档语言)）。
+- 旧模块注释仍有英文；改动范围按[注释与文档语言](../development.md#注释与文档语言)处理。
 
 ## Dev Note
 

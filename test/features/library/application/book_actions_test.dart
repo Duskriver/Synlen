@@ -48,9 +48,8 @@ void main() {
   });
 
   test('findByHash 透传仓库结果', () async {
-    when(
-      repository.getBookByHash('hash-1'),
-    ).thenAnswer((_) async => buildBook());
+    when(repository.getBookByHash('hash-1'))
+        .thenAnswer((_) async => buildBook());
 
     final book = await container
         .read(bookActionsProvider.notifier)
@@ -60,9 +59,8 @@ void main() {
   });
 
   test('saveMetadataByHash 成功返回 null 并写回编辑后的字段', () async {
-    when(
-      repository.getBookByHash('hash-1'),
-    ).thenAnswer((_) async => buildBook());
+    when(repository.getBookByHash('hash-1'))
+        .thenAnswer((_) async => buildBook());
     when(repository.saveBook(any)).thenAnswer((_) async => right(1));
 
     final error = await container
@@ -85,9 +83,8 @@ void main() {
   });
 
   test('saveMetadataByHash 清空简介时写回 null', () async {
-    when(
-      repository.getBookByHash('hash-1'),
-    ).thenAnswer((_) async => buildBook());
+    when(repository.getBookByHash('hash-1'))
+        .thenAnswer((_) async => buildBook());
     when(repository.saveBook(any)).thenAnswer((_) async => right(1));
 
     await container
@@ -122,9 +119,8 @@ void main() {
   });
 
   test('saveMetadataByHash 失败返回仓库给出的错误信息', () async {
-    when(
-      repository.getBookByHash('hash-1'),
-    ).thenAnswer((_) async => buildBook());
+    when(repository.getBookByHash('hash-1'))
+        .thenAnswer((_) async => buildBook());
     when(repository.saveBook(any)).thenAnswer((_) async => left('磁盘已满'));
 
     final error = await container

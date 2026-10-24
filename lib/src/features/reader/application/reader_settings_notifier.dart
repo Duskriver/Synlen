@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/features/settings/application/imported_font_file_names_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../domain/reader_settings.dart';
 
 part 'reader_settings_notifier.g.dart';

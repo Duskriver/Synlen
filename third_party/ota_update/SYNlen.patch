@@ -9,6 +9,15 @@
 +android/.kotlin/
 --- a/android/build.gradle
 +++ b/android/build.gradle
+@@ -8,7 +8,7 @@
+     }
+
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:8.7.3'
++        classpath 'com.android.tools.build:gradle:9.1.1'
+     }
+ }
+
 @@ -37,12 +37,15 @@
          minSdk 23
          testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -18,7 +27,7 @@
          disable 'InvalidPackage'
      }
  }
- 
+
  dependencies {
 +    testImplementation "junit:junit:4.13.2"
 +    testImplementation "org.robolectric:robolectric:4.16.1"
@@ -53,7 +62,7 @@
 -        PluginRegistry.RequestPermissionsResultListener,
 -        ProgressListener {
 +        PluginRegistry.RequestPermissionsResultListener {
- 
+
      //CONSTANTS
 -    private static final String BYTES_DOWNLOADED = "BYTES_DOWNLOADED";
 -    private static final String BYTES_TOTAL = "BYTES_TOTAL";
@@ -63,7 +72,7 @@
      private static final String ARG_HEADERS = "headers";
 @@ -92,7 +85,21 @@
      private InstallSessionCallback installSessionCallback;
- 
+
      //DOWNLOAD SPECIFIC PLUGIN STATE. PLUGIN SUPPORT ONLY ONE DOWNLOAD AT A TIME
 -    private Call currentCall;
 +    // 所有权只在主线程移交；工作线程只读取本任务的取消标记和参数。
@@ -135,7 +144,7 @@
 +        cancelActiveDownload();
          closeSink();
      }
- 
+
 @@ -235,113 +250,117 @@
       * or from onRequestPermissionsResult if user had to grant permissions.
       */
@@ -354,12 +363,12 @@
 +            reportStatus(false, OtaStatus.DOWNLOADING, "", null, "" + ((read * 100) / total));
 +        });
      }
- 
+
      /**
 @@ -359,6 +378,10 @@
          }
      }
- 
+
 +    boolean validateChecksum(String expected, File file) {
 +        return Sha256ChecksumValidator.validateChecksum(expected, file);
 +    }
@@ -417,7 +426,7 @@
 @@ -543,35 +550,7 @@
          final MethodChannel methodChannel = new MethodChannel(messanger, METHOD_CHANNEL);
          methodChannel.setMethodCallHandler(this);
- 
+
 -        client = new OkHttpClient.Builder()
 -                .addNetworkInterceptor(chain -> {
 -                    Response originalResponse = chain.proceed(chain.request());
@@ -449,7 +458,7 @@
 -        }
 +        client = new OkHttpClient();
      }
- 
+
      public void onInstallSuccess(String message) {
 @@ -593,8 +572,9 @@
          progressSink = null;

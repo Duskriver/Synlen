@@ -20,13 +20,12 @@
 |---|---|
 | `lib/` 行为改动 | `flutter analyze` + 对应路径的测试（`flutter test test/<对应路径>_test.dart`） |
 | 仅注释 / 文档 | 无测试；动了 `.dart` 跑 `dart format`；跑 `dart run tool/doc_gates.dart` |
-| 模型 / provider 注解 | `dart run build_runner build --delete-conflicting-outputs` → analyze + 相关测试 |
+| 模型 / provider 注解 | `dart run build_runner build` → analyze + 相关测试 |
 | l10n ARB | `flutter gen-l10n`（或 `flutter pub get`）重新生成 localizations + 受影响页面的测试 |
 | `pubspec.yaml` / `analysis_options.yaml` / `build.yaml` / `l10n.yaml` | `flutter analyze` + **全量** `flutter test` |
-| `rust/` 或 FFI 绑定 | `cargo test`（在 `rust/` 内）→ 绑定重新生成 → analyze + 冒烟测试 |
 | Android 原生库构建或 APK 校验 | 重建 APK → `bash tool/verify_android_page_alignment.sh <apk>`（需 `ANDROID_HOME`）+ `flutter test test/tool/release_test.dart`；在设备上覆盖安装并启动 |
-| Android Readium Navigator 或手势补丁 | `flutter pub get` → `bash tool/test_readium_android.sh`（需 JDK 21）；真实 `MotionEvent` 回归通过后，在设备验证拖动松手、取消与跨章 |
-| Android OTA 下载与取消补丁 | `bash tool/test_readium_android.sh`（需 JDK 21）；重建 APK，设备验证取消、重试与系统安装交接 |
+| Android Readium Navigator 或手势补丁 | `flutter pub get` → `bash tool/test_readium_android.sh`（需[开发环境](development.md#环境)中的 JDK 25）；真实 `MotionEvent` 回归通过后，在设备验证拖动松手、取消与跨章 |
+| Android OTA 下载与取消补丁 | `bash tool/test_readium_android.sh`（需[开发环境](development.md#环境)中的 JDK 25）；重建 APK，设备验证取消、重试与系统安装交接 |
 | reader 学习脚本 | npm 锁文件检查 + `npm run typecheck --prefix web_assets/readium` + `npm test --prefix web_assets/readium` → `dart run tool/build_readium_assets.dart`（见[操作手册](cookbook/changing-reader-web-assets.md)） |
 
 测试文件过滤不等于覆盖率豁免：新增源文件必须有对应测试。全量本地演练只在用户明确要求、排查 CI 失败或变更横跨全仓库时执行；**推送与合并前全量 `flutter test` 必须全绿**。
@@ -54,6 +53,7 @@
   flutter test integration_test/learning_e2e_test.dart -d <device> --dart-define=SYNLEN_DEEPSEEK_KEY=<key>
   ```
 
+- `integration_test/cover_import_test.dart` 在 Android / iOS 设备验证含 PNG 封面的真实 EPUB 批量导入、原生 JPEG 压缩与解码、数据库失败后的文件回滚：`flutter test integration_test/cover_import_test.dart -d <device>`。
 - `integration_test/reader_smoke_test.dart` 无需密钥，在 Android / iOS 设备验证真实 TXT 导入、Readium 翻页与跨章、主题重排、退出保存和重开恢复：`flutter test integration_test/reader_smoke_test.dart -d <device>`。
 - `integration_test/word_popover_smoke_test.dart` 无需密钥，真实导入 TXT / EPUB 并驱动 Readium 点词，在学习仓储与播放器注入替身，验证词卡渐进内容、外部关闭不翻页、重排与旋转关闭，以及退出取消请求。Android 执行 `flutter test integration_test/word_popover_smoke_test.dart -d <device>`；iOS 使用下述原生输入驱动。
 - 浏览器测试在 Chromium 与 WebKit 执行真实 DOM 与 Range，覆盖完整词句、手势取消、原生交互透传和消息次数；Readium 分页与完整 Locator 恢复由会话测试和两端设备验收覆盖。

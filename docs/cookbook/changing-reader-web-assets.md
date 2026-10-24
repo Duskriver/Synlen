@@ -4,7 +4,7 @@
 
 ## 前置
 
-Node 22 与 Dart 环境见 [development.md](../development.md)。Playwright 浏览器二进制单独下载，首次安装需要网络。
+Node LTS 与 Dart 环境见 [development.md](../development.md)。Playwright 浏览器二进制单独下载，首次安装需要网络。
 
 ## 步骤
 

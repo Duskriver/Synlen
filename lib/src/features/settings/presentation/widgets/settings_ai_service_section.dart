@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/l10n/app_localizations.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
+
 import 'api_key_dialog.dart';
 import '../../application/deep_seek_connectivity.dart';
+
 import 'package:synlen/src/features/settings/application/api_key_notifier.dart';
+
 import 'settings_info_section.dart';
 
 /// AI 服务设置分组：配置 DeepSeek 与阿里云 TTS 的 API Key（用户自填）

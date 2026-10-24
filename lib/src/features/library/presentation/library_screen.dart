@@ -143,9 +143,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               ),
               error: (error, stack) => Center(
                 child: Text(
-                  AppLocalizations.of(
-                    context,
-                  )!.errorLoadingLibrary(error.toString()),
+                  AppLocalizations.of(context)!
+                      .errorLoadingLibrary(error.toString()),
                 ),
               ),
               data: (state) {
@@ -172,9 +171,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           if (isSelectingFiles)
             Positioned.fill(
               child: Container(
-                color: Theme.of(
-                  context,
-                ).colorScheme.scrim.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.scrim
+                    .withValues(alpha: 0.5),
                 child: const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,

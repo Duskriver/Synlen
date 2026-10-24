@@ -7,9 +7,10 @@ import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/library/application/library_consistency_repair.dart';
 import 'package:synlen/src/features/settings/application/update_apk_cleanup.dart';
-import 'package:synlen/src/rust/frb_generated.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'src/app.dart';
+
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/database/providers.dart';
 
@@ -35,9 +36,6 @@ Future<void> _registerBundledLicenses() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _registerBundledLicenses();
-
-  // Initialize Rust FFI runtime (must be called before any Rust API functions)
-  await RustLib.init();
 
   // Initialize app storage paths
   await AppStorage.init();

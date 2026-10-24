@@ -6,7 +6,9 @@ import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
+
 import '../library_book_store.dart';
+
 import 'package:synlen/src/features/library/data/shelf_book_repository.dart';
 
 import '../../domain/book_format.dart';
@@ -42,12 +44,10 @@ class ImportBackupService {
   final LibraryBookStore _bookStore;
 
   ImportBackupService({
-    required ShelfBookRepository shelfBookRepository,
-    required LibraryBookStore bookStore,
-    required UnifiedImportService importService,
-  }) : _shelfBookRepository = shelfBookRepository,
-       _importService = importService,
-       _bookStore = bookStore;
+    required this._shelfBookRepository,
+    required this._bookStore,
+    required this._importService,
+  });
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -169,9 +169,8 @@ class ImportBackupService {
               existingBook != null &&
               existingBook.updatedAt >= (bookMap['updatedAt'] as int) &&
               existingCover != null &&
-              await File(
-                p.join(AppStorage.documentsPath, existingCover),
-              ).exists();
+              await File(p.join(AppStorage.documentsPath, existingCover))
+                  .exists();
           String? restoredCoverPath = keepLocalCover ? existingCover : null;
           if (!keepLocalCover && pathsForBook.coverPath != null) {
             try {

@@ -18,7 +18,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: '3.44.9'
+          flutter-version: '3.47.8'
           channel: 'stable'
           cache: true
 
@@ -60,13 +60,13 @@ jobs:
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '25'
           cache: 'gradle'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: '3.44.9'
+          flutter-version: '3.47.8'
           channel: 'stable'
           cache: true
 
@@ -87,11 +87,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # doc_gates 是纯 Dart 脚本，用 setup-dart 即可；Dart 版本与 Flutter 3.44.9 自带 Dart 锁步，flutter-version 升级时同步改
+      # doc_gates 是纯 Dart 脚本，用 setup-dart 即可；Dart 版本与 Flutter 3.47.8 自带 Dart 锁步，flutter-version 升级时同步改
       - name: Setup Dart
         uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
-          sdk: '3.12.2'
+          sdk: '3.13.7'
 
       # 链接 / 锚点 / 术语 / Agent Note 格式 / 技能元数据 / 预算 / Markdown 卫生
       - name: Run documentation gates
@@ -108,12 +108,12 @@ jobs:
       - name: Setup Dart
         uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
-          sdk: '3.12.2'
+          sdk: '3.13.7'
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
 
       # 安装 lockfile 锁定的 typescript / esbuild（构建脚本使用本地 .bin/esbuild）
       - name: Install web toolchain
@@ -146,23 +146,3 @@ jobs:
         run: |
           dart tool/build_readium_assets.dart
           git diff --exit-code -- assets/reader/readium_learning.js
-
-  rust:
-    name: Rust compile & test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
-        with:
-          toolchain: 1.97.1
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: rust
-
-      - name: Run Rust tests
-        run: cargo test --locked --manifest-path rust/Cargo.toml

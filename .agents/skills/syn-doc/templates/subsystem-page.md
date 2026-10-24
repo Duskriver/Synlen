@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-<对外接口清单；跨 feature 只写经哪个 application 接口；不暴露的东西一句带过。>
+<对外 application 能力入口与 domain 值类型；依赖按[跨 feature 允许形态](../../../../docs/architecture.md#跨-feature-依赖)描述；不暴露的东西一句带过。>
 
 ## 关键类型与语义
 

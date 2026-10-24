@@ -10,6 +10,7 @@ import 'package:synlen/src/features/library/domain/book_views.dart';
 import 'package:synlen/src/features/reader/application/readium_publication_source.dart';
 import 'package:synlen/src/features/reader/data/readium_txt_publication_cache.dart';
 import 'package:synlen/src/features/reader/data/readium_epub_publication_cache.dart';
+
 import '../../../helpers/epub_fixture.dart';
 
 class _Queries implements BookQueries {
@@ -61,9 +62,8 @@ void main() {
   tearDown(() async => directory.delete(recursive: true));
 
   test('EPUB 返回原文件绝对路径，未保存进度保持 null', () async {
-    final original = await File(
-      p.join(directory.path, 'original.epub'),
-    ).writeAsBytes(testEpubBytes());
+    final original = await File(p.join(directory.path, 'original.epub'))
+        .writeAsBytes(testEpubBytes());
     queries.book = book(BookFormat.epub, 'original.epub');
     final result = await source.open('hash');
     expect(result.path, original.path);

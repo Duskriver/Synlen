@@ -33,9 +33,8 @@ void main() {
     ),
     home: Builder(
       builder: (context) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(scale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(scale)),
         child: Scaffold(
           body: WordDefinitionPopover(
             anchorRect: const Rect.fromLTWH(140, 60, 50, 24),

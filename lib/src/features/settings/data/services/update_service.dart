@@ -12,16 +12,12 @@ import 'package:synlen/src/features/settings/domain/version_manifest.dart';
 /// 更新清单与安装服务；原生事件由 application 转成状态与错误码。
 class UpdateService {
   UpdateService({
-    required Dio dio,
-    required String versionEndpoint,
-    required Future<PackageInfo> Function() readPackageInfo,
-    required OtaUpdate Function() createUpdater,
-    required Future<Directory> Function() supportDirectory,
-  }) : _dio = dio,
-       _versionEndpoint = versionEndpoint,
-       _readPackageInfo = readPackageInfo,
-       _createUpdater = createUpdater,
-       _supportDirectory = supportDirectory;
+    required this._dio,
+    required this._versionEndpoint,
+    required this._readPackageInfo,
+    required this._createUpdater,
+    required this._supportDirectory,
+  });
 
   final Dio _dio;
   final String _versionEndpoint;

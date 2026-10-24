@@ -26,4 +26,4 @@ Status: implemented
 
 - `book_import_service.dart` 由 568 行降到 399 行，library 的超 400 行清单少一项。
 - 格式探测与文件落盘有独立单元测试（`book_file_probe_test.dart` / `book_file_store_test.dart`）。
-- 封面提取仍只由导入端到端测试覆盖：它依赖 Rust 后端与图片压缩 worker，独立测需要真 EPUB 样本。
+- 封面由 [Dart 有界读取](../simplification/2026-09-26-replace-rust-cover-reader.md)与原生图片压缩处理；读取边界、导入文件补偿与两端插件分别验证。

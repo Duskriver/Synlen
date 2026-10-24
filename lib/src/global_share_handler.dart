@@ -71,9 +71,8 @@ class GlobalShareHandler extends ConsumerWidget {
     await showDialog(
       context: navContext,
       barrierDismissible: false,
-      barrierColor: Theme.of(
-        navContext,
-      ).colorScheme.scrim.withValues(alpha: 0.5),
+      barrierColor: Theme.of(navContext).colorScheme.scrim
+          .withValues(alpha: 0.5),
       builder: (ctx) => ImportProgressDialog(stream: stream, l10n: l10n),
     );
 
