@@ -8,14 +8,16 @@ library/data 约 30 处 `Either<String, T>`：错误码、内部细节、用户�
 
 ## Decision
 
-**错误模型**：`lib/src/features/library/domain/library_exception.dart` 定义 `LibraryErrorCode`（11 码）与 `LibraryException(code, details)`，`details` 仅入日志不上屏。码表按 import / backup 主链路的失败语义盘点既有 String 消息后定：
+**错误模型**：`lib/src/features/library/domain/library_exception.dart` 定义 `LibraryErrorCode` 与 `LibraryException(code, details)`，`details` 仅入日志不上屏。码表按 import / backup 主链路的失败语义盘点既有 String 消息后定：
 
 - import：`fileUnreadable`（读取/哈希）、`parseFailed`（EPUB/TXT 解析）、`drmProtected`、`duplicateBook`、`fileWriteFailed`（落盘）、`saveFailed`（写库）、`importFailed`（兜底）。
-- backup：`backupVersionTooNew`、`backupArchiveInvalid`（ZIP 解压前校验不过）、`backupCorrupted`（JSON 损坏/结构不一致）、`restoreFailed`（兜底）。
+- backup：`backupVersionTooNew`、`backupArchiveInvalid`（ZIP 解压前校验不过）、`backupCorrupted`（JSON 损坏/结构不一致）、`restoreFailed`（兜底）、`exportCancelled`（分享取消）、`exportFailed`（导出失败）。
 
 **保留 `Either`，只换 Left 类型**：import 主链路（`EpubZipParser`、`TxtBookParser`、`ImportWorkers`、`BookFileProbe`、`BookFileStore`、`BookImportService.importBook`）从 `Either<String, T>` 改为 `Either<LibraryException, T>`。恢复链路本就走进度事件流：`ImportFailure` 改持 `LibraryException`，`ProgressLog` 增加 `error` 字段，application（`LibraryNotifier`）把 Left 与兜底异常转成事件携带的类型化错误。
 
 **presentation 只按码映射**：`library_error_mapper.dart` 的 `libraryErrorMessage` 把码映射为 l10n；`ProgressDialog` 日志面板与 `RestoreProgressDialog` 的版本过新判定不再做字符串匹配。core 的 `BackupArchiveViolationException` 留在 `core/file_handling`（共享校验器），在 `library_actions_mixin` 桥接为 `backupArchiveInvalid` 码。`BackupVersionTooNewException` 删除，`backup_decoders.dart` 直接抛 `LibraryException`。
+
+**导出异常归属 application**：`ExportBackupService` 返回分享结果的错误码，I/O 与平台异常向上传播并始终清理临时产物；`BackupExport` 捕获异常、记录详情并返回 `exportFailed`。设置页只映射导出失败与取消文案，`exportFailed` 的 ARB 无详情占位符。页面订阅用例，用例订阅服务以覆盖跨帧等待。
 
 **标记字符串模式废除**：`drmProtectedErrorMarker` / `backupVersionTooNewErrorMarker` 删除，两条链路迁入类型化错误。
 
@@ -33,7 +35,7 @@ library/data 约 30 处 `Either<String, T>`：错误码、内部细节、用户�
 
 - l10n：`importFailed` / `restoreFailed` 去掉 `{error}` / `{message}` 参数（不再上屏内部细节），新增 `importFileUnreadable`、`importParseFailed`、`importDuplicateBook`、`importFileWriteFailed`、`importSaveFailed`、`backupDataCorrupted` 六个 key，双语同批。
 - 新增错误码时必须同步 `library_error_mapper.dart` 的 switch 与双语 l10n；switch 穷举由编译器保证。
-- 未迁移区域（后续 issue 收）：`ShelfBookRepository` / `BookManifestRepository` / `LibraryBookStore` 的 `Either<String, T>`、`ExportBackupService` 的 `ExportFailure(String message)`、分组 CRUD 与 `StorageCleanupService`。
+- 未迁移区域（后续 issue 收）：`ShelfBookRepository` / `BookManifestRepository` / `LibraryBookStore` 的 `Either<String, T>`、分组 CRUD 与 `StorageCleanupService`。
 - core 的 `backup_archive_guard.dart` 未动；若未来其他 feature 消费备份恢复，桥接点需要下沉。
 
 ## Testing

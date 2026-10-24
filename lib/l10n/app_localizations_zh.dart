@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -465,9 +466,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupShared => '备份已通过分享功能导出';
 
   @override
-  String exportFailed(String message) {
-    return '备份失败：$message';
-  }
+  String get exportFailed => '备份导出失败，请重试。';
+
+  @override
+  String get exportCancelled => '已取消备份导出。';
 
   @override
   String progressing(String fileName) {

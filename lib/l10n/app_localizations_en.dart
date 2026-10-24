@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -491,9 +492,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupShared => 'Backup successfully shared';
 
   @override
-  String exportFailed(String message) {
-    return 'Backup failed: $message';
-  }
+  String get exportFailed => 'Could not export the backup. Please try again.';
+
+  @override
+  String get exportCancelled => 'Backup export cancelled.';
 
   @override
   String progressing(String fileName) {

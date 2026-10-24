@@ -1,6 +1,8 @@
 import '../../../../helpers/book_progress.dart';
+
 import 'package:synlen/src/features/library/domain/book_progress.dart';
 import 'package:synlen/src/features/library/data/library_book_store.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -11,6 +13,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:path/path.dart' as p;
 import 'package:synlen/src/core/database/app_database.dart';
 import 'package:synlen/src/core/file_handling/file_handling.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
@@ -47,19 +50,19 @@ void main() {
   });
 
   /// 在 documents 落盘源文件并写入数据库，构成一份可导出的书库。
-  Future<void> seedLibrary({BookProgress? progress}) async {
-    await File(
-      '${AppStorage.documentsPath}books/book-a.txt',
-    ).create(recursive: true);
-    await File(
-      '${AppStorage.documentsPath}books/book-a.txt',
-    ).writeAsString('one\ntwo\n');
-    await File(
-      '${AppStorage.documentsPath}covers/book-a.jpg',
-    ).create(recursive: true);
-    await File(
-      '${AppStorage.documentsPath}covers/book-a.jpg',
-    ).writeAsBytes([8, 9]);
+  Future<void> seedLibrary({
+    BookProgress? progress,
+    String? coverPath = 'covers/book-a.jpg',
+  }) async {
+    await File('${AppStorage.documentsPath}books/book-a.txt')
+        .create(recursive: true);
+    await File('${AppStorage.documentsPath}books/book-a.txt')
+        .writeAsString('one\ntwo\n');
+    final cover = File(
+      p.join(AppStorage.documentsPath, coverPath ?? 'covers/book-a.jpg'),
+    );
+    await cover.create(recursive: true);
+    await cover.writeAsBytes([8, 9]);
 
     await shelfRepo.saveBook(
       ShelfBook(
@@ -85,7 +88,7 @@ void main() {
         isFinished: true,
         isDeleted: false,
         updatedAt: 100,
-        coverPath: 'covers/book-a.jpg',
+        coverPath: coverPath,
       ),
     );
     await manifestRepo.saveManifest(
@@ -150,12 +153,90 @@ void main() {
     expect(names.where((n) => n.startsWith('manifests/book-a.')), isNotEmpty);
 
     final shelfJson = archive.findFile('shelf.json')!;
-    final shelf =
-        jsonDecode(utf8.decode(shelfJson.content as List<int>))
-            as Map<String, dynamic>;
+    final shelf = jsonDecode(
+      utf8.decode(shelfJson.content as List<int>),
+    ) as Map<String, dynamic>;
     expect(shelf['version'], 2);
     expect(shelf['books'], hasLength(1));
     expect((shelf['books'] as List).first['fileHash'], 'book-a');
+  });
+
+  for (final extension in ['gif', 'bmp', 'svg']) {
+    test('$extension 封面按持久化路径导出，在空存储中恢复字节与关联', () async {
+      await seedLibrary(coverPath: 'covers/custom-cover.$extension');
+      // 同哈希的旧 JPEG 不得覆盖已选封面。
+      await File('${AppStorage.documentsPath}covers/book-a.jpg')
+          .writeAsBytes([1]);
+      final zipPath = await exportAndCaptureZip();
+      final archive = ZipDecoder().decodeBytes(
+        await File(zipPath).readAsBytes(),
+      );
+      expect(archive.findFile('covers/book-a.$extension')?.content, [8, 9]);
+      expect(archive.findFile('covers/book-a.jpg'), isNull);
+
+      await db.close();
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+      shelfRepo = ShelfBookRepository(db: db);
+      manifestRepo = BookManifestRepository(db: db);
+      AppStorage.initForTesting(
+        documentsPath: '${root.path}/restored-documents',
+        tempPath: '${root.path}/restored-cache',
+      );
+      final unified = UnifiedImportService(cacheManager: ImportCacheManager());
+      final paths = await unified.processBackupZip(IOSFilePath(zipPath));
+      final logs = await ImportBackupService(
+        shelfBookRepository: shelfRepo,
+        bookStore: LibraryBookStore(db: db),
+        importService: unified,
+      ).importLibraryFromFolder(paths).toList();
+      expect(
+        logs.whereType<BackupImportProgress>().last.result,
+        isA<ImportSuccess>(),
+      );
+      final restored = (await shelfRepo.getBookByHash('book-a'))!;
+      expect(restored.coverPath, 'covers/book-a.$extension');
+      expect(
+        await File('${AppStorage.documentsPath}${restored.coverPath}')
+            .readAsBytes(),
+        [8, 9],
+      );
+    });
+  }
+
+  test('旧书目没有封面路径时保留常见后缀查找', () async {
+    await seedLibrary(coverPath: null);
+    final zipPath = await exportAndCaptureZip();
+    final archive = ZipDecoder().decodeBytes(await File(zipPath).readAsBytes());
+    expect(archive.findFile('covers/book-a.jpg')?.content, [8, 9]);
+  });
+
+  test('绝对封面路径保留源后缀，并按书籍哈希导出', () async {
+    await seedLibrary(
+      coverPath: '${AppStorage.documentsPath}covers/custom.png',
+    );
+    final zipPath = await exportAndCaptureZip();
+    final archive = ZipDecoder().decodeBytes(await File(zipPath).readAsBytes());
+    expect(archive.findFile('covers/book-a.png')?.content, [8, 9]);
+  });
+
+  test('平台分享异常继续向上抛，临时产物仍被清理', () async {
+    await seedLibrary();
+    String? sharedZip;
+    final service = ExportBackupService(
+      shelfBookRepo: shelfRepo,
+      manifestRepo: manifestRepo,
+      share: (params) async {
+        sharedZip = params.files!.single.path;
+        throw const FileSystemException('private share path');
+      },
+    );
+    await expectLater(
+      service.exportLibraryAsFile(shareTitle: '备份'),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(File(sharedZip!).existsSync(), isFalse);
+    expect(Directory('${AppStorage.tempPath}backup').listSync(), isEmpty);
+    expect((await shelfRepo.getAllBooks()).single.title, '测试书');
   });
 
   for (final saved in [
@@ -207,9 +288,8 @@ void main() {
         expect(book.lastOpenedDate, 300);
         expect(book.coverPath, 'covers/book-a.jpg');
         expect(
-          await File(
-            '${AppStorage.documentsPath}covers/book-a.jpg',
-          ).readAsBytes(),
+          await File('${AppStorage.documentsPath}covers/book-a.jpg')
+              .readAsBytes(),
           [8, 9],
         );
         expect((await manifestRepo.getManifestByHash('book-a'))!, isNotNull);
@@ -277,9 +357,8 @@ void main() {
       );
       expect((await shelfRepo.getAllBooks()).single.title, '测试书');
       expect(
-        await File(
-          '${AppStorage.documentsPath}books/book-a.txt',
-        ).readAsString(),
+        await File('${AppStorage.documentsPath}books/book-a.txt')
+            .readAsString(),
         'one\ntwo\n',
       );
     });

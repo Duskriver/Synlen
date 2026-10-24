@@ -46,7 +46,7 @@ final class BackupExportProvider extends $NotifierProvider<BackupExport, void> {
   }
 }
 
-String _$backupExportHash() => r'f271537e8e7103e7aeb691b22c6065bc94f9a8f0';
+String _$backupExportHash() => r'aa78b5773bbe203e41b1f2882a2ecc5be9f7ef15';
 
 /// 整库备份导出用例（组合面）。presentation 只说「导到分享面板」，
 /// data 层的服务与结果类型不外泄到 UI。

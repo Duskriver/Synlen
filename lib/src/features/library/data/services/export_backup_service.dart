@@ -8,11 +8,16 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import '../../domain/book_manifest.dart';
+import '../../domain/library_exception.dart';
+
 import 'package:synlen/src/core/database/app_database.dart';
+
 import '../book_manifest_repository.dart';
 import '../shelf_book_repository.dart';
+
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
+
 import 'backup_decoders.dart';
 
 /// Result of an export operation.
@@ -25,10 +30,10 @@ final class ExportSuccess extends ExportResult {
   const ExportSuccess();
 }
 
-/// Export failed with [message].
+/// 分享失败或被取消；内部详情只写日志。
 final class ExportFailure extends ExportResult {
-  final String message;
-  const ExportFailure(this.message);
+  final LibraryErrorCode code;
+  const ExportFailure(this.code);
 }
 
 /// Library backup export service.
@@ -51,12 +56,10 @@ class ExportBackupService {
   final Future<ShareResult> Function(ShareParams params) _share;
 
   ExportBackupService({
-    required ShelfBookRepository shelfBookRepo,
-    required BookManifestRepository manifestRepo,
+    required this._shelfBookRepo,
+    required this._manifestRepo,
     Future<ShareResult> Function(ShareParams params)? share,
-  }) : _shelfBookRepo = shelfBookRepo,
-       _manifestRepo = manifestRepo,
-       _share = share ?? ((params) => SharePlus.instance.share(params));
+  }) : _share = share ?? ((params) => SharePlus.instance.share(params));
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -66,8 +69,8 @@ class ExportBackupService {
   /// system share sheet ([shareTitle] anchors iOS popover to
   /// [sharePositionOrigin]).
   ///
-  /// Returns [ExportSuccess] when the backup was shared, [ExportFailure] on
-  /// unrecoverable errors or when the user dismisses the share sheet.
+  /// 分享成功返回 [ExportSuccess]，未完成分享返回 [ExportFailure]。
+  /// I/O 与平台异常交给 application 转换；临时文件始终清理。
   Future<ExportResult> exportLibraryAsFile({
     Rect? sharePositionOrigin,
     required String shareTitle,
@@ -127,24 +130,13 @@ class ExportBackupService {
           );
         }
 
-        // -- Copy cover image (zero-memory) ------------------------------------
-        // Try common extensions; the cover may have been saved as jpg or png.
-        bool coverCopied = false;
-        for (final ext in ['jpg', 'png', 'jpeg', 'webp']) {
-          final coverSrc = File(
-            p.join(
-              AppStorage.documentsPath,
-              AppStorageConstants.coversDir,
-              '$hash.$ext',
-            ),
-          );
-          if (coverSrc.existsSync()) {
-            await coverSrc.copy(p.join(coversOutDir.path, '$hash.$ext'));
-            coverCopied = true;
-            break;
-          }
-        }
-        if (!coverCopied) {
+        final coverSrc = _coverFile(book);
+        if (coverSrc != null && coverSrc.existsSync()) {
+          final extension = p.extension(coverSrc.path);
+          // 恢复按哈希关联封面，备份文件名不能沿用任意源文件名。
+          final coverName = '$hash${extension.isEmpty ? '.jpg' : extension}';
+          await coverSrc.copy(p.join(coversOutDir.path, coverName));
+        } else {
           appLogger.w('[ExportBackup] Cover not found, skipping: $hash');
         }
 
@@ -152,9 +144,8 @@ class ExportBackupService {
         final manifest = await _manifestRepo.getManifestByHash(hash);
         if (manifest != null) {
           final manifestJson = jsonEncode(_manifestToMap(manifest));
-          await File(
-            p.join(manifestsOutDir.path, '$hash.json'),
-          ).writeAsString(manifestJson);
+          await File(p.join(manifestsOutDir.path, '$hash.json'))
+              .writeAsString(manifestJson);
         } else {
           appLogger.w('[ExportBackup] No manifest found for: $hash');
         }
@@ -165,9 +156,8 @@ class ExportBackupService {
       // -----------------------------------------------------------------------
       final shelfMap = _shelfToMap(books, groups);
       final shelfJson = jsonEncode(shelfMap);
-      await File(
-        p.join(targetDir.path, AppStorageConstants.shelfFile),
-      ).writeAsString(shelfJson);
+      await File(p.join(targetDir.path, AppStorageConstants.shelfFile))
+          .writeAsString(shelfJson);
 
       // -----------------------------------------------------------------------
       // 6. Zip the folder (streamed, bounded memory) and share the file.
@@ -195,17 +185,11 @@ class ExportBackupService {
           return const ExportSuccess();
         case ShareResultStatus.dismissed:
           appLogger.i('[ExportBackup] Export cancelled by user.');
-          return const ExportFailure('Export cancelled');
+          return const ExportFailure(LibraryErrorCode.exportCancelled);
         default:
           appLogger.e('[ExportBackup] Export failed: ${result.raw}');
-          return ExportFailure('Export failed: ${result.raw}');
+          return const ExportFailure(LibraryErrorCode.exportFailed);
       }
-    } on FileSystemException catch (e) {
-      appLogger.e('[ExportBackup] FileSystemException: $e');
-      return ExportFailure('File system error: ${e.message}');
-    } catch (e, st) {
-      appLogger.e('[ExportBackup] Unexpected error: $e\n$st');
-      return ExportFailure('Export failed: $e');
     } finally {
       // -----------------------------------------------------------------------
       // 7. Cleanup — the folder and ZIP live in the app-private temp
@@ -222,6 +206,25 @@ class ExportBackupService {
         }
       }
     }
+  }
+
+  File? _coverFile(ShelfBook book) {
+    final coverPath = book.coverPath;
+    if (coverPath != null && coverPath.isNotEmpty) {
+      return File(p.join(AppStorage.documentsPath, coverPath));
+    }
+    // 兼容缺少 coverPath 的旧书目。
+    for (final extension in ['jpg', 'png', 'jpeg', 'webp']) {
+      final file = File(
+        p.join(
+          AppStorage.documentsPath,
+          AppStorageConstants.coversDir,
+          '${book.fileHash}.$extension',
+        ),
+      );
+      if (file.existsSync()) return file;
+    }
+    return null;
   }
 
   /// 删除残留的导出临时目录；目录位于应用缓存区，随时可安全重建。

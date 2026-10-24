@@ -15,6 +15,8 @@ String libraryErrorMessage(AppLocalizations l10n, LibraryErrorCode code) =>
       LibraryErrorCode.backupArchiveInvalid => l10n.backupInvalidArchive,
       LibraryErrorCode.backupCorrupted => l10n.backupDataCorrupted,
       LibraryErrorCode.restoreFailed => l10n.restoreFailed,
+      LibraryErrorCode.exportCancelled => l10n.exportCancelled,
+      LibraryErrorCode.exportFailed => l10n.exportFailed,
     };
 
 /// 未知异常回退为通用文案；[LibraryException] 按错误码映射。

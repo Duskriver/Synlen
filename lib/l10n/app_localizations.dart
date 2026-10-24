@@ -962,11 +962,17 @@ abstract class AppLocalizations {
   /// **'Backup successfully shared'**
   String get backupShared;
 
-  /// Backup export failed message
+  /// 备份导出失败的通用提示，不含内部异常详情
   ///
   /// In en, this message translates to:
-  /// **'Backup failed: {message}'**
-  String exportFailed(String message);
+  /// **'Could not export the backup. Please try again.'**
+  String get exportFailed;
+
+  /// 用户取消备份分享的提示
+  ///
+  /// In en, this message translates to:
+  /// **'Backup export cancelled.'**
+  String get exportCancelled;
 
   /// Importing progress message with file name
   ///

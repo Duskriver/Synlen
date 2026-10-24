@@ -642,14 +642,13 @@
   "@backupShared": {
     "description": "Backup shared success message"
   },
-  "exportFailed": "Backup failed: {message}",
+  "exportFailed": "Could not export the backup. Please try again.",
   "@exportFailed": {
-    "description": "Backup export failed message",
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
+    "description": "备份导出失败的通用提示，不含内部异常详情"
+  },
+  "exportCancelled": "Backup export cancelled.",
+  "@exportCancelled": {
+    "description": "用户取消备份分享的提示"
   },
   "progressing": "Processing {fileName}",
   "@progressing": {

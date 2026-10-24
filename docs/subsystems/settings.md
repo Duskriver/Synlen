@@ -29,7 +29,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 | `importedFontFileNamesProvider` | 已导入字体文件名，供阅读器设置消费 | `lib/src/features/settings/application/imported_font_file_names_provider.dart` |
 | `TtsVoiceNotifier` | 当前音色持久化（`SharedPreferences` 键 `tts_voice`） | `lib/src/features/settings/application/tts_voice_notifier.dart` |
 | `CacheCleanup` | 组合 library 与 learning 的清理用例，状态携带进度、删除量或失败 | `lib/src/features/settings/application/cache_cleanup.dart` |
-| `BackupExport` | 组合 library 的导出用例，只回传错误字符串 | `lib/src/features/settings/application/backup_export.dart` |
+| `BackupExport` | 组合 library 的导出用例，成功返回 null，取消与失败返回 `LibraryErrorCode` | `lib/src/features/settings/application/backup_export.dart` |
 | `DeepSeekKeyCheck` / `DeepSeekConnectivity` | 密钥连通性检查状态与结果 | `lib/src/features/settings/application/deep_seek_connectivity.dart` |
 | `UpdateCheck` / `UpdateState` | 更新检查与下载的状态流（`AsyncValue`：loading = 检查中，error = `UpdateException`），下载子状态带进度与错误码 | `lib/src/features/settings/application/update_check.dart` |
 | `UpdateService` | 读取远端清单与本地版本，校验下载参数并调用 ota_update；平台依赖经构造注入 | `lib/src/features/settings/data/services/update_service.dart` |
@@ -51,6 +51,8 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 - 密钥只进 `FlutterSecureStorage`，不入源码、构建配置或 `SharedPreferences`。
 - `ApiKeyNotifier` 的写入串行化，避免并发覆盖。
 - 字体文件名是 `ReaderSettings.fontFileName` 的取值来源；删除字体必须同时清掉该引用。
+- 字体导入查询 SAF 显示名，取 basename 并清理控制字符与平台保留字符；同名覆盖文件且不重复登记。查询不可用时沿用路径名，文件选择后的处理始终释放原生访问；既有字体列表不改名。
+- 备份导出由页面订阅用例、用例订阅服务；异常在 application 转为 `exportFailed`，系统分享取消返回 `exportCancelled`，界面只映射双语提示，内部详情只入日志。
 - 缓存清理只删可重建数据，不动图书与阅读进度。
 - 更新直链必须是 HTTPS，摘要必须是 64 位 SHA-256；插件校验失败后删除坏包。APK 位于私有 `files/ota_update/`，使用固定文件名，重试重新下载。
 - 更新下载期间禁止替换清单或直接关闭弹窗；取消回执确认原生写入与校验结束后才关闭；取消期间保留终态，取消通道失败后按终态恢复可关闭、可重试的界面。Provider 释放时取消下载，迟到事件不写状态。`installerOpened` 仅表示已拉起系统安装器，不表示安装成功。
@@ -60,7 +62,7 @@ settings 是组合面：唯一允许编排其他 feature `application` 的模块
 
 ## 已知限制与待办
 
-- 设置模块的测试覆盖 AI 密钥、连通性、缓存清理、TTS 音色、更新检查与字体导入（`test/features/settings/`）；主题与备份导出仍缺覆盖（[测试分层](../testing.md#分层)）。
+- 设置模块的测试覆盖 AI 密钥、连通性、缓存清理、TTS 音色、更新检查、字体导入与备份导出（`test/features/settings/`）；主题仍缺覆盖（[测试分层](../testing.md#分层)）。
 
 ## Dev Note
 

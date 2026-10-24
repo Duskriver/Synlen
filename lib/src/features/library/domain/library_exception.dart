@@ -36,6 +36,12 @@ enum LibraryErrorCode {
 
   /// 恢复的兜底失败（未预期的其他异常），细节见 [LibraryException.details]
   restoreFailed,
+
+  /// 用户取消系统分享，备份未导出。
+  exportCancelled,
+
+  /// 备份导出失败，内部细节只入日志。
+  exportFailed,
 }
 
 /// 藏书模块领域异常。

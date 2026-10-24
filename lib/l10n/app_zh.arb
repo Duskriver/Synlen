@@ -650,14 +650,13 @@
   "@backupShared": {
     "description": "备份分享成功消息"
   },
-  "exportFailed": "备份失败：{message}",
+  "exportFailed": "备份导出失败，请重试。",
   "@exportFailed": {
-    "description": "备份失败消息",
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
+    "description": "备份导出失败的通用提示，不含内部异常详情"
+  },
+  "exportCancelled": "已取消备份导出。",
+  "@exportCancelled": {
+    "description": "用户取消备份分享的提示"
   },
   "progressing": "正在处理：{fileName}",
   "@progressing": {

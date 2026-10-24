@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synlen/src/core/services/toast_service.dart';
+
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/backup_export.dart';
+import '../../../library/domain/library_exception.dart';
 
 /// List tile that triggers a full library backup export.
 ///
@@ -47,7 +49,11 @@ class _BackupTileState extends ConsumerState<BackupTile> {
     if (error == null) {
       ToastService.showSuccess(l10n.backupShared);
     } else {
-      ToastService.showError(l10n.exportFailed(error));
+      ToastService.showError(
+        error == LibraryErrorCode.exportCancelled
+            ? l10n.exportCancelled
+            : l10n.exportFailed,
+      );
     }
 
     setState(() => _isExporting = false);
@@ -55,6 +61,7 @@ class _BackupTileState extends ConsumerState<BackupTile> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(backupExportProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return ListTile(

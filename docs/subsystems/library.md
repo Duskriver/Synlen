@@ -21,7 +21,8 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 | `BookshelfNotifier` / `BookshelfState` / `ViewMode` | 书架状态：排序、分组过滤、多选；状态值对象在 `bookshelf_state.dart`，多选纯函数在 `bookshelf_selection.dart`，标签页 LRU 缓存在 `bookshelf_tab_cache.dart` | `lib/src/features/library/application/bookshelf_notifier.dart` |
 | `LibraryNotifier` / `ImportProgress` / `ImportStatus` | 导入编排：`importPipelineStream`（逐文件缓存 → 导入 → 清理）与 `importLibraryFromFolder` | `lib/src/features/library/application/library_notifier.dart` |
 | `BookImportService` | 导入流水线编排：去重 → 落盘 → 解析 → 封面 → 落库；格式探测、文件落盘与封面提取分别在 `BookFileProbe` / `BookFileStore` / `CoverExtractor` | `lib/src/features/library/data/services/book_import_service.dart` |
-| `ImportWorkers` / `ParseParams` / `ParseResult` | 在 isolate 中运行的 EPUB 解析、TXT 解析与图片压缩 | `lib/src/features/library/data/services/epub_import_workers.dart` |
+| `readEpubCover` | 在 isolate 中按文件流读取单个封面条目，核对 CRC 与实际大小，支持 STORE / DEFLATE | `lib/src/features/library/data/services/epub_cover_reader.dart` |
+| `ImportWorkers` / `ParseParams` / `ParseResult` | EPUB / TXT 解析由 isolate 执行，图片压缩调用原生插件 | `lib/src/features/library/data/services/epub_import_workers.dart` |
 | `EpubZipParser` / `EpubZipParseResult` | 直接从 ZIP 读 OPF、spine、TOC 与 manifest，不整包解压；OPF 元数据、TOC、路径解析与 encryption.xml 判定按 part 文件分组 | `lib/src/features/library/data/parsers/epub_zip_parser.dart` |
 | `TxtDecoder` / `TxtEncoding` / `TxtDecodeResult` | TXT 编码识别：BOM → UTF-8 严格 → GBK 兜底，并用控制字符占比拦二进制内容 | `lib/src/features/library/data/parsers/txt_decoder.dart` |
 | `TxtChapterSplitter` / `TxtChapter` | 章节切分：标题行正则、引导块、无标题时按体积分割 | `lib/src/features/library/data/parsers/txt_chapter_splitter.dart` |
@@ -51,6 +52,7 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 
 ## 边界与不变量
 
+- 封面读取仅解压目标条目，解压后的图像文件最多 50 MiB；实际输出不得超过声明大小，CRC 不匹配、加密、符号链接或不一致头部均拒绝。提取失败记日志并以无封面继续导入；图片压缩失败保留原图。
 - 导入与恢复的书目和清单在同一事务中提交；文件补偿只覆盖运行中异常，不保证跨进程崩溃原子性。
 - 删除事务失败不触碰文件；提交后的文件清理失败保留墓碑，书架按已删除处理，残留文件由存储清理重试。
 
@@ -62,8 +64,9 @@ library 模块负责藏书：把书籍文件变成书架条目，管理分组、
 - 分组为扁平结构，不支持嵌套；`filterGroupId` 为 `-1` 表示未分组，`null` 表示全部。
 - 备份 ZIP 的解压目录由调用方在流结束后删除，恢复服务自身不清理；解压前的上限与路径校验在 core 的 `backup_archive_guard.dart`（见 [core](core.md#关键类型)）。
 - 导出备份格式为 2，恢复兼容格式 1 的旧坐标和格式 2 的完整 Locator／待恢复旧坐标。shelf.json 与每书 manifest 顶层的 `version` 由 `backup_decoders.dart` 按版本分派 decoder：字段缺失按 1 处理并记 warning，高于当前支持版本（`kBackupFormatVersion`）时恢复中止，抛 `LibraryException`（`backupVersionTooNew`）。
+- 封面导出以 `coverPath` 为源，保留后缀并写成 `{fileHash}{extension}`，保持恢复时按哈希关联；缺少路径的旧书目才枚举常见后缀。导出 I/O 与平台异常向 application 传播，临时文件在 finally 清理。
 - 导入进度事件落在 `domain`，使 data 发事件、application 编排、presentation 渲染都不产生逆向依赖。
-- 含 `META-INF/encryption.xml` 的 EPUB：仅当每个 EncryptedData 都是 IDPF / Adobe 字体混淆算法且目标是字体 media-type 时放行（`epub_encryption.dart`）；其余按 DRM 拒绝（`LibraryErrorCode.drmProtected`）。放行书籍的混淆字体在阅读时由 Rust 侧现场还原（见 [rust.md](rust.md#职责)）。
+- 含 `META-INF/encryption.xml` 的 EPUB：仅当每个 EncryptedData 都是 IDPF / Adobe 字体混淆算法且目标是字体 media-type 时放行（`epub_encryption.dart`）；其余按 DRM 拒绝（`LibraryErrorCode.drmProtected`）。放行书籍的混淆字体在阅读时由原生 Readium 还原（见 [reader](reader.md#边界与不变量)）。
 - import / backup 主链路的错误是 `Either<LibraryException, T>` 或携带 `LibraryException` 的进度事件；presentation 只按错误码映射 l10n（`library_error_mapper.dart`），不匹配消息内容。分组 CRUD、删除、清理等其余链路仍是 `Either<String, T>`，迁移时往 `LibraryErrorCode` 补码。
 
 ## 已知限制与待办
