@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
+
 import 'backup_archive_extractor.dart';
 import 'backup_paths.dart';
 import 'native_file_picker.dart';
@@ -51,19 +53,24 @@ class UnifiedImportService {
   Future<ImportableEpub> processEpub(PlatformPath path) async {
     final importable = await _cacheManager.createCacheAndHash(path);
 
-    // SAF 数字文档 ID（如 .../document/1000000018）无法从 URI 推断真实
-    // 文件名，缓存扩展名与 TXT 书名都会错；向原生查询显示名兜底。
+    final name = await resolveFileName(path);
+    return ImportableEpub(
+      cacheFile: importable.cacheFile,
+      hash: importable.hash,
+      originalName: name,
+    );
+  }
+
+  /// 查询 SAF 显示名；查询不可用或为空时沿用路径名。
+  /// 返回值未经落盘名称清理，由保存文件的调用方处理。
+  Future<String> resolveFileName(PlatformPath path) async {
     if (path is AndroidUriPath) {
       final displayName = await _picker.resolveDisplayName(path.uri);
       if (displayName != null && displayName.trim().isNotEmpty) {
-        return ImportableEpub(
-          cacheFile: importable.cacheFile,
-          hash: importable.hash,
-          originalName: displayName.trim(),
-        );
+        return displayName.trim();
       }
     }
-    return importable;
+    return path.name;
   }
 
   /// Process a plain text file (e.g. shelf.json) into a String

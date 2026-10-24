@@ -10,18 +10,20 @@ import 'package:synlen/src/core/providers/unified_import_service_provider.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
 import 'package:synlen/src/features/settings/application/font_manager_notifier.dart';
 
-/// 字体导入管道的手写 fake：只覆写被 [FontManagerNotifier] 消费的四个入口，
+/// 字体导入管道的手写 fake：只覆写被 [FontManagerNotifier] 消费的入口，
 /// 不触发任何平台通道。
 class _FakeUnifiedImportService extends UnifiedImportService {
   _FakeUnifiedImportService({
     this.pickedPaths = const [],
     Map<String, File>? cacheFiles,
+    this.displayNames = const {},
     this.failFor = const {},
   }) : _cacheFiles = cacheFiles ?? {};
 
   final List<PlatformPath> pickedPaths;
   final Map<String, File> _cacheFiles;
   final Set<String> failFor;
+  final Map<String, String> displayNames;
 
   final List<File> cleaned = [];
   int processCount = 0;
@@ -29,6 +31,10 @@ class _FakeUnifiedImportService extends UnifiedImportService {
 
   @override
   Future<List<PlatformPath>> pickFontFiles() async => pickedPaths;
+
+  @override
+  Future<String> resolveFileName(PlatformPath path) async =>
+      displayNames[path.name] ?? path.name;
 
   @override
   Future<File> processFontFile(PlatformPath path) async {
@@ -162,6 +168,100 @@ void main() {
     expect(container.read(fontManagerProvider).map((f) => f.fileName), [
       'serif.ttf',
     ]);
+  });
+
+  for (final displayName in [
+    '阅读字体.ttf',
+    '../阅读字体.ttf',
+    r'C:\folder\阅读字体.ttf',
+  ]) {
+    test('数字 SAF ID 使用清理后的显示名：$displayName', () async {
+      final cache = await writeCacheFile('cache.ttf');
+      const path = AndroidUriPath(
+        'content://com.android.providers.downloads.documents/document/1000000018',
+      );
+      final service = _FakeUnifiedImportService(
+        pickedPaths: [path],
+        cacheFiles: {path.name: cache},
+        displayNames: {path.name: displayName},
+      );
+      final container = await buildContainer(service);
+      addTearDown(container.dispose);
+      final imported = await container
+          .read(fontManagerProvider.notifier)
+          .importFonts();
+      expect(imported.single.fileName, '阅读字体.ttf');
+      expect(imported.single.displayName, '阅读字体');
+      expect(await File('${documentsDir.path}/fonts/阅读字体.ttf').readAsBytes(), [
+        1,
+        2,
+        3,
+      ]);
+      expect(
+        File('${documentsDir.path}/fonts/1000000018').existsSync(),
+        isFalse,
+      );
+      expect(service.cleaned, [cache]);
+      expect(service.releaseCount, 1);
+      expect(
+        (await SharedPreferences.getInstance()).getString('imported_fonts'),
+        '["阅读字体.ttf"]',
+      );
+    });
+  }
+
+  test('显示名中的控制字符和平台保留字符被替换，后缀保留', () async {
+    final cache = await writeCacheFile('cache.otf');
+    const path = AndroidUriPath('content://fonts/document/123');
+    final service = _FakeUnifiedImportService(
+      pickedPaths: [path],
+      cacheFiles: {path.name: cache},
+      displayNames: {path.name: 'bad:\u0000name?.otf'},
+    );
+    final container = await buildContainer(service);
+    addTearDown(container.dispose);
+    final imported = await container
+        .read(fontManagerProvider.notifier)
+        .importFonts();
+    expect(imported.single.fileName, 'bad__name_.otf');
+    expect(
+      File('${documentsDir.path}/fonts/bad__name_.otf').existsSync(),
+      isTrue,
+    );
+    expect(service.cleaned, [cache]);
+    expect(service.releaseCount, 1);
+  });
+
+  test('无法落盘的名称跳过当前字体，并释放原生访问', () async {
+    const path = AndroidUriPath('content://fonts/document/123');
+    final service = _FakeUnifiedImportService(
+      pickedPaths: [path],
+      displayNames: {path.name: '..'},
+    );
+    final container = await buildContainer(service);
+    addTearDown(container.dispose);
+    expect(
+      await container.read(fontManagerProvider.notifier).importFonts(),
+      isEmpty,
+    );
+    expect(container.read(fontManagerProvider), isEmpty);
+    expect(service.processCount, 0);
+    expect(service.releaseCount, 1);
+  });
+
+  test('建立字体目录失败时仍释放已选文件的原生访问', () async {
+    await File('${documentsDir.path}/fonts').writeAsString('目录被文件占用');
+    final service = _FakeUnifiedImportService(
+      pickedPaths: [const IOSFilePath('/source/font.ttf')],
+    );
+    final container = await buildContainer(service);
+    addTearDown(container.dispose);
+    await expectLater(
+      container.read(fontManagerProvider.notifier).importFonts(),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(service.processCount, 0);
+    expect(service.releaseCount, 1);
   });
 
   test('单个字体处理失败时继续后续条目，并始终清理缓存与释放原生资源', () async {

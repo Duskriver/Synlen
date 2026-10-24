@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 import 'package:synlen/src/core/providers/shared_preferences_provider.dart';
 import 'package:synlen/src/core/services/app_logger.dart';
 import 'package:synlen/src/core/storage/app_storage.dart';
@@ -36,20 +38,20 @@ class FontManagerNotifier extends _$FontManagerNotifier {
     final paths = await unifiedImportService.pickFontFiles();
     if (paths.isEmpty) return [];
 
-    // Ensure fonts directory exists.
-    final fontsDir = Directory('${AppStorage.documentsPath}fonts');
-    if (!await fontsDir.exists()) {
-      await fontsDir.create(recursive: true);
-    }
-
     final imported = <ImportedFont>[];
     var current = state;
 
     try {
+      final fontsDir = Directory('${AppStorage.documentsPath}fonts');
+      if (!await fontsDir.exists()) {
+        await fontsDir.create(recursive: true);
+      }
       for (final platformPath in paths) {
         File? cacheFile;
         try {
-          final fileName = platformPath.name;
+          final fileName = _fontFileName(
+            await unifiedImportService.resolveFileName(platformPath),
+          );
 
           // 1. Cache file from platform path to temp location.
           cacheFile = await unifiedImportService.processFontFile(platformPath);
@@ -103,5 +105,16 @@ class FontManagerNotifier extends _$FontManagerNotifier {
   Future<void> _persist(List<ImportedFont> fonts) async {
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.setString(_kImportedFonts, encodeImportedFonts(fonts));
+  }
+
+  String _fontFileName(String value) {
+    final name = p
+        .basename(value.replaceAll('\\', '/'))
+        .trim()
+        .replaceAll(RegExp(r'[\x00-\x1f\x7f<>:"|?*]'), '_');
+    if (name.isEmpty || name == '.' || name == '..') {
+      throw const FormatException('Invalid font file name');
+    }
+    return name;
   }
 }
