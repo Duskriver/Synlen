@@ -12,7 +12,7 @@ description: 在 Synlen 推送、强推、标记 ready for review 或声称"检�
 - [docs/testing.md](../../../docs/testing.md) — 按文件类型的最小证据表、测试分层、命名与位置。
 - [docs/development.md](../../../docs/development.md) — 提交门禁、提交信息格式、增量重构纪律。
 - [AGENTS.md](../../../AGENTS.md) — 命令清单与强推约束。
-- [.agents/notes/README.md](../../../.agents/notes/README.md) — 非平凡改动必须带笔记。
+- [.agents/notes/README.md](../../../.agents/notes/README.md#何时写一篇) — 非平凡改动的决策关联，以及笔记复用、更新与新增条件。
 
 ## 最小证据选择
 
@@ -25,7 +25,6 @@ description: 在 Synlen 推送、强推、标记 ready for review 或声称"检�
 | 跨层契约、数据模型、共享 `core/` | 相关 feature 的测试 + `dart run tool/layer_gates.dart` | 影响面超出单模块，分层门禁覆盖边 |
 | 模型 / provider 注解 | 重新生成 codegen → analyze + 相关测试 | 生成物是契约的一部分 |
 | 配置与依赖（`pubspec.yaml`、`analysis_options.yaml`、`build.yaml`、`l10n.yaml`） | analyze + 全量 `flutter test` | 影响全局，证据必须宽 |
-| `rust/` 或 FFI 绑定 | `cargo test` → 绑定重生成 → analyze + 冒烟 | 跨语言边界 |
 | reader Web 资源 | typecheck + 前端测试 → 重新生成资源 | 生成物会漂移 |
 
 按文件类型的精确映射见 [docs/testing.md](../../../docs/testing.md)；本表只定宽度。测试过滤不等于覆盖率豁免：新增源文件必须有对应测试。全量本地演练只在用户明确要求、排查 CI 失败或改动横跨全仓库时执行。

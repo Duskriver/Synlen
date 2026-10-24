@@ -20,10 +20,10 @@ description: 在 Synlen 评审 PR 或待合并改动时使用——同时走标�
 
 ## 双轴
 
-先确认评审对象：`gh pr view <n> --json baseRefName,headRefName` 或 `git merge-base`；目标分支变更后重新评审。看全量 diff（`gh pr diff <n>` 或 `git diff <base>...HEAD`），先 `--stat` 判范围再逐文件读足上下文。读发起 issue（`gh issue view <n>`）记住验收标准。
+先确认评审对象：`gh pr view <n> --json baseRefName,headRefName` 或 `git merge-base`；目标分支变更后重新评审。看全量 diff（`gh pr diff <n>` 或 `git diff <base>...HEAD`），先 `--stat` 判范围再逐文件读足上下文。有发起 issue 时读取其验收标准；没有时，以用户请求和既定契约为依据，按[风险流程](../../../docs/development.md#按风险选流程)判断是否缺少必要规格。
 
 - **标准轴**：改动是否守本仓库文档化的规范（下面两节）。
-- **spec 轴**：改动是否贴合 issue 的验收标准；偏离要指出是缺口还是超范围。
+- **spec 轴**：改动是否贴合上述目标与验收标准；偏离要指出是缺口还是超范围。
 
 两轴分别报告，不合并成一条结论。
 
@@ -40,12 +40,12 @@ description: 在 Synlen 评审 PR 或待合并改动时使用——同时走标�
 
 下面每条若由本次改动新增，同样是阻断项。
 
-- **分层**：`presentation → application → domain`、`data → domain`；新增的 `presentation → data`、`domain → 上层`、feature 间互引直接阻断；进 `core/` 的必须被 ≥2 个 feature 使用。
+- **分层**：`presentation → application → domain`、`data → domain`；新增的 `presentation → data`、`domain → 上层` 直接阻断；跨 feature 按[允许形态](../../../docs/architecture.md#跨-feature-依赖)判断，进 `core/` 的必须被 ≥2 个 feature 使用。
 - **Riverpod**：`AsyncValue` 三态齐全、无裸 `.value`；依赖经 provider 注入，不在内部 `new`；实现与 provider 文件分离。
 - **错误处理**：捕获点在 application，异常转状态字段；用户可读消息走 l10n，内部细节只入日志。
 - **并发与生命周期**：流订阅取消、一页一实例的协调器、平台通道回调的泄漏路径。
 - **测试强度**：在 seam 处用 fake 替换，不依赖真实网络 / 文件系统 / 平台通道。
-- **增量纪律**：重构与功能分开提交；新代码按规范，旧代码路过即修（[决策](../../../.agents/notes/implemented/architecture/2026-08-10-incremental-refactor-over-big-bang.md)）。
+- **增量纪律**：按[增量重构](../../../docs/development.md#增量重构)核对必要性与修改范围，重构与功能分开提交；不把无关清理作为完成当前任务的条件。
 - **体量**：单文件超过 ~400 行先找拆分点（[体量规则](../../../docs/design.md#体量)）；接口能再小就再小。
 
 ## 报告发现

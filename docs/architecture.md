@@ -22,14 +22,13 @@ lib/src/
       data/          ← Repository、Service、Parser
   core/              ← 跨模块共享：database、theme、storage、services、providers、widgets、file_handling、config、url_launcher
   app_router.dart    ← 路由表（应用外壳，唯一允许依赖各 feature presentation 的位置）
-  rust/              ← 性能敏感逻辑（FFI，经 core 暴露）
 ```
 
 规则：
 
 - **依赖方向**：`presentation → application → domain`、`data → domain`；`application` 可以依赖本 feature `data` 的 provider 与实现。禁止 `presentation → data`（presentation 只 `ref.watch` provider）；禁止 `domain` 依赖上层。
 - **接口归属**：跨 feature 暴露的接口与实现都在 `application`（`BookQueries` / `RepositoryBookQueries`）；feature 内部的 seam 接口就近定义（如 `data/stores/` 的 `WordCacheStore`）。
-- **feature 之间不互相 import**；跨 feature 只经对方 `application` 暴露的接口；唯一例外是组合面 `settings/application`，可编排其他 feature 的 `data`，见 [跨 feature 依赖](#跨-feature-依赖)。
+- **跨 feature 依赖**限于对方 `application` 的能力入口与 `domain` 值类型；组合面 `settings/application` 可编排其他 feature 的 `data`，见 [跨 feature 依赖](#跨-feature-依赖)。
 - **`core/` 是共享工具箱**：放进去的东西必须被 ≥2 个 feature 使用，否则留在所属 feature。
 - **`domain` 是纯 Dart**：不 import Riverpod，不触碰 data / presentation。UI 类型（如 `Color`）仅在无法避免时允许（参考 `ReaderSettings` 引入 `AppThemeSettings` 的做法）。
 
@@ -44,7 +43,6 @@ lib/src/
 | [learning](subsystems/learning.md) | 学习：点词释义、长句分析、TTS 发音与缓存 | `LearningEntry` |
 | [settings](subsystems/settings.md) | 设置：主题、字体、AI 密钥、音色、缓存清理、备份导出、更新检查 | 组合面（唯一允许跨 feature 编排的模块） |
 | [core](subsystems/core.md) | 跨模块能力：数据库、路由、主题、存储、日志、导入编排、文件处理 | provider 与 service |
-| [rust](subsystems/rust.md) | EPUB 中央目录缓存与解压（FFI） | `readEpubFile` |
 
 ## 数据流
 
@@ -62,9 +60,9 @@ lib/src/
 
 ## 跨 feature 依赖
 
-允许的形态只有三种：**组合面**（`settings`）经其他 feature 的 `application` 编排；**宿主调能力模块**（`reader` 经 `LearningEntry`）；**值类型与配置读取**（`domain` 类型、`settings/application` 的配置）。
+允许的形态只有三种：**组合面**（`settings`）经其他 feature 的 `application` 编排，其自身 `application` 还可依赖其他 feature 的 `data`；**宿主调能力模块**（`reader` 经 `LearningEntry`）；**值类型与配置读取**（`domain` 值类型、`settings/application` 的配置）。
 
-不允许的形态：任何 feature 的 `presentation` 直接依赖其他 feature 的 `data`；`application` 直连其他 feature 的 `data`。`core/` 只能依赖 feature 的 `domain` 值类型（drift 表的类型转换器），不得依赖 feature 的其余层。
+跨 feature 不得依赖对方的 `presentation`；依赖对方 `data` 仅限上述 `settings/application` 例外，任何 `presentation` 均不得使用该例外。`core/` 只能依赖 feature 的 `domain` 值类型（drift 表的类型转换器），不得依赖 feature 的其余层。
 
 新增跨 feature 边之前先读 [组合面决策](../.agents/notes/implemented/architecture/2026-09-08-composition-surface-cross-feature.md)。边与违规由门禁核对，不靠人眼：
 
@@ -82,7 +80,6 @@ dart run tool/layer_gates.dart          # 违规检查；CI 与提交前都跑
 | 新的学习能力（新的 AI 任务） | `learning/application/` 的 controller + `learning/data/` 的 service；缓存策略跟着缓存表走 |
 | 新的设置项 | `settings/` 三件套：domain 值对象、application notifier、presentation 卡片 |
 | 跨 feature 的能力 | 先问是否真的被 ≥2 个 feature 使用；是则 `core/`，否则留在所属 feature |
-| 性能敏感的解析 / 解压 | `rust/src/api/` + 重跑 flutter_rust_bridge codegen |
 
 ## Dev Note
 

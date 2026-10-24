@@ -8,7 +8,7 @@ Status: implemented
 
 ## Decision
 
-先建立开发规范（[docs/development.md](../../../../docs/development.md) 与 [docs/architecture.md](../../../../docs/architecture.md)），架构采用增量演进（strangler fig + Boy Scout Rule）：新代码一律按规范写，旧代码路过即修，只有成为新功能地基的区域才安排专项重构。**不做**一次性大规模重构。专项重构前必须先补该区域的测试。
+架构采用增量演进：新代码按[开发规范](../../../../docs/development.md)与[架构约束](../../../../docs/architecture.md)实现；旧代码的整理范围由[按风险选择流程](../process/2026-09-26-risk-based-agent-workflow.md)约束。专项重构服务于功能地基或明确的重构任务，动手前必须先补该区域的测试；不做一次性大规模重构。
 
 ## Alternatives considered
 

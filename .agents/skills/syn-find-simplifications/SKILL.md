@@ -13,7 +13,7 @@ description: 在 Synlen 找非显而易见的简化候选并写成 Agent Note �
 - [docs/design.md](../../../docs/design.md) — 深模块、删除测试、seam 纪律。
 - [docs/architecture.md](../../../docs/architecture.md) — 模块边界与跨 feature 依赖的允许形态。
 - [docs/subsystems/README.md](../../../docs/subsystems/README.md) — 每模块的「已知限制与待办」，已有条目不重复提案。
-- [AGENTS.md](../../../AGENTS.md) — 增量重构与 Boy Scout Rule。
+- [docs/development.md](../../../docs/development.md#增量重构) — 重构范围与增量纪律。
 
 ## 四个信号
 
@@ -26,7 +26,7 @@ description: 在 Synlen 找非显而易见的简化候选并写成 Agent Note �
 
 - `rg` 区分调用方：`lib/` 命中是生产调用；只命中 `test/` 或 `docs/` 不算。
 - 读实际调用点确认语义，不只看名字。
-- **否决**：有生产调用；已被 Agent Note 或子系统页的待办覆盖；改动太小不值得提案——按 Boy Scout Rule 顺手修，或记进子系统页的「已知限制与待办」。
+- **否决**：有生产调用；已被 Agent Note 或子系统页的待办覆盖。太小而无需独立提案的候选在报告中列出；是否实施按用户任务与[重构范围](../../../docs/development.md#增量重构)判断，发现候选不自动扩大修改范围。
 - 有意设计先读它的 Agent Note 再判断：性能与兼容决策、迁移期并存形态，轻率提议删除会被否决。
 
 ## 写 Agent Note 提案
