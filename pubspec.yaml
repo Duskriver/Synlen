@@ -55,7 +55,7 @@ dependencies:
   # App Info & URL Launcher
   package_info_plus: ^10.2.2
   url_launcher: ^6.3.3
-  flutter_svg: ^2.3.0
+  flutter_svg: ^2.3.2
 
   # Image Compression
   flutter_image_compress: ^2.5.1
